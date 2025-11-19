@@ -2,6 +2,4 @@ iris_streams.logs/
 /iris_streams/logs
 /iris_streams/logs
 
-/iris_streams/run_streams.sh
-iris_streams/run_streams.sh
-
+iris_streams/target
