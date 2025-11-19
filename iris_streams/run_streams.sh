@@ -5,14 +5,14 @@ export NUM_WORKERS=5
 # --- Reset section -----------------------------------------------------------
 # if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
-#     for ((i=0; i<NUM_WORKERS; i++)); do
-#         app="pso-worker-$i"
-#         docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-#             --application-id "$app" \
-#             --input-topics iris-input \
-#             --bootstrap-server localhost:9092 \
-#             --force
-#     done
+    # for ((i=0; i<NUM_WORKERS; i++)); do
+    #     app="pso-worker-$i"
+    #     docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
+    #         --application-id "$app" \
+    #         --input-topics iris-input \
+    #         --bootstrap-server localhost:9092 \
+    #         --force
+    # done
 
     # app="pso-coordinator"
     # docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \

@@ -352,7 +352,7 @@ public class CoordinatorProcessor extends ContextualProcessor<String, String, St
                 try {
                     String json = MAPPER.writeValueAsString(payload);
                     context().forward(new Record<>(
-                            String.valueOf(1),   // key: all to same partition
+                            "gBest",   // key: all to same partition
                             json,
                             record.timestamp()
                     ));
