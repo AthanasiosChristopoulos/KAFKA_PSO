@@ -35,8 +35,6 @@ public class Worker implements Runnable {
 
         String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
         String DATA_TOPIC = System.getenv().getOrDefault("DATA_TOPIC", "iris-input");
-        System.out.println("[Worker " + workerId + "] Starting with DATA_TOPIC = " + DATA_TOPIC);
-
         String LOCAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
         String GLOBAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
 
@@ -48,6 +46,7 @@ public class Worker implements Runnable {
 
         Properties dataProps = new Properties();
         dataProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);
+        // dataProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_");
         dataProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         dataProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         dataProps.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
