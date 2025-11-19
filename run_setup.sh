@@ -124,3 +124,4 @@ docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
   --input-topics iris-input \
   --bootstrap-server localhost:9092 \
   --force
+
