@@ -65,6 +65,8 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         // this.gBestStore = (KeyValueStore<String, String>) context.getStateStore("gBestStore"); // open state store
         // this.gBestStore = (ReadOnlyKeyValueStore<String, String>) context.getStateStore("gBestStore");
         this.gBestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore("gBestStore");
+        shared.log("Offset: " + context.offset() + "Partition: " + context.partition() + "Topic: " + context.topic());
+        System.out.println("Offset: " + context.offset() + "Partition: " + context.partition() + "Topic: " + context.topic());
 
     }
 
