@@ -181,12 +181,11 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
             Map<String, Object> msg = MAPPER.readValue(gBestJson, new TypeReference<Map<String, Object>>() {});
             Object gBestObj = msg.get("w_gBest");
             if (!(gBestObj instanceof List<?> gBestList)) {
-                
                 return null;
             }
 
             double[] gBestWeights = new double[gBestList.size()];
-            shared.log("gBestWeights_1: " + Dl4jParamUtils.sampleFlat(gBestWeights));
+            shared.log("gBestWeights: " + Dl4jParamUtils.sampleFlat(gBestWeights));
 
             for (int i = 0; i < gBestList.size(); i++) {
                 gBestWeights[i] = ((Number) gBestList.get(i)).doubleValue();

@@ -58,6 +58,7 @@ public class Worker implements Runnable {
                 .withValueSerde(Serdes.String())
         );
 
+        // Print: Optional to DEBUG
         // gBestTable
         //     .toStream()
         //     .peek((k, v) -> System.out.println(

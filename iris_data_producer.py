@@ -12,6 +12,7 @@ DATA_TOPIC = os.getenv("DATA_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--streaming', action='store_true')
 parser.add_argument('--all', action='store_true') # make this a flag argument
 args = parser.parse_args()
 
@@ -51,7 +52,7 @@ if args.all:
         
     print(f"Loaded entire iris dataset in iris-input topic")
     
-else: 
+elif args.streaming: 
     while True:
         index = random.randrange(len(X)) # we need random samples (if in order, they would belong to the same class)
         features = X_scaled[index]
@@ -71,3 +72,6 @@ else:
         index = index + 1
         
         time.sleep(1)
+
+else:
+    print("Arg missing")

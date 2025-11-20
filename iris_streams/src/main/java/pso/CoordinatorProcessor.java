@@ -347,13 +347,13 @@ public class CoordinatorProcessor extends ContextualProcessor<String, String, St
                 for (double v : gBestWeights) {
                     gBestListOut.add(v);
                 }
-                payload.put("w_gBest", gBestListOut);
+                payload.put("w_gBest", gBestListOut); 
 
                 try {
                     String json = MAPPER.writeValueAsString(payload);
                     context().forward(new Record<>(
-                            "gBest",   // key: all to same partition
-                            json,
+                            "gBest",    // key: all to same partition
+                            json,       // value: the JSON is the records value 
                             record.timestamp()
                     ));
                 } catch (com.fasterxml.jackson.core.JsonProcessingException e) {

@@ -12,16 +12,15 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic iris-output --partitions 1 --if-not-exists
-
-docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists
 
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic iris-output --partitions 1 --if-not-exists
 
 # === Describe topic =================================================================================
 

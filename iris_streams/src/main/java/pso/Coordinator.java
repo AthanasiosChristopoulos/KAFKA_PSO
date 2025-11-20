@@ -18,6 +18,8 @@ public class Coordinator implements Runnable {
     public void run() {
 
         String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
+        System.out.println("Coordinator started with RUN_ID: " + RUN_ID);
+
         String LOCAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
         String GLOBAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
 
