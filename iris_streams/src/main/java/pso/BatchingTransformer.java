@@ -170,7 +170,7 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         }
 
         String gBestJson = wrapper.value();
-
+        shared.log("gBestJson: " + gBestJson);
         if (gBestJson == null) {
             shared.log("gBestWeights returned null");
             return null;
@@ -179,8 +179,9 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         try {
 
             Map<String, Object> msg = MAPPER.readValue(gBestJson, new TypeReference<Map<String, Object>>() {});
-            Object gBestObj = msg.get("w_gBest");
+            Object gBestObj = msg.get("w_gBest"); // get MSG inside the JSON
             if (!(gBestObj instanceof List<?> gBestList)) {
+                shared.log("gBestWeights isnt a List");
                 return null;
             }
 

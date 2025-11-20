@@ -12,7 +12,7 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.streams.processor.api.ContextualProcessor;
+import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import java.io.IOException;
@@ -33,7 +33,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import java.time.Duration;
 
 
-public class CoordinatorProcessor extends ContextualProcessor<String, String, String, String> {
+public class CoordinatorProcessor implements Processor<String, String, String, String> {
+    private ProcessorContext<String, String> context;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -126,7 +127,7 @@ public class CoordinatorProcessor extends ContextualProcessor<String, String, St
 
     @Override
     public void init(ProcessorContext<String, String> context) {
-        super.init(context);
+        this.context = context;
     }
 
     @Override
@@ -134,7 +135,7 @@ public class CoordinatorProcessor extends ContextualProcessor<String, String, St
         if (control.isStopRequested()) return;
         
         if(count == 0) {
-            context().recordMetadata().ifPresent(meta -> 
+            context.recordMetadata().ifPresent(meta -> 
                 log("Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
             );
         }
@@ -351,7 +352,7 @@ public class CoordinatorProcessor extends ContextualProcessor<String, String, St
 
                 try {
                     String json = MAPPER.writeValueAsString(payload);
-                    context().forward(new Record<>(
+                    context.forward(new Record<>(
                             "gBest",    // key: all to same partition
                             json,       // value: the JSON is the records value 
                             record.timestamp()
