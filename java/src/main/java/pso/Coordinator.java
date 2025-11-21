@@ -12,7 +12,7 @@ import java.util.Properties;
 
 import java.util.concurrent.CountDownLatch;
 
-import utils.Config; 
+import utils.*; 
 
 public class Coordinator implements Runnable {
 

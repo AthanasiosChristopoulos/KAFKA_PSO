@@ -15,7 +15,7 @@ import org.apache.kafka.common.utils.Bytes;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import utils.Config; // from the same project (in the utils package)
+import utils.*;
 
 public class Worker implements Runnable {
 

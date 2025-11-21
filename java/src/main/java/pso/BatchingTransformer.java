@@ -19,9 +19,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 
-import utils.Dl4jParamUtils;
 import utils.*;
-
 import state.*;
 
 public class BatchingTransformer implements Transformer<String, String, KeyValue<String, String>> {

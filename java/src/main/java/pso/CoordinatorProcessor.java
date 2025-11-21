@@ -31,10 +31,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
 
-import utils.Config; 
-import utils.Dl4jParamUtils;
 import utils.*;
-
 import state.*;
 
 public class CoordinatorProcessor implements Processor<String, String, String, String> {

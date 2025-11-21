@@ -5,7 +5,7 @@ import java.util.List;
 import java.io.InputStream;
 import java.util.logging.LogManager;
 
-import utils.Config; 
+import utils.*; 
 
 public class Simulation {
 
