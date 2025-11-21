@@ -83,6 +83,14 @@ public class Worker implements Runnable {
                     .withValueSerde(Serdes.String())
                     .withCachingDisabled()
             );
+            
+            gBestTable
+                .toStream()
+                .peek((k, json) -> {
+                    logger.log("Received New gBest JSON: " + json);
+                    // System.out.println("[Coordinator] New gBest JSON: " + json);
+                });
+
         } else {
             KTable<String, String> gBestTable = builder.table(
                 GLOBAL_WEIGHTS_TOPIC,
@@ -90,7 +98,7 @@ public class Worker implements Runnable {
                 Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    .withCachingDisabled()
+                    // .withCachingDisabled()
             );
         }
 
@@ -101,10 +109,7 @@ public class Worker implements Runnable {
             Consumed.with(Serdes.String(), Serdes.String()))
             .transform(() -> new WorkerTransformer(workerId), stateStoreName)
                                                                 //  wire the state store to the WorkerTransformer
-            .filter((k, v) -> v != null)
-            .peek((k, v) -> {
-                logger.log("value is: " + v);
-            });
+            .filter((k, v) -> v != null);
 
         KStream<String, String>[] branches = dataStream.branch(
             (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates

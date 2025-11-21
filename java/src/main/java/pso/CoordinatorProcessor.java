@@ -197,61 +197,63 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
                 }
             }
 
-        } else {    // Receive pBest updates 
+        } 
+        
+        // else {    // Receive pBest updates 
 
-            Object pBestObj = msg.get("pBest");
-            if (!(pBestObj instanceof List<?> pBestList)) {
-                return;
-            }
+        //     Object pBestObj = msg.get("pBestWeights");
+        //     if (!(pBestObj instanceof List<?> pBestList)) {
+        //         return;
+        //     }
 
-            Object accObj = msg.get("accuracy");
-            if (!(accObj instanceof Number accuracyNumber)) {
-                logger.log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
-                return;
-            }
-            double accuracy = accuracyNumber.doubleValue();
+        //     Object accObj = msg.get("accuracy");
+        //     if (!(accObj instanceof Number accuracyNumber)) {
+        //         logger.log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
+        //         return;
+        //     }
+        //     double accuracy = accuracyNumber.doubleValue();
 
-            // --- check against current gBest ---
-            if (gBestWeights == null || accuracy > gBestAccuracy) {
-                // new global best!
-                gBestAccuracy = accuracy;
+        //     // --- check against current gBest ---
+        //     if (gBestWeights == null || accuracy > gBestAccuracy) {
+        //         // new global best!
+        //         gBestAccuracy = accuracy;
                
-                double[] pBestWeights = new double[pBestList.size()];
-                for (int i = 0; i < pBestList.size(); i++) {
-                    pBestWeights[i] = ((Number) pBestList.get(i)).doubleValue();
-                }
+        //         double[] pBestWeights = new double[pBestList.size()];
+        //         for (int i = 0; i < pBestList.size(); i++) {
+        //             pBestWeights[i] = ((Number) pBestList.get(i)).doubleValue();
+        //         }
 
-                gBestWeights  = pBestWeights;
+        //         gBestWeights  = pBestWeights;
 
-                var payload = new HashMap<String, Object>();
-                payload.put("id_worker", Integer.parseInt(workerId));
-                payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
-                payload.put("accuracy", gBestAccuracy);
+        //         var payload = new HashMap<String, Object>();
+        //         payload.put("id_worker", Integer.parseInt(workerId));
+        //         payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
+        //         payload.put("accuracy", gBestAccuracy);
 
-                List<Double> gBestListOut = new ArrayList<>(gBestWeights.length);
-                for (double v : gBestWeights) {
-                    gBestListOut.add(v);
-                }
-                payload.put("w_gBest", gBestListOut); 
+        //         List<Double> gBestListOut = new ArrayList<>(gBestWeights.length);
+        //         for (double v : gBestWeights) {
+        //             gBestListOut.add(v);
+        //         }
+        //         payload.put("gBestWeights", gBestListOut); 
 
-                try {
-                    String json = MAPPER.writeValueAsString(payload);
+        //         try {
+        //             String json = MAPPER.writeValueAsString(payload);
     
-                    logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
-                    logger.log("gBestJSON: " + json);
+        //             logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
+        //             logger.log("gBestJSON: " + json);
 
-                    context.forward(new Record<>(
-                            "gBest",    // key: all to same partition
-                            json,       // value: the JSON is the records value 
-                            record.timestamp()
-                    ));
+        //             context.forward(new Record<>(
+        //                     "gBest",    // key: all to same partition
+        //                     json,       // value: the JSON is the records value 
+        //                     record.timestamp()
+        //             ));
 
-                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                    e.printStackTrace(); // or log it and skip sending
-                }
+        //         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+        //             e.printStackTrace(); // or log it and skip sending
+        //         }
 
-            }
-        }
+        //     }
+        // }
     }
 
     @Override

@@ -147,7 +147,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             var payload = new HashMap<String, Object>();
             payload.put("pBestMsgIndex", java.util.UUID.randomUUID().toString());
             payload.put("id_worker", workerId);
-            payload.put("pBest", weightList);
+            payload.put("pBestWeights", weightList);
             payload.put("accuracy", accuracy);
 
             try {
@@ -190,10 +190,12 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
             if (neighborPBestList.isEmpty()) {
                 logger.log("No neighbor pBest found; skipping social update this round.");
+                velocity = psoUpdater.updateX(model, null);
             } else {
-                logger.log("pBest Weights: " + Dl4jParamUtils.sampleFlats(neighborPBestList));
+                logger.log("pBest Weights:\n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = psoUpdater.updateX(model, neighborPBestList);
             }
+
 
         } else {
             double[] gBestWeights = readBestWeights();
@@ -230,9 +232,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 if (json == null) continue;
 
                 try {
-                    Map<String, Object> msg =
-                        MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
-                    Object pBestObj = msg.get("pBest");
+                    Map<String, Object> msg = MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+                    Object pBestObj = msg.get("pBestWeights");
                     if (!(pBestObj instanceof List<?> pBestList)) {
                         continue;
                     }
@@ -282,7 +283,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         try {
 
             Map<String, Object> msg = MAPPER.readValue(gBestJson, new TypeReference<Map<String, Object>>() {});
-            Object gBestObj = msg.get("w_gBest"); // get MSG inside the JSON
+            Object gBestObj = msg.get("gBestWeights"); // get MSG inside the JSON
             if (!(gBestObj instanceof List<?> gBestList)) {
                 logger.log("gBestWeights isnt a List");
                 return null;

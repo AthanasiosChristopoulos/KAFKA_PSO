@@ -14,20 +14,21 @@ public class PsoUpdater {
     private final double C1;
     private final double C2;
     private final int NUM_WORKERS;
+    private final String FULLY_INFORMED;
 
     private double[] velocity; 
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
         Config cfg = Config.get();
+        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
-        // if(globalBestRun) {
-        //     this.W_INERTIA = cfg.W_INERTIA_G_BEST;
-        // } else {
-        //    this.W_INERTIA = cfg.W_INERTIA;
-        // }
+        if("true".equals(FULLY_INFORMED)) {
+            this.W_INERTIA = cfg.W_INERTIA;
+        } else {
+           this.W_INERTIA = cfg.W_INERTIA_G_BEST;
+        }
 
-        this.W_INERTIA = cfg.W_INERTIA_G_BEST;
         this.C = cfg.C;
         this.C1 = cfg.C1;
         this.C2 = cfg.C2;
@@ -76,13 +77,68 @@ public class PsoUpdater {
 
     //================================================================================================
 
+    // public double[] updateX(MultiLayerNetwork model, List<double[]> neighborPBestList) {
+
+    //     double[] x_i = Dl4jParamUtils.modelToFlatList(model);
+
+    //     double[] socialAggregate = new double[x_i.length];
+    //     Random rnd = new Random();
+
+    //     // for pBest_j in neighbor_pBests:
+    //     for (double[] pBest_j : neighborPBestList) {
+
+    //         if (pBest_j.length != x_i.length) {
+    //             throw new IllegalArgumentException("pBest size mismatch");
+    //         }
+
+    //         for (int k = 0; k < x_i.length; k++) {
+    //             double p_i_j = rnd.nextDouble();  // in [0,1)
+    //             socialAggregate[k] += p_i_j * (pBest_j[k] - x_i[k]);
+    //         }
+    //     }
+
+    //     double scale = C / (double) NUM_WORKERS;
+    //     for (int k = 0; k < socialAggregate.length; k++) {
+    //         socialAggregate[k] *= scale;
+    //     }
+
+    //     double[] velocity_i_1 = new double[x_i.length];
+    //     double[] x_i_1 = new double[x_i.length];
+
+    //     for (int k = 0; k < x_i.length; k++) {
+    //         velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
+    //         x_i_1[k] = x_i[k] + velocity_i_1[k];
+    //     }
+
+    //     Dl4jParamUtils.updateModel(model, x_i_1);
+
+    //     this.velocity = velocity_i_1;
+    //     return this.velocity;
+    // }
+
     public double[] updateX(MultiLayerNetwork model, List<double[]> neighborPBestList) {
 
         double[] x_i = Dl4jParamUtils.modelToFlatList(model);
-
         double[] socialAggregate = new double[x_i.length];
         Random rnd = new Random();
 
+        // ===== handle "no neighbors" case: pure inertia step =====
+        if (neighborPBestList == null || neighborPBestList.isEmpty()) {
+            double[] velocity_i_1 = new double[x_i.length];
+            double[] x_i_1 = new double[x_i.length];
+
+            for (int k = 0; k < x_i.length; k++) {
+                // socialAggregate[k] is 0 -> only inertia
+                velocity_i_1[k] = W_INERTIA * velocity[k];
+                x_i_1[k] = x_i[k] + velocity_i_1[k];
+            }
+
+            Dl4jParamUtils.updateModel(model, x_i_1);
+            this.velocity = velocity_i_1;
+            return this.velocity;
+        }
+
+        // ===== normal fully-informed case with neighbors =====
         // for pBest_j in neighbor_pBests:
         for (double[] pBest_j : neighborPBestList) {
 

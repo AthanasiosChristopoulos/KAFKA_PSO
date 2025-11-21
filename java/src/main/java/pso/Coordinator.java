@@ -68,7 +68,7 @@ public class Coordinator implements Runnable {
         CoordinatorControl control = new CoordinatorControl();
 
         StreamsBuilder builder = new StreamsBuilder();
-        
+
         // =======================================================================================================
         
         KStream<String, String> local_weights_stream = builder.stream(
@@ -88,8 +88,8 @@ public class Coordinator implements Runnable {
             )
             .peek((k, json) ->
                 logger.log("New gBest from worker JSON: " + json)
-            )
-            .selectKey((k, v) -> "gBest");
+            );
+            // .selectKey((k, v) -> "gBest");
 
             KTable<String, String> gBestTable = pBestJsonStream
                 .groupByKey()
@@ -118,26 +118,25 @@ public class Coordinator implements Runnable {
                     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
                         .withKeySerde(Serdes.String())
                         .withValueSerde(Serdes.String())
-                        .withCachingDisabled()
+                        .withCachingDisabled() // since this is a KTable, there will be no downstream updates / forwards
             );
 
             gBestTable
                 .toStream()
                 .mapValues(json -> {
                     try {
-                        // logger.log("I am running");
                         Map<String, Object> msg =
                             MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
 
                         Map<String, Object> payload = new HashMap<>();
-                        // reuse fields from the best pBest
+
                         payload.put("id_worker", msg.get("id_worker"));
                         payload.put("accuracy", msg.get("accuracy"));
                         payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
-                        // gBest weights are just pBest weights of the best particle
-                        payload.put("w_gBest", msg.get("pBest"));
+                        payload.put("gBestWeights", msg.get("pBestWeights"));
 
                         return MAPPER.writeValueAsString(payload);
+
                     } catch (Exception e) {
                         e.printStackTrace();
                         return null;
