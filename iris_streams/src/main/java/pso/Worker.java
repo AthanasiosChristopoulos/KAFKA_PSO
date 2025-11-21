@@ -37,12 +37,14 @@ public class Worker implements Runnable {
     @Override
     public void run() {
 
-        System.out.println("[Worker " + workerId + " i am here]");
+        String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
+
+        System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 
         WorkerSharedState sharedState = new WorkerSharedState(workerId);
 
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId);
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -73,10 +75,8 @@ public class Worker implements Runnable {
         );
 
         dataStream
-            .transform(
-                () -> new BatchingTransformer(workerId, sharedState, BATCH_SIZE, N_BATCHES),
-                "gBestStore"   //  the state store
-            )
+            .transform(() -> new BatchingTransformer(workerId, sharedState, BATCH_SIZE, N_BATCHES),"gBestStore" )
+                                                                //  wire the state store to the BatchingTransformer
             .filter((k, v) -> v != null)
             .to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 

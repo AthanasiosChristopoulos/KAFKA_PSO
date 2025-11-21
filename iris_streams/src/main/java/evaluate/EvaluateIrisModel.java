@@ -16,8 +16,8 @@ import pso.Dl4jParamUtils;
 public class EvaluateIrisModel {
 
     public static void main(String[] args) throws IOException {
-        System.out.println("Executing ...");
-        // 1. Load the saved model
+        System.out.println("Executing model Evaluation ...");
+
         File modelFile = new File("models/iris-global-model.zip");
         MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(modelFile);
 

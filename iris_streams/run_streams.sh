@@ -23,18 +23,37 @@ if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
 fi
 
-export BATCH_SIZE=150        # After BATCH_SIZE we evaluate the accuracy
-export N_BATCHES=10      # After read N BATCH_SIZE, then send to Kafka
+BROKER="broker"
+BOOTSTRAP="localhost:9092"
 
-export DATA_TOPIC=iris-input
-export LOCAL_WEIGHTS_TOPIC=local-weights-topic
-export GLOBAL_WEIGHTS_TOPIC=global-weights-topic
+# TOPICS=(
+#   "local-weights-topic"
+#   "global-weights-topic"
+# )
 
-export DESIRED_ACCURACY=0.87
-export W_INERTIA=0.95
-export C=1.7     
-export C1=1.0     
-export C2=2.0     
+
+TOPICS=(
+  "global-weights-topic"
+)
+
+for topic in "${TOPICS[@]}"; do
+    docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server "$BOOTSTRAP" \
+        --delete --topic "$topic"
+done
+
+for topic in "${TOPICS[@]}"; do
+    docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server "$BOOTSTRAP" \
+        --create --topic "$topic" \
+        --partitions 1 --if-not-exists
+done
+
+echo pause 1 second
+sleep 1
+echo Awoken
+
+export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
 # mvn -q -DskipTests clean compile exec:java
 

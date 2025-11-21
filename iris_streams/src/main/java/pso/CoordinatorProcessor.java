@@ -6,7 +6,6 @@ import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.deeplearning4j.util.ModelSerializer;
 import java.io.File;
 import java.io.IOException;
 
@@ -52,9 +51,10 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
     private final WorkerStats globalStats;
     private final BatchPrediction globalPredictor;
 
-    private String DATA_TOPIC;
+    private final String DATA_TOPIC;
     private final int BATCH_SIZE;
     private final double DESIRED_ACCURACY;
+    private final String SAVE_MODEL_NAME;
 
     private final KafkaConsumer<String, String> consumer;
 
@@ -92,6 +92,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         this.DATA_TOPIC = System.getenv().getOrDefault("DATA_TOPIC", "iris-input");
         this.BATCH_SIZE = Integer.parseInt(System.getenv().getOrDefault("BATCH_SIZE", "30"));
         this.DESIRED_ACCURACY = Double.parseDouble(System.getenv().getOrDefault("DESIRED_ACCURACY", "0.9"));
+        this.SAVE_MODEL_NAME = System.getenv().getOrDefault("SAVE_MODEL_NAME", "iris-global-model");
 
         BufferedWriter w = null;
         try {
@@ -213,102 +214,11 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
                 weightsBuffer.clear();
 
-                //===================================================================================
-
-                // if (accuracy >= this.DESIRED_ACCURACY) {
-                //     control.requestStop();
-                //     return;
-                // }
-
-                //===================================================================================
-                // if (accuracy >= this.DESIRED_ACCURACY) {
-
-                //     // ===== Save the trained global model to file =====
-                //     try {
-                //         File dir = new File("models");
-                //         if (!dir.exists()) {
-                //             dir.mkdirs();
-                //         }
-
-                //         // you can choose any filename you like
-                //         File modelFile = new File(dir, "iris-global-model.zip");
-
-                //         // true => save updater state as well (good if you later continue training)
-                //         ModelSerializer.writeModel(globalModel, modelFile, true);
-
-                //         log("Saved global model to: " + modelFile.getAbsolutePath());
-                //         System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
-                //     } catch (IOException e) {
-                //         e.printStackTrace();
-                //         log("Failed to save model: " + e.getMessage());
-                //     }
-
-                //     control.requestStop();
-                //     return;
-                // }
-
                if (accuracy >= this.DESIRED_ACCURACY) {
-
-                    // ===== Save the trained global model to file =====
-                    try {
-                        File dir = new File("models");
-                        if (!dir.exists()) {
-                            dir.mkdirs();
-                        }
-
-                        // you can choose any filename you like
-                        File modelFile = new File(dir, "iris-global-model.zip");
-
-                        // true => save updater state as well (good if you later continue training)
-                        ModelSerializer.writeModel(globalModel, modelFile, true);
-
-                        log("Saved global model to: " + modelFile.getAbsolutePath());
-                        System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        log("Failed to save model: " + e.getMessage());
-                    }
-                }
-
-                //===================================================================================
-
-                if (accuracy >= this.DESIRED_ACCURACY) {
-                    double[] flat = Dl4jParamUtils.modelToFlatList(globalModel);
-
-                    log("Model result: " + Arrays.toString(flat));
-                    try {
-                        // 1. Get flat weights from the current globalModel
-
-                        // 2. Ensure models/ directory exists
-                        Files.createDirectories(Paths.get("models"));
-
-                        // 3. Write one weight per line to a text file
-                        try (BufferedWriter w = Files.newBufferedWriter(
-                                Paths.get("models/iris-weights-flat.txt"),
-                                StandardOpenOption.CREATE,
-                                StandardOpenOption.TRUNCATE_EXISTING,
-                                StandardOpenOption.WRITE
-                        )) {
-                            for (double v : flat) {
-                                w.write(Double.toString(v));
-                                w.newLine();
-                            }
-                        }
-
-                        log("Saved flat weights to models/iris-weights-flat.txt, length=" + flat.length);
-                        System.out.println("Saved flat weights to models/iris-weights-flat.txt, length=" + flat.length);
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        log("Failed to save flat weights: " + e.getMessage());
-                    }
-
+                    Dl4jParamUtils.saveModel(globalModel, SAVE_MODEL_NAME);
                     control.requestStop();
                     return;
                 }
-
-
             }
 
         } else {    // Receive pBest updates 
@@ -337,8 +247,6 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
                 gBestWeights  = pBestWeights;
 
-                log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
-
                 var payload = new HashMap<String, Object>();
                 payload.put("id_worker", Integer.parseInt(workerId));
                 payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
@@ -352,11 +260,16 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
                 try {
                     String json = MAPPER.writeValueAsString(payload);
+    
+                    log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
+                    log("gBestJSON: " + json);
+
                     context.forward(new Record<>(
                             "gBest",    // key: all to same partition
                             json,       // value: the JSON is the records value 
                             record.timestamp()
                     ));
+
                 } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
                     e.printStackTrace(); // or log it and skip sending
                 }
@@ -370,6 +283,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         // nothing special
     }
 
+    
     private static double[] averageWeights(List<double[]> bufs) {
         if (bufs == null || bufs.isEmpty()) return new double[0];
 

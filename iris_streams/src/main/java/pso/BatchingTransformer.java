@@ -12,10 +12,12 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Arrays;
 
 public class BatchingTransformer implements Transformer<String, String, KeyValue<String, String>> {
 
@@ -41,6 +43,8 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
     private double[] pBestWeights;
     private int batchesRead = 0;
 
+    private boolean printedOffset = false;
+
     public BatchingTransformer(int workerId, WorkerSharedState shared, int batchSize, int nBatches) {
 
         this.workerId = workerId;
@@ -65,13 +69,30 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         // this.gBestStore = (KeyValueStore<String, String>) context.getStateStore("gBestStore"); // open state store
         // this.gBestStore = (ReadOnlyKeyValueStore<String, String>) context.getStateStore("gBestStore");
         this.gBestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore("gBestStore");
-        shared.log("Offset: " + context.offset() + "Partition: " + context.partition() + "Topic: " + context.topic());
-        System.out.println("Offset: " + context.offset() + "Partition: " + context.partition() + "Topic: " + context.topic());
-
     }
+
+    //=========================================================================================================================
 
     @Override
     public KeyValue<String, String> transform(String key, String value) {
+
+        if (!printedOffset) {
+            shared.log(
+                "Starting at -> " +
+                "Offset: " + context.offset() +
+                ", Partition: " + context.partition() +
+                ", Topic: " + context.topic()
+            );
+            ValueAndTimestamp<String> wrapper = gBestStore.get("gBest");
+            if (wrapper == null) {
+                shared.log("initial gBestStore: gBestStore has no 'gBest'");
+            } else {
+                shared.log("initial gBestStore: gBestStore['gBest'] = " + wrapper.value());
+            }
+            
+            printedOffset = true;
+        }
+
         
         if (value == null) {
             return null;
@@ -145,18 +166,22 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
 
         double[] gBestWeights = readGlobalBestWeights();
 
-        if (gBestWeights != null) {
-            double[] velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
-            stats.reset();
-
-            shared.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-                       ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
+        if (gBestWeights == null) {
+            gBestWeights = new double[this.pBestWeights.length]; // make a 0.0 array, essentially making this parameter ineffective
         }
+
+        double[] velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
+        stats.reset();
+
+        shared.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
+                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
 
         return null;
     }
 
-    private double[] readGlobalBestWeights() {
+    //=========================================================================================================================
+
+    private double[] readGlobalBestWeights() { // read state store
 
         if (gBestStore == null) {
             shared.log("gBestWeights returned null");
@@ -187,12 +212,13 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
                 return null;
             }
 
-            double[] gBestWeights = new double[gBestList.size()];
-            shared.log("gBestWeights: " + Dl4jParamUtils.sampleFlat(gBestWeights));
+            double[] gBestWeights = new double[gBestList.size()]; // initialize with 0.0 values
 
             for (int i = 0; i < gBestList.size(); i++) {
-                gBestWeights[i] = ((Number) gBestList.get(i)).doubleValue();
+                gBestWeights[i] = ((Number) gBestList.get(i)).doubleValue(); // fill the gBestWeights with the actuall values
             }
+            shared.log("gBestWeights: " + Arrays.toString(gBestWeights));
+
             return gBestWeights;
 
         } catch (Exception e) {
@@ -200,6 +226,8 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
             return null;
         }
     }
+
+    //=========================================================================================================================
 
     @Override
     public void close() {

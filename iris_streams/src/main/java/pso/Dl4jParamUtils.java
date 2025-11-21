@@ -2,13 +2,24 @@ package pso;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.api.Layer;
+import org.deeplearning4j.util.ModelSerializer;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.BufferedWriter;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 import java.util.*;
+
 
 public class Dl4jParamUtils {
 
@@ -127,6 +138,54 @@ public class Dl4jParamUtils {
         sb.append("]");
 
         return sb.toString();
+    }
+
+    //=====================================================================================================
+
+    public static void saveModel(MultiLayerNetwork model, String modelFileName) {
+
+        File dir = new File("models"); // create Models Directory if it doesnt exist
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        // ===================== Save the model using DL4J =====================
+        try {
+            File modelFile = new File(dir, modelFileName + "-dl4j.zip");
+            ModelSerializer.writeModel(model, modelFile, true);
+
+            System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to save model: " + e.getMessage());
+        }
+
+        // ===================== Save the model as a list =====================
+
+        double[] flat = modelToFlatList(model);
+        String filenameFlat = "models/" + modelFileName + "-flat.txt";
+
+        try {
+            try (BufferedWriter writer = Files.newBufferedWriter(
+                    Paths.get(filenameFlat),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                for (double weight : flat) {
+                    writer.write(Double.toString(weight));
+                    writer.newLine();
+                }
+            }
+
+            System.out.println("Saved flat weights to" + filenameFlat + ", with length=" + flat.length);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to save flat weights: " + e.getMessage());
+        }
+
     }
 
 }
