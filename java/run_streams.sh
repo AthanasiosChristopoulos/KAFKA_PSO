@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export NUM_WORKERS=5
+set -a           # auto-export all variables
+source .env
+set +a
 
 # --- Reset section -----------------------------------------------------------
 if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
@@ -23,29 +25,30 @@ if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
 fi
 
-# BROKER="broker"
-# BOOTSTRAP="localhost:9092"
+BROKER="broker"
+BOOTSTRAP="localhost:9092"
 
-# TOPICS=(
-#   "global-weights-topic"
-# )
+TOPICS=(
+  "$PBEST_WEIGHTS_TOPIC"
+  "$GLOBAL_WEIGHTS_TOPIC"
+)
 
-# for topic in "${TOPICS[@]}"; do
-#     docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
-#         --bootstrap-server "$BOOTSTRAP" \
-#         --delete --topic "$topic"
-# done
+for topic in "${TOPICS[@]}"; do
+    docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server "$BOOTSTRAP" \
+        --delete --topic "$topic"
+done
 
-# for topic in "${TOPICS[@]}"; do
-#     docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
-#         --bootstrap-server "$BOOTSTRAP" \
-#         --create --topic "$topic" \
-#         --partitions 1 --if-not-exists
-# done
+for topic in "${TOPICS[@]}"; do
+    docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server "$BOOTSTRAP" \
+        --create --topic "$topic" \
+        --partitions 1 --if-not-exists
+done
 
-# echo pause 1 second
-# sleep 1
-# echo Awoken
+echo pause 1 second
+sleep 1
+echo Awoken
 
 export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 

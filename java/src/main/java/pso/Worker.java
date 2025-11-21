@@ -29,6 +29,8 @@ public class Worker implements Runnable {
     private final String GLOBAL_WEIGHTS_TOPIC;
     private final String RUN_ID;
 
+    private final CustomLogger logger;
+
     public Worker(int workerId) {
 
         this.workerId = workerId;
@@ -40,7 +42,9 @@ public class Worker implements Runnable {
         this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
-        this.RUN_ID = cfg.RUN_ID;                   
+        this.RUN_ID = cfg.RUN_ID;   
+
+        this.logger = CustomLogger.getWorkerInstance(workerId);                
     }
 
     @Override
@@ -63,7 +67,14 @@ public class Worker implements Runnable {
             Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
                 .withKeySerde(Serdes.String())
                 .withValueSerde(Serdes.String())
+                .withCachingDisabled()
         );
+
+        // gBestTable
+        //     .toStream()
+        //     .peek((k, v) -> {
+        //         logger.log("I am reading global records: " + v);
+        //     });
 
         // DATA stream → WorkerTransformer (which will read gBestStore) ========================================
 

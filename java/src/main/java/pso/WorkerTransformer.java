@@ -63,7 +63,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
 
-        this.logger = new CustomLogger(workerId);
+        this.logger = CustomLogger.getWorkerInstance(workerId);
         logger.log("Worker " + workerId + " WorkerTransformer started");
     }
 
@@ -152,6 +152,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         if (batchesRead >= nBatches) {
             try {
+                logger.log("Sending current weights ...");
                 var payload = new HashMap<String, Object>();
                 payload.put("id_worker", this.workerId);
                 payload.put("weightsMsgIndex", java.util.UUID.randomUUID().toString());
@@ -194,7 +195,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         // String gBestJson = gBestStore.get("gBest"); // this is the State Store. get(record key)
-        dumpGbestStore();
+        // dumpGbestStore();
 
         ValueAndTimestamp<String> wrapper = gBestStore.get("gBest");
         if (wrapper == null) {
@@ -204,10 +205,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         String gBestJson = wrapper.value();
         logger.log("gBestJson: " + gBestJson);
-        if (gBestJson == null) {
-            logger.log("gBestWeights returned null");
-            return null;
-        }
 
         try {
 
@@ -223,7 +220,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             for (int i = 0; i < gBestList.size(); i++) {
                 gBestWeights[i] = ((Number) gBestList.get(i)).doubleValue(); // fill the gBestWeights with the actuall values
             }
-            logger.log("gBestWeights: " + Arrays.toString(gBestWeights));
+            // logger.log("gBestWeights: " + Dl4JParamUtils.sampleFlat(gBestWeights));
 
             return gBestWeights;
 

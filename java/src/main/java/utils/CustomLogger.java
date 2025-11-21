@@ -13,6 +13,7 @@ public class CustomLogger {
 
     public final BufferedWriter logWriter;
     public static CustomLogger coordinatorInstance;
+    private static final Map<Integer, CustomLogger> workerInstances = new HashMap<>();
 
     public CustomLogger(int workerId) {
 
@@ -50,12 +51,29 @@ public class CustomLogger {
         this.logWriter = w;
     } 
     
+    //=====================================================================================\
+
     public static CustomLogger getCoordinatorInstance() {
         if(coordinatorInstance == null) {
             coordinatorInstance = new CustomLogger(-1);
         }
         return coordinatorInstance;
     }
+
+    //=====================================================================================\
+
+    public static CustomLogger getWorkerInstance(int workerId) {
+        CustomLogger logger = workerInstances.get(workerId);
+
+        if (logger == null) {
+            logger = new CustomLogger(workerId);
+            workerInstances.put(workerId, logger);
+        }
+
+        return logger;
+    }
+
+    //=====================================================================================\
 
     public void log(String msg) {
         if (logWriter == null) return;
