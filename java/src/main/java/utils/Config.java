@@ -10,6 +10,7 @@ public class Config {
     private static Config instance; // Singleton
 
     public final String DATA_TOPIC;
+    public final String PBEST_WEIGHTS_TOPIC;
     public final String PREDICTION_TOPIC;
     public final String LOCAL_WEIGHTS_TOPIC;
     public final String GLOBAL_WEIGHTS_TOPIC;
@@ -20,6 +21,8 @@ public class Config {
     public final double DESIRED_ACCURACY;
     public final String SAVE_MODEL_NAME;
 
+    public final double W_INERTIA;
+    public final double W_INERTIA_G_BEST;
     public final double C;
     public final double C1;
     public final double C2;
@@ -31,9 +34,9 @@ public class Config {
                 .configure()
                 .ignoreIfMissing() 
                 .load();
-
         
         this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
+        this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
         this.PREDICTION_TOPIC = getenv(dotenv, "PREDICTION_TOPIC", "iris-output");
         this.LOCAL_WEIGHTS_TOPIC = getenv(dotenv, "LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
         this.GLOBAL_WEIGHTS_TOPIC = getenv(dotenv, "GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
@@ -44,6 +47,8 @@ public class Config {
         this.DESIRED_ACCURACY = Double.parseDouble(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "iris-global-model");
 
+        this.W_INERTIA = Double.parseDouble(getenv(dotenv, "W_INERTIA", "0.95"));
+        this.W_INERTIA_G_BEST = Double.parseDouble(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
         this.C = Double.parseDouble(getenv(dotenv, "C", "1.7"));
         this.C1 = Double.parseDouble(getenv(dotenv, "C1", "1.0"));
         this.C2 = Double.parseDouble(getenv(dotenv, "C2", "2.0"));
@@ -60,11 +65,6 @@ public class Config {
     }
 
     private String getenv(Dotenv dotenv, String key, String defaultValue) {
-
-        // String value = System.getenv(key);
-        // if (value != null) {
-        //     return value;
-        // }
 
         String value = dotenv.get(key);
         if (value != null) {

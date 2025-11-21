@@ -24,6 +24,7 @@ public class Worker implements Runnable {
     private final int BATCH_SIZE;
     private final int N_BATCHES;
     private final String DATA_TOPIC;
+    private final String PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
     private final String RUN_ID;
@@ -36,6 +37,7 @@ public class Worker implements Runnable {
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;         
         this.DATA_TOPIC = cfg.DATA_TOPIC;
+        this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
         this.RUN_ID = cfg.RUN_ID;                   
@@ -54,7 +56,7 @@ public class Worker implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // KTable over GLOBAL_WEIGHTS_TOPIC, materialized as "gBestStore"
+        // KTable over GLOBAL_WEIGHTS_TOPIC, materialized as "gBestStore" ====================================
         KTable<String, String> gBestTable = builder.table(
             GLOBAL_WEIGHTS_TOPIC,
             Consumed.with(Serdes.String(), Serdes.String()),
@@ -63,31 +65,30 @@ public class Worker implements Runnable {
                 .withValueSerde(Serdes.String())
         );
 
-        // Print: Optional to DEBUG
-        // gBestTable
-        //     .toStream()
-        //     .peek((k, v) -> System.out.println(
-        //         "[DEBUG GLOBAL] key = " + k + " value = " + v
-        //     ));
-
-        // 2) DATA stream → BatchingTransformer (which will read gBestStore)
+        // DATA stream → WorkerTransformer (which will read gBestStore) ========================================
 
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String())
+            Consumed.with(Serdes.String(), Serdes.String()))
+            .transform(() -> new WorkerTransformer(workerId, BATCH_SIZE, N_BATCHES),"gBestStore" )
+                                                                //  wire the state store to the WorkerTransformer
+            .filter((k, v) -> v != null);
+
+        KStream<String, String>[] branches = dataStream.branch(
+            (key, value) -> "gBest".equals(key),   // branch[0]: pBest/gBest updates
+            (key, value) -> true                   // branch[1]: all others (weights)
         );
 
-        dataStream
-            .transform(() -> new BatchingTransformer(workerId, BATCH_SIZE, N_BATCHES),"gBestStore" )
-                                                                //  wire the state store to the BatchingTransformer
-            .filter((k, v) -> v != null)
-            .to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+
+        // =====================================================================================================
 
         System.out.println("[Worker " + workerId + " i am here2]");
 
         Topology topology = builder.build();
         System.out.println("[Worker " + workerId + "] Topology:");
-        System.out.println(topology.describe());
+        // System.out.println(topology.describe());
 
         KafkaStreams streams = new KafkaStreams(topology, props);
 

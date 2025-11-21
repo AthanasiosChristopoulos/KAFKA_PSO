@@ -7,6 +7,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
+import org.apache.kafka.streams.state.KeyValueIterator;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +23,7 @@ import java.util.Arrays;
 import utils.*;
 import state.*;
 
-public class BatchingTransformer implements Transformer<String, String, KeyValue<String, String>> {
+public class WorkerTransformer implements Transformer<String, String, KeyValue<String, String>> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -49,7 +50,7 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
 
     private boolean printedOffset = false;
 
-    public BatchingTransformer(int workerId, int batchSize, int nBatches) {
+    public WorkerTransformer(int workerId, int batchSize, int nBatches) {
 
         this.workerId = workerId;
         this.batchSize = batchSize;
@@ -63,7 +64,7 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
 
         this.logger = new CustomLogger(workerId);
-        logger.log("Worker " + workerId + " BatchingTransformer started");
+        logger.log("Worker " + workerId + " WorkerTransformer started");
     }
 
     @Override
@@ -193,7 +194,8 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         }
 
         // String gBestJson = gBestStore.get("gBest"); // this is the State Store. get(record key)
-        
+        dumpGbestStore();
+
         ValueAndTimestamp<String> wrapper = gBestStore.get("gBest");
         if (wrapper == null) {
             logger.log("gBestWeights returned null (no entry for key 'gBest')");
@@ -228,6 +230,38 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    private void dumpGbestStore() {
+
+        if (gBestStore == null) {
+            logger.log("gBestStore is null (not initialized yet)");
+            return;
+        }
+
+        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = gBestStore.all()) {
+
+            boolean empty = true;
+
+            while (it.hasNext()) {
+                empty = false;
+                KeyValue<String, ValueAndTimestamp<String>> entry = it.next();
+
+                logger.log(
+                    "[gBestStore] key = " + entry.key +
+                    ", value = " + entry.value.value() +
+                    ", timestamp = " + entry.value.timestamp()
+                );
+            }
+
+            if (empty) {
+                logger.log("[gBestStore] Store is empty!");
+            }
+
+        } catch (Exception e) {
+            logger.log("Error while dumping gBestStore: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

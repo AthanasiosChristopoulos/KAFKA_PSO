@@ -73,9 +73,6 @@ def reconstruct_layer_weights_for_keras(flat: np.ndarray):
         kernels.append(kernel)
         biases.append(bias)
 
-        # print(f"Layer {layer_idx}: kernel shape {kernel.shape}, bias shape {bias.shape}")
-        # print(f"Layer {layer_idx}: first row of kernel: {kernel[0, :5]}, first bias: {bias[0]}")
-
     print(f"Consumed {idx} values from flat array.")
     if idx != len(flat):
         raise ValueError(f"Flat length mismatch, used {idx} of {len(flat)} values")

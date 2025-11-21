@@ -49,7 +49,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
     private int round = 0;
 
-    private final MultiLayerNetwork globalModel;
+    private final MultiLayerNetwork globalModel; // x_g , current model
     private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
@@ -64,20 +64,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
     private final CoordinatorControl control;
 
-    // ========================= simple file logger =========================
-
-    private final BufferedWriter logWriter;
-
-    private void log(String msg) {
-        if (logWriter == null) return;
-        try {
-            logWriter.write(msg);
-            logWriter.newLine();
-            logWriter.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private final CustomLogger logger;
 
     // ======================================================================
 
@@ -96,19 +83,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
         this.RUN_ID = cfg.RUN_ID;    
 
-        BufferedWriter w = null;
-        try {
-            Files.createDirectories(Paths.get("logs"));
-            w = Files.newBufferedWriter(
-                    Paths.get("logs/coordinator.log"),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        this.logWriter = w;
+        this.logger = CustomLogger.getCoordinatorInstance();
         
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -121,7 +96,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
 
-        log("Coordinator started");
+        logger.log("Coordinator started");
         System.out.println("Coordinator started");
 
     }
@@ -137,7 +112,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         
         if(count == 0) {
             context.recordMetadata().ifPresent(meta -> 
-                log("Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
+                logger.log("Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
             );
         }
 
@@ -160,12 +135,12 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         if (workerIdObj == null) {
             return;
         }
-        // log("Unexpected worker_id type: " + workerIdObj.getClass());
+        // logger.log("Unexpected worker_id type: " + workerIdObj.getClass());
         // int workerId = ((Number) msg.get("id_worker")).intValue();
 
         String workerId = String.valueOf(workerIdObj);
 
-        log("RECEIVED value: " + value);
+        logger.log("RECEIVED value: " + value);
 
         if(msg.containsKey("weights")) {    // Receive weight updates
             
@@ -194,6 +169,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
                 while (evalBatch.size() < BATCH_SIZE) {
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+
                     if (records.isEmpty()) {
                         break; // no more data, use whatever we have
                     }
@@ -209,7 +185,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
                 globalPredictor.callPredictionsBatch(evalBatch);
                 double accuracy = globalStats.getAccuracy();
 
-                log("Global model accuracy: " + accuracy);
+                logger.log("Global model accuracy: " + accuracy);
                 System.out.println("Global model accuracy: " + accuracy);
 
                 weightsBuffer.clear();
@@ -230,7 +206,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
             Object accObj = msg.get("accuracy");
             if (!(accObj instanceof Number accuracyNumber)) {
-                log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
+                logger.log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
                 return;
             }
             double accuracy = accuracyNumber.doubleValue();
@@ -261,8 +237,8 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
                 try {
                     String json = MAPPER.writeValueAsString(payload);
     
-                    log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
-                    log("gBestJSON: " + json);
+                    logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
+                    logger.log("gBestJSON: " + json);
 
                     context.forward(new Record<>(
                             "gBest",    // key: all to same partition

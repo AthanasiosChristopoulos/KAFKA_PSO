@@ -2,13 +2,17 @@
 
 # 0) Setup Kafka Enviroment ==============================================================
 
-docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
-  --create --topic iris-input --partitions 3 --if-not-exists
+# docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+#   --bootstrap-server localhost:9092 \
+#   --create --topic iris-input --partitions 3 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic iris-input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic pbest-weights-topic --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
@@ -46,6 +50,18 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --delete --topic global-weights-topic-1
+
+docker exec broker bash -c '
+  /opt/kafka/bin/kafka-topics.sh \
+    --bootstrap-server localhost:9092 --list \
+  | grep "gBestStore-changelog" \
+  | while read t; do
+      echo "Deleting topic: $t"
+      /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server localhost:9092 \
+        --delete --topic "$t"
+    done
+'
 
 # === Check the topics are there ====================================================================
 

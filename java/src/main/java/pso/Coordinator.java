@@ -1,14 +1,24 @@
 package pso;
 
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.common.utils.Bytes;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Properties;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -16,15 +26,23 @@ import utils.*;
 
 public class Coordinator implements Runnable {
 
+    private final String PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
     private final String RUN_ID;
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private final CustomLogger logger;
+
     public Coordinator() {
         Config cfg = Config.get();
         this.RUN_ID = cfg.RUN_ID;
+        this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+
+        this.logger = CustomLogger.getCoordinatorInstance();
     }
 
     @Override
@@ -39,20 +57,105 @@ public class Coordinator implements Runnable {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); // not effective Kafka Streams commit by itself. It works only for plain
                                                                       // KafkaConsumers/KafkaProducers
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+
+        // Serde<PBestUpdate> pBestSerde = new JsonSerde<>(PBestUpdate.class);
 
         CoordinatorControl control = new CoordinatorControl();
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        var globalStream = builder.stream(LOCAL_WEIGHTS_TOPIC, Consumed.with(Serdes.String(), Serdes.String()))
-                                .process(() -> new CoordinatorProcessor(control));
+        // var globalStream = builder.stream(LOCAL_WEIGHTS_TOPIC, Consumed.with(Serdes.String(), Serdes.String()))
+        //                         .process(() -> new CoordinatorProcessor(control));
 
-        globalStream.to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        // =======================================================================================================
+        
+        KStream<String, String> local_weights_stream = builder.stream(
+            LOCAL_WEIGHTS_TOPIC,
+            Consumed.with(Serdes.String(), Serdes.String())
+        );
+
+        local_weights_stream.process(() -> new CoordinatorProcessor(control));
+
+        // =======================================================================================================
+
+
+        KStream<String, String> pBestJsonStream = builder.stream(
+            PBEST_WEIGHTS_TOPIC,
+            Consumed.with(Serdes.String(), Serdes.String())
+        )
+        .peek((k, json) ->
+            logger.log("New gBest from worker JSON: " + json)
+        )
+        .selectKey((k, v) -> "gBest");
+
+        KTable<String, String> gBestTable = pBestJsonStream
+            .groupByKey()
+            .aggregate(
+                () -> null,               // initial aggregate = null (no gBest yet)
+                (key, newJson, aggJson) -> {
+                    if (aggJson == null) return newJson;
+
+                    try {
+                        Map<String, Object> newMsg =
+                            MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
+                        Map<String, Object> oldMsg =
+                            MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
+
+                        double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
+                        double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
+                        
+                        // System.out.println("newJson: " + newJson);
+                        // logger.log("I am running2");
+                        return newAcc > oldAcc ? newJson : aggJson;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return aggJson; // keep the old best if parsing fails
+                    }
+                },
+                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.String())
+                    .withCachingDisabled()
+        );
+
+        gBestTable
+            .toStream()
+            .mapValues(json -> {
+                try {
+                    // logger.log("I am running");
+                    Map<String, Object> msg =
+                        MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+
+                    Map<String, Object> payload = new HashMap<>();
+                    // reuse fields from the best pBest
+                    payload.put("id_worker", msg.get("id_worker"));
+                    payload.put("accuracy", msg.get("accuracy"));
+                    payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
+                    // gBest weights are just pBest weights of the best particle
+                    payload.put("w_gBest", msg.get("pBest"));
+
+                    return MAPPER.writeValueAsString(payload);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            })
+            .filter((k, v) -> v != null)
+            .peek((k, json) -> {
+                logger.log("New gBest JSON: " + json);
+                // System.out.println("[Coordinator] New gBest JSON: " + json);
+            })
+            .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+
+
+        // =======================================================================================================
 
         Topology topology = builder.build();
 
         System.out.println("Coordinator topology:");
-        System.out.println(topology.describe());
+        // System.out.println(topology.describe());
 
         KafkaStreams streams = new KafkaStreams(topology, props);
 

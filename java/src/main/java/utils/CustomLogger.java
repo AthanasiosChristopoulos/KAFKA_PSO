@@ -12,24 +12,50 @@ import java.nio.file.StandardOpenOption;
 public class CustomLogger {
 
     public final BufferedWriter logWriter;
+    public static CustomLogger coordinatorInstance;
 
     public CustomLogger(int workerId) {
-        
+
         BufferedWriter w = null;
-        try {
-            Files.createDirectories(Paths.get("logs"));
-            w = Files.newBufferedWriter(
-                    Paths.get("logs/worker_" + workerId + ".log"),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
+
+        if(workerId != -1) {
+
+            try {
+                Files.createDirectories(Paths.get("logs"));
+                w = Files.newBufferedWriter(
+                        Paths.get("logs/worker_" + workerId + ".log"),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+
+            try {
+                Files.createDirectories(Paths.get("logs"));
+                w = Files.newBufferedWriter(
+                        Paths.get("logs/coordinator.log"),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }            
+        } 
+
         this.logWriter = w;
     } 
+    
+    public static CustomLogger getCoordinatorInstance() {
+        if(coordinatorInstance == null) {
+            coordinatorInstance = new CustomLogger(-1);
+        }
+        return coordinatorInstance;
+    }
 
     public void log(String msg) {
         if (logWriter == null) return;

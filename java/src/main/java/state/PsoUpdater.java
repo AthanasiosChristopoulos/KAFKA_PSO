@@ -21,12 +21,13 @@ public class PsoUpdater {
         
         Config cfg = Config.get();
 
-        if(globalBestRun) {
-            this.W_INERTIA = cfg.W_INERTIA_G_BEST;
-        } else {
-           this.W_INERTIA = cfg.W_INERTIA;
-        }
-        
+        // if(globalBestRun) {
+        //     this.W_INERTIA = cfg.W_INERTIA_G_BEST;
+        // } else {
+        //    this.W_INERTIA = cfg.W_INERTIA;
+        // }
+
+        this.W_INERTIA = cfg.W_INERTIA_G_BEST;
         this.C = cfg.C;
         this.C1 = cfg.C1;
         this.C2 = cfg.C2;
