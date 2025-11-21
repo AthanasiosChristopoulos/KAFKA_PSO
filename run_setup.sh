@@ -106,27 +106,14 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic local-weights-topic --from-beginning
 
-    docker exec -i broker bash -lc '
-      /opt/kafka/bin/kafka-console-consumer.sh \
-        --bootstrap-server localhost:9092 \
-        --topic local-weights-topic-1
-    ' | jq -c '{worker_id, worker_send_increment, reached_acc_goal}'
-
-    docker exec -i broker bash -lc '
-      /opt/kafka/bin/kafka-console-consumer.sh \
-        --bootstrap-server localhost:9092 \
-        --topic local-weights-topic-1 --from-beginning
-    ' | jq -c '{worker_id, worker_send_increment, reached_acc_goal}'
-
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic global-weights-topic --from-beginning
 
-    docker exec -i broker bash -lc '
-      /opt/kafka/bin/kafka-console-consumer.sh \
-        --bootstrap-server localhost:9092 \
-        --topic global-weights-topic-1
-    ' | jq -c '{round, global_weights}'
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic pbest-weights-topic --from-beginning
+
 
 # 5) =====================================================================================
 
@@ -139,4 +126,6 @@ docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
   --input-topics iris-input \
   --bootstrap-server localhost:9092 \
   --force
+
+
 

@@ -68,10 +68,7 @@ public class Coordinator implements Runnable {
         CoordinatorControl control = new CoordinatorControl();
 
         StreamsBuilder builder = new StreamsBuilder();
-
-        // var globalStream = builder.stream(LOCAL_WEIGHTS_TOPIC, Consumed.with(Serdes.String(), Serdes.String()))
-        //                         .process(() -> new CoordinatorProcessor(control));
-
+        
         // =======================================================================================================
         
         KStream<String, String> local_weights_stream = builder.stream(

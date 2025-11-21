@@ -30,6 +30,9 @@ public class Worker implements Runnable {
     private final String RUN_ID;
     private final String FULLY_INFORMED;
 
+    private String stateStoreName;
+    private String keyName;
+
     private final CustomLogger logger;
 
     public Worker(int workerId) {
@@ -47,6 +50,14 @@ public class Worker implements Runnable {
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);                
+
+        if("true".equals(FULLY_INFORMED)) {
+            stateStoreName = "pBestStore";
+            keyName = "pBest" + workerId;
+        } else {
+            stateStoreName = "gBestStore";
+            keyName = "gBest";
+        }
     }
 
     @Override
@@ -62,33 +73,41 @@ public class Worker implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // KTable over GLOBAL_WEIGHTS_TOPIC, materialized as "gBestStore" ====================================
-        KTable<String, String> gBestTable = builder.table(
-            GLOBAL_WEIGHTS_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String()),
-            Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
-                .withKeySerde(Serdes.String())
-                .withValueSerde(Serdes.String())
-                .withCachingDisabled()
-        );
+        // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
+        if("true".equals(FULLY_INFORMED)) {
+            KTable<String, String> gBestTable = builder.table(
+                PBEST_WEIGHTS_TOPIC,
+                Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.String())
+                    .withCachingDisabled()
+            );
+        } else {
+            KTable<String, String> gBestTable = builder.table(
+                GLOBAL_WEIGHTS_TOPIC,
+                Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.String())
+                    .withCachingDisabled()
+            );
+        }
 
-        // gBestTable
-        //     .toStream()
-        //     .peek((k, v) -> {
-        //         logger.log("I am reading global records: " + v);
-        //     });
-
-        // DATA stream → WorkerTransformer (which will read gBestStore) ========================================
+        // =====================================================================================================
 
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
             Consumed.with(Serdes.String(), Serdes.String()))
-            .transform(() -> new WorkerTransformer(workerId, BATCH_SIZE, N_BATCHES),"gBestStore" )
+            .transform(() -> new WorkerTransformer(workerId), stateStoreName)
                                                                 //  wire the state store to the WorkerTransformer
-            .filter((k, v) -> v != null);
+            .filter((k, v) -> v != null)
+            .peek((k, v) -> {
+                logger.log("value is: " + v);
+            });
 
         KStream<String, String>[] branches = dataStream.branch(
-            (key, value) -> "gBest".equals(key),   // branch[0]: pBest/gBest updates
+            (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 
@@ -97,11 +116,15 @@ public class Worker implements Runnable {
 
         // =====================================================================================================
 
-        if(FULLY_INFORMED == "true") {
-            
+        Topology topology;
+        try {
+            topology = builder.build();
+        } catch (Exception e) {
+            System.out.println("[Worker " + workerId + "] Didn't build topology:");
+            e.printStackTrace();
+            return;   
         }
 
-        Topology topology = builder.build();
         System.out.println("[Worker " + workerId + "] Topology:");
         // System.out.println(topology.describe());
 

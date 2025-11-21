@@ -28,15 +28,15 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final int workerId;
-    private final int batchSize;
-    private final int nBatches;
+    private final int BATCH_SIZE;
+    private final int N_BATCHES;
+    private final String FULLY_INFORMED;
+
     private final CustomLogger logger;
 
     private ProcessorContext context;
-    // private KeyValueStore<Strin  g, String> gBestStore;  // <-- state store
-    // private ReadOnlyKeyValueStore<String, String> gBestStore;
 
-    private ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>> gBestStore;
+    private ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>> bestStore;
 
     private final List<String> buffer = new ArrayList<>();
 
@@ -50,11 +50,17 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     private boolean printedOffset = false;
 
-    public WorkerTransformer(int workerId, int batchSize, int nBatches) {
+    private String stateStoreName;
+    private String keyName;
+
+    public WorkerTransformer(int workerId) {
 
         this.workerId = workerId;
-        this.batchSize = batchSize;
-        this.nBatches = nBatches;
+        
+        Config cfg = Config.get();
+        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.N_BATCHES = cfg.N_BATCHES;   
+        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
         this.model = Dl4jModelFactory.createIrisModel();
         this.stats = new Stats();
@@ -65,15 +71,21 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
         logger.log("Worker " + workerId + " WorkerTransformer started");
+
+        if("true".equals(FULLY_INFORMED)) {
+            stateStoreName = "pBestStore";
+            keyName = "pBest" + workerId;
+        } else {
+            stateStoreName = "gBestStore";
+            keyName = "gBest";
+        }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
         this.context = context;
-        // this.gBestStore = (KeyValueStore<String, String>) context.getStateStore("gBestStore"); // open state store
-        // this.gBestStore = (ReadOnlyKeyValueStore<String, String>) context.getStateStore("gBestStore");
-        this.gBestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore("gBestStore");
+        this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
     }
 
     //=========================================================================================================================
@@ -88,11 +100,11 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 ", Partition: " + context.partition() +
                 ", Topic: " + context.topic()
             );
-            ValueAndTimestamp<String> wrapper = gBestStore.get("gBest");
+            ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
             if (wrapper == null) {
-                logger.log("initial gBestStore: gBestStore has no 'gBest'");
+                logger.log("initial bestStore: bestStore has no 'gBest'");
             } else {
-                logger.log("initial gBestStore: gBestStore['gBest'] = " + wrapper.value());
+                logger.log("initial bestStore: bestStore['gBest'] = " + wrapper.value());
             }
             
             printedOffset = true;
@@ -105,7 +117,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         buffer.add(value);
 
-        if (buffer.size() < batchSize) {
+        if (buffer.size() < BATCH_SIZE) {
             return null;
         }
 
@@ -142,7 +154,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 String json = MAPPER.writeValueAsString(payload);
                 logger.log("SENDING pBest JSON: " + json);
 
-                return new KeyValue<>("gBest", json);
+                return new KeyValue<>(keyName, json);
 
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
                 e.printStackTrace();
@@ -150,7 +162,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             }
         }
 
-        if (batchesRead >= nBatches) {
+        if (batchesRead >= N_BATCHES) {
             try {
                 logger.log("Sending current weights ...");
                 var payload = new HashMap<String, Object>();
@@ -170,15 +182,28 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             }
         }
 
-        double[] gBestWeights = readGlobalBestWeights();
+        double[] velocity = new double[this.pBestWeights.length];
 
-        if (gBestWeights == null) {
-            gBestWeights = new double[this.pBestWeights.length]; // make a 0.0 array, essentially making this parameter ineffective
+        if ("true".equals(FULLY_INFORMED)) {
+
+            List<double[]> neighborPBestList = readNeighborPBestList();
+
+            if (neighborPBestList.isEmpty()) {
+                logger.log("No neighbor pBest found; skipping social update this round.");
+            } else {
+                logger.log("pBest Weights: " + Dl4jParamUtils.sampleFlats(neighborPBestList));
+                velocity = psoUpdater.updateX(model, neighborPBestList);
+            }
+
+        } else {
+            double[] gBestWeights = readBestWeights();
+            if (gBestWeights == null) {
+                gBestWeights = new double[this.pBestWeights.length];
+            }
+            velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
-        double[] velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         stats.reset();
-
         logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
                     ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
 
@@ -187,17 +212,65 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     //=========================================================================================================================
 
-    private double[] readGlobalBestWeights() { // read state store
+    private List<double[]> readNeighborPBestList() {
 
-        if (gBestStore == null) {
+        List<double[]> neighbors = new ArrayList<>();
+
+        if (bestStore == null) {
+            logger.log("readNeighborPBestList: bestStore is null");
+            return neighbors;
+        }
+
+        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = bestStore.all()) {
+
+            while (it.hasNext()) {
+                KeyValue<String, ValueAndTimestamp<String>> entry = it.next();
+
+                String json = entry.value.value();
+                if (json == null) continue;
+
+                try {
+                    Map<String, Object> msg =
+                        MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+                    Object pBestObj = msg.get("pBest");
+                    if (!(pBestObj instanceof List<?> pBestList)) {
+                        continue;
+                    }
+
+                    double[] pBestArr = new double[pBestList.size()];
+                    for (int i = 0; i < pBestList.size(); i++) {
+                        pBestArr[i] = ((Number) pBestList.get(i)).doubleValue();
+                    }
+
+                    neighbors.add(pBestArr);
+
+                } catch (Exception e) {
+                    logger.log("Error parsing pBest from store: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+        } catch (Exception e) {
+            logger.log("Error iterating bestStore: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return neighbors;
+    }
+
+    //=========================================================================================================================
+
+    private double[] readBestWeights() { // read state store
+
+        if (bestStore == null) {
             logger.log("gBestWeights returned null");
             return null;
         }
 
-        // String gBestJson = gBestStore.get("gBest"); // this is the State Store. get(record key)
-        // dumpGbestStore();
+        // String gBestJson = bestStore.get(keyName); // this is the State Store. get(record key)
+        // dumpBestStore();
 
-        ValueAndTimestamp<String> wrapper = gBestStore.get("gBest");
+        ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
         if (wrapper == null) {
             logger.log("gBestWeights returned null (no entry for key 'gBest')");
             return null;
@@ -230,14 +303,14 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
     }
 
-    private void dumpGbestStore() {
+    private void dumpBestStore() {
 
-        if (gBestStore == null) {
-            logger.log("gBestStore is null (not initialized yet)");
+        if (bestStore == null) {
+            logger.log("bestStore is null (not initialized yet)");
             return;
         }
 
-        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = gBestStore.all()) {
+        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = bestStore.all()) {
 
             boolean empty = true;
 
@@ -246,18 +319,18 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 KeyValue<String, ValueAndTimestamp<String>> entry = it.next();
 
                 logger.log(
-                    "[gBestStore] key = " + entry.key +
+                    "[bestStore] key = " + entry.key +
                     ", value = " + entry.value.value() +
                     ", timestamp = " + entry.value.timestamp()
                 );
             }
 
             if (empty) {
-                logger.log("[gBestStore] Store is empty!");
+                logger.log("[bestStore] Store is empty!");
             }
 
         } catch (Exception e) {
-            logger.log("Error while dumping gBestStore: " + e.getMessage());
+            logger.log("Error while dumping bestStore: " + e.getMessage());
             e.printStackTrace();
         }
     }
