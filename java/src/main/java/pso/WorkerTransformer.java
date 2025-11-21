@@ -202,6 +202,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new double[this.pBestWeights.length];
             }
+            logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 

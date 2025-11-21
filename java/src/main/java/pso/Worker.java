@@ -81,15 +81,15 @@ public class Worker implements Runnable {
                 Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    .withCachingDisabled()
+                    // .withCachingDisabled()
             );
             
-            gBestTable
-                .toStream()
-                .peek((k, json) -> {
-                    logger.log("Received New gBest JSON: " + json);
-                    // System.out.println("[Coordinator] New gBest JSON: " + json);
-                });
+            // gBestTable
+            //     .toStream()
+            //     .peek((k, json) -> {
+            //         logger.log("Received New gBest JSON: " + json);
+            //         // System.out.println("[Coordinator] New gBest JSON: " + json);
+            //     });
 
         } else {
             KTable<String, String> gBestTable = builder.table(
