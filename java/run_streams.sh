@@ -28,10 +28,17 @@ fi
 BROKER="broker"
 BOOTSTRAP="localhost:9092"
 
-TOPICS=(
-  "$PBEST_WEIGHTS_TOPIC"
-  "$GLOBAL_WEIGHTS_TOPIC"
-)
+if [[ "$FULLY_INFORMED" == "true" ]]; then
+    echo "Fully Informed run"
+    TOPICS=(
+        "$PBEST_WEIGHTS_TOPIC"
+    )
+else
+    TOPICS=(
+        "$PBEST_WEIGHTS_TOPIC"
+        "$GLOBAL_WEIGHTS_TOPIC"
+    )
+fi
 
 for topic in "${TOPICS[@]}"; do
     docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \

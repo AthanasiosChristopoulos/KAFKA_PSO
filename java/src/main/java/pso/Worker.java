@@ -28,6 +28,7 @@ public class Worker implements Runnable {
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
     private final String RUN_ID;
+    private final String FULLY_INFORMED;
 
     private final CustomLogger logger;
 
@@ -43,6 +44,7 @@ public class Worker implements Runnable {
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
         this.RUN_ID = cfg.RUN_ID;   
+        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);                
     }
@@ -95,7 +97,9 @@ public class Worker implements Runnable {
 
         // =====================================================================================================
 
-        System.out.println("[Worker " + workerId + " i am here2]");
+        if(FULLY_INFORMED == "true") {
+            
+        }
 
         Topology topology = builder.build();
         System.out.println("[Worker " + workerId + "] Topology:");
@@ -107,7 +111,6 @@ public class Worker implements Runnable {
             System.out.println("[Worker " + workerId + "] Uncaught exception in thread " + t.getName());
             e.printStackTrace();
         });
-        System.out.println("[Worker " + workerId + " i am here3]");
 
         CountDownLatch latch = new CountDownLatch(1);
 

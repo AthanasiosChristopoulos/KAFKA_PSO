@@ -28,6 +28,8 @@ public class Config {
     public final double C2;
     public final String RUN_ID;
 
+    public final String FULLY_INFORMED;
+
     public Config() {
         
         Dotenv dotenv = Dotenv
@@ -55,6 +57,8 @@ public class Config {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
         this.RUN_ID = LocalDateTime.now().format(fmt); 
+
+        this.FULLY_INFORMED = getenv(dotenv, "FULLY_INFORMED", "false");
     }
 
     public static Config get() {

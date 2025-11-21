@@ -43,11 +43,9 @@ public class PsoUpdater {
 
     public double[] updateX(MultiLayerNetwork model, double[] pbest, double[] gbest) {
 
-        // Current position x_i
         double[] x_i = Dl4jParamUtils.modelToFlatList(model);
         int dim = x_i.length;
 
-        // If velocity not initialized, initialize with zeros
         if (velocity == null || velocity.length != dim) {
             velocity = new double[dim];
         }
@@ -70,10 +68,8 @@ public class PsoUpdater {
             x_i_1[k] = x_i[k] + velocity_i_1[k];
         }
 
-        // Update model parameters with x_i_1
         Dl4jParamUtils.updateModel(model, x_i_1);
 
-        // Store velocity and return it
         this.velocity = velocity_i_1;
         return velocity_i_1;
     }
