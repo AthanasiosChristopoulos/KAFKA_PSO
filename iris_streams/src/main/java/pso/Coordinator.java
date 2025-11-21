@@ -12,16 +12,25 @@ import java.util.Properties;
 
 import java.util.concurrent.CountDownLatch;
 
+import utils.Config; 
+
 public class Coordinator implements Runnable {
+
+    private final String LOCAL_WEIGHTS_TOPIC;
+    private final String GLOBAL_WEIGHTS_TOPIC;
+    private final String RUN_ID;
+
+    public Coordinator() {
+        Config cfg = Config.get();
+        this.RUN_ID = cfg.RUN_ID;
+        this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
+        this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+    }
 
     @Override
     public void run() {
 
-        String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
         System.out.println("Coordinator started with RUN_ID: " + RUN_ID);
-
-        String LOCAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
-        String GLOBAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
 
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);

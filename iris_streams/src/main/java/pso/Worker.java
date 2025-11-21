@@ -15,29 +15,35 @@ import org.apache.kafka.common.utils.Bytes;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
+import utils.Config; // from the same project (in the utils package)
+
 public class Worker implements Runnable {
 
     private final int workerId;
+    
     private final int BATCH_SIZE;
     private final int N_BATCHES;
     private final String DATA_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
+    private final String RUN_ID;
 
     public Worker(int workerId) {
+
         this.workerId = workerId;
 
-        this.BATCH_SIZE = Integer.parseInt(System.getenv().getOrDefault("BATCH_SIZE", "150"));
-        this.N_BATCHES = Integer.parseInt(System.getenv().getOrDefault("N_BATCHES", "10"));
-        this.DATA_TOPIC = System.getenv().getOrDefault("DATA_TOPIC", "iris-input");
-        this.LOCAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
-        this.GLOBAL_WEIGHTS_TOPIC = System.getenv().getOrDefault("GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
+        Config cfg = Config.get();
+        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.N_BATCHES = cfg.N_BATCHES;         
+        this.DATA_TOPIC = cfg.DATA_TOPIC;
+        this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
+        this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+        this.RUN_ID = cfg.RUN_ID;                   
+
     }
 
     @Override
     public void run() {
-
-        String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
 
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 

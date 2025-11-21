@@ -35,7 +35,6 @@ public class WorkerSharedState {
         }
         
         this.logWriter = w;
-
     } 
 
     public void log(String msg) {

@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import java.io.IOException;
-import pso.Dl4jParamUtils;
+import utils.Dl4jParamUtils;
 
 public class EvaluateIrisModel {
 

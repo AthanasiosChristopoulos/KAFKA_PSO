@@ -6,9 +6,17 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Config {
-    
+
+    private static Config instance; // Singleton
+
     public final String DATA_TOPIC;
+    public final String PREDICTION_TOPIC;
+    public final String LOCAL_WEIGHTS_TOPIC;
+    public final String GLOBAL_WEIGHTS_TOPIC;
+
+    public final int NUM_WORKERS;
     public final int BATCH_SIZE;
+    public final int N_BATCHES;
     public final double DESIRED_ACCURACY;
     public final String SAVE_MODEL_NAME;
 
@@ -18,14 +26,21 @@ public class Config {
     public final String RUN_ID;
 
     public Config() {
+        
         Dotenv dotenv = Dotenv
                 .configure()
-                .ignoreIfMissing()  // so it still works if .env is not there
+                .ignoreIfMissing() 
                 .load();
 
-        // Read from .env, fallback to defaults if not present
+        
         this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
+        this.PREDICTION_TOPIC = getenv(dotenv, "PREDICTION_TOPIC", "iris-output");
+        this.LOCAL_WEIGHTS_TOPIC = getenv(dotenv, "LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
+        this.GLOBAL_WEIGHTS_TOPIC = getenv(dotenv, "GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
+
+        this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "30"));
         this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
+        this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         this.DESIRED_ACCURACY = Double.parseDouble(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "iris-global-model");
 
@@ -34,8 +49,14 @@ public class Config {
         this.C2 = Double.parseDouble(getenv(dotenv, "C2", "2.0"));
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-        runId = LocalDateTime.now().format(fmt);  
-        this.RUN_ID = runId;
+        this.RUN_ID = LocalDateTime.now().format(fmt); 
+    }
+
+    public static Config get() {
+        if (instance == null) {
+            instance = new Config();
+        }
+        return instance;
     }
 
     private String getenv(Dotenv dotenv, String key, String defaultValue) {
@@ -45,7 +66,7 @@ public class Config {
         //     return value;
         // }
 
-        value = dotenv.get(key);
+        String value = dotenv.get(key);
         if (value != null) {
             return value;
         }

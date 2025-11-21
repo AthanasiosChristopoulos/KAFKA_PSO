@@ -1,4 +1,4 @@
-package pso;
+package utils;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;

@@ -19,6 +19,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 
+import utils.Dl4jParamUtils;
+import utils.*;
+
+import state.*;
+
+
 public class BatchingTransformer implements Transformer<String, String, KeyValue<String, String>> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -36,7 +42,7 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
     private final List<String> buffer = new ArrayList<>();
 
     private final MultiLayerNetwork model;
-    private final WorkerStats stats;
+    private final Stats stats;
     private final BatchPrediction predictor;
     private final PsoUpdater psoUpdater;
 
@@ -53,7 +59,7 @@ public class BatchingTransformer implements Transformer<String, String, KeyValue
         this.nBatches = nBatches;
 
         this.model = Dl4jModelFactory.createIrisModel();
-        this.stats = new WorkerStats();
+        this.stats = new Stats();
         this.predictor = new BatchPrediction(model, stats);
         this.psoUpdater = new PsoUpdater(model, workerId);
 

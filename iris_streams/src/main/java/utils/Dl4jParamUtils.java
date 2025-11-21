@@ -1,4 +1,4 @@
-package pso;
+package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.api.Layer;

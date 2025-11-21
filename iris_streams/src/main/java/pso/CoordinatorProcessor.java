@@ -31,6 +31,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
 
+import utils.Config; 
+import utils.Dl4jParamUtils;
+import utils.*;
 
 public class CoordinatorProcessor implements Processor<String, String, String, String> {
     private ProcessorContext<String, String> context;
@@ -48,13 +51,14 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
     private int round = 0;
 
     private final MultiLayerNetwork globalModel;
-    private final WorkerStats globalStats;
+    private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
     private final String DATA_TOPIC;
     private final int BATCH_SIZE;
     private final double DESIRED_ACCURACY;
     private final String SAVE_MODEL_NAME;
+    private final String RUN_ID;
 
     private final KafkaConsumer<String, String> consumer;
 
@@ -83,16 +87,17 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
         this.control = control;
 
-        this.NUM_WORKERS = Integer.parseInt(System.getenv().getOrDefault("NUM_WORKERS", "3"));
-
         this.globalModel = Dl4jModelFactory.createIrisModel();
-        this.globalStats = new WorkerStats();                   
+        this.globalStats = new Stats();                   
         this.globalPredictor = new BatchPrediction(globalModel, globalStats);
 
-        this.DATA_TOPIC = System.getenv().getOrDefault("DATA_TOPIC", "iris-input");
-        this.BATCH_SIZE = Integer.parseInt(System.getenv().getOrDefault("BATCH_SIZE", "30"));
-        this.DESIRED_ACCURACY = Double.parseDouble(System.getenv().getOrDefault("DESIRED_ACCURACY", "0.9"));
-        this.SAVE_MODEL_NAME = System.getenv().getOrDefault("SAVE_MODEL_NAME", "iris-global-model");
+        Config cfg = Config.get();
+        this.NUM_WORKERS = cfg.NUM_WORKERS;
+        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.DATA_TOPIC = cfg.DATA_TOPIC;
+        this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
+        this.SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
+        this.RUN_ID = cfg.RUN_ID;    
 
         BufferedWriter w = null;
         try {
@@ -108,8 +113,6 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         }
         this.logWriter = w;
         
-        String RUN_ID = System.getenv().getOrDefault("RUN_ID", "111");
-
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);

@@ -1,10 +1,12 @@
-package pso;
+package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+
+import utils.*; 
 
 public class PsoUpdater {
 
@@ -13,25 +15,23 @@ public class PsoUpdater {
     private final double W_INERTIA;
     private final double C1;
     private final double C2;
-
     private final int NUM_WORKERS;
 
     private double[] velocity; 
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
-        // W_INERTIA = Double.parseDouble(System.getenv().getOrDefault("W_INERTIA", "0.7"));
+        Config cfg = Config.get();
+        // this.W_INERTIA = cfg.W_INERTIA;
         W_INERTIA = 0.7;
-        C1 = Double.parseDouble(System.getenv().getOrDefault("C1", "1.229"));
-        C2 = Double.parseDouble(System.getenv().getOrDefault("C2", "1.229"));
-
-        NUM_WORKERS = Integer.parseInt(System.getenv().getOrDefault("NUM_WORKERS", "10"));
+        this.C1 = cfg.C1;
+        this.C2 = cfg.C2;
+        this.NUM_WORKERS = cfg.NUM_WORKERS;
 
         double[] x = Dl4jParamUtils.modelToFlatList(model);
         velocity = new double[x.length];
 
         randomizeVelocity(workerId, 0.01);
-        // randomizeModelWeights(model, workerId + 1337, 0.1);
     }
 
     //================================================================================================
@@ -129,6 +129,8 @@ public class PsoUpdater {
         // this.LOG.info("Velocity initialized: " + sampleFlat(velocity, 5));
     }
 
+    //================================================================================================
+
     public void randomizeModelWeights(MultiLayerNetwork model, int seed, double sigma) {
         double[] flat = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random(seed);
@@ -142,15 +144,4 @@ public class PsoUpdater {
         // this.LOG.info("Model randomized: " + sampleFlat(flat, 5));
     }
 
-    private static String sampleFlat(double[] flat, int n) {
-        StringBuilder sb = new StringBuilder("[");
-        int len = Math.min(n, flat.length);
-        for (int i = 0; i < len; i++) {
-            sb.append(String.format("%.4f", flat[i]));
-            if (i < len - 1) sb.append(", ");
-        }
-        if (flat.length > n) sb.append(", ...");
-        sb.append("]");
-        return sb.toString();
-    }
 }

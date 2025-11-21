@@ -5,11 +5,14 @@ import java.util.List;
 import java.io.InputStream;
 import java.util.logging.LogManager;
 
+import utils.Config; 
+
 public class Simulation {
 
     public static void main(String[] args) throws Exception {
- 
-        int numWorkers = Integer.parseInt(System.getenv().getOrDefault("NUM_WORKERS", "3"));
+        
+        Config cfg = Config.get();
+        int numWorkers = cfg.NUM_WORKERS;
 
         // List<Thread> threads = new ArrayList<>();
 
@@ -21,13 +24,12 @@ public class Simulation {
         coordinatorThread.start();
         // threads.add(coordinatorThread);
 
-        System.out.println("Starting " + numWorkers + " workers (threads)...");
+        System.out.println("Starting " + numWorkers + " workers ...");
 
         for (int i = 0; i < numWorkers; i++) {
             Worker worker = new Worker(i);
             Thread workerThread = new Thread(worker, "worker-thread-" + i);
             workerThread.start();
-            // threads.add(workerThread);
             System.out.println("Started worker thread " + i);
         }
 

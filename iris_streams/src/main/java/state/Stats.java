@@ -1,6 +1,6 @@
 package pso;
 
-public class WorkerStats {
+public class Stats {
 
     private long nPredictions = 0;
     private long nCorrect = 0;

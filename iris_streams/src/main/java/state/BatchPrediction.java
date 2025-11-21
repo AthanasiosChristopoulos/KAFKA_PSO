@@ -16,9 +16,9 @@ public class BatchPrediction {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final MultiLayerNetwork model;
-    private final WorkerStats stats;
+    private final Stats stats;
 
-    public BatchPrediction(MultiLayerNetwork model, WorkerStats stats) {
+    public BatchPrediction(MultiLayerNetwork model, Stats stats) {
         this.model = model;
         this.stats = stats;
     }
