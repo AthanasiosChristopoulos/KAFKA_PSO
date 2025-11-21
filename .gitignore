@@ -1,5 +1,10 @@
-iris_streams.logs/
-/iris_streams/logs
-/iris_streams/logs
+java.logs/
+/java/logs
+/java/logs
+java/logs/
 
-iris_streams/target
+/java/target
+java/logs/
+*.log
+java/target/
+java/target/classes/pso/CoordinatorProcessor.class
