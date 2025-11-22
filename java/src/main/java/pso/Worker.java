@@ -106,22 +106,31 @@ public class Worker implements Runnable {
             });
 
         } else {
-            KTable<String, String> gBestTable = builder.table(
+            // KTable<String, String> gBestTable = builder.table(
+            //     GLOBAL_WEIGHTS_TOPIC,
+            //     Consumed.with(Serdes.String(), Serdes.String()),
+            //     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+            //         .withKeySerde(Serdes.String())
+            //         .withValueSerde(Serdes.String())
+            //         .withCachingDisabled()
+            // );
+
+            // gBestTable
+            //     .toStream()
+            //     .peek((k, json) -> {
+            //         logger.log("Received New gBest JSON: " + json);
+            //         // System.out.println("[Coordinator] New gBest JSON: " + json);
+            //     });
+
+            KStream<String, String> pBestStream = builder.stream(
                 GLOBAL_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(Serdes.String())
-                    .withCachingDisabled()
+                Consumed.with(Serdes.String(), Serdes.String())
             );
 
-            gBestTable
-                .toStream()
-                .peek((k, json) -> {
-                    logger.log("Received New gBest JSON: " + json);
-                    // System.out.println("[Coordinator] New gBest JSON: " + json);
-                });
-
+            pBestStream.peek((k, json) -> {
+                logger.log("Rec1eived New pBest JSON: " + json);
+            });
+            
         }
 
         // =====================================================================================================
