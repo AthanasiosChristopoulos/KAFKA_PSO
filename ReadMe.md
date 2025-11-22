@@ -109,5 +109,8 @@ Codes:
 
 	username: AthanasiosChristopoulos
 	password: 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
-	
+
+git rm -r --cached logs
+git rm -r --cached target
+
 ```

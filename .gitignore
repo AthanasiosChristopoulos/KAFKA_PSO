@@ -8,3 +8,5 @@ java/logs/
 *.log
 java/target/
 java/target/classes/pso/CoordinatorProcessor.class
+
+java/models/
