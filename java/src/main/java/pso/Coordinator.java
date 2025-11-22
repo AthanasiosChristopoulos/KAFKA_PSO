@@ -70,7 +70,8 @@ public class Coordinator implements Runnable {
         StreamsBuilder builder = new StreamsBuilder();
 
         // =======================================================================================================
-        
+        // 5
+
         KStream<String, String> local_weights_stream = builder.stream(
             LOCAL_WEIGHTS_TOPIC,
             Consumed.with(Serdes.String(), Serdes.String())
@@ -79,75 +80,90 @@ public class Coordinator implements Runnable {
         local_weights_stream.process(() -> new CoordinatorProcessor(control));
 
         // =======================================================================================================
+        // 3
 
-        if(FULLY_INFORMED != "true") {
+        if(1 == 1) {
 
-            KStream<String, String> pBestJsonStream = builder.stream(
+            KStream<String, String> pBest_weights_stream = builder.stream(
                 PBEST_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), Serdes.String())
-            )
-            .peek((k, json) ->
-                logger.log("New gBest from worker JSON: " + json)
             );
-            // .selectKey((k, v) -> "gBest");
 
-            KTable<String, String> gBestTable = pBestJsonStream
-                .groupByKey()
-                .aggregate(
-                    () -> null,               // initial aggregate = null (no gBest yet)
-                    (key, newJson, aggJson) -> {
-                        if (aggJson == null) return newJson;
+            pBest_weights_stream
+                .process(() -> new CoordinatorProcessor(control))
+                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
+        } else {
+            
+            if(FULLY_INFORMED != "true") {
+
+                KStream<String, String> pBestJsonStream = builder.stream(
+                    PBEST_WEIGHTS_TOPIC,
+                    Consumed.with(Serdes.String(), Serdes.String())
+                )
+                .peek((k, json) ->
+                    logger.log("New gBest from worker JSON: " + json)
+                );
+                // .selectKey((k, v) -> "gBest");
+
+                KTable<String, String> gBestTable = pBestJsonStream
+                    .groupByKey()
+                    .aggregate(
+                        () -> null,               // initial aggregate = null (no gBest yet)
+                        (key, newJson, aggJson) -> {
+                            if (aggJson == null) return newJson;
+
+                            try {
+                                Map<String, Object> newMsg =
+                                    MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
+                                Map<String, Object> oldMsg =
+                                    MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
+
+                                double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
+                                double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
+                                
+                                // System.out.println("newJson: " + newJson);
+                                // logger.log("I am running2");
+                                return newAcc > oldAcc ? newJson : aggJson;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                return aggJson; // keep the old best if parsing fails
+                            }
+                        },
+                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
+                            .withKeySerde(Serdes.String())
+                            .withValueSerde(Serdes.String())
+                            .withCachingDisabled() // since this is a KTable, there will be no downstream updates / forwards
+                );
+
+                gBestTable
+                    .toStream()
+                    .mapValues(json -> {
                         try {
-                            Map<String, Object> newMsg =
-                                MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
-                            Map<String, Object> oldMsg =
-                                MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
+                            Map<String, Object> msg =
+                                MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
 
-                            double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
-                            double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
-                            
-                            // System.out.println("newJson: " + newJson);
-                            // logger.log("I am running2");
-                            return newAcc > oldAcc ? newJson : aggJson;
+                            Map<String, Object> payload = new HashMap<>();
+
+                            payload.put("id_worker", msg.get("id_worker"));
+                            payload.put("accuracy", msg.get("accuracy"));
+                            payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
+                            payload.put("gBestWeights", msg.get("pBestWeights"));
+
+                            return MAPPER.writeValueAsString(payload);
+
                         } catch (Exception e) {
                             e.printStackTrace();
-                            return aggJson; // keep the old best if parsing fails
+                            return null;
                         }
-                    },
-                    Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(Serdes.String())
-                        .withCachingDisabled() // since this is a KTable, there will be no downstream updates / forwards
-            );
-
-            gBestTable
-                .toStream()
-                .mapValues(json -> {
-                    try {
-                        Map<String, Object> msg =
-                            MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
-
-                        Map<String, Object> payload = new HashMap<>();
-
-                        payload.put("id_worker", msg.get("id_worker"));
-                        payload.put("accuracy", msg.get("accuracy"));
-                        payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
-                        payload.put("gBestWeights", msg.get("pBestWeights"));
-
-                        return MAPPER.writeValueAsString(payload);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .filter((k, v) -> v != null)
-                .peek((k, json) -> {
-                    logger.log("New gBest JSON: " + json);
-                    // System.out.println("[Coordinator] New gBest JSON: " + json);
-                })
-                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+                    })
+                    .filter((k, v) -> v != null)
+                    .peek((k, json) -> {
+                        logger.log("New gBest JSON: " + json);
+                        // System.out.println("[Coordinator] New gBest JSON: " + json);
+                    })
+                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            }
         }
 
         // =======================================================================================================

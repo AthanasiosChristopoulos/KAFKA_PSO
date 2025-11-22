@@ -98,7 +98,7 @@ public class Worker implements Runnable {
                 Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    // .withCachingDisabled()
+                    .withCachingDisabled()
             );
         }
 
