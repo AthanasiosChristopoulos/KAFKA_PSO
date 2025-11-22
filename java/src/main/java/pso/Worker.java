@@ -78,21 +78,31 @@ public class Worker implements Runnable {
 
         // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
         if("true".equals(FULLY_INFORMED)) {
-            KTable<String, String> gBestTable = builder.table(
-                PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(Serdes.String())
-                    .withCachingDisabled()
-            );
+            // KTable<String, String> gBestTable = builder.table(
+            //     PBEST_WEIGHTS_TOPIC,
+            //     Consumed.with(Serdes.String(), Serdes.String()),
+            //     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+            //         .withKeySerde(Serdes.String())
+            //         .withValueSerde(Serdes.String())
+            //         .withCachingDisabled()
+            // );
             
             // gBestTable
             //     .toStream()
             //     .peek((k, json) -> {
-            //         logger.log("Received New gBest JSON: " + json);
+            //         logger.log("Received New pBest JSON: " + json);
             //         // System.out.println("[Coordinator] New gBest JSON: " + json);
             //     });
+
+
+            KStream<String, String> pBestStream = builder.stream(
+                PBEST_WEIGHTS_TOPIC,
+                Consumed.with(Serdes.String(), Serdes.String())
+            );
+
+            pBestStream.peek((k, json) -> {
+                logger.log("Rec1eived New pBest JSON: " + json);
+            });
 
         } else {
             KTable<String, String> gBestTable = builder.table(
@@ -118,7 +128,7 @@ public class Worker implements Runnable {
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
             Consumed.with(Serdes.String(), Serdes.String()))
-            .transform(() -> new WorkerTransformer(workerId), stateStoreName)
+            .transform(() -> new WorkerTransformer(workerId))
                                                                 //  wire the state store to the WorkerTransformer
             .filter((k, v) -> v != null);
 

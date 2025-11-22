@@ -85,7 +85,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
         this.context = context;
-        this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
+        // this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
+        bestStore = null;
     }
 
     //=========================================================================================================================
@@ -94,22 +95,25 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     public KeyValue<String, String> transform(String key, String value) {
 
         if (!printedOffset) {
+            printedOffset = true;
             logger.log(
                 "Starting at -> " +
                 "Offset: " + context.offset() +
                 ", Partition: " + context.partition() +
                 ", Topic: " + context.topic()
             );
+            if (bestStore == null) {
+                logger.log("gBestWeights returned null");
+                return null;
+            }
+
             ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
             if (wrapper == null) {
                 logger.log("initial bestStore: bestStore has no 'gBest'");
             } else {
                 logger.log("initial bestStore: bestStore['gBest'] = " + wrapper.value());
             }
-            
-            printedOffset = true;
         }
-
         
         if (value == null) {
             return null;
@@ -184,11 +188,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         double[] velocity = new double[this.pBestWeights.length];
 
+        // get the State Store ==================================================================================
+
         if ("true".equals(FULLY_INFORMED)) {
 
             List<double[]> neighborPBestList = readNeighborPBestList();
 
-            if (neighborPBestList.isEmpty()) {
+            if (neighborPBestList == null || neighborPBestList.isEmpty()) {
                 logger.log("No neighbor pBest found; skipping social update this round.");
                 velocity = psoUpdater.updateX(model, null);
             } else {
@@ -197,6 +203,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             }
 
         } else {
+
             double[] gBestWeights = readBestWeights();
             if (gBestWeights == null) {
                 gBestWeights = new double[this.pBestWeights.length];
@@ -215,6 +222,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     //=========================================================================================================================
 
     private List<double[]> readNeighborPBestList() {
+
+        if (bestStore == null) {
+            logger.log("gBestWeights returned null");
+            return null;
+        }
+
+        // dumpBestStore();
 
         List<double[]> neighbors = new ArrayList<>();
 
@@ -269,7 +283,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         // String gBestJson = bestStore.get(keyName); // this is the State Store. get(record key)
-        // dumpBestStore();
+        dumpBestStore();
 
         ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
         if (wrapper == null) {
@@ -304,12 +318,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
     }
 
-    private void dumpBestStore() {
+    // =====================================================================================================================
 
-        if (bestStore == null) {
-            logger.log("bestStore is null (not initialized yet)");
-            return;
-        }
+    private void dumpBestStore() {
 
         try (KeyValueIterator<String, ValueAndTimestamp<String>> it = bestStore.all()) {
 
