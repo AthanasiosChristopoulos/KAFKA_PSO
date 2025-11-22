@@ -72,48 +72,49 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
-        
+        // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
+        // props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
+
         StreamsBuilder builder = new StreamsBuilder();
 
         // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
         if("true".equals(FULLY_INFORMED)) {
 
-            // KTable<String, String> gBestTable = builder.table(
-            //     PBEST_WEIGHTS_TOPIC,
-            //     Consumed.with(Serdes.String(), Serdes.String()),
-            //     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
-            //         .withKeySerde(Serdes.String())
-            //         .withValueSerde(Serdes.String())
-            //         .withCachingDisabled()
-            // );
-            
-            // gBestTable
-            //     .toStream()
-            //     .peek((k, json) -> {
-            //         logger.log("Received New pBest JSON: " + json);
-            //         // System.out.println("[Coordinator] New gBest JSON: " + json);
-            //     });
-
-
-            KStream<String, String> pBestStream = builder.stream(
+            KTable<String, String> gBestTable = builder.table(
                 PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String())
+                Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.String())
+                    .withCachingDisabled()
             );
+            
+            gBestTable
+                .toStream()
+                .peek((k, json) -> {
+                    logger.log("Received New pBest JSON: " + json);
+                    // System.out.println("[Coordinator] New gBest JSON: " + json);
+                });
 
-            pBestStream.peek((k, json) -> {
-                logger.log("Rec1eived New pBest JSON: " + json);
-            });
+
+            // KStream<String, String> pBestStream = builder.stream(
+            //     PBEST_WEIGHTS_TOPIC,
+            //     Consumed.with(Serdes.String(), Serdes.String())
+            // );
+
+            // pBestStream.peek((k, json) -> {
+            //     logger.log("Rec1eived New pBest JSON: " + json);
+            // });
 
         } else {
-            // KTable<String, String> gBestTable = builder.table(
-            //     GLOBAL_WEIGHTS_TOPIC,
-            //     Consumed.with(Serdes.String(), Serdes.String()),
-            //     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
-            //         .withKeySerde(Serdes.String())
-            //         .withValueSerde(Serdes.String())
-            //         .withCachingDisabled()
-            // );
+            KTable<String, String> gBestTable = builder.table(
+                GLOBAL_WEIGHTS_TOPIC,
+                Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(Serdes.String())
+                    // .withCachingDisabled()
+            );
 
             // gBestTable
             //     .toStream()
@@ -122,14 +123,14 @@ public class Worker implements Runnable {
             //         // System.out.println("[Coordinator] New gBest JSON: " + json);
             //     });
 
-            KStream<String, String> pBestStream = builder.stream(
-                GLOBAL_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String())
-            );
+            // KStream<String, String> pBestStream = builder.stream(
+            //     GLOBAL_WEIGHTS_TOPIC,
+            //     Consumed.with(Serdes.String(), Serdes.String())
+            // );
 
-            pBestStream.peek((k, json) -> {
-                logger.log("Rec1eived New pBest JSON: " + json);
-            });
+            // pBestStream.peek((k, json) -> {
+            //     logger.log("Rec1eived New pBest JSON: " + json);
+            // });
             
         }
 
