@@ -114,6 +114,11 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic pbest-weights-topic --from-beginning
 
+    docker exec -i broker bash -lc '
+      /opt/kafka/bin/kafka-console-consumer.sh \
+        --bootstrap-server localhost:9092 \
+        --topic pbest-weights-topic 
+    ' | jq -c '{id_worker, pBestMsgIndex, accuracy}'
 
 # 5) =====================================================================================
 

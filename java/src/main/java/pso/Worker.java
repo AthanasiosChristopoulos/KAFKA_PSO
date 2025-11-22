@@ -72,12 +72,13 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
-        // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         
         StreamsBuilder builder = new StreamsBuilder();
 
         // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
         if("true".equals(FULLY_INFORMED)) {
+
             // KTable<String, String> gBestTable = builder.table(
             //     PBEST_WEIGHTS_TOPIC,
             //     Consumed.with(Serdes.String(), Serdes.String()),
