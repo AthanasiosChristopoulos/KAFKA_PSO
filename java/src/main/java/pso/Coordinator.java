@@ -113,7 +113,6 @@ public class Coordinator implements Runnable {
                 .peek((k, json) ->
                     logger.log("New gBest from worker JSON: " + json)
                 );
-                // .selectKey((k, v) -> "gBest");
 
                 KTable<String, String> gBestTable = pBestJsonStream
                     .groupByKey()
@@ -240,7 +239,7 @@ public class Coordinator implements Runnable {
             System.out.println("[Coordinator] Topology:\n" + topology.describe());
 
             try { 
-                Thread.sleep(1000); 
+                Thread.sleep(2500); 
             } catch (InterruptedException ignored) {
                 System.out.println("Sleep failed");
             }

@@ -1,6 +1,32 @@
 #! /bin/bash
 
-# 0) ==============================================================
+# ==============================================================
+# recreate:
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic iris-input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic pbest-weights-topic --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic local-weights-topic --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic global-weights-topic --partitions 1 --if-not-exists
+
+cd python
+python3 iris_data_producer.py --all
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --list 
+
+exit 0
+#  ==============================================================
 
 # docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 #   --bootstrap-server localhost:9092 \

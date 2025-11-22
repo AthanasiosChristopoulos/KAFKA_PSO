@@ -106,7 +106,7 @@ public class Worker implements Runnable {
         }
 
         // Task 1 ================================================================================================
-        // input stream 1 and output stream 2
+        // input stream 1 and output stream 2_1 and stream 2_2
 
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
@@ -162,7 +162,7 @@ public class Worker implements Runnable {
                 System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
 
                 try { 
-                    Thread.sleep(500); 
+                    Thread.sleep(1500); 
                 } catch (InterruptedException ignored) {
                     System.out.println("Sleep failed");
                 }
