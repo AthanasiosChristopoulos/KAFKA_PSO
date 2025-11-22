@@ -11,6 +11,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -70,7 +71,9 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
+        // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
+        // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);
+        
         StreamsBuilder builder = new StreamsBuilder();
 
         // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
@@ -81,7 +84,7 @@ public class Worker implements Runnable {
                 Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    // .withCachingDisabled()
+                    .withCachingDisabled()
             );
             
             // gBestTable
@@ -100,6 +103,14 @@ public class Worker implements Runnable {
                     .withValueSerde(Serdes.String())
                     .withCachingDisabled()
             );
+
+            gBestTable
+                .toStream()
+                .peek((k, json) -> {
+                    logger.log("Received New gBest JSON: " + json);
+                    // System.out.println("[Coordinator] New gBest JSON: " + json);
+                });
+
         }
 
         // =====================================================================================================
@@ -115,6 +126,7 @@ public class Worker implements Runnable {
             (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates
             (key, value) -> true                   // branch[1]: all others (weights)
         );
+
         branches[0].
             peek((k, v) -> {
                 logger.log("Sending pBest: " + v);
