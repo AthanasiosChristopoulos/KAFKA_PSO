@@ -115,8 +115,12 @@ public class Worker implements Runnable {
             (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates
             (key, value) -> true                   // branch[1]: all others (weights)
         );
-
-        branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        branches[0].
+            peek((k, v) -> {
+                logger.log("Sending pBest: " + v);
+            })
+            .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            
         branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
         // =====================================================================================================

@@ -213,9 +213,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         //     }
         //     double accuracy = accuracyNumber.doubleValue();
 
-        //     // --- check against current gBest ---
         //     if (gBestWeights == null || accuracy > gBestAccuracy) {
-        //         // new global best!
         //         gBestAccuracy = accuracy;
                
         //         double[] pBestWeights = new double[pBestList.size()];

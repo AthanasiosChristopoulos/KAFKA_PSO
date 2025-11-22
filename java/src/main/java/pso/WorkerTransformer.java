@@ -152,7 +152,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
             try {
                 String json = MAPPER.writeValueAsString(payload);
-                logger.log("SENDING pBest JSON: " + json);
+                // logger.log("SENDING pBest JSON: " + json);
 
                 return new KeyValue<>(keyName, json);
 
@@ -195,7 +195,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 logger.log("pBest Weights:\n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = psoUpdater.updateX(model, neighborPBestList);
             }
-
 
         } else {
             double[] gBestWeights = readBestWeights();
