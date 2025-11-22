@@ -85,8 +85,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
         this.context = context;
-        // this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
-        bestStore = null;
+        this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
+        // bestStore = null;
     }
 
     //=========================================================================================================================
@@ -208,7 +208,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new double[this.pBestWeights.length];
             }
-            logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
+            // logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
@@ -222,11 +222,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     //=========================================================================================================================
 
     private List<double[]> readNeighborPBestList() {
-
-        if (bestStore == null) {
-            logger.log("gBestWeights returned null");
-            return null;
-        }
 
         // dumpBestStore();
 
@@ -283,7 +278,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         // String gBestJson = bestStore.get(keyName); // this is the State Store. get(record key)
-        dumpBestStore();
+        // dumpBestStore();
 
         ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
         if (wrapper == null) {

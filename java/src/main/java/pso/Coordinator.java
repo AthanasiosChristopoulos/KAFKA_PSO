@@ -12,6 +12,9 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.kstream.Suppressed;
+import org.apache.kafka.streams.processor.ThreadMetadata;
+import org.apache.kafka.streams.processor.TaskMetadata;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.Duration;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -33,6 +37,7 @@ public class Coordinator implements Runnable {
     private final String FULLY_INFORMED;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private Map<String, Object> payload = new HashMap<>();
 
     private final CustomLogger logger;
 
@@ -63,6 +68,9 @@ public class Coordinator implements Runnable {
         // props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         // props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
+        // This controls how often Kafka Streams commits processing progress and flushes its internal caches.
+
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2"); // 2 Threads since we have 2 Tasks
 
         // Serde<PBestUpdate> pBestSerde = new JsonSerde<>(PBestUpdate.class);
 
@@ -70,8 +78,8 @@ public class Coordinator implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // =======================================================================================================
-        // 5
+        // Task 0 =======================================================================================================
+        // input stream 5
 
         KStream<String, String> local_weights_stream = builder.stream(
             LOCAL_WEIGHTS_TOPIC,
@@ -80,19 +88,19 @@ public class Coordinator implements Runnable {
 
         local_weights_stream.process(() -> new CoordinatorProcessor(control));
 
-        // =======================================================================================================
-        // 3
+        // Task 1 =======================================================================================================
+        // input stream 3 and output stream 6
 
-        if(1 == 1) {
+        if(1 == 2) { // for debuggging purposes
 
-            KStream<String, String> pBest_weights_stream = builder.stream(
-                PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String())
-            );
+            // KStream<String, String> pBest_weights_stream = builder.stream(
+            //     PBEST_WEIGHTS_TOPIC,
+            //     Consumed.with(Serdes.String(), Serdes.String())
+            // );
 
-            pBest_weights_stream
-                .process(() -> new CoordinatorProcessor(control))
-                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            // pBest_weights_stream
+            //     .process(() -> new CoordinatorProcessor(control))
+            //     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
         } else {
             
@@ -110,7 +118,7 @@ public class Coordinator implements Runnable {
                 KTable<String, String> gBestTable = pBestJsonStream
                     .groupByKey()
                     .aggregate(
-                        () -> null,               // initial aggregate = null (no gBest yet)
+                        () -> null,     // initial aggregate = null (no gBest yet)
                         (key, newJson, aggJson) -> {
                             if (aggJson == null) return newJson;
 
@@ -123,28 +131,32 @@ public class Coordinator implements Runnable {
                                 double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
                                 double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
                                 
-                                // System.out.println("newJson: " + newJson);
-                                // logger.log("I am running2");
-                                return newAcc > oldAcc ? newJson : aggJson;
+                                if(newAcc > oldAcc) {
+                                    return newJson;
+                                }
+
+                                return aggJson; // means keep aggJson as the current aggregate
+
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                return aggJson; // keep the old best if parsing fails
+                                return aggJson; 
                             }
                         },
                         Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
                             .withKeySerde(Serdes.String())
                             .withValueSerde(Serdes.String())
-                            .withCachingDisabled() // since this is a KTable, there will be no downstream updates / forwards
-                );
+                            .withCachingDisabled() 
+                )
+                .suppress(Suppressed.untilTimeLimit(
+                    Duration.ofSeconds(1), // flush every one second
+                    Suppressed.BufferConfig.unbounded()
+                ));
 
                 gBestTable
                     .toStream()
                     .mapValues(json -> {
                         try {
-                            Map<String, Object> msg =
-                                MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
-
-                            Map<String, Object> payload = new HashMap<>();
+                            Map<String, Object> msg = MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
 
                             payload.put("id_worker", msg.get("id_worker"));
                             payload.put("accuracy", msg.get("accuracy"));
@@ -163,16 +175,13 @@ public class Coordinator implements Runnable {
                         logger.log("New gBest JSON: " + json);
                         // System.out.println("[Coordinator] New gBest JSON: " + json);
                     })
-                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String())); 
             }
         }
 
         // =======================================================================================================
 
         Topology topology = builder.build();
-
-        System.out.println("Coordinator topology:");
-        // System.out.println(topology.describe());
 
         KafkaStreams streams = new KafkaStreams(topology, props);
 
@@ -226,7 +235,24 @@ public class Coordinator implements Runnable {
 
         try {
             streams.start();
-            System.out.println("[Coordinator] KafkaStreams started.");
+
+            System.out.println("[Coordinator] started.");
+            System.out.println("[Coordinator] Topology:\n" + topology.describe());
+
+            try { 
+                Thread.sleep(1000); 
+            } catch (InterruptedException ignored) {
+                System.out.println("Sleep failed");
+            }
+
+            for (ThreadMetadata tm : streams.localThreadsMetadata()) {
+                System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
+
+                for (TaskMetadata task : tm.activeTasks()) {
+                    System.out.println("  ACTIVE Task: " + task.taskId()
+                        + " partitions=" + task.topicPartitions());
+                }
+            }
             latch.await(); 
         } catch (Throwable e) {
             System.out.println("[Coordinator] Error in KafkaStreams: " + e.getMessage());

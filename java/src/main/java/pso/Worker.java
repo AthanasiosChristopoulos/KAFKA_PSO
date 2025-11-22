@@ -7,11 +7,15 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.streams.processor.ThreadMetadata;
+import org.apache.kafka.streams.processor.TaskMetadata;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -74,67 +78,35 @@ public class Worker implements Runnable {
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
         // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         // props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // KTable over WEIGHTS_TOPIC, materialized as "stateStoreName" ====================================
+        // Task 0 (of Global Streams) ===============================================================================
+        // input stream 4 and input stream 7
+
         if("true".equals(FULLY_INFORMED)) {
 
-            KTable<String, String> gBestTable = builder.table(
+            GlobalKTable<String, String> gBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                Materialized.<String,   String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    .withCachingDisabled()
             );
-            
-            gBestTable
-                .toStream()
-                .peek((k, json) -> {
-                    logger.log("Received New pBest JSON: " + json);
-                    // System.out.println("[Coordinator] New gBest JSON: " + json);
-                });
-
-
-            // KStream<String, String> pBestStream = builder.stream(
-            //     PBEST_WEIGHTS_TOPIC,
-            //     Consumed.with(Serdes.String(), Serdes.String())
-            // );
-
-            // pBestStream.peek((k, json) -> {
-            //     logger.log("Rec1eived New pBest JSON: " + json);
-            // });
 
         } else {
-            KTable<String, String> gBestTable = builder.table(
+            GlobalKTable<String, String> gBestTable = builder.globalTable(
                 GLOBAL_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), Serdes.String()),
                 Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(Serdes.String())
-                    // .withCachingDisabled()
             );
-
-            // gBestTable
-            //     .toStream()
-            //     .peek((k, json) -> {
-            //         logger.log("Received New gBest JSON: " + json);
-            //         // System.out.println("[Coordinator] New gBest JSON: " + json);
-            //     });
-
-            // KStream<String, String> pBestStream = builder.stream(
-            //     GLOBAL_WEIGHTS_TOPIC,
-            //     Consumed.with(Serdes.String(), Serdes.String())
-            // );
-
-            // pBestStream.peek((k, json) -> {
-            //     logger.log("Rec1eived New pBest JSON: " + json);
-            // });
-            
         }
 
-        // =====================================================================================================
+        // Task 1 ================================================================================================
+        // input stream 1 and output stream 2
 
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
@@ -167,9 +139,6 @@ public class Worker implements Runnable {
             return;   
         }
 
-        System.out.println("[Worker " + workerId + "] Topology:");
-        // System.out.println(topology.describe());
-
         KafkaStreams streams = new KafkaStreams(topology, props);
 
         streams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
@@ -187,7 +156,27 @@ public class Worker implements Runnable {
 
         try {
             streams.start();
-            System.out.println("[Worker " + workerId + "] KafkaStreams started.");
+
+            System.out.println("[Worker " + workerId + "] started.");
+            if(workerId == 0) {
+                System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
+
+                try { 
+                    Thread.sleep(500); 
+                } catch (InterruptedException ignored) {
+                    System.out.println("Sleep failed");
+                }
+
+                for (ThreadMetadata tm : streams.localThreadsMetadata()) {
+                    System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
+
+                    for (TaskMetadata task : tm.activeTasks()) {
+                        System.out.println("  ACTIVE Task: " + task.taskId()
+                            + " partitions=" + task.topicPartitions());
+                    }
+
+                }
+            }
             latch.await();
         } catch (Throwable e) {
             System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());

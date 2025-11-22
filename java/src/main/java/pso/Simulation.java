@@ -14,15 +14,12 @@ public class Simulation {
         Config cfg = Config.get();
         int numWorkers = cfg.NUM_WORKERS;
 
-        // List<Thread> threads = new ArrayList<>();
-
         System.out.println("============== Simulation Start ======================");
         System.out.println("Starting Coordinator ...");
 
         Coordinator coordinator = new Coordinator();
         Thread coordinatorThread = new Thread(coordinator, "coordinator");
         coordinatorThread.start();
-        // threads.add(coordinatorThread);
 
         System.out.println("Starting " + numWorkers + " workers ...");
 
@@ -37,7 +34,7 @@ public class Simulation {
             System.out.println("\n[Shutdown] JVM is stopping, workers will close via their KafkaStreams hooks.");
         }));
 
-        coordinatorThread.join(); // Wait for coordinator thread
+        coordinatorThread.join(); 
 
         System.out.println("============== Simulation stop ==============");
         System.exit(1);
