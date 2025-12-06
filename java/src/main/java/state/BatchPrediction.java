@@ -10,6 +10,9 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+
+import utils.*;
 
 public class BatchPrediction {
 
@@ -17,11 +20,21 @@ public class BatchPrediction {
 
     private final MultiLayerNetwork model;
     private final Stats stats;
+    private static BatchPrediction coordinatorInstance = null;
 
     public BatchPrediction(MultiLayerNetwork model, Stats stats) {
         this.model = model;
         this.stats = stats;
     }
+
+    public static BatchPrediction getCoordinatorInstance(MultiLayerNetwork model, Stats stats) {
+        if(coordinatorInstance == null) {
+            coordinatorInstance = new BatchPrediction(model, stats);
+            return coordinatorInstance;
+        } 
+        return coordinatorInstance;
+    }
+    // ===========================================================================
 
     public void callPredictionsBatch(List<String> jsonValues) {
         if (jsonValues == null || jsonValues.isEmpty()) {
@@ -38,7 +51,7 @@ public class BatchPrediction {
 
                 List<?> featList = (List<?>) obj.get("features");
                 if (featList == null || featList.size() != 4) {
-                    continue; // skip bad record
+                    continue;       // skip non conforming record
                 }
                 double[] features = new double[4];
                 for (int i = 0; i < 4; i++) {
@@ -53,13 +66,13 @@ public class BatchPrediction {
             }
         }
 
-        int batchSize = featureList.size();
-        if (batchSize == 0) {
+        int nPredictions = featureList.size();
+        if (nPredictions == 0) {
             return;
         }
 
-        double[][] data = new double[batchSize][4];
-        for (int i = 0; i < batchSize; i++) {
+        double[][] data = new double[nPredictions][4];
+        for (int i = 0; i < nPredictions; i++) {
             data[i] = featureList.get(i);
         }
         
@@ -67,16 +80,63 @@ public class BatchPrediction {
         INDArray probs = model.output(X, false);     // [batch, 3]
         INDArray argMax = probs.argMax(1);           // [batch]
 
-        int correctBatch = 0;
-        for (int i = 0; i < batchSize; i++) {
+        int nCorrect = 0;
+        double loss = 0;
+        
+        for (int i = 0; i < nPredictions; i++) {
+            
+            // Measure Accuracy
             int pred = argMax.getInt(i);
             int label = labels.get(i);
             if (pred == label) {
-                correctBatch++;
+                nCorrect++;
             }
+
+            // Measure Loss
+            double[] probabilities = probs.getRow(i).toDoubleVector();
+            loss += LossFunction.compute(probabilities, label);
+        }
+   
+        stats.addBatch(nPredictions, nCorrect, loss); // Update this worker's stats
+    }
+
+    // ===========================================================================
+
+    public String predictSingle(String jsonValue) {
+        if (jsonValue == null || jsonValue.isEmpty()) {
+            return null;
         }
 
-        // Update this worker's stats
-        stats.addBatch(batchSize, correctBatch);
+        try {
+            Map<String, Object> obj = MAPPER.readValue(
+                    jsonValue, new TypeReference<Map<String, Object>>() {}
+            );
+
+            List<?> featList = (List<?>) obj.get("features");
+            if (featList == null || featList.size() != 4) {
+                return null; // bad record
+            }
+
+            double[] features = new double[4];
+            for (int i = 0; i < 4; i++) {
+                features[i] = ((Number) featList.get(i)).doubleValue();
+            }
+
+            // Create [1,4] INDArray
+            INDArray X = Nd4j.create(features).reshape(1, 4);
+            INDArray probs = model.output(X, false);   // [1, 3]
+            int pred = probs.argMax(1).getInt(0);      // single prediction
+
+            Object sampleIndex = obj.get("sample_index");
+            Map<String, Object> out = new HashMap<>();
+            out.put("sample_index", sampleIndex);
+            out.put("prediction", pred);
+
+            return MAPPER.writeValueAsString(out);
+        } catch (Exception e) {
+            System.out.println("Error in predictSingle: " + e.getMessage());
+            return null;
+        }
     }
+
 }

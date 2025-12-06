@@ -42,9 +42,11 @@ public class Dl4jParamUtils {
 
             // same convention: j = neuron index, i = input index
             for (int j = 0; j < outSize; j++) {
+                
                 for (int i = 0; i < inSize; i++) {
                     flatList.add(W.getDouble(i, j));
                 }
+
                 // bias for neuron j
                 flatList.add(b.getDouble(j));
             }

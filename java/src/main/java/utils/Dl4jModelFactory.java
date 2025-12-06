@@ -27,7 +27,7 @@ public class Dl4jModelFactory {
                 .layer(new OutputLayer.Builder() // Output Layer 
                         .nIn(16)
                         .nOut(3)
-                        .lossFunction(LossFunctions.LossFunction.MCXENT)
+                        .lossFunction(LossFunctions.LossFunction.MCXENT)  // is used only for model.fit(...). Ignore it
                         .activation(Activation.SOFTMAX)
                         .build())
                 .build();

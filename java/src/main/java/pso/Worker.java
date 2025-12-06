@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 import utils.*;
+import state.*;
 
 public class Worker implements Runnable {
 
@@ -33,12 +34,15 @@ public class Worker implements Runnable {
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
     private final String RUN_ID;
-    private final String FULLY_INFORMED;
+
+    private final boolean FULLY_INFORMED;
+    private final boolean DEBUG_KAFKA;
 
     private String stateStoreName;
     private String keyName;
 
     private final CustomLogger logger;
+    private final CoordinatorControl control;
 
     public Worker(int workerId) {
 
@@ -53,16 +57,19 @@ public class Worker implements Runnable {
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
         this.RUN_ID = cfg.RUN_ID;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
+        this.DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);                
 
-        if("true".equals(FULLY_INFORMED)) {
+        if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;
         } else {
             stateStoreName = "gBestStore";
             keyName = "gBest";
         }
+
+        this.control = CoordinatorControl.getInstance();
     }
 
     @Override
@@ -85,7 +92,7 @@ public class Worker implements Runnable {
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
-        if("true".equals(FULLY_INFORMED)) {
+        if(FULLY_INFORMED == true) {
 
             GlobalKTable<String, String> gBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,
@@ -158,7 +165,8 @@ public class Worker implements Runnable {
             streams.start();
 
             System.out.println("[Worker " + workerId + "] started.");
-            if(workerId == 0) {
+
+            if(workerId == 0 && DEBUG_KAFKA == true) {
                 System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
 
                 try { 
@@ -177,7 +185,15 @@ public class Worker implements Runnable {
 
                 }
             }
+
+            while (!control.isStopRequested()) {
+                Thread.sleep(500); // poll every 500ms
+            }
+            System.out.println("[Worker " + workerId + " ] Stopping because desired accuracy was reached.");
+            streams.close();
+
             latch.await();
+
         } catch (Throwable e) {
             System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());
             streams.close();

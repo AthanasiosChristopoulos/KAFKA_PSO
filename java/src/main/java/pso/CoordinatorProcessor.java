@@ -68,13 +68,14 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
     // ======================================================================
 
-    public CoordinatorProcessor(CoordinatorControl control) {
+    public CoordinatorProcessor(MultiLayerNetwork model, Stats stats) {
 
-        this.control = control;
+        this.control = CoordinatorControl.getInstance();
+          
+        this.globalModel = model;
+        this.globalStats = stats;    
 
-        this.globalModel = Dl4jModelFactory.createIrisModel();
-        this.globalStats = new Stats();                   
-        this.globalPredictor = new BatchPrediction(globalModel, globalStats);
+        this.globalPredictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
 
         Config cfg = Config.get();
         this.NUM_WORKERS = cfg.NUM_WORKERS;

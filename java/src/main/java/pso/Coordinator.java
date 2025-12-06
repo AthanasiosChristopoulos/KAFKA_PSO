@@ -26,31 +26,57 @@ import java.time.Duration;
 
 import java.util.concurrent.CountDownLatch;
 
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+
+
 import utils.*; 
+import state.*; 
 
 public class Coordinator implements Runnable {
 
     private final String PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
+    public final String PREDICTION_INPUT_TOPIC;
+    public final String PREDICTION_OUTPUT_TOPIC;
+
     private final String RUN_ID;
-    private final String FULLY_INFORMED;
+    private final boolean FULLY_INFORMED;
+    private final boolean DEBUG_KAFKA;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private Map<String, Object> payload = new HashMap<>();
 
     private final CustomLogger logger;
 
+    private final MultiLayerNetwork globalModel; // x_g , current model
+    private final Stats globalStats;
+
+    private final BatchPrediction predictor;
+
     public Coordinator() {
 
         Config cfg = Config.get();
-        this.RUN_ID = cfg.RUN_ID;
         this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+        this.PREDICTION_INPUT_TOPIC = cfg.PREDICTION_INPUT_TOPIC;
+        this.PREDICTION_OUTPUT_TOPIC = cfg.PREDICTION_OUTPUT_TOPIC;
+
+        System.out.println("Coordinator: " + PREDICTION_INPUT_TOPIC + ", " + PREDICTION_OUTPUT_TOPIC);
+
+        this.RUN_ID = cfg.RUN_ID;
+
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
+        this.DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
         this.logger = CustomLogger.getCoordinatorInstance();
+
+        this.globalModel = Dl4jModelFactory.createIrisModel();
+        this.globalStats = new Stats();     
+
+        this.predictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
+
     }
 
     @Override
@@ -70,11 +96,11 @@ public class Coordinator implements Runnable {
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
         // This controls how often Kafka Streams commits processing progress and flushes its internal caches.
 
-        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2"); // 2 Threads since we have 2 Tasks
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "3"); // 3 Threads since we have 3 Tasks {Task 0, Task 1, Task 2}
 
         // Serde<PBestUpdate> pBestSerde = new JsonSerde<>(PBestUpdate.class);
 
-        CoordinatorControl control = new CoordinatorControl();
+        CoordinatorControl control = CoordinatorControl.getInstance();
 
         StreamsBuilder builder = new StreamsBuilder();
 
@@ -86,25 +112,25 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), Serdes.String())
         );
 
-        local_weights_stream.process(() -> new CoordinatorProcessor(control));
+        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, globalStats));
 
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6
 
         if(1 == 2) { // for debuggging purposes
 
-            // KStream<String, String> pBest_weights_stream = builder.stream(
-            //     PBEST_WEIGHTS_TOPIC,
-            //     Consumed.with(Serdes.String(), Serdes.String())
-            // );
+            KStream<String, String> pBest_weights_stream = builder.stream(
+                PBEST_WEIGHTS_TOPIC,
+                Consumed.with(Serdes.String(), Serdes.String())
+            );
 
-            // pBest_weights_stream
-            //     .process(() -> new CoordinatorProcessor(control))
-            //     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            pBest_weights_stream
+                .process(() -> new CoordinatorProcessor(globalModel, globalStats))
+                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
         } else {
             
-            if(FULLY_INFORMED != "true") {
+            if(FULLY_INFORMED != true) {
 
                 KStream<String, String> pBestJsonStream = builder.stream(
                     PBEST_WEIGHTS_TOPIC,
@@ -178,6 +204,30 @@ public class Coordinator implements Runnable {
             }
         }
 
+        // Task 2 =======================================================================================================
+        
+        // KStream<String, String> prediction_stream = builder.stream(
+        //     PREDICTION_INPUT_TOPIC,
+        //     Consumed.with(Serdes.String(), Serdes.String())
+        // );
+
+        // prediction_stream
+        //     .transformValues(() -> new PredictSingle(control))
+        //     .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+
+        KStream<String, String> prediction_stream = builder.stream(
+            PREDICTION_INPUT_TOPIC,
+            Consumed.with(Serdes.String(), Serdes.String())
+        );
+
+        prediction_stream
+            .peek((k, v) -> {
+                System.out.println("New Prediction Record: " + v);
+            })
+            .mapValues(json -> predictor.predictSingle(json)) 
+            .filter((k, v) -> v != null) 
+            .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            
         // =======================================================================================================
 
         Topology topology = builder.build();
@@ -186,9 +236,9 @@ public class Coordinator implements Runnable {
 
         CountDownLatch latch = new CountDownLatch(1);
 
-        streams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
+        streams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {  // handling exceptions
             Throwable cause = e;
-            // StreamsException wraps the real cause
+
             if (e instanceof org.apache.kafka.streams.errors.StreamsException && e.getCause() != null) {
                 cause = e.getCause();
             }
@@ -207,22 +257,22 @@ public class Coordinator implements Runnable {
         });
 
         // Watcher thread: waits for desired accuracy, then stops the streams ===========================================
-        Thread controlThread = new Thread(() -> {
-            try {
-                while (!control.isStopRequested()) {
-                    Thread.sleep(500); // poll every 500ms
-                }
-                System.out.println("[Coordinator] Stopping because desired accuracy was reached.");
-                streams.close();
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            } finally {
-                latch.countDown();
-            }
-        }, "coordinator-control-thread");
+        // Thread controlThread = new Thread(() -> {
+        //     try {
+        //         while (!control.isStopRequested()) {
+        //             Thread.sleep(500); // poll every 500ms
+        //         }
+        //         System.out.println("[Coordinator] Stopping because desired accuracy was reached.");
+        //         streams.close();
+        //     } catch (InterruptedException ie) {
+        //         Thread.currentThread().interrupt();
+        //     } finally {
+        //         latch.countDown();
+        //     }
+        // }, "coordinator-control-thread");
 
-        controlThread.setDaemon(true);
-        controlThread.start();
+        // controlThread.setDaemon(true);
+        // controlThread.start();
 
         // ===============================================================================================================
 
@@ -236,23 +286,27 @@ public class Coordinator implements Runnable {
             streams.start();
 
             System.out.println("[Coordinator] started.");
-            System.out.println("[Coordinator] Topology:\n" + topology.describe());
+            if(DEBUG_KAFKA == true) {
+                System.out.println("[Coordinator] Topology:\n" + topology.describe());
 
-            try { 
-                Thread.sleep(2500); 
-            } catch (InterruptedException ignored) {
-                System.out.println("Sleep failed");
-            }
+                try { 
+                    Thread.sleep(2500); 
+                } catch (InterruptedException ignored) {
+                    System.out.println("Sleep failed");
+                }
 
-            for (ThreadMetadata tm : streams.localThreadsMetadata()) {
-                System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
+                for (ThreadMetadata tm : streams.localThreadsMetadata()) {
+                    System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
 
-                for (TaskMetadata task : tm.activeTasks()) {
-                    System.out.println("  ACTIVE Task: " + task.taskId()
-                        + " partitions=" + task.topicPartitions());
+                    for (TaskMetadata task : tm.activeTasks()) {
+                        System.out.println("  ACTIVE Task: " + task.taskId()
+                            + " partitions=" + task.topicPartitions());
+                    }
                 }
             }
+
             latch.await(); 
+
         } catch (Throwable e) {
             System.out.println("[Coordinator] Error in KafkaStreams: " + e.getMessage());
             streams.close();

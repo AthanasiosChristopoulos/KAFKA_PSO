@@ -1,10 +1,13 @@
 #!/bin/bash
 
+cd ./java
+
 set -a           # auto-export all variables
 source .env
 set +a
 
 # --- Reset section -----------------------------------------------------------
+
 if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
     for ((i=0; i<NUM_WORKERS; i++)); do
@@ -25,11 +28,7 @@ if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
 fi
 
-echo "$FULLY_INFORMED"
-echo "$PBEST_WEIGHTS_TOPIC"
-echo "$GLOBAL_WEIGHTS_TOPIC"
-
-if [[ "1" == "1" ]]; then
+if [[ "$1" != "--debug" ]]; then
 
     BROKER="broker"
     BOOTSTRAP="localhost:9092"
@@ -68,7 +67,6 @@ fi
 export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
 # mvn -q -DskipTests clean compile exec:java
-
 mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
 
 # mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java

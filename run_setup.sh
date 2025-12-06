@@ -19,6 +19,14 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists
 
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic prediction_input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic prediction_output --partitions 1 --if-not-exists
+  
 cd python
 python3 iris_data_producer.py --all
 
@@ -26,6 +34,7 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --list 
 
 exit 0
+
 #  ==============================================================
 
 # docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
@@ -120,17 +129,30 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic global-weights-topic --from-beginning
 
-# PREDICTION_TOPIC ==============================================================
+# PREDICTION_INPUT_TOPIC ==============================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic iris-output --partitions 1 --if-not-exists
+  --create --topic prediction_input --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --delete --topic iris-output
+  --delete --topic prediction_input
 
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic iris-output --from-beginning
+  --topic prediction_input --from-beginning
 
+# PREDICTION_OUTPUT_TOPIC ==============================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic prediction_output --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic prediction_output
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic prediction_output --from-beginning

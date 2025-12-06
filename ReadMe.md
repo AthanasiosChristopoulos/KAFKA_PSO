@@ -1,5 +1,5 @@
 
-===================================================================================
+
 ## Run
 
 ```bash
@@ -8,7 +8,7 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exe
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
 ```
 
-===================================================================================
+
 ## Formulas for PSO / velocity update:
 
  - Neighbor best (classical PSO):
@@ -18,7 +18,7 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:
     - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
 
 
-===================================================================================
+
 
 ```bash
 
@@ -27,15 +27,6 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
-
-===================================================================================
-
-## To Do:
-
- - Implement as much as in Kafka Streams, as you can 
- - Implement Inference pipeline using x_g
- - Use loss functions instead of accuracy
-
 
 ## Distributed, data parallel PSO Protocol:
 
@@ -65,7 +56,7 @@ dos2unix run_streams.sh
                 => only if this x_g has a high enough accuracy (higher than desired accuracy) do we conclude training
                 
 
-===================================================================================
+
 ## Git:
 
 ```bash

@@ -7,14 +7,25 @@ from kafka import KafkaProducer
 import argparse
 
 from dotenv import load_dotenv
-load_dotenv()
+loaded = load_dotenv("../java/.env")
+print("Dotenv loaded:", loaded)
+
 DATA_TOPIC = os.getenv("DATA_TOPIC")
+PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
+
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
 parser.add_argument('--all', action='store_true') # make this a flag argument
+parser.add_argument('--pred', action='store_true')
 args = parser.parse_args()
+
+
+INPUT_TOPIC = DATA_TOPIC
+
+if args.pred:
+    INPUT_TOPIC = PREDICTION_INPUT_TOPIC
 
 producer = KafkaProducer(
     bootstrap_servers = "localhost:9092",
@@ -45,7 +56,7 @@ if args.all:
                 "label": label
             }
 
-            producer.send(DATA_TOPIC, value=msg)
+            producer.send(INPUT_TOPIC, value=msg)
             producer.flush() 
         
         data_repeats += 1
@@ -65,7 +76,7 @@ elif args.streaming:
             "label": label
         }
 
-        producer.send(DATA_TOPIC, value=msg) # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
+        producer.send(INPUT_TOPIC, value=msg) # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
         producer.flush()                # This sends everything that been buffered
 
         print(f"sent: {msg}")

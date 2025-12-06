@@ -11,9 +11,10 @@ public class Config {
 
     public final String DATA_TOPIC;
     public final String PBEST_WEIGHTS_TOPIC;
-    public final String PREDICTION_TOPIC;
     public final String LOCAL_WEIGHTS_TOPIC;
     public final String GLOBAL_WEIGHTS_TOPIC;
+    public final String PREDICTION_INPUT_TOPIC;
+    public final String PREDICTION_OUTPUT_TOPIC;
 
     public final int NUM_WORKERS;
     public final int BATCH_SIZE;
@@ -28,7 +29,10 @@ public class Config {
     public final double C2;
     public final String RUN_ID;
 
-    public final String FULLY_INFORMED;
+    public final boolean FULLY_INFORMED;
+    public final boolean DEBUG_KAFKA;
+    public final String LOSS_FUNCTION;
+    public final int TOP_K_VALUE;
 
     public Config() {
         
@@ -39,11 +43,12 @@ public class Config {
         
         this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
         this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
-        this.PREDICTION_TOPIC = getenv(dotenv, "PREDICTION_TOPIC", "iris-output");
         this.LOCAL_WEIGHTS_TOPIC = getenv(dotenv, "LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
         this.GLOBAL_WEIGHTS_TOPIC = getenv(dotenv, "GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
+        this.PREDICTION_INPUT_TOPIC = getenv(dotenv, "PREDICTION_INPUT_TOPIC", "iris-output");
+        this.PREDICTION_OUTPUT_TOPIC = getenv(dotenv, "PREDICTION_OUTPUT_TOPIC", "iris-output");
 
-        this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "30"));
+        this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "5"));
         this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
         this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         this.DESIRED_ACCURACY = Double.parseDouble(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
@@ -55,10 +60,13 @@ public class Config {
         this.C1 = Double.parseDouble(getenv(dotenv, "C1", "1.0"));
         this.C2 = Double.parseDouble(getenv(dotenv, "C2", "2.0"));
 
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-        this.RUN_ID = LocalDateTime.now().format(fmt); 
+        this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")); // create new RUN_ID based on time
 
-        this.FULLY_INFORMED = getenv(dotenv, "FULLY_INFORMED", "false");
+        this.FULLY_INFORMED = Boolean.parseBoolean(getenv(dotenv, "FULLY_INFORMED", "false"));
+        this.DEBUG_KAFKA = Boolean.parseBoolean(getenv(dotenv, "DEBUG_KAFKA", "false"));
+        this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
+        this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
+
     }
 
     public static Config get() {

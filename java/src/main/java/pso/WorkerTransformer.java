@@ -30,7 +30,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private final int workerId;
     private final int BATCH_SIZE;
     private final int N_BATCHES;
-    private final String FULLY_INFORMED;
+    private final boolean FULLY_INFORMED;
 
     private final CustomLogger logger;
 
@@ -72,7 +72,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         this.logger = CustomLogger.getWorkerInstance(workerId);
         logger.log("Worker " + workerId + " WorkerTransformer started");
 
-        if("true".equals(FULLY_INFORMED)) {
+        if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;
         } else {
@@ -86,7 +86,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     public void init(ProcessorContext context) {
         this.context = context;
         this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
-        // bestStore = null;
     }
 
     //=========================================================================================================================
@@ -130,7 +129,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         batchesRead++;
 
         double accuracy = stats.getAccuracy();
-        if (accuracy == -1) {
+        double loss = stats.getLoss();
+        if (accuracy == 0.0) {
+            System.out.println("Accuracy Invalid");
             return null;
         }
 
@@ -140,19 +141,26 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             weightList.add(v);
         }
 
-        if (accuracy > stats.getBestAccuracy()) {
+        // if (accuracy > stats.getBestAccuracy()) {
+        if(loss < stats.getBestLoss()) {
 
             stats.setBestAccuracy(accuracy);
+            stats.setBestLoss(loss);
+
             this.pBestWeights = weights;
 
             logger.log("Improved accuracy to: " + stats.getBestAccuracy() + ", n_predictions: " + stats.getNumPredictions() +
                        ", n_correct: " + stats.getNumCorrect());
 
+            logger.log("Improved loss to: " + stats.getBestLoss() + ", n_predictions: " + stats.getNumPredictions() +
+                       ", n_correct: " + stats.getNumCorrect());
+            
             var payload = new HashMap<String, Object>();
             payload.put("pBestMsgIndex", java.util.UUID.randomUUID().toString());
             payload.put("id_worker", workerId);
             payload.put("pBestWeights", weightList);
             payload.put("accuracy", accuracy);
+            payload.put("loss", loss);
 
             try {
                 String json = MAPPER.writeValueAsString(payload);
@@ -190,7 +198,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         // get the State Store ==================================================================================
 
-        if ("true".equals(FULLY_INFORMED)) {
+        if (FULLY_INFORMED == true) {
 
             List<double[]> neighborPBestList = readNeighborPBestList();
 
@@ -208,6 +216,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new double[this.pBestWeights.length];
             }
+
             // logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }

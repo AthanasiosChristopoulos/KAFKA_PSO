@@ -14,7 +14,7 @@ public class PsoUpdater {
     private final double C1;
     private final double C2;
     private final int NUM_WORKERS;
-    private final String FULLY_INFORMED;
+    private final boolean FULLY_INFORMED;
 
     private double[] velocity; 
 
@@ -23,7 +23,7 @@ public class PsoUpdater {
         Config cfg = Config.get();
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
-        if("true".equals(FULLY_INFORMED)) {
+        if(FULLY_INFORMED == true) {
             this.W_INERTIA = cfg.W_INERTIA;
         } else {
            this.W_INERTIA = cfg.W_INERTIA_G_BEST;
