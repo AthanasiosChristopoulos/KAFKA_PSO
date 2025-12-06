@@ -34,6 +34,7 @@ public class BatchPrediction {
         } 
         return coordinatorInstance;
     }
+
     // ===========================================================================
 
     public void callPredictionsBatch(List<String> jsonValues) {
@@ -66,13 +67,13 @@ public class BatchPrediction {
             }
         }
 
-        int nPredictions = featureList.size();
-        if (nPredictions == 0) {
+        int nSamples = featureList.size();
+        if (nSamples == 0) {
             return;
         }
 
-        double[][] data = new double[nPredictions][4];
-        for (int i = 0; i < nPredictions; i++) {
+        double[][] data = new double[nSamples][4];
+        for (int i = 0; i < nSamples; i++) {
             data[i] = featureList.get(i);
         }
         
@@ -83,7 +84,7 @@ public class BatchPrediction {
         int nCorrect = 0;
         double loss = 0;
         
-        for (int i = 0; i < nPredictions; i++) {
+        for (int i = 0; i < nSamples; i++) {
             
             // Measure Accuracy
             int pred = argMax.getInt(i);
@@ -93,11 +94,11 @@ public class BatchPrediction {
             }
 
             // Measure Loss
-            double[] probabilities = probs.getRow(i).toDoubleVector();
-            loss += LossFunction.compute(probabilities, label);
+            double[] probabilities = probs.getRow(i).toDoubleVector();      // get the probabilities for current sample 
+            loss += LossFunction.compute_loss(probabilities, label);
         }
    
-        stats.addBatch(nPredictions, nCorrect, loss); // Update this worker's stats
+        stats.addBatch(nSamples, nCorrect, loss); // Update this worker's stats
     }
 
     // ===========================================================================

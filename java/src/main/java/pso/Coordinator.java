@@ -148,15 +148,16 @@ public class Coordinator implements Runnable {
                             if (aggJson == null) return newJson;
 
                             try {
-                                Map<String, Object> newMsg =
-                                    MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
-                                Map<String, Object> oldMsg =
-                                    MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
+                                Map<String, Object> newMsg = MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
+                                Map<String, Object> oldMsg = MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
 
-                                double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
-                                double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
-                                
-                                if(newAcc > oldAcc) {
+                                // double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
+                                // double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
+
+                                double newLoss = ((Number) newMsg.get("loss")).doubleValue();
+                                double oldLoss = ((Number) oldMsg.get("loss")).doubleValue();
+
+                                if(oldLoss > newLoss) {
                                     return newJson;
                                 }
 
@@ -221,9 +222,7 @@ public class Coordinator implements Runnable {
         );
 
         prediction_stream
-            .peek((k, v) -> {
-                System.out.println("New Prediction Record: " + v);
-            })
+            .peek((k, v) -> { System.out.println("New Prediction Record: " + v); })
             .mapValues(json -> predictor.predictSingle(json)) 
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));

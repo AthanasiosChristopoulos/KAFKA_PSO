@@ -2,23 +2,21 @@ package state;
 
 public class Stats {
 
-    private long nPredictions = 0;
+    private long nSamples = 0;
     private long nCorrect = 0;
     private double loss = 0;
 
     private double bestAccuracy = 0;
     private double bestLoss = 1000000;
 
-    public void addBatch(int nSamples, int nCorrectBatch, double loss) {
-        nPredictions += nSamples;
-        nCorrect += nCorrectBatch;
-        loss += loss;
-
-        double acc = nPredictions == 0 ? -1 : (double) nCorrect / nPredictions;
+    public void addBatch(int nSamples, int nCorrect, double loss) {
+        this.nSamples += nSamples;
+        this.nCorrect += nCorrect;
+        this.loss += loss;
     }
 
     public long getNumPredictions() {
-        return nPredictions;
+        return nSamples;
     }
 
     public long getNumCorrect() {
@@ -28,11 +26,12 @@ public class Stats {
     // Accuracy ==========================================================================
 
     public double getAccuracy() {
-        if (nPredictions == 0) {
+        if (nSamples == 0) {
             System.out.println("0.0, because no Predictions");
             return 0.0;
         } 
-        double acc = (double) nCorrect / nPredictions;
+        
+        double acc = (double) nCorrect / nSamples;
         return Math.round(acc * 1000.0) / 1000.0; // round at 3 decimal positions 
     }
 
@@ -47,11 +46,11 @@ public class Stats {
     // Loss ==========================================================================
 
     public double getLoss() {
-        return loss; 
+        return Math.round(loss * 1000.0) / 1000.0; 
     }
     
     public double getBestLoss() {
-        return bestLoss;
+        return Math.round(bestLoss * 1000.0) / 1000.0; 
     }
     
     public void setBestLoss(double bestLoss) {
@@ -59,9 +58,9 @@ public class Stats {
     }
 
     // ================================================================================
-    
+
     public void reset() {
-        nPredictions = 0;
+        nSamples = 0;
         nCorrect = 0;
         loss = 0;
     }

@@ -26,7 +26,7 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic prediction_output --partitions 1 --if-not-exists
-  
+
 cd python
 python3 iris_data_producer.py --all
 
@@ -56,6 +56,7 @@ done
 
 # DATA_TOPIC ==============================================================
 
+# iris: ======================================================
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic iris-input --partitions 1 --if-not-exists
@@ -70,6 +71,23 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic iris-input --from-beginning
+  
+# iris: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic wine-input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic wine-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic wine-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic wine-input --from-beginning
   
 
 # PBEST_WEIGHTS_TOPIC ==============================================================
