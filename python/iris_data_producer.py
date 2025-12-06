@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 loaded = load_dotenv("../java/.env")
 print("Dotenv loaded:", loaded)
 
+DATASET = os.getenv("DATASET")
 DATA_TOPIC = os.getenv("DATA_TOPIC")
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
@@ -34,13 +35,13 @@ producer = KafkaProducer(
 def load_dataset():
     X = y = class_names = None
     
-    if DATA_TOPIC == "iris-input":
+    if DATASET == "iris":
         iris = load_iris()
         X = iris.data
         y = iris.target
         class_names = iris.target_names.tolist()
 
-    elif DATA_TOPIC == "wine-input":   # <-- remove the space in "wine -input"
+    elif DATASET == "wine":   # <-- remove the space in "wine -input"
         wine = load_wine()
         X = wine.data              # shape (178, 13)
         y = wine.target            # 0,1,2
@@ -82,7 +83,7 @@ def main():
             
             data_repeats += 1
             
-        print(f"Loaded entire iris dataset in iris-input topic")
+        print(f"Loaded entire {DATASET} dataset in {DATA_TOPIC}")
         
     elif args.streaming: 
         while True:
@@ -94,7 +95,8 @@ def main():
             msg = { 
                 "sample_index" : index,
                 "features": features,
-                "label": label
+                "label": label,
+                "label_name": label_name
             }
 
             producer.send(INPUT_TOPIC, value=msg) # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches

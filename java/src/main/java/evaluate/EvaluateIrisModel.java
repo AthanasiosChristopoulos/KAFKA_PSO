@@ -19,7 +19,7 @@ public class EvaluateIrisModel {
     public static void main(String[] args) throws IOException {
         System.out.println("Executing model Evaluation ...");
 
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
 
         File modelFile = new File("models/" + SAVE_MODEL_NAME + "-dl4j.zip");

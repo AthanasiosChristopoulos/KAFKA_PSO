@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 public class LossFunction {
 
-    private static final Config cfg = Config.get();
+    private static final Config cfg = Config.getInstance();
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
     private static final int k = cfg.TOP_K_VALUE;
 

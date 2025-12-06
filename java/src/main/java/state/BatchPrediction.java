@@ -16,6 +16,10 @@ import utils.*;
 
 public class BatchPrediction {
 
+    private static final Config cfg = Config.getInstance();
+    public final int NEURAL_INPUT = cfg.NEURAL_INPUT;
+    public final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final MultiLayerNetwork model;
@@ -51,17 +55,18 @@ public class BatchPrediction {
                 Map<String, Object> obj = MAPPER.readValue(value, new TypeReference<Map<String, Object>>() {});
 
                 List<?> featList = (List<?>) obj.get("features");
-                if (featList == null || featList.size() != 4) {
+                if (featList == null || featList.size() != NEURAL_INPUT) {
                     continue;       // skip non conforming record
                 }
-                double[] features = new double[4];
-                for (int i = 0; i < 4; i++) {
+                double[] features = new double[NEURAL_INPUT];
+                for (int i = 0; i < NEURAL_INPUT; i++) {
                     features[i] = ((Number) featList.get(i)).doubleValue();
                 }
                 int label = ((Number) obj.get("label")).intValue();
 
                 featureList.add(features);
                 labels.add(label);
+
             } catch (Exception e) {
                 System.out.println("Error");
             }
@@ -72,13 +77,13 @@ public class BatchPrediction {
             return;
         }
 
-        double[][] data = new double[nSamples][4];
+        double[][] data = new double[nSamples][NEURAL_INPUT];
         for (int i = 0; i < nSamples; i++) {
             data[i] = featureList.get(i);
         }
         
-        INDArray X = Nd4j.create(data);              // [batch, 4]
-        INDArray probs = model.output(X, false);     // [batch, 3]
+        INDArray X = Nd4j.create(data);              // [batch, NEURAL_INPUT]
+        INDArray probs = model.output(X, false);     // [batch, NEURAL_OUTPUT]
         INDArray argMax = probs.argMax(1);           // [batch]
 
         int nCorrect = 0;
@@ -114,24 +119,27 @@ public class BatchPrediction {
             );
 
             List<?> featList = (List<?>) obj.get("features");
-            if (featList == null || featList.size() != 4) {
+            if (featList == null || featList.size() != NEURAL_INPUT) {
                 return null; // bad record
             }
 
-            double[] features = new double[4];
-            for (int i = 0; i < 4; i++) {
+            double[] features = new double[NEURAL_INPUT];
+            for (int i = 0; i < NEURAL_INPUT; i++) {
                 features[i] = ((Number) featList.get(i)).doubleValue();
             }
 
-            // Create [1,4] INDArray
-            INDArray X = Nd4j.create(features).reshape(1, 4);
-            INDArray probs = model.output(X, false);   // [1, 3]
+            // Create [1, NEURAL_INPUT] INDArray
+            INDArray X = Nd4j.create(features).reshape(1, NEURAL_INPUT);
+            INDArray probs = model.output(X, false);   // [1, NEURAL_OUTPUT]
             int pred = probs.argMax(1).getInt(0);      // single prediction
 
             Object sampleIndex = obj.get("sample_index");
+            Object label_name = obj.get("label_name");
+
             Map<String, Object> out = new HashMap<>();
             out.put("sample_index", sampleIndex);
             out.put("prediction", pred);
+            out.put("true_label_name", label_name);
 
             return MAPPER.writeValueAsString(out);
         } catch (Exception e) {
@@ -139,5 +147,5 @@ public class BatchPrediction {
             return null;
         }
     }
-
+v   
 }

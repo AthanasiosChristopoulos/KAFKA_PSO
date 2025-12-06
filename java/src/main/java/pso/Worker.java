@@ -48,7 +48,7 @@ public class Worker implements Runnable {
 
         this.workerId = workerId;
 
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;         
         this.DATA_TOPIC = cfg.DATA_TOPIC;

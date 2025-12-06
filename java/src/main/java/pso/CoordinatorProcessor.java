@@ -77,7 +77,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
         this.globalPredictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
 
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         this.NUM_WORKERS = cfg.NUM_WORKERS;
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.DATA_TOPIC = cfg.DATA_TOPIC;

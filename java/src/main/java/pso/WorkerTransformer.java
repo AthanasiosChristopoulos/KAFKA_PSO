@@ -57,7 +57,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         this.workerId = workerId;
         
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;

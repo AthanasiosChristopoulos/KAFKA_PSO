@@ -10,8 +10,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class Dl4jModelFactory {
         
-	private static final Config cfg = Config.get();
+	private static final Config cfg = Config.getInstance();
 	private static final String DATA_TOPIC = cfg.DATA_TOPIC;
+    public static final int NEURAL_INPUT = cfg.NEURAL_INPUT;
+    public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
 	public static MultiLayerNetwork createModel() {
 
@@ -20,7 +22,11 @@ public class Dl4jModelFactory {
 
 		} else if ("wine-input".equals(DATA_TOPIC)) {
 				return createWineModel();
+		} else {
+            throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
 		}
+
+		
 	}
 
 	public static MultiLayerNetwork createIrisModel() {
@@ -28,7 +34,7 @@ public class Dl4jModelFactory {
 				.seed(123) // or pass seed from outside
 				.list()
 				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
-						.nIn(4)
+						.nIn(NEURAL_INPUT)
 						.nOut(16)
 						.activation(Activation.RELU)
 						.build())
@@ -39,7 +45,7 @@ public class Dl4jModelFactory {
 						.build())
 				.layer(new OutputLayer.Builder() // Output Layer 
 						.nIn(16)
-						.nOut(3)
+						.nOut(NEURAL_OUTPUT)
 						.lossFunction(LossFunctions.LossFunction.MCXENT)  // is used only for model.fit(...). Ignore it
 						.activation(Activation.SOFTMAX)
 						.build())
@@ -63,7 +69,7 @@ public class Dl4jModelFactory {
                 .seed(123)
                 .list()
                 .layer(new DenseLayer.Builder()
-                        .nIn(13)
+                        .nIn(NEURAL_INPUT)
                         .nOut(32)
                         .activation(Activation.RELU)
                         .build())
@@ -74,7 +80,7 @@ public class Dl4jModelFactory {
                         .build())
                 .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
                         .nIn(16)
-                        .nOut(3)
+                        .nOut(NEURAL_OUTPUT)
                         .activation(Activation.SOFTMAX)
                         .build())
                 .build();

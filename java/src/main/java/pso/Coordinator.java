@@ -56,7 +56,7 @@ public class Coordinator implements Runnable {
 
     public Coordinator() {
 
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
         this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;

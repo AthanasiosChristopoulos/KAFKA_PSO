@@ -7,8 +7,12 @@ import java.time.format.DateTimeFormatter;
 
 public class Config {
 
-    private static Config instance; // Singleton
+    private static Config instance = new Config();     // Singleton
 
+    public final int NEURAL_INPUT;      // Number of Features of Dataset
+    public final int NEURAL_OUTPUT;     // Number of Classes of Dataset
+
+    public final String DATASET;
     public final String DATA_TOPIC;
     public final String PBEST_WEIGHTS_TOPIC;
     public final String LOCAL_WEIGHTS_TOPIC;
@@ -41,7 +45,21 @@ public class Config {
                 .ignoreIfMissing() 
                 .load();
         
-        this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
+        this.DATASET = getenv(dotenv, "DATASET", "iris");
+        // this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
+        this.DATA_TOPIC = this.DATASET + "-input";
+
+        if("iris".equals(this.DATASET)) {
+            this.NEURAL_INPUT = 4;
+            this.NEURAL_OUTPUT = 3;
+        
+        } else if("wine".equals(this.DATASET)) {
+            this.NEURAL_INPUT = 13;
+            this.NEURAL_OUTPUT = 3;
+        } else {
+            throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);
+        }
+
         this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
         this.LOCAL_WEIGHTS_TOPIC = getenv(dotenv, "LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
         this.GLOBAL_WEIGHTS_TOPIC = getenv(dotenv, "GLOBAL_WEIGHTS_TOPIC", "global-weights-topic");
@@ -69,10 +87,7 @@ public class Config {
 
     }
 
-    public static Config get() {
-        if (instance == null) {
-            instance = new Config();
-        }
+    public static Config getInstance() {
         return instance;
     }
 

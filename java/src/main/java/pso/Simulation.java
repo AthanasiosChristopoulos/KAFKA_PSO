@@ -11,7 +11,7 @@ public class Simulation {
 
     public static void main(String[] args) throws Exception {
         
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         int numWorkers = cfg.NUM_WORKERS;
 
         System.out.println("============== Simulation Start ======================");

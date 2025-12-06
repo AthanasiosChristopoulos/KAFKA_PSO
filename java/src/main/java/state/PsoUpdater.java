@@ -20,7 +20,7 @@ public class PsoUpdater {
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
         if(FULLY_INFORMED == true) {

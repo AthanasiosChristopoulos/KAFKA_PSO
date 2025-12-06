@@ -146,7 +146,7 @@ public class Dl4jParamUtils {
 
     public static void saveModel(MultiLayerNetwork model) {
 
-        Config cfg = Config.get();
+        Config cfg = Config.getInstance();
         String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
 
         File dir = new File("models"); // create Models Directory if it doesnt exist
