@@ -1,6 +1,7 @@
 
 import numpy as np
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_wine
 from sklearn.metrics import accuracy_score
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # no GPU
@@ -27,6 +28,17 @@ from dotenv import load_dotenv
 env_path = os.path.join("..", "java", ".env")
 if os.path.exists(env_path):
     load_dotenv(env_path)
+
+DATASET = os.getenv("DATASET", "iris")
+NEURAL_INPUT = NEURAL_OUTPUT = 0
+
+if(DATASET == "iris"):
+    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_IRIS", "4"))
+    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_IRIS", "3"))
+
+elif (DATASET == "wine"):
+    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_WINE", "13"))
+    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_WINE", "3"))   
     
 
 # =======================================================================================================
@@ -38,24 +50,35 @@ def load_flat_weights(path: str) -> np.ndarray:
     print(f"First 5 flat values: {flat[:5]}")
     return flat
 
-
 # =======================================================================================================
 # 2. Reconstruct layer weights using the same convention as
 
 def reconstruct_layer_weights_for_keras(flat: np.ndarray):
 
     # (in_size, out_size) for each dense layer in order
-    layer_shapes = [
-        (4, 16),    # Layer 1
-        (16, 16),   # Layer 2
-        (16, 3),    # Output Layer
-    ]
+    if DATASET == "iris":
+        layer_shapes = [
+            (NEURAL_INPUT, 16),     # Layer 1
+            (16, 16),               # Layer 2
+            (16, NEURAL_OUTPUT),    # Output Layer
+        ]
+        
+    elif DATASET == "wine":
+        layer_shapes = [
+            (NEURAL_INPUT, 32),
+            (32, 16),
+            (16, NEURAL_OUTPUT),
+        ]
+        
+    else:
+        raise ValueError(f"Unsupported DATASET={DATASET}")
 
     idx = 0
     kernels = []
     biases = []
 
     for layer_idx, (in_size, out_size) in enumerate(layer_shapes):
+        
         kernel = np.zeros((in_size, out_size), dtype=np.float32)
         bias = np.zeros((out_size,), dtype=np.float32)
 
@@ -83,16 +106,30 @@ def reconstruct_layer_weights_for_keras(flat: np.ndarray):
 # =======================================================================================================
 # 3. Keras model definition
 
-def build_keras_iris_model() -> keras.Model:
+def build_keras_model():
     
-    model = keras.Sequential(
-        [
-            layers.Input(shape=(4,)),
-            layers.Dense(16, activation="relu", name="dense1"),
-            layers.Dense(16, activation="relu", name="dense2"),
-            layers.Dense(3, activation="softmax", name="output"),
-        ]
-    )
+    if DATASET == "iris":
+        model = keras.Sequential(
+            [
+                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Dense(16, activation="relu", name="dense1"),
+                layers.Dense(16, activation="relu", name="dense2"),
+                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+            ]
+        )
+        
+    elif DATASET == "wine":
+        model = keras.Sequential(
+            [
+                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Dense(32, activation="relu", name="dense1"),
+                layers.Dense(16, activation="relu", name="dense2"),
+                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+            ]
+        )
+    else:
+        raise ValueError(f"Invalid Dataset = {DATASET} chosen")
+    
     return model
 
 # =======================================================================================================
@@ -116,7 +153,7 @@ def print_full_model(kernels, biases):
 
 # =======================================================================================================
 
-def load_weights_into_keras_model(model: keras.Model, kernels, biases):
+def load_weights_into_keras_model(model, kernels, biases):
 
     dense1 = model.get_layer("dense1")
     dense2 = model.get_layer("dense2")
@@ -135,18 +172,28 @@ def load_weights_into_keras_model(model: keras.Model, kernels, biases):
     print("Neuron 1 bias:", dense1.get_weights()[1][1])
 
 # =======================================================================================================
-# 4. Evaluate on Iris dataset
+# 4. Evaluate on Dataset
 
-def evaluate_model(model: keras.Model):
+def evaluate_model(model):
 
-    iris = load_iris()
-    X_raw = iris["data"].astype(np.float32)   # shape [150, 4]
-    y = iris["target"]                        # shape [150,]
-
+    if DATASET == "iris":
+        
+        iris = load_iris()
+        X_raw = iris["data"].astype(np.float32)   # shape [150, NEURAL_INPUT]
+        y = iris["target"]                        # shape [150,]
+        
+    elif DATASET == "wine":
+        iris = load_wine()
+        X_raw = iris["data"].astype(np.float32)   # shape [150, NEURAL_INPUT]
+        y = iris["target"]                        # shape [150,]    
+        
+    else:
+        raise ValueError(f"Invalid Dataset = {DATASET} chosen")
+    
     scaler = StandardScaler().fit(X_raw)
     X_scaled = scaler.transform(X_raw).astype(np.float32)
 
-    print("=============== Showing first 5 rows of SCALED Iris dataset (TF/Keras) ================")
+    print("=============== Showing first 5 rows of (scaled) Dataset ================")
     
     for i in range(5):
         print(f"Row {i}: features={X_scaled[i].tolist()}  label={int(y[i])}")
@@ -158,19 +205,19 @@ def evaluate_model(model: keras.Model):
     preds = probs.argmax(axis=1)
 
     acc = accuracy_score(y, preds)
-    print("Accuracy on Iris using Keras: ", acc)
+    print("Test Accuracy: ", acc)
     return acc
 
 # =======================================================================================================
 # 4. Evaluate model using data from Kafka
 
-def evaluate_model_kafka(model: keras.Model, num_samples: int = 150):
+def evaluate_model_kafka(model, num_samples: int = 150):
 
-    topic = os.getenv("DATA_TOPIC", "iris-input")
-    print(f"[INFO] Consuming {num_samples} samples from Kafka topic '{topic}'")
+    data_topic = os.getenv("DATA_TOPIC", "iris-input")
+    print(f"[INFO] Consuming {num_samples} samples from Kafka data_topic '{data_topic}'")
 
     consumer = KafkaConsumer(
-        topic,
+        data_topic,
         bootstrap_servers="localhost:9092",
         auto_offset_reset="earliest",    # start from beginning
         enable_auto_commit=False,
@@ -197,7 +244,7 @@ def evaluate_model_kafka(model: keras.Model, num_samples: int = 150):
 
     consumer.close()
 
-    X = np.array(X_list, dtype=np.float32)   # shape [num_samples, 4]
+    X = np.array(X_list, dtype=np.float32)   # shape [num_samples, NEURAL_INPUT]
     y = np.array(y_list, dtype=np.int64)     # shape [num_samples]
 
     print(f"Collected {X.shape[0]} samples from Kafka")
@@ -209,7 +256,7 @@ def evaluate_model_kafka(model: keras.Model, num_samples: int = 150):
     preds = probs.argmax(axis=1)
 
     acc = accuracy_score(y, preds)
-    print("Accuracy on Kafka Iris stream on Keras: ", acc)
+    print("Testing Accuracy on Kafka Streams: ", acc)
     return acc
 
 # =======================================================================================================
@@ -217,14 +264,14 @@ def evaluate_model_kafka(model: keras.Model, num_samples: int = 150):
 
 if __name__ == "__main__":
 
-    SAVED_MODEL_NAME = os.getenv("SAVE_MODEL_NAME", "iris-global-model")
+    SAVED_MODEL_NAME = os.getenv("SAVE_MODEL_NAME", "global-model")
     flat_path = os.path.join("..", "java", "models", f"{SAVED_MODEL_NAME}-flat.txt")
     
     flat = load_flat_weights(flat_path)
     kernels, biases = reconstruct_layer_weights_for_keras(flat)
     # print_full_model(kernels, biases)
 
-    model = build_keras_iris_model()
+    model = build_keras_model()
     load_weights_into_keras_model(model, kernels, biases)
 
     if args.kafka:

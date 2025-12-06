@@ -62,7 +62,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         this.N_BATCHES = cfg.N_BATCHES;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
-        this.model = Dl4jModelFactory.createIrisModel();
+        this.model = Dl4jModelFactory.createModel();
         this.stats = new Stats();
         this.predictor = new BatchPrediction(model, stats);
         this.psoUpdater = new PsoUpdater(model, workerId);

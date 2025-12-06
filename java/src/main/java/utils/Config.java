@@ -46,16 +46,18 @@ public class Config {
                 .load();
         
         this.DATASET = getenv(dotenv, "DATASET", "iris");
+        System.out.println("DATASET: " + DATASET);
         // this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
         this.DATA_TOPIC = this.DATASET + "-input";
 
         if("iris".equals(this.DATASET)) {
-            this.NEURAL_INPUT = 4;
-            this.NEURAL_OUTPUT = 3;
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
         
         } else if("wine".equals(this.DATASET)) {
-            this.NEURAL_INPUT = 13;
-            this.NEURAL_OUTPUT = 3;
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);
         }
@@ -70,7 +72,7 @@ public class Config {
         this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
         this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         this.DESIRED_ACCURACY = Double.parseDouble(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
-        this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "iris-global-model");
+        this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
 
         this.W_INERTIA = Double.parseDouble(getenv(dotenv, "W_INERTIA", "0.95"));
         this.W_INERTIA_G_BEST = Double.parseDouble(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));

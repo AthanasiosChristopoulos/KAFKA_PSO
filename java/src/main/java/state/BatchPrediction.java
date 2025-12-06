@@ -147,5 +147,5 @@ public class BatchPrediction {
             return null;
         }
     }
-v   
+
 }

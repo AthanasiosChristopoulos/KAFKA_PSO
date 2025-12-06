@@ -16,6 +16,7 @@ public class Dl4jModelFactory {
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
 	public static MultiLayerNetwork createModel() {
+		// System.out.println("DATA_TOPIC: " + DATA_TOPIC);
 
 		if("iris-input".equals(DATA_TOPIC)) {
 				return createIrisModel();
@@ -25,11 +26,13 @@ public class Dl4jModelFactory {
 		} else {
             throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
 		}
-
-		
 	}
 
+	// ======================================================================================================================
+	// Iris Dataset Model Architecture 
+
 	public static MultiLayerNetwork createIrisModel() {
+		System.out.println("Using Iris Model");
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123) // or pass seed from outside
 				.list()
@@ -63,8 +66,10 @@ public class Dl4jModelFactory {
         // 403 weights all in all
 
 	// ======================================================================================================================
+	// Wine Dataset Model Architecture 
 
 	public static MultiLayerNetwork createWineModel() {
+		System.out.println("Using Wine Model");
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
                 .list()
@@ -89,4 +94,11 @@ public class Dl4jModelFactory {
         model.init();
         return model;
 	} 
+	// Number of weights in the network calculation:  
+        // For Hidden Layer 1   => 13 * 32 + 32 (Bias) 
+        // For Hidden Layer 2   => 32 * 16 + 16
+        // For Output Layer     => 16  * 3 + 3
+        // 403 weights all in all
+
+
 }

@@ -40,15 +40,14 @@ public class Dl4jParamUtils {
             long inSize = W.size(0);
             long outSize = W.size(1);
 
-            // same convention: j = neuron index, i = input index
+            // convention W_L(i, j): j = neuron index, i = input index (input weights), L = number of layer
             for (int j = 0; j < outSize; j++) {
 
-                for (int i = 0; i < inSize; i++) {
+                for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
                     flatList.add(W.getDouble(i, j));
                 }
 
-                // bias for neuron j
-                flatList.add(b.getDouble(j));
+                flatList.add(b.getDouble(j));       // Bias for neuron j
             }
         }
 

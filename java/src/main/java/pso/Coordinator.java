@@ -34,6 +34,7 @@ import state.*;
 
 public class Coordinator implements Runnable {
 
+    public final String DATASET;
     private final String PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC;
@@ -72,10 +73,14 @@ public class Coordinator implements Runnable {
 
         this.logger = CustomLogger.getCoordinatorInstance();
 
-        this.globalModel = Dl4jModelFactory.createIrisModel();
+        this.globalModel = Dl4jModelFactory.createModel();
         this.globalStats = new Stats();     
 
         this.predictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
+
+        this.DATASET = cfg.DATASET;
+
+        System.out.println("Running on Dataset: " + this.DATASET);
 
     }
 
