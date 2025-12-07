@@ -21,10 +21,10 @@ import java.util.Collection;
 import java.util.*;
 
 
-public class Dl4jParamUtils {
+public class Dl4jParamUtils {   
 
-    public static double[] modelToFlatList(MultiLayerNetwork model) {
-        List<Double> flatList = new ArrayList<>();
+    public static float[] modelToFlatList(MultiLayerNetwork model) {
+        List<Float> flatList = new ArrayList<>();
 
         for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
             Layer l = model.getLayer(layerIdx);
@@ -44,14 +44,14 @@ public class Dl4jParamUtils {
             for (int j = 0; j < outSize; j++) {
 
                 for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
-                    flatList.add(W.getDouble(i, j));
+                    flatList.add(W.getFloat(i, j));
                 }
 
-                flatList.add(b.getDouble(j));       // Bias for neuron j
+                flatList.add(b.getFloat(j));       // Bias for neuron j
             }
         }
 
-        double[] flat = new double[flatList.size()];
+        float[] flat = new float[flatList.size()];
         for (int i = 0; i < flat.length; i++) {
             flat[i] = flatList.get(i);
         }
@@ -60,7 +60,7 @@ public class Dl4jParamUtils {
     
     //=====================================================================================================
 
-    public static void updateModel(MultiLayerNetwork model, double[] flat) {
+    public static void updateModel(MultiLayerNetwork model, float[] flat) {
         int idx = 0;
 
         for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
@@ -98,7 +98,7 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static String sampleFlat(double[] flat) {
+    public static String sampleFlat(float[] flat) {
         int n = Math.min(3, flat.length);
 
         StringBuilder sb = new StringBuilder();
@@ -120,14 +120,14 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static String sampleFlats(Collection<double[]> flats) {
+    public static String sampleFlats(Collection<float[]> flats) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
 
         int idx = 0;
         int size = flats.size();
 
-        for (double[] flat : flats) {
+        for (float[] flat : flats) {
             sb.append(sampleFlat(flat));   // reuse your existing sampling function
 
             if (idx < size - 1) {
@@ -167,7 +167,7 @@ public class Dl4jParamUtils {
 
         // ===================== Save the model as a list =====================
 
-        double[] flat = modelToFlatList(model);
+        float[] flat = modelToFlatList(model);
         String filenameFlat = "models/" + SAVE_MODEL_NAME + "-flat.txt";
 
         try {
@@ -177,8 +177,8 @@ public class Dl4jParamUtils {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                for (double weight : flat) {
-                    writer.write(Double.toString(weight));
+                for (float weight : flat) {
+                    writer.write(Float.toString(weight));
                     writer.newLine();
                 }
             }

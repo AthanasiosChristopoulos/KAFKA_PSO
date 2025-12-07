@@ -5,8 +5,10 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.nd4j.linalg.api.buffer.DataType;
 
 public class Dl4jModelFactory {
         
@@ -35,7 +37,8 @@ public class Dl4jModelFactory {
 	// Iris Dataset Model Architecture 
 
 	public static MultiLayerNetwork createIrisModel() {
-		System.out.println("Using Iris Model");
+		// System.out.println("Using Iris Model");
+
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123) // or pass seed from outside
 				.list()
@@ -72,8 +75,10 @@ public class Dl4jModelFactory {
 	// Wine Dataset Model Architecture 
 
 	public static MultiLayerNetwork createWineModel() {
-		System.out.println("Using Wine Model");
+		// System.out.println("Using Wine Model");
+
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.dataType(DataType.HALF) 
                 .seed(123)
                 .list()
                 .layer(new DenseLayer.Builder()
@@ -97,6 +102,7 @@ public class Dl4jModelFactory {
         model.init();
         return model;
 	} 
+	
 	// Number of weights in the network calculation:  
         // For Hidden Layer 1   => 13 * 32 + 32 
         // For Hidden Layer 2   => 32 * 16 + 16
@@ -107,7 +113,8 @@ public class Dl4jModelFactory {
 	// MINST Dataset Model Architecture 
 
 	public static MultiLayerNetwork createMNISTModel() {
-		System.out.println("Using MNIST Model");
+		// System.out.println("Using MNIST Model");
+
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
 				.list()
