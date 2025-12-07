@@ -46,7 +46,7 @@ public class BatchPrediction {
             return;
         }
 
-        List<double[]> featureList = new ArrayList<>();
+        List<float[]> featureList = new ArrayList<>();
         List<Integer> labels = new ArrayList<>();
 
         // Parse JSONs into features + labels
@@ -58,9 +58,9 @@ public class BatchPrediction {
                 if (featList == null || featList.size() != NEURAL_INPUT) {
                     continue;       // skip non conforming record
                 }
-                double[] features = new double[NEURAL_INPUT];
+                float[] features = new float[NEURAL_INPUT];
                 for (int i = 0; i < NEURAL_INPUT; i++) {
-                    features[i] = ((Number) featList.get(i)).doubleValue();
+                    features[i] = ((Number) featList.get(i)).floatValue();
                 }
                 int label = ((Number) obj.get("label")).intValue();
 
@@ -77,7 +77,7 @@ public class BatchPrediction {
             return;
         }
 
-        double[][] data = new double[nSamples][NEURAL_INPUT];
+        float[][] data = new float[nSamples][NEURAL_INPUT];
         for (int i = 0; i < nSamples; i++) {
             data[i] = featureList.get(i);
         }
@@ -87,7 +87,7 @@ public class BatchPrediction {
         INDArray argMax = probs.argMax(1);           // [batch]
 
         int nCorrect = 0;
-        double loss = 0;
+        float loss = 0;
         
         for (int i = 0; i < nSamples; i++) {
             
@@ -99,7 +99,7 @@ public class BatchPrediction {
             }
 
             // Measure Loss
-            double[] probabilities = probs.getRow(i).toDoubleVector();      // get the probabilities for current sample 
+            float[] probabilities = probs.getRow(i).toFloatVector();      // get the probabilities for current sample 
             loss += LossFunction.compute_loss(probabilities, label);
         }
    
@@ -123,9 +123,9 @@ public class BatchPrediction {
                 return null; // bad record
             }
 
-            double[] features = new double[NEURAL_INPUT];
+            float[] features = new float[NEURAL_INPUT];
             for (int i = 0; i < NEURAL_INPUT; i++) {
-                features[i] = ((Number) featList.get(i)).doubleValue();
+                features[i] = ((Number) featList.get(i)).floatValue();
             }
 
             // Create [1, NEURAL_INPUT] INDArray

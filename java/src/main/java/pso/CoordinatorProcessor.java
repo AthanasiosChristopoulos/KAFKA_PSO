@@ -41,11 +41,11 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
     private final int NUM_WORKERS;
 
-    private final Map<String, double[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
-    private final Map<String, double[]> pBestBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
+    private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
+    private final Map<String, float[]> pBestBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
     
-    private double[] gBestWeights = null;
-    private double gBestAccuracy = 0.0;
+    private float[] gBestWeights = null;
+    private float gBestAccuracy = 0f;
 
     private int round = 0;
 
@@ -55,7 +55,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
     private final String DATA_TOPIC;
     private final int BATCH_SIZE;
-    private final double DESIRED_ACCURACY;
+    private final float DESIRED_ACCURACY;
     private final String RUN_ID;
 
     private final KafkaConsumer<String, String> consumer;
@@ -150,9 +150,9 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
                 return;
             }
 
-            double[] weights = new double[weightsList.size()];
+            float[] weights = new float[weightsList.size()];
             for (int i = 0; i < weightsList.size(); i++) {
-                weights[i] = ((Number) weightsList.get(i)).doubleValue();
+                weights[i] = ((Number) weightsList.get(i)).floatValue();
             }
 
             weightsBuffer.put(workerId, weights);
@@ -160,7 +160,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
             // Run only if all workers have reported their position 
             if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
             
-                double[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
+                float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
                 Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
@@ -184,7 +184,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
                 globalStats.reset();       
                 globalPredictor.callPredictionsBatch(evalBatch);
-                double accuracy = globalStats.getAccuracy();
+                float accuracy = globalStats.getAccuracy();
 
                 logger.log("Global model accuracy: " + accuracy);
                 System.out.println("Global model accuracy: " + accuracy);
@@ -212,14 +212,14 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         //         logger.log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
         //         return;
         //     }
-        //     double accuracy = accuracyNumber.doubleValue();
+        //     float accuracy = accuracyNumber.floatValue();
 
         //     if (gBestWeights == null || accuracy > gBestAccuracy) {
         //         gBestAccuracy = accuracy;
                
-        //         double[] pBestWeights = new double[pBestList.size()];
+        //         float[] pBestWeights = new float[pBestList.size()];
         //         for (int i = 0; i < pBestList.size(); i++) {
-        //             pBestWeights[i] = ((Number) pBestList.get(i)).doubleValue();
+        //             pBestWeights[i] = ((Number) pBestList.get(i)).floatValue();
         //         }
 
         //         gBestWeights  = pBestWeights;
@@ -229,8 +229,8 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
         //         payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
         //         payload.put("accuracy", gBestAccuracy);
 
-        //         List<Double> gBestListOut = new ArrayList<>(gBestWeights.length);
-        //         for (double v : gBestWeights) {
+        //         List<Float> gBestListOut = new ArrayList<>(gBestWeights.length);
+        //         for (float v : gBestWeights) {
         //             gBestListOut.add(v);
         //         }
         //         payload.put("gBestWeights", gBestListOut); 
@@ -261,14 +261,14 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
     }
 
     
-    private static double[] averageWeights(List<double[]> bufs) {
-        if (bufs == null || bufs.isEmpty()) return new double[0];
+    private static float[] averageWeights(List<float[]> bufs) {
+        if (bufs == null || bufs.isEmpty()) return new float[0];
 
         int numWorkers = bufs.size();
         int len = bufs.get(0).length;
-        double[] avg = new double[len];
+        float[] avg = new float[len];
 
-        for (double[] arr : bufs) {
+        for (float[] arr : bufs) {
             for (int i = 0; i < len; i++) {
                 avg[i] += arr[i];
             }

@@ -156,11 +156,11 @@ public class Coordinator implements Runnable {
                                 Map<String, Object> newMsg = MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
                                 Map<String, Object> oldMsg = MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
 
-                                // double newAcc = ((Number) newMsg.get("accuracy")).doubleValue();
-                                // double oldAcc = ((Number) oldMsg.get("accuracy")).doubleValue();
+                                // float newAcc = ((Number) newMsg.get("accuracy")).floatValue();
+                                // float oldAcc = ((Number) oldMsg.get("accuracy")).floatValue();
 
-                                double newLoss = ((Number) newMsg.get("loss")).doubleValue();
-                                double oldLoss = ((Number) oldMsg.get("loss")).doubleValue();
+                                float newLoss = ((Number) newMsg.get("loss")).floatValue();
+                                float oldLoss = ((Number) oldMsg.get("loss")).floatValue();
 
                                 if(oldLoss > newLoss) {
                                     return newJson;

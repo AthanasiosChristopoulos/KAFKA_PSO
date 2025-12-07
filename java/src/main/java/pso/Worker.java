@@ -89,6 +89,8 @@ public class Worker implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
+        Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
+
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
@@ -103,6 +105,7 @@ public class Worker implements Runnable {
             );
 
         } else {
+
             GlobalKTable<String, String> gBestTable = builder.globalTable(
                 GLOBAL_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), Serdes.String()),
@@ -114,7 +117,7 @@ public class Worker implements Runnable {
 
         // Task 1 ================================================================================================
         // input stream 1 and output stream 2_1 and stream 2_2
-
+        
         KStream<String, String> dataStream = builder.stream(
             DATA_TOPIC,
             Consumed.with(Serdes.String(), Serdes.String()))
@@ -131,9 +134,9 @@ public class Worker implements Runnable {
             peek((k, v) -> {
                 // logger.log("Sending pBest: " + v);
             })
-            .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+            .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
             
-        branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
         // =====================================================================================================
 

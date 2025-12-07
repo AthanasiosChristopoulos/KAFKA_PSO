@@ -23,14 +23,14 @@ public class Config {
     public final int NUM_WORKERS;
     public final int BATCH_SIZE;
     public final int N_BATCHES;
-    public final double DESIRED_ACCURACY;
+    public final float DESIRED_ACCURACY;
     public final String SAVE_MODEL_NAME;
 
-    public final double W_INERTIA;
-    public final double W_INERTIA_G_BEST;
-    public final double C;
-    public final double C1;
-    public final double C2;
+    public final float W_INERTIA;
+    public final float W_INERTIA_G_BEST;
+    public final float C;
+    public final float C1;
+    public final float C2;
     public final String RUN_ID;
 
     public final boolean FULLY_INFORMED;
@@ -75,14 +75,14 @@ public class Config {
         this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "5"));
         this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
         this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
-        this.DESIRED_ACCURACY = Double.parseDouble(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
+        this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
 
-        this.W_INERTIA = Double.parseDouble(getenv(dotenv, "W_INERTIA", "0.95"));
-        this.W_INERTIA_G_BEST = Double.parseDouble(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
-        this.C = Double.parseDouble(getenv(dotenv, "C", "1.7"));
-        this.C1 = Double.parseDouble(getenv(dotenv, "C1", "1.0"));
-        this.C2 = Double.parseDouble(getenv(dotenv, "C2", "2.0"));
+        this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
+        this.W_INERTIA_G_BEST = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+        this.C = Float.parseFloat(getenv(dotenv, "C", "1.7"));
+        this.C1 = Float.parseFloat(getenv(dotenv, "C1", "1.0"));
+        this.C2 = Float.parseFloat(getenv(dotenv, "C2", "2.0"));
 
         this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")); // create new RUN_ID based on time
 

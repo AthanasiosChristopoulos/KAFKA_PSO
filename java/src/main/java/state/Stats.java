@@ -4,12 +4,12 @@ public class Stats {
 
     private long nSamples = 0;
     private long nCorrect = 0;
-    private double loss = 0;
+    private float loss = 0;
 
-    private double bestAccuracy = 0;
-    private double bestLoss = 1000000;
+    private float bestAccuracy = 0;
+    private float bestLoss = 1000000;
 
-    public void addBatch(int nSamples, int nCorrect, double loss) {
+    public void addBatch(int nSamples, int nCorrect, float loss) {
         this.nSamples += nSamples;
         this.nCorrect += nCorrect;
         this.loss += loss;
@@ -25,35 +25,35 @@ public class Stats {
 
     // Accuracy ==========================================================================
 
-    public double getAccuracy() {
+    public float getAccuracy() {
         if (nSamples == 0) {
-            System.out.println("0.0, because no Predictions");
-            return 0.0;
+            System.out.println("0f, because no Predictions");
+            return 0f;
         } 
-        
-        double acc = (double) nCorrect / nSamples;
-        return Math.round(acc * 1000.0) / 1000.0; // round at 3 decimal positions 
+
+        float acc = (float) nCorrect / nSamples;
+        return Math.round(acc * 1000f) / 1000f; // round at 3 decimal positions 
     }
 
-    public double getBestAccuracy() {
-        return Math.round(bestAccuracy * 1000.0) / 1000.0;
+    public float getBestAccuracy() {
+        return Math.round(bestAccuracy * 1000f) / 1000f;
     }
     
-    public void setBestAccuracy(double newBestAccuracy) {
+    public void setBestAccuracy(float newBestAccuracy) {
         this.bestAccuracy = newBestAccuracy;
     }
 
     // Loss ==========================================================================
 
-    public double getLoss() {
-        return Math.round(loss * 1000.0) / 1000.0; 
+    public float getLoss() {
+        return Math.round(loss * 1000f) / 1000f; 
     }
     
-    public double getBestLoss() {
-        return Math.round(bestLoss * 1000.0) / 1000.0; 
+    public float getBestLoss() {
+        return Math.round(bestLoss * 1000f) / 1000f; 
     }
     
-    public void setBestLoss(double bestLoss) {
+    public void setBestLoss(float bestLoss) {
         this.bestLoss = bestLoss;
     }
 

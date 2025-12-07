@@ -9,14 +9,14 @@ import utils.*;
 
 public class PsoUpdater {
 
-    private final double W_INERTIA;
-    private final double C;
-    private final double C1;
-    private final double C2;
+    private final float W_INERTIA;
+    private final float C;
+    private final float C1;
+    private final float C2;
     private final int NUM_WORKERS;
     private final boolean FULLY_INFORMED;
 
-    private double[] velocity; 
+    private float[] velocity; 
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
@@ -34,36 +34,36 @@ public class PsoUpdater {
         this.C2 = cfg.C2;
         this.NUM_WORKERS = cfg.NUM_WORKERS;
 
-        double[] x = Dl4jParamUtils.modelToFlatList(model);
-        velocity = new double[x.length];
+        float[] x = Dl4jParamUtils.modelToFlatList(model);
+        velocity = new float[x.length];
 
-        randomizeVelocity(workerId, 0.01);
+        randomizeVelocity(workerId, 0.01f);
     }
 
     //================================================================================================
 
-    public double[] updateX(MultiLayerNetwork model, double[] pbest, double[] gbest) {
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {
 
-        double[] x_i = Dl4jParamUtils.modelToFlatList(model);
+        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         int dim = x_i.length;
 
         if (velocity == null || velocity.length != dim) {
-            velocity = new double[dim];
+            velocity = new float[dim];
         }
 
         Random rnd = new Random();
 
-        double[] velocity_i_1 = new double[dim];
-        double[] x_i_1 = new double[dim];
+        float[] velocity_i_1 = new float[dim];
+        float[] x_i_1 = new float[dim];
 
         for (int k = 0; k < dim; k++) {
 
-            double r1 = rnd.nextDouble();   // randomness
-            double r2 = rnd.nextDouble();  
+            float r1 = rnd.nextFloat();   // randomness
+            float r2 = rnd.nextFloat();  
 
-            double cognitive = C1 * r1 * (pbest[k] - x_i[k]);
-            double social    = C2 * r2 * (gbest[k] - x_i[k]);
-            double inertia   = W_INERTIA * velocity[k];
+            float cognitive = C1 * r1 * (pbest[k] - x_i[k]);
+            float social    = C2 * r2 * (gbest[k] - x_i[k]);
+            float inertia   = W_INERTIA * velocity[k];
 
             velocity_i_1[k] = inertia + cognitive + social;
             x_i_1[k] = x_i[k] + velocity_i_1[k];
@@ -77,33 +77,33 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    // public double[] updateX(MultiLayerNetwork model, List<double[]> neighborPBestList) {
+    // public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {
 
-    //     double[] x_i = Dl4jParamUtils.modelToFlatList(model);
+    //     float[] x_i = Dl4jParamUtils.modelToFlatList(model);
 
-    //     double[] socialAggregate = new double[x_i.length];
+    //     float[] socialAggregate = new float[x_i.length];
     //     Random rnd = new Random();
 
     //     // for pBest_j in neighbor_pBests:
-    //     for (double[] pBest_j : neighborPBestList) {
+    //     for (float[] pBest_j : neighborPBestList) {
 
     //         if (pBest_j.length != x_i.length) {
     //             throw new IllegalArgumentException("pBest size mismatch");
     //         }
 
     //         for (int k = 0; k < x_i.length; k++) {
-    //             double p_i_j = rnd.nextDouble();  // in [0,1)
+    //             float p_i_j = rnd.nextFloat();  // in [0,1)
     //             socialAggregate[k] += p_i_j * (pBest_j[k] - x_i[k]);
     //         }
     //     }
 
-    //     double scale = C / (double) NUM_WORKERS;
+    //     float scale = C / (float) NUM_WORKERS;
     //     for (int k = 0; k < socialAggregate.length; k++) {
     //         socialAggregate[k] *= scale;
     //     }
 
-    //     double[] velocity_i_1 = new double[x_i.length];
-    //     double[] x_i_1 = new double[x_i.length];
+    //     float[] velocity_i_1 = new float[x_i.length];
+    //     float[] x_i_1 = new float[x_i.length];
 
     //     for (int k = 0; k < x_i.length; k++) {
     //         velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
@@ -116,16 +116,16 @@ public class PsoUpdater {
     //     return this.velocity;
     // }
 
-    public double[] updateX(MultiLayerNetwork model, List<double[]> neighborPBestList) {
+    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {
 
-        double[] x_i = Dl4jParamUtils.modelToFlatList(model);
-        double[] socialAggregate = new double[x_i.length];
+        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
+        float[] socialAggregate = new float[x_i.length];
         Random rnd = new Random();
 
         // ===== handle "no neighbors" case: pure inertia step =====
         if (neighborPBestList == null || neighborPBestList.isEmpty()) {
-            double[] velocity_i_1 = new double[x_i.length];
-            double[] x_i_1 = new double[x_i.length];
+            float[] velocity_i_1 = new float[x_i.length];
+            float[] x_i_1 = new float[x_i.length];
 
             for (int k = 0; k < x_i.length; k++) {
                 // socialAggregate[k] is 0 -> only inertia
@@ -140,25 +140,25 @@ public class PsoUpdater {
 
         // ===== normal fully-informed case with neighbors =====
         // for pBest_j in neighbor_pBests:
-        for (double[] pBest_j : neighborPBestList) {
+        for (float[] pBest_j : neighborPBestList) {
 
             if (pBest_j.length != x_i.length) {
                 throw new IllegalArgumentException("pBest size mismatch");
             }
 
             for (int k = 0; k < x_i.length; k++) {
-                double p_i_j = rnd.nextDouble();  // in [0,1)
+                float p_i_j = rnd.nextFloat();  // in [0,1)
                 socialAggregate[k] += p_i_j * (pBest_j[k] - x_i[k]);
             }
         }
 
-        double scale = C / (double) NUM_WORKERS;
+        float scale = C / (float) NUM_WORKERS;
         for (int k = 0; k < socialAggregate.length; k++) {
             socialAggregate[k] *= scale;
         }
 
-        double[] velocity_i_1 = new double[x_i.length];
-        double[] x_i_1 = new double[x_i.length];
+        float[] velocity_i_1 = new float[x_i.length];
+        float[] x_i_1 = new float[x_i.length];
 
         for (int k = 0; k < x_i.length; k++) {
             velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
@@ -173,18 +173,18 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    public void randomizeVelocity(int workerId, double sigma) {
+    public void randomizeVelocity(int workerId, float sigma) {
         Random rnd = new Random(workerId);
 
         for (int i = 0; i < velocity.length; i++) {
-            velocity[i] = rnd.nextGaussian() * sigma;
+            velocity[i] = (float) rnd.nextGaussian() * sigma;
         }
     }
 
     //================================================================================================
 
-    public void randomizeModelWeights(MultiLayerNetwork model, int seed, double sigma) {
-        double[] flat = Dl4jParamUtils.modelToFlatList(model);
+    public void randomizeModelWeights(MultiLayerNetwork model, int seed, float sigma) {
+        float[] flat = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random(seed);
 
         for (int i = 0; i < flat.length; i++) {

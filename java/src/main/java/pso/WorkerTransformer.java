@@ -23,7 +23,7 @@ import java.util.Arrays;
 import utils.*;
 import state.*;
 
-public class WorkerTransformer implements Transformer<String, String, KeyValue<String, String>> {
+public class WorkerTransformer implements Transformer<String, String, KeyValue<String, WeightsMessage>> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -45,7 +45,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private final BatchPrediction predictor;
     private final PsoUpdater psoUpdater;
 
-    private double[] pBestWeights;
+    private float[] pBestWeights;
     private int batchesRead = 0;
 
     private boolean printedOffset = false;
@@ -128,18 +128,18 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         buffer.clear();
         batchesRead++;
 
-        double accuracy = stats.getAccuracy();
-        double loss = stats.getLoss();
+        float accuracy = stats.getAccuracy();
+        float loss = stats.getLoss();
         if (accuracy == 0.0) {
             System.out.println("Accuracy Invalid");
             return null;
         }
 
-        double[] weights = Dl4jParamUtils.modelToFlatList(model);
-        List<Double> weightList = new ArrayList<>(weights.length);
-        for (double v : weights) {
-            weightList.add(v);
-        }
+        float[] weights = Dl4jParamUtils.modelToFlatList(model);
+        // List<Float> weightList = new ArrayList<>(weights.length);
+        // for (float v : weights) {
+        //     weightList.add(v);
+        // }
 
         // if (accuracy > stats.getBestAccuracy()) {
         if(loss < stats.getBestLoss()) {
@@ -155,18 +155,23 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             logger.log("Improved loss to: " + stats.getBestLoss() + ", n_predictions: " + stats.getNumPredictions() +
                        ", n_correct: " + stats.getNumCorrect());
             
-            var payload = new HashMap<String, Object>();
-            payload.put("pBestMsgIndex", java.util.UUID.randomUUID().toString());
-            payload.put("id_worker", workerId);
-            payload.put("pBestWeights", weightList);
-            payload.put("accuracy", accuracy);
-            payload.put("loss", loss);
+            // var payload = new HashMap<String, Object>();
+            // payload.put("pBestMsgIndex", java.util.UUID.randomUUID().toString());
+            // payload.put("id_worker", workerId);
+            // payload.put("pBestWeights", weightList);
+            // payload.put("accuracy", accuracy);
+            // payload.put("loss", loss);
 
+            
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+            
             try {
-                String json = MAPPER.writeValueAsString(payload);
-                // logger.log("SENDING pBest JSON: " + json);
+                // String json = MAPPER.writeValueAsString(payload);
+                // // logger.log("SENDING pBest JSON: " + json);
 
-                return new KeyValue<>(keyName, json);
+                // return new KeyValue<>(keyName, json);
+
+                return new KeyValue<>(keyName, msg);
 
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
                 e.printStackTrace();
@@ -194,13 +199,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             }
         }
 
-        double[] velocity = new double[this.pBestWeights.length];
+        float[] velocity = new float[this.pBestWeights.length];
 
         // get the State Store ==================================================================================
 
         if (FULLY_INFORMED == true) {
 
-            List<double[]> neighborPBestList = readNeighborPBestList();
+            List<float[]> neighborPBestList = readNeighborPBestList();
 
             if (neighborPBestList == null || neighborPBestList.isEmpty()) {
                 logger.log("No neighbor pBest found; skipping social update this round.");
@@ -212,9 +217,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         } else {
 
-            double[] gBestWeights = readBestWeights();
+            float[] gBestWeights = readBestWeights();
             if (gBestWeights == null) {
-                gBestWeights = new double[this.pBestWeights.length];
+                gBestWeights = new float[this.pBestWeights.length];
             }
 
             // logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
@@ -230,11 +235,11 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     //=========================================================================================================================
 
-    private List<double[]> readNeighborPBestList() {
+    private List<float[]> readNeighborPBestList() {
 
         // dumpBestStore();
 
-        List<double[]> neighbors = new ArrayList<>();
+        List<float[]> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
             logger.log("readNeighborPBestList: bestStore is null");
@@ -256,9 +261,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                         continue;
                     }
 
-                    double[] pBestArr = new double[pBestList.size()];
+                    float[] pBestArr = new float[pBestList.size()];
                     for (int i = 0; i < pBestList.size(); i++) {
-                        pBestArr[i] = ((Number) pBestList.get(i)).doubleValue();
+                        pBestArr[i] = ((Number) pBestList.get(i)).floatValue();
                     }
 
                     neighbors.add(pBestArr);
@@ -279,7 +284,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     //=========================================================================================================================
 
-    private double[] readBestWeights() { // read state store
+    private float[] readBestWeights() { // read state store
 
         if (bestStore == null) {
             logger.log("gBestWeights returned null");
@@ -307,10 +312,10 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 return null;
             }
 
-            double[] gBestWeights = new double[gBestList.size()]; // initialize with 0.0 values
+            float[] gBestWeights = new float[gBestList.size()]; // initialize with 0.0 values
 
             for (int i = 0; i < gBestList.size(); i++) {
-                gBestWeights[i] = ((Number) gBestList.get(i)).doubleValue(); // fill the gBestWeights with the actuall values
+                gBestWeights[i] = ((Number) gBestList.get(i)).floatValue(); // fill the gBestWeights with the actuall values
             }
             // logger.log("gBestWeights: " + Dl4JParamUtils.sampleFlat(gBestWeights));
 

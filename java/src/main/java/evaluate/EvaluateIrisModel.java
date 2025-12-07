@@ -47,8 +47,8 @@ public class EvaluateIrisModel {
         // ===== Print first 10 scaled samples =====
         System.out.println("=== First 10 SCALED Iris samples (DL4J) ===");
         for (int i = 0; i < 10; i++) {
-            double[] features = X_scaled.getRow(i).toDoubleVector();
-            double[] labels = y.getRow(i).toDoubleVector();
+            float[] features = X_scaled.getRow(i).toFloatVector();
+            float[] labels = y.getRow(i).toFloatVector();
 
             System.out.printf(
                 "Row %d: features=%s  label=%s%n",
@@ -65,7 +65,7 @@ public class EvaluateIrisModel {
         INDArray output = model.output(X_scaled, false);
         eval.eval(y, output);
 
-        double accuracy = eval.accuracy();
+        float accuracy = (float) eval.accuracy();
         System.out.println("Iris model accuracy (scaled): " + accuracy);
 
     }

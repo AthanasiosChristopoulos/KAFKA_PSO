@@ -105,3 +105,36 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
+
+
+## Kafka Message Documentation:
+
+Input pBest-weights-topic:
+
+    Field             | Type
+    -----------------------------
+    id_worker         | int
+    MsgIndex          | String
+    accuracy          | float
+    loss              | float
+    weights           | float[]
+
+Input local-weights-topic:
+
+    Field             | Type
+    -----------------------------
+    id_worker         | int
+    MsgIndex          | String
+    accuracy          | float
+    loss              | float
+    weights           | float[]
+
+Input input-weights-topic:
+
+    Field             | Type
+    -----------------------------
+    id_worker         | int
+    MsgIndex          | String
+    accuracy          | float
+    loss              | float
+    weights           | float[]
