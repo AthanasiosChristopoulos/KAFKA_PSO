@@ -36,7 +36,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     private ProcessorContext context;
 
-    private ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>> bestStore;
+    private ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>> bestStore;
 
     private final List<String> buffer = new ArrayList<>();
 
@@ -85,13 +85,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
         this.context = context;
-        this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<String>>) context.getStateStore(stateStoreName);
+        this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>>) context.getStateStore(stateStoreName);
     }
 
     //=========================================================================================================================
 
     @Override
-    public KeyValue<String, String> transform(String key, String value) {
+    public KeyValue<String, WeightsMessage> transform(String key, String value) {
 
         if (!printedOffset) {
             printedOffset = true;
@@ -106,11 +106,25 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 return null;
             }
 
-            ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
+            ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
             if (wrapper == null) {
-                logger.log("initial bestStore: bestStore has no 'gBest'");
+                logger.log("gBestWeights returned null (no entry for key '" + keyName + "')");
+                return null;
+            }
+
+            WeightsMessage best = wrapper.value();
+            if (best == null || best.weights == null || best.weights.length == 0) {
+                logger.log("gBestWeights is empty for key '" + keyName + "'");
+                return null;
+            }
+
+            if (best == null) {
+                logger.log("initial bestStore: no entry for key '" + keyName + "'");
             } else {
-                logger.log("initial bestStore: bestStore['gBest'] = " + wrapper.value());
+                logger.log("initial bestStore: " + keyName +
+                        " -> worker=" + best.idWorker +
+                        ", loss=" + best.loss +
+                        ", accuracy=" + best.accuracy);
             }
         }
         
@@ -142,6 +156,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         // }
 
         // if (accuracy > stats.getBestAccuracy()) {
+
         if(loss < stats.getBestLoss()) {
 
             stats.setBestAccuracy(accuracy);
@@ -162,36 +177,41 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             // payload.put("accuracy", accuracy);
             // payload.put("loss", loss);
 
-            
+            String msgIndex = java.util.UUID.randomUUID().toString();
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
-            
-            try {
+
+            return new KeyValue<>(keyName, msg);
+
+            // try {
                 // String json = MAPPER.writeValueAsString(payload);
                 // // logger.log("SENDING pBest JSON: " + json);
 
                 // return new KeyValue<>(keyName, json);
 
-                return new KeyValue<>(keyName, msg);
-
-            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                e.printStackTrace();
-                return null;
-            }
+            // } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            //     e.printStackTrace();
+            //     return null;
+            // }
         }
 
         if (batchesRead >= N_BATCHES) {
             try {
                 logger.log("Sending current weights ...");
-                var payload = new HashMap<String, Object>();
-                payload.put("id_worker", this.workerId);
-                payload.put("weightsMsgIndex", java.util.UUID.randomUUID().toString());
-                payload.put("weights", weightList);
+                // var payload = new HashMap<String, Object>();
+                // payload.put("id_worker", this.workerId);
+                // payload.put("weightsMsgIndex", java.util.UUID.randomUUID().toString());
+                // payload.put("weights", weightList);
 
-                String json = MAPPER.writeValueAsString(payload);
+                // String json = MAPPER.writeValueAsString(payload);
 
                 batchesRead = 0;
+                String msgIndex = java.util.UUID.randomUUID().toString();
 
-                return new KeyValue<>("1", json);
+                WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+
+                return new KeyValue<>("current_weights", msg);
+
+                // return new KeyValue<>("1", json);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -237,8 +257,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     private List<float[]> readNeighborPBestList() {
 
-        // dumpBestStore();
-
         List<float[]> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
@@ -246,32 +264,18 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             return neighbors;
         }
 
-        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = bestStore.all()) {
+        try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
 
             while (it.hasNext()) {
-                KeyValue<String, ValueAndTimestamp<String>> entry = it.next();
-
-                String json = entry.value.value();
-                if (json == null) continue;
-
-                try {
-                    Map<String, Object> msg = MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
-                    Object pBestObj = msg.get("pBestWeights");
-                    if (!(pBestObj instanceof List<?> pBestList)) {
-                        continue;
-                    }
-
-                    float[] pBestArr = new float[pBestList.size()];
-                    for (int i = 0; i < pBestList.size(); i++) {
-                        pBestArr[i] = ((Number) pBestList.get(i)).floatValue();
-                    }
-
-                    neighbors.add(pBestArr);
-
-                } catch (Exception e) {
-                    logger.log("Error parsing pBest from store: " + e.getMessage());
-                    e.printStackTrace();
+                KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
+                WeightsMessage msg = entry.value.value(); 
+                if (msg == null || msg.weights == null || msg.weights.length == 0) {
+                    continue;
                 }
+
+                float[] pBestArr = msg.weights;
+
+                neighbors.add(pBestArr);
             }
 
         } catch (Exception e) {
@@ -282,79 +286,84 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         return neighbors;
     }
 
+
     //=========================================================================================================================
 
-    private float[] readBestWeights() { // read state store
+    private float[] readBestWeights() {
 
         if (bestStore == null) {
-            logger.log("gBestWeights returned null");
+            logger.log("bestStore is null");
             return null;
         }
 
-        // String gBestJson = bestStore.get(keyName); // this is the State Store. get(record key)
-        // dumpBestStore();
-
-        ValueAndTimestamp<String> wrapper = bestStore.get(keyName);
+        ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
         if (wrapper == null) {
-            logger.log("gBestWeights returned null (no entry for key 'gBest')");
+            logger.log("gBestWeights returned null (no entry for key '" + keyName + "')");
             return null;
         }
 
-        String gBestJson = wrapper.value();
-        // logger.log("gBestJson: " + gBestJson);
-
-        try {
-
-            Map<String, Object> msg = MAPPER.readValue(gBestJson, new TypeReference<Map<String, Object>>() {});
-            Object gBestObj = msg.get("gBestWeights"); // get MSG inside the JSON
-            if (!(gBestObj instanceof List<?> gBestList)) {
-                logger.log("gBestWeights isnt a List");
-                return null;
-            }
-
-            float[] gBestWeights = new float[gBestList.size()]; // initialize with 0.0 values
-
-            for (int i = 0; i < gBestList.size(); i++) {
-                gBestWeights[i] = ((Number) gBestList.get(i)).floatValue(); // fill the gBestWeights with the actuall values
-            }
-            // logger.log("gBestWeights: " + Dl4JParamUtils.sampleFlat(gBestWeights));
-
-            return gBestWeights;
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        WeightsMessage best = wrapper.value();
+        if (best == null || best.weights == null || best.weights.length == 0) {
+            logger.log("gBestWeights is empty for key '" + keyName + "'");
             return null;
         }
+
+        float[] gBestWeights = best.weights;
+        if (gBestWeights == null || gBestWeights.length == 0) {
+            logger.log("gBestWeights is empty for key '" + keyName + "'");
+            return null;
+        }
+
+        // logger.log("gBestWeights: " + Dl4jParamUtils.sampleFlat(gBestWeights));
+        return gBestWeights;
     }
 
     // =====================================================================================================================
 
-    private void dumpBestStore() {
+    // private void dumpBestStore() {
 
-        try (KeyValueIterator<String, ValueAndTimestamp<String>> it = bestStore.all()) {
+    //     if (bestStore == null) {
+    //         logger.log("[bestStore] Store is null!");
+    //         return;
+    //     }
 
-            boolean empty = true;
+    //     try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
 
-            while (it.hasNext()) {
-                empty = false;
-                KeyValue<String, ValueAndTimestamp<String>> entry = it.next();
+    //         boolean empty = true;
 
-                logger.log(
-                    "[bestStore] key = " + entry.key +
-                    ", value = " + entry.value.value() +
-                    ", timestamp = " + entry.value.timestamp()
-                );
-            }
+    //         while (it.hasNext()) {
+    //             empty = false;
+    //             KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
 
-            if (empty) {
-                logger.log("[bestStore] Store is empty!");
-            }
+    //             WeightsMessage msg = entry.value.value(); // unwrap
+    //             if (msg == null) {
+    //                 logger.log("[bestStore] key = " + entry.key + ", value = null");
+    //                 continue;
+    //             }
 
-        } catch (Exception e) {
-            logger.log("Error while dumping bestStore: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+    //             int nWeights = (msg.weights != null) ? msg.weights.length : 0;
+
+    //             logger.log(
+    //                 "[bestStore] key = " + entry.key +
+    //                 ", id_worker = " + msg.idWorker +
+    //                 ", msgIndex = " + msg.msgIndex +
+    //                 ", accuracy = " + msg.accuracy +
+    //                 ", loss = " + msg.loss +
+    //                 ", nWeights = " + nWeights
+    //             );
+    //         }
+
+    //         if (empty) {
+    //             logger.log("[bestStore] Store is empty!");
+    //         }
+
+    //     } catch (Exception e) {
+    //         logger.log("Error while dumping bestStore: " + e.getMessage());
+    //         e.printStackTrace();
+    //     }
+    // }
+
+
 
     //=========================================================================================================================
 

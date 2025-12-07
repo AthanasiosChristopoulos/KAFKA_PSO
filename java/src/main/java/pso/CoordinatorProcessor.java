@@ -34,7 +34,7 @@ import java.time.Duration;
 import utils.*;
 import state.*;
 
-public class CoordinatorProcessor implements Processor<String, String, String, String> {
+public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, String> {
     private ProcessorContext<String, String> context;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -108,7 +108,7 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
     }
 
     @Override
-    public void process(Record<String, String> record) {
+    public void process(Record<String, WeightsMessage> record) {
         if (control.isStopRequested()) return;
         
         if(count == 0) {
@@ -119,83 +119,61 @@ public class CoordinatorProcessor implements Processor<String, String, String, S
 
         count = count + 1;
 
-        String value = record.value();
-        if (value == null) {
+        WeightsMessage msg = record.value();
+        if (msg == null) {
             return;
         }
 
-        Map<String, Object> msg;
-        try {
-            msg = MAPPER.readValue(value, new TypeReference<Map<String, Object>>() {});
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            e.printStackTrace(); 
+        // logger.log("RECEIVED value: " + value);
+        String workerId = String.valueOf(msg.idWorker);
+
+        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from: " + workerId);
+
+        float[] weights = msg.weights;
+        if (weights == null) {
             return;
         }
 
-        Object workerIdObj = msg.get("id_worker");
-        if (workerIdObj == null) {
-            return;
-        }
-        // logger.log("Unexpected worker_id type: " + workerIdObj.getClass());
-        // int workerId = ((Number) msg.get("id_worker")).intValue();
+        weightsBuffer.put(workerId, weights);
 
-        String workerId = String.valueOf(workerIdObj);
+        // Run only if all workers have reported their position 
+        if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+        
+            float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
-        logger.log("RECEIVED value: " + value);
+            Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
-        if(msg.containsKey("weights")) {    // Receive weight updates
-            
-            Object weightsObj = msg.get("weights");
-            if (!(weightsObj instanceof List<?> weightsList)) { // if weightsObj is a List,then automatically cast it into weightsList
+            // ======== evaluate accuracy of globalModel using BatchPrediction ========
+
+            List<String> evalBatch = new ArrayList<>();
+
+            while (evalBatch.size() < BATCH_SIZE) {
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+
+                if (records.isEmpty()) {
+                    break; // no more data, use whatever we have
+                }
+
+                for (ConsumerRecord<String, String> rec : records) {
+                    if (rec.value() != null) {
+                        evalBatch.add(rec.value());
+                    }
+                }
+            }
+
+            globalStats.reset();       
+            globalPredictor.callPredictionsBatch(evalBatch);
+            float accuracy = globalStats.getAccuracy();
+
+            logger.log("Global model accuracy: " + accuracy);
+            System.out.println("Global model accuracy: " + accuracy);
+
+            weightsBuffer.clear();
+
+            if (accuracy >= this.DESIRED_ACCURACY) {
+                Dl4jParamUtils.saveModel(globalModel);
+                control.requestStop();
                 return;
-            }
-
-            float[] weights = new float[weightsList.size()];
-            for (int i = 0; i < weightsList.size(); i++) {
-                weights[i] = ((Number) weightsList.get(i)).floatValue();
-            }
-
-            weightsBuffer.put(workerId, weights);
-
-            // Run only if all workers have reported their position 
-            if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
-            
-                float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
-
-                Dl4jParamUtils.updateModel(globalModel, avgWeights);
-
-                // ======== evaluate accuracy of globalModel using BatchPrediction ========
-
-                List<String> evalBatch = new ArrayList<>();
-
-                while (evalBatch.size() < BATCH_SIZE) {
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-
-                    if (records.isEmpty()) {
-                        break; // no more data, use whatever we have
-                    }
-
-                    for (ConsumerRecord<String, String> rec : records) {
-                        if (rec.value() != null) {
-                            evalBatch.add(rec.value());
-                        }
-                    }
-                }
-
-                globalStats.reset();       
-                globalPredictor.callPredictionsBatch(evalBatch);
-                float accuracy = globalStats.getAccuracy();
-
-                logger.log("Global model accuracy: " + accuracy);
-                System.out.println("Global model accuracy: " + accuracy);
-
-                weightsBuffer.clear();
-
-               if (accuracy >= this.DESIRED_ACCURACY) {
-                    Dl4jParamUtils.saveModel(globalModel);
-                    control.requestStop();
-                    return;
-                }
             }
 
         } 

@@ -16,6 +16,7 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
+import org.apache.kafka.common.serialization.Serde;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -87,55 +88,52 @@ public class Worker implements Runnable {
         // props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
 
-        StreamsBuilder builder = new StreamsBuilder();
-
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
+
+        StreamsBuilder builder = new StreamsBuilder();
 
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
         if(FULLY_INFORMED == true) {
 
-            GlobalKTable<String, String> gBestTable = builder.globalTable(
+            GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.<String,   String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                Consumed.with(Serdes.String(), weightsSerde),
+                Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
-                    .withValueSerde(Serdes.String())
+                    .withValueSerde(weightsSerde)
             );
 
         } else {
 
-            GlobalKTable<String, String> gBestTable = builder.globalTable(
+            GlobalKTable<String, WeightsMessage> gBestTable = builder.globalTable(
                 GLOBAL_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String()),
-                Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                Consumed.with(Serdes.String(), weightsSerde),
+                Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
                     .withKeySerde(Serdes.String())
-                    .withValueSerde(Serdes.String())
+                    .withValueSerde(weightsSerde)
             );
         }
 
         // Task 1 ================================================================================================
         // input stream 1 and output stream 2_1 and stream 2_2
         
-        KStream<String, String> dataStream = builder.stream(
+        KStream<String, String> rawDataStream = builder.stream(
             DATA_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String()))
+            Consumed.with(Serdes.String(), Serdes.String())
+        );
+
+        KStream<String, WeightsMessage> dataStream = rawDataStream
             .transform(() -> new WorkerTransformer(workerId))
-                                                                //  wire the state store to the WorkerTransformer
             .filter((k, v) -> v != null);
 
-        KStream<String, String>[] branches = dataStream.branch(
+        KStream<String, WeightsMessage>[] branches = dataStream.branch(
             (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 
-        branches[0].
-            peek((k, v) -> {
-                // logger.log("Sending pBest: " + v);
-            })
-            .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
-            
+        branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
         // =====================================================================================================

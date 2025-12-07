@@ -15,6 +15,7 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.Suppressed;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
+import org.apache.kafka.streams.kstream.Grouped;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -103,7 +104,7 @@ public class Coordinator implements Runnable {
 
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "3"); // 3 Threads since we have 3 Tasks {Task 0, Task 1, Task 2}
 
-        // Serde<PBestUpdate> pBestSerde = new JsonSerde<>(PBestUpdate.class);
+        Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
         CoordinatorControl control = CoordinatorControl.getInstance();
 
@@ -112,9 +113,9 @@ public class Coordinator implements Runnable {
         // Task 0 =======================================================================================================
         // input stream 5
 
-        KStream<String, String> local_weights_stream = builder.stream(
+        KStream<String, WeightsMessage> local_weights_stream = builder.stream(
             LOCAL_WEIGHTS_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String())
+            Consumed.with(Serdes.String(), weightsSerde)
         );
 
         local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, globalStats));
@@ -122,92 +123,140 @@ public class Coordinator implements Runnable {
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6
 
-        if(1 == 2) { // for debuggging purposes
+        // if(1 == 2) { // for debuggging purposes
 
-            KStream<String, String> pBest_weights_stream = builder.stream(
+        //     KStream<String, WeightsMessage> pBest_weights_stream = builder.stream(
+        //         PBEST_WEIGHTS_TOPIC,
+        //         Consumed.with(Serdes.String(), weightsSerde)
+        //     );
+
+        //     pBest_weights_stream
+        //         .process(() -> new CoordinatorProcessor(globalModel, globalStats))
+        //         .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+        // } else {
+                    
+        if(FULLY_INFORMED != true) {
+
+            KStream<String, WeightsMessage> pBestJsonStream = builder.stream(
                 PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), Serdes.String())
-            );
+                Consumed.with(Serdes.String(), weightsSerde)
+            )
+            .peek((k, json) -> {
+                // logger.log("New gBest from worker JSON: " + json);
+            });
 
-            pBest_weights_stream
-                .process(() -> new CoordinatorProcessor(globalModel, globalStats))
-                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
-
-        } else {
-            
-            if(FULLY_INFORMED != true) {
-
-                KStream<String, String> pBestJsonStream = builder.stream(
-                    PBEST_WEIGHTS_TOPIC,
-                    Consumed.with(Serdes.String(), Serdes.String())
-                )
-                .peek((k, json) -> {
-                    // logger.log("New gBest from worker JSON: " + json);
-                });
-
-                KTable<String, String> gBestTable = pBestJsonStream
-                    .groupByKey()
-                    .aggregate(
-                        () -> null,     // initial aggregate = null (no gBest yet)
-                        (key, newJson, aggJson) -> {
-                            if (aggJson == null) return newJson;
-
-                            try {
-                                Map<String, Object> newMsg = MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
-                                Map<String, Object> oldMsg = MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
-
-                                // float newAcc = ((Number) newMsg.get("accuracy")).floatValue();
-                                // float oldAcc = ((Number) oldMsg.get("accuracy")).floatValue();
-
-                                float newLoss = ((Number) newMsg.get("loss")).floatValue();
-                                float oldLoss = ((Number) oldMsg.get("loss")).floatValue();
-
-                                if(oldLoss > newLoss) {
-                                    return newJson;
-                                }
-
-                                return aggJson; // means keep aggJson as the current aggregate
-
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                return aggJson; 
-                            }
-                        },
-                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
-                            .withKeySerde(Serdes.String())
-                            .withValueSerde(Serdes.String())
-                            .withCachingDisabled() 
-                )
-                .suppress(Suppressed.untilTimeLimit(
-                    Duration.ofSeconds(1), // flush every one second
-                    Suppressed.BufferConfig.unbounded()
-                ));
-
-                gBestTable
-                    .toStream()
-                    .mapValues(json -> {
-                        try {
-                            Map<String, Object> msg = MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
-
-                            payload.put("id_worker", msg.get("id_worker"));
-                            payload.put("accuracy", msg.get("accuracy"));
-                            payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
-                            payload.put("gBestWeights", msg.get("pBestWeights"));
-
-                            return MAPPER.writeValueAsString(payload);
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
+            KTable<String, WeightsMessage> gBestTable = pBestJsonStream
+                .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
+                .aggregate(
+                    () -> null,     // initial aggregate = null (no gBest yet)
+                    (key, newMsg, aggMsg) -> {
+                        if (aggMsg == null) {
+                            return newMsg;
                         }
-                    })
-                    .filter((k, v) -> v != null)
-                    .peek((k, json) -> {
-                        // logger.log("New gBest JSON: " + json);
-                    })
-                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String())); 
-            }
+                        
+                        float newLoss = newMsg.loss;
+                        float oldLoss = aggMsg.loss;
+
+                        if (newLoss < oldLoss) {
+                            return newMsg;
+                        }
+                        return aggMsg; // means keep aggMsg as the current aggregate
+
+                    },
+                    Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(weightsSerde)
+                        .withCachingDisabled() 
+            )
+            .suppress(Suppressed.untilTimeLimit(
+                Duration.ofSeconds(1), // flush every one second
+                Suppressed.BufferConfig.unbounded()
+            ));
+
+            gBestTable
+                .toStream()
+                .filter((k, v) -> v != null)
+                .peek((k, json) -> {
+                    // logger.log("New gBest JSON: " + json);
+                })
+                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 
         }
+
+            // if(FULLY_INFORMED != true) {
+
+            //     KStream<String, String> pBestJsonStream = builder.stream(
+            //         PBEST_WEIGHTS_TOPIC,
+            //         Consumed.with(Serdes.String(), Serdes.String())
+            //     )
+            //     .peek((k, json) -> {
+            //         // logger.log("New gBest from worker JSON: " + json);
+            //     });
+
+            //     KTable<String, String> gBestTable = pBestJsonStream
+            //         .groupByKey()
+            //         .aggregate(
+            //             () -> null,     // initial aggregate = null (no gBest yet)
+            //             (key, newJson, aggJson) -> {
+            //                 if (aggJson == null) return newJson;
+
+            //                 try {
+            //                     Map<String, Object> newMsg = MAPPER.readValue(newJson, new TypeReference<Map<String, Object>>() {});
+            //                     Map<String, Object> oldMsg = MAPPER.readValue(aggJson, new TypeReference<Map<String, Object>>() {});
+
+            //                     // float newAcc = ((Number) newMsg.get("accuracy")).floatValue();
+            //                     // float oldAcc = ((Number) oldMsg.get("accuracy")).floatValue();
+
+            //                     float newLoss = ((Number) newMsg.get("loss")).floatValue();
+            //                     float oldLoss = ((Number) oldMsg.get("loss")).floatValue();
+
+            //                     if(oldLoss > newLoss) {
+            //                         return newJson;
+            //                     }
+
+            //                     return aggJson; // means keep aggJson as the current aggregate
+
+            //                 } catch (Exception e) {
+            //                     e.printStackTrace();
+            //                     return aggJson; 
+            //                 }
+            //             },
+            //             Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore")
+            //                 .withKeySerde(Serdes.String())
+            //                 .withValueSerde(Serdes.String())
+            //                 .withCachingDisabled() 
+            //     )
+            //     .suppress(Suppressed.untilTimeLimit(
+            //         Duration.ofSeconds(1), // flush every one second
+            //         Suppressed.BufferConfig.unbounded()
+            //     ));
+
+            //     gBestTable
+            //         .toStream()
+            //         .mapValues(json -> {
+            //             try {
+            //                 Map<String, Object> msg = MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+
+            //                 payload.put("id_worker", msg.get("id_worker"));
+            //                 payload.put("accuracy", msg.get("accuracy"));
+            //                 payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
+            //                 payload.put("gBestWeights", msg.get("pBestWeights"));
+
+            //                 return MAPPER.writeValueAsString(payload);
+
+            //             } catch (Exception e) {
+            //                 e.printStackTrace();
+            //                 return null;
+            //             }
+            //         })
+            //         .filter((k, v) -> v != null)
+            //         .peek((k, json) -> {
+            //             // logger.log("New gBest JSON: " + json);
+            //         })
+            //         .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String())); 
+            // }
+            
+        // }
 
         // Task 2 =======================================================================================================
         
@@ -227,7 +276,7 @@ public class Coordinator implements Runnable {
 
         prediction_stream
             .peek((k, v) -> { System.out.println("New Prediction Record: " + v); })
-            .mapValues(json -> predictor.predictSingle(json)) 
+            .mapValues(json -> predictor.predictSingle(json))   // simple transformer
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
             
