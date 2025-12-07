@@ -2,6 +2,7 @@
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_wine
+from tensorflow.keras.datasets import mnist
 from sklearn.metrics import accuracy_score
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # no GPU
@@ -35,10 +36,14 @@ NEURAL_INPUT = NEURAL_OUTPUT = 0
 if(DATASET == "iris"):
     NEURAL_INPUT = int(os.getenv("NUM_FEATURES_IRIS", "4"))
     NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_IRIS", "3"))
-
+    
 elif (DATASET == "wine"):
     NEURAL_INPUT = int(os.getenv("NUM_FEATURES_WINE", "13"))
     NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_WINE", "3"))   
+
+elif (DATASET == "mnist"):
+    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_MNIST", "784"))
+    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_MNIST", "10"))   
     
 
 # =======================================================================================================
@@ -70,6 +75,13 @@ def reconstruct_layer_weights_for_keras(flat: np.ndarray):
             (16, NEURAL_OUTPUT),
         ]
         
+    elif DATASET == "mnist":
+        layer_shapes = [
+            (NEURAL_INPUT, 256),  
+            (256, 128),           
+            (128, NEURAL_OUTPUT), 
+        ]
+                        
     else:
         raise ValueError(f"Unsupported DATASET={DATASET}")
 
@@ -124,6 +136,16 @@ def build_keras_model():
                 layers.Input(shape=(NEURAL_INPUT,)),
                 layers.Dense(32, activation="relu", name="dense1"),
                 layers.Dense(16, activation="relu", name="dense2"),
+                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+            ]
+        )
+        
+    elif DATASET == "mnist":
+        model = keras.Sequential(
+            [
+                layers.Input(shape=(NEURAL_INPUT,)),   
+                layers.Dense(256, activation="relu", name="dense1"),
+                layers.Dense(128, activation="relu", name="dense2"),
                 layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
             ]
         )
@@ -186,7 +208,13 @@ def evaluate_model(model):
         iris = load_wine()
         X_raw = iris["data"].astype(np.float32)   # shape [150, NEURAL_INPUT]
         y = iris["target"]                        # shape [150,]    
-        
+    
+    elif DATASET == "mnist":
+        (X_train, y_train), _ = mnist.load_data()
+        X_raw = X_train.reshape(-1, 28 * 28).astype("float32")
+        y = y_train
+        X_scaled = (X_raw / 255.0).astype(np.float32)   # no StandardScaler
+
     else:
         raise ValueError(f"Invalid Dataset = {DATASET} chosen")
     

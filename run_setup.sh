@@ -54,9 +54,12 @@ for app in pso-worker pso-coordinator; do
     --force
 done
 
+# ========================================================================
+# ========================================================================
 # DATA_TOPIC ==============================================================
 
 # iris: ======================================================
+
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic iris-input --partitions 1 --if-not-exists
@@ -89,6 +92,22 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic wine-input --from-beginning
   
+# mnist: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic mnist-input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic mnist-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic mnist-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic mnist-input --from-beginning
 
 # PBEST_WEIGHTS_TOPIC ==============================================================
 

@@ -141,9 +141,9 @@ public class Coordinator implements Runnable {
                     PBEST_WEIGHTS_TOPIC,
                     Consumed.with(Serdes.String(), Serdes.String())
                 )
-                .peek((k, json) ->
-                    logger.log("New gBest from worker JSON: " + json)
-                );
+                .peek((k, json) -> {
+                    // logger.log("New gBest from worker JSON: " + json);
+                });
 
                 KTable<String, String> gBestTable = pBestJsonStream
                     .groupByKey()
@@ -203,8 +203,7 @@ public class Coordinator implements Runnable {
                     })
                     .filter((k, v) -> v != null)
                     .peek((k, json) -> {
-                        logger.log("New gBest JSON: " + json);
-                        // System.out.println("[Coordinator] New gBest JSON: " + json);
+                        // logger.log("New gBest JSON: " + json);
                     })
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), Serdes.String())); 
             }

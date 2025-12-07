@@ -58,6 +58,10 @@ public class Config {
             this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
 
+        } else if("mnist".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);
         }

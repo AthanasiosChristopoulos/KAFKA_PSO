@@ -296,7 +296,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         String gBestJson = wrapper.value();
-        logger.log("gBestJson: " + gBestJson);
+        // logger.log("gBestJson: " + gBestJson);
 
         try {
 

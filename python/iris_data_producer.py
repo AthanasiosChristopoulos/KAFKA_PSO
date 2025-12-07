@@ -3,6 +3,7 @@ import json, time, random
 import os
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_wine
+from tensorflow.keras.datasets import mnist
 from sklearn.preprocessing import StandardScaler
 from kafka import KafkaProducer
 import argparse
@@ -46,7 +47,13 @@ def load_dataset():
         X = wine.data              # shape (178, 13)
         y = wine.target            # 0,1,2
         class_names = wine.target_names.tolist()
-
+    
+    elif DATASET == "mnist":
+        (X_train, y_train), _ = mnist.load_data()
+        X = X_train.reshape(-1, 28 * 28).astype("float32")  # [60000, 784], by default mnist has 60000 samples
+        y = y_train
+        class_names = [str(i) for i in range(10)]           # "0".."9" each is one different number
+    
     else:
         print("Invalid Dataset selected")
         exit(0)
@@ -67,6 +74,7 @@ def main():
     if args.all:
         
         while data_repeats < NUMBER_OF_DATA_REPEATS:
+            
             for index in range(len(X_scaled)):
                 features = X_scaled[index]
                 label = int(y[index])
