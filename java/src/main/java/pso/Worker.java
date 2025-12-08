@@ -18,6 +18,9 @@ import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.serialization.Serde;
 
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.streams.StreamsConfig;
+
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -87,7 +90,8 @@ public class Worker implements Runnable {
         // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         // props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
-
+        props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
+        
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
         StreamsBuilder builder = new StreamsBuilder();

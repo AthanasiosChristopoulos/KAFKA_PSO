@@ -138,3 +138,20 @@ Input input-weights-topic:
     accuracy          | float
     loss              | float
     weights           | float[]
+
+
+## Input new Dataset - Model:
+gunzip SUSY.csv.gz
+
+ - 1) Add new .env variables
+ - 2) Update NEURAL_INPUT and NEURAL_OUTPUT in Config.java
+ - 3) Define new createModel function in Dl4jModelFactory
+ - 4) append in iris_data_producer.py the load_dataset() function an elif
+ - 5) update in evaluate_model.py, by adding elifs to functions:
+        - NEURAL_INPUT and NEURAL_OUTPUT
+        - reconstruct_layer_weights_for_keras()
+        - build_keras_model()
+        - evaluate_model()
+
+
+

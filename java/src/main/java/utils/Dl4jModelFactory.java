@@ -28,6 +28,9 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist-input".equals(DATA_TOPIC)) {
 				return createMNISTModel();
+				
+		} else if ("susy-input".equals(DATA_TOPIC)) {
+				return createSUSYModel();
 		} else {
             throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
 		}
@@ -40,6 +43,7 @@ public class Dl4jModelFactory {
 		// System.out.println("Using Iris Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.dataType(DataType.HALF) 
 				.seed(123) // or pass seed from outside
 				.list()
 				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
@@ -102,7 +106,7 @@ public class Dl4jModelFactory {
         model.init();
         return model;
 	} 
-	
+
 	// Number of weights in the network calculation:  
         // For Hidden Layer 1   => 13 * 32 + 32 
         // For Hidden Layer 2   => 32 * 16 + 16
@@ -116,6 +120,7 @@ public class Dl4jModelFactory {
 		// System.out.println("Using MNIST Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.dataType(DataType.HALF) 
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
@@ -145,6 +150,50 @@ public class Dl4jModelFactory {
         // For Hidden Layer 2   => 256 * 128 + 128
         // For Output Layer     => 128 * 10 + 10
         // 235146 weights all in all
-
+		// 400000 == NN400K
 		// this is comparable to NN400K
+
+		// 1048576
+		// 1881444
+		//  940584
+	
+	// ======================================================================================================================
+	// SUSY Dataset Model Architecture 
+
+	public static MultiLayerNetwork createSUSYModel() {
+		// System.out.println("Using SUSY Model");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.dataType(DataType.HALF)
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)  // 18
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT)  // 2
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// Number of weights in the network calculation:  
+		// For Hidden Layer 1   => 18 * 128 + 128  
+		// For Hidden Layer 2   => 128 * 128 + 128
+		// For Output Layer     => 128 * 2 + 2
+		// 19202 weights all in all
+		// 38018
+	
 }

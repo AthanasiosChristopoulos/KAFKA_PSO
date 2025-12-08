@@ -101,31 +101,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 ", Partition: " + context.partition() +
                 ", Topic: " + context.topic()
             );
-            if (bestStore == null) {
-                logger.log("gBestWeights returned null");
-                return null;
-            }
-
-            ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
-            if (wrapper == null) {
-                logger.log("gBestWeights returned null (no entry for key '" + keyName + "')");
-                return null;
-            }
-
-            WeightsMessage best = wrapper.value();
-            if (best == null || best.weights == null || best.weights.length == 0) {
-                logger.log("gBestWeights is empty for key '" + keyName + "'");
-                return null;
-            }
-
-            if (best == null) {
-                logger.log("initial bestStore: no entry for key '" + keyName + "'");
-            } else {
-                logger.log("initial bestStore: " + keyName +
-                        " -> worker=" + best.idWorker +
-                        ", loss=" + best.loss +
-                        ", accuracy=" + best.accuracy);
-            }
         }
         
         if (value == null) {
@@ -150,12 +125,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         float[] weights = Dl4jParamUtils.modelToFlatList(model);
-        // List<Float> weightList = new ArrayList<>(weights.length);
-        // for (float v : weights) {
-        //     weightList.add(v);
-        // }
-
-        // if (accuracy > stats.getBestAccuracy()) {
 
         if(loss < stats.getBestLoss()) {
 
@@ -164,59 +133,26 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
             this.pBestWeights = weights;
 
-            logger.log("Improved accuracy to: " + stats.getBestAccuracy() + ", n_predictions: " + stats.getNumPredictions() +
-                       ", n_correct: " + stats.getNumCorrect());
-
-            logger.log("Improved loss to: " + stats.getBestLoss() + ", n_predictions: " + stats.getNumPredictions() +
-                       ", n_correct: " + stats.getNumCorrect());
-            
-            // var payload = new HashMap<String, Object>();
-            // payload.put("pBestMsgIndex", java.util.UUID.randomUUID().toString());
-            // payload.put("id_worker", workerId);
-            // payload.put("pBestWeights", weightList);
-            // payload.put("accuracy", accuracy);
-            // payload.put("loss", loss);
+            logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
+                        ", n_predictions: " + stats.getNumPredictions() + ", n_correct: " + stats.getNumCorrect());
 
             String msgIndex = java.util.UUID.randomUUID().toString();
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
             return new KeyValue<>(keyName, msg);
-
-            // try {
-                // String json = MAPPER.writeValueAsString(payload);
-                // // logger.log("SENDING pBest JSON: " + json);
-
-                // return new KeyValue<>(keyName, json);
-
-            // } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            //     e.printStackTrace();
-            //     return null;
-            // }
         }
 
         if (batchesRead >= N_BATCHES) {
-            try {
-                logger.log("Sending current weights ...");
-                // var payload = new HashMap<String, Object>();
-                // payload.put("id_worker", this.workerId);
-                // payload.put("weightsMsgIndex", java.util.UUID.randomUUID().toString());
-                // payload.put("weights", weightList);
 
-                // String json = MAPPER.writeValueAsString(payload);
+            logger.log("Sending current weights ...");
 
-                batchesRead = 0;
-                String msgIndex = java.util.UUID.randomUUID().toString();
+            batchesRead = 0;
+            String msgIndex = java.util.UUID.randomUUID().toString();
 
-                WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
-                return new KeyValue<>("current_weights", msg);
+            return new KeyValue<>("current_weights", msg);
 
-                // return new KeyValue<>("1", json);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
         }
 
         float[] velocity = new float[this.pBestWeights.length];
@@ -240,9 +176,10 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             float[] gBestWeights = readBestWeights();
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
+            } else {
+                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
             }
 
-            // logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 

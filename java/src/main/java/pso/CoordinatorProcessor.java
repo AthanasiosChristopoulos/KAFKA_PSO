@@ -127,7 +127,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         // logger.log("RECEIVED value: " + value);
         String workerId = String.valueOf(msg.idWorker);
 
-        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from: " + workerId);
+        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
         float[] weights = msg.weights;
         if (weights == null) {
@@ -147,7 +147,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             List<String> evalBatch = new ArrayList<>();
 
-            while (evalBatch.size() < BATCH_SIZE) {
+            while (evalBatch.size() < BATCH_SIZE) {  // foll eval_batch before evaluating performance 
+
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
                 if (records.isEmpty()) {

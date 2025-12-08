@@ -45,11 +45,14 @@ elif (DATASET == "mnist"):
     NEURAL_INPUT = int(os.getenv("NUM_FEATURES_MNIST", "784"))
     NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_MNIST", "10"))   
     
+elif (DATASET == "susy"):
+    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_SUSSY", "18"))
+    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_SUSSY", "2"))
 
 # =======================================================================================================
 # 1. Load flat weights from file
 
-def load_flat_weights(path: str) -> np.ndarray:
+def load_flat_weights(path: str):
     flat = np.loadtxt(path, dtype=np.float32)
     print(f"Loaded flat weights from {path}, length = {len(flat)}")
     print(f"First 5 flat values: {flat[:5]}")
@@ -58,7 +61,7 @@ def load_flat_weights(path: str) -> np.ndarray:
 # =======================================================================================================
 # 2. Reconstruct layer weights using the same convention as
 
-def reconstruct_layer_weights_for_keras(flat: np.ndarray):
+def reconstruct_layer_weights_for_keras(flat):
 
     # (in_size, out_size) for each dense layer in order
     if DATASET == "iris":
@@ -81,7 +84,14 @@ def reconstruct_layer_weights_for_keras(flat: np.ndarray):
             (256, 128),           
             (128, NEURAL_OUTPUT), 
         ]
-                        
+
+    elif DATASET == "susy":
+        layer_shapes = [
+            (NEURAL_INPUT, 128),   # Dense 1
+            (128, 128),            # Dense 2
+            (128, NEURAL_OUTPUT),  # Output
+        ]
+                    
     else:
         raise ValueError(f"Unsupported DATASET={DATASET}")
 
@@ -149,6 +159,17 @@ def build_keras_model():
                 layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
             ]
         )
+
+    elif DATASET == "susy":
+        model = keras.Sequential(
+            [
+                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Dense(128, activation="relu", name="dense1"),
+                layers.Dense(128, activation="relu", name="dense2"),
+                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+            ]
+        )
+
     else:
         raise ValueError(f"Invalid Dataset = {DATASET} chosen")
     
@@ -213,7 +234,11 @@ def evaluate_model(model):
         (X_train, y_train), _ = mnist.load_data()
         X_raw = X_train.reshape(-1, 28 * 28).astype("float32")
         y = y_train
-        X_scaled = (X_raw / 255.0).astype(np.float32)   # no StandardScaler
+
+    elif DATASET == "susy":
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows = 150)
+        X_raw = data[:, :-1].astype(np.float32) 
+        y = data[:, -1].astype(int)              
 
     else:
         raise ValueError(f"Invalid Dataset = {DATASET} chosen")
@@ -241,11 +266,11 @@ def evaluate_model(model):
 
 def evaluate_model_kafka(model, num_samples: int = 150):
 
-    data_topic = os.getenv("DATA_TOPIC", "iris-input")
-    print(f"[INFO] Consuming {num_samples} samples from Kafka data_topic '{data_topic}'")
+    INPUT_TOPIC = DATASET + "-input"
+    print(f"[INFO] Consuming {num_samples} samples from Kafka INPUT_TOPIC '{INPUT_TOPIC}'")
 
     consumer = KafkaConsumer(
-        data_topic,
+        INPUT_TOPIC,
         bootstrap_servers="localhost:9092",
         auto_offset_reset="earliest",    # start from beginning
         enable_auto_commit=False,

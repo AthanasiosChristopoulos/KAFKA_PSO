@@ -62,8 +62,13 @@ public class Config {
             this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
 
+        } else if("susy".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);
+            
         }
 
         this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");

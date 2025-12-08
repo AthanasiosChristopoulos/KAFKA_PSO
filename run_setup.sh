@@ -109,6 +109,24 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic mnist-input --from-beginning
 
+# susy: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic susy-input --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic susy-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic susy-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic susy-input --from-beginning
+
+
 # PBEST_WEIGHTS_TOPIC ==============================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \

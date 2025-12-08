@@ -40,8 +40,9 @@ if [[ "$1" != "--debug" ]]; then
         )
     else
         TOPICS=(
-            "$PBEST_WEIGHTS_TOPIC"
+            # "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"
+            # "$LOCAL_WEIGHTS_TOPIC"
         )
     fi
 
