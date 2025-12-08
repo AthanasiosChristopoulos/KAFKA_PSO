@@ -59,6 +59,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private float accuracy = -1f;
     private float loss = 10000f;
 
+    private float gBestAccuracy = -1f;
+
+
     public WorkerTransformer(int workerId) {
 
         this.workerId = workerId;
@@ -68,14 +71,15 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         this.N_BATCHES = cfg.N_BATCHES;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
+        this.logger = CustomLogger.getWorkerInstance(workerId);
+
         this.model = Dl4jModelFactory.createModel();
         this.stats = new Stats();
-        this.predictor = new BatchPrediction(model, stats);
+        this.predictor = new BatchPrediction(model, stats, logger);
         this.psoUpdater = new PsoUpdater(model, workerId);
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
 
-        this.logger = CustomLogger.getWorkerInstance(workerId);
         logger.log("Worker " + workerId + " WorkerTransformer started");
 
         if(FULLY_INFORMED == true) {
@@ -131,10 +135,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         catch (Exception e) {
             logger.log("Error iterating bestStore: " + e.getMessage());
             System.out.println("Error iterating bestStore: " + e.getMessage());
-
             e.printStackTrace();
         }
-
 
         buffer.clear();
         batchesRead++;
@@ -142,14 +144,14 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         // float accuracy = stats.getAccuracy();
         // float loss = stats.getLoss();
 
-        if (accuracy == 0f) {
+        // if (accuracy == 0f) {
             
-            if(accuracy_invalid == false) {
-                System.out.println("Accuracy Invalid");
-                accuracy_invalid = true;
-            }
-            return null;
-        }
+        //     if(accuracy_invalid == false) {
+        //         System.out.println("Accuracy Invalid");
+        //         accuracy_invalid = true;
+        //     }
+        //     return null;
+        // }
 
         if (loss == 0f) {
             if(loss_invalid == false) {
@@ -221,7 +223,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights));
+                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights) + ", gBest Accuracy: " + gBestAccuracy);
             }
 
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
@@ -290,6 +292,10 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         float[] gBestWeights = best.weights;
+        if(best.accuracy > gBestAccuracy) {  // update gBestAccuracy
+            gBestAccuracy = best.accuracy;
+        }
+        
         if (gBestWeights == null || gBestWeights.length == 0) {
             logger.log("gBestWeights is empty for key '" + keyName + "'");
             return null;

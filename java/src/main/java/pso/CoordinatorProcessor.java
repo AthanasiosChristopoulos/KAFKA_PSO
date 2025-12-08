@@ -76,11 +76,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     public CoordinatorProcessor(MultiLayerNetwork model, Stats stats) {
 
         this.control = CoordinatorControl.getInstance();
-          
+
+        this.logger = CustomLogger.getCoordinatorInstance();
+
         this.globalModel = model;
         this.globalStats = stats;    
 
-        this.globalPredictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
+        this.globalPredictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats, logger);
 
         Config cfg = Config.getInstance();
         this.NUM_WORKERS = cfg.NUM_WORKERS;
@@ -89,8 +91,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.TEST_TOPIC = cfg.TEST_TOPIC;
         this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
         this.RUN_ID = cfg.RUN_ID;    
-
-        this.logger = CustomLogger.getCoordinatorInstance();
         
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");

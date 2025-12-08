@@ -80,7 +80,7 @@ public class Coordinator implements Runnable {
         this.globalModel = Dl4jModelFactory.createModel();
         this.globalStats = new Stats();     
 
-        this.predictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats);
+        this.predictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats, logger);
 
         this.DATASET = cfg.DATASET;
 
