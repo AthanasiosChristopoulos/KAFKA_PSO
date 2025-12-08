@@ -55,7 +55,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final String DATA_TOPIC;
     private final String TEST_TOPIC;
-    
+
     private final int BATCH_SIZE;
     private final float DESIRED_ACCURACY;
     private final String RUN_ID;
@@ -67,6 +67,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final CoordinatorControl control;
 
     private final CustomLogger logger;
+
+    private float accuracy = -1f;
+    private float loss = 10000f;
 
     // ======================================================================
 
@@ -96,7 +99,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-
+        logger.log("TEST_TOPIC: " + TEST_TOPIC);
         this.consumer = new KafkaConsumer<>(consumerProps);
         // this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));     
@@ -156,6 +159,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
                 if (records.isEmpty()) {
+                    System.out.println("Records is empty");
                     break; // no more data, use whatever we have
                 }
 
@@ -167,8 +171,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             }
 
             globalStats.reset();       
-            globalPredictor.callPredictionsBatch(evalBatch);
-            float accuracy = globalStats.getAccuracy();
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
+            accuracy = accLoss[0];
+            loss = accLoss[1];
+
+            // float accuracy = globalStats.getAccuracy();
 
             logger.log("Global model accuracy: " + accuracy);
             System.out.println("Global model accuracy: " + accuracy);

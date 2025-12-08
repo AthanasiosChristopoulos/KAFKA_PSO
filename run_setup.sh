@@ -44,7 +44,7 @@ exit 0
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --list 
 
-# Reset StateStores ===================================================================
+# Delete old StateStores ===================================================================
 
 for app in pso-worker pso-coordinator; do
   docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
@@ -54,7 +54,6 @@ for app in pso-worker pso-coordinator; do
     --force
 done
 
-# ========================================================================
 # ========================================================================
 # DATA_TOPIC ==============================================================
 

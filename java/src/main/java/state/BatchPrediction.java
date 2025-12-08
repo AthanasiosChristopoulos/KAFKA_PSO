@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-
+import java.util.Arrays;
 import utils.*;
 
 public class BatchPrediction {
@@ -41,22 +41,111 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public void callPredictionsBatch(List<String> jsonValues) {
+    // public void callPredictionsBatch(List<String> jsonValues) {     // jsonValues == buffer with many samples
+    //     if (jsonValues == null || jsonValues.isEmpty()) {
+    //         System.out.println("json values are empty");
+    //         return;
+    //     }
+
+    //     List<float[]> featureList = new ArrayList<>();
+    //     List<Integer> labels = new ArrayList<>();
+
+    //     for (String value : jsonValues) {   // extract features, labels out of json values for data batch
+    //         try {
+    //             Map<String, Object> obj = MAPPER.readValue(value, new TypeReference<Map<String, Object>>() {});
+
+    //             List<?> featList = (List<?>) obj.get("features");
+    //             if (featList == null || featList.size() != NEURAL_INPUT) {
+    //                 continue;       // skip non conforming record (or wrong number of NEURAL_INPUT / NUMBER_OF_FEATURES)
+    //             }
+    //             float[] features = new float[NEURAL_INPUT];
+    //             for (int i = 0; i < NEURAL_INPUT; i++) {
+    //                 features[i] = ((Number) featList.get(i)).floatValue();
+    //             }
+    //             int label = ((Number) obj.get("label")).intValue();
+
+    //             featureList.add(features);
+    //             labels.add(label);
+
+    //         } catch (Exception e) {
+    //             System.out.println("Error");
+    //         }
+    //     }
+
+    //     int nSamples = featureList.size();
+    //     if (nSamples == 0) {
+    //         System.out.println("No samples");
+    //         return;
+    //     }
+
+    //     float[][] data = new float[nSamples][NEURAL_INPUT];
+    //     for (int i = 0; i < nSamples; i++) {
+    //         data[i] = featureList.get(i);
+    //     }
+        
+    //     INDArray X = Nd4j.create(data);              // [batch, NEURAL_INPUT]
+    //     INDArray probs = model.output(X, false);     // [batch, NEURAL_OUTPUT]
+    //     INDArray argMax = probs.argMax(1);           // [batch]
+
+    //     if (probs == null || probs.size(0) == 0) {
+    //         System.out.println("Empty probs batch");
+    //         return;
+    //     }
+
+    //     int nCorrect = 0;
+    //     float loss = 0;
+        
+    //     for (int i = 0; i < nSamples; i++) {    // for every samples
+            
+    //         // Measure Accuracy
+    //         int pred = argMax.getInt(i);
+    //         int label = labels.get(i);
+    //         if (pred == label) {
+    //             nCorrect++;
+    //         }
+
+    //         // Measure Loss
+    //         float[] probabilities = probs.getRow(i).toFloatVector();      // get the probabilities for current sample 
+    //         // for (float p : probabilities) {
+    //         //     if (p == 0.0f) {
+    //         //         System.out.println("0 probability detected, something went wrong");
+    //         //         break;  
+    //         //     }
+    //         // }
+    //         loss += LossFunction.compute_loss(probabilities, label);
+    //     }
+
+    //     if (loss == 0f) {
+    //         System.out.println("loss == 0, X length: " + X.length());
+    //         return;
+    //     }
+
+    //     if (nCorrect == 0) {
+    //         System.out.println("nCorrect == 0");
+    //         return;
+    //     }
+        
+    //     stats.addBatch(nSamples, nCorrect, loss); // Update this worker's stats
+    // }
+
+
+    public float[] callPredictionsBatch(List<String> jsonValues) {     // jsonValues == buffer with many samples
+        
         if (jsonValues == null || jsonValues.isEmpty()) {
-            return;
+            System.out.println("json values are empty");
+            return new float[]{-1f, -1f};
         }
 
         List<float[]> featureList = new ArrayList<>();
         List<Integer> labels = new ArrayList<>();
 
-        // Parse JSONs into features + labels
-        for (String value : jsonValues) {
+        for (String value : jsonValues) {   // extract features, labels out of json values for data batch
             try {
                 Map<String, Object> obj = MAPPER.readValue(value, new TypeReference<Map<String, Object>>() {});
 
                 List<?> featList = (List<?>) obj.get("features");
                 if (featList == null || featList.size() != NEURAL_INPUT) {
-                    continue;       // skip non conforming record
+                    continue;       // skip non conforming record (or wrong number of NEURAL_INPUT / NUMBER_OF_FEATURES)
                 }
                 float[] features = new float[NEURAL_INPUT];
                 for (int i = 0; i < NEURAL_INPUT; i++) {
@@ -74,7 +163,8 @@ public class BatchPrediction {
 
         int nSamples = featureList.size();
         if (nSamples == 0) {
-            return;
+            System.out.println("No samples");
+            return new float[]{-1f, -1f};
         }
 
         float[][] data = new float[nSamples][NEURAL_INPUT];
@@ -83,29 +173,86 @@ public class BatchPrediction {
         }
         
         INDArray X = Nd4j.create(data);              // [batch, NEURAL_INPUT]
+
+        // System.out.println("X shape: " + Arrays.toString(X.shape()));
+        // int debugRowsX = (int) Math.min(5, X.size(0));   // X.size(0) = batch size
+        // for (int i = 0; i < debugRowsX; i++) {
+        //     System.out.println("X row " + i + ": " + X.getRow(i));
+        // }
+
         INDArray probs = model.output(X, false);     // [batch, NEURAL_OUTPUT]
+
+        // System.out.println("probs shape: " + Arrays.toString(probs.shape()));
+        // int debugRowsX = (int) Math.min(5, probs.size(0));   // X.size(0) = batch size
+        // for (int i = 0; i < debugRowsX; i++) {
+        //     System.out.println("probs row " + i + ": " + probs.getRow(i));
+        // }        
+        
         INDArray argMax = probs.argMax(1);           // [batch]
+
+        if (probs == null || probs.size(0) == 0) {
+            System.out.println("Empty probs batch");
+            return new float[]{-1f, -1f};
+        }
 
         int nCorrect = 0;
         float loss = 0;
         
-        for (int i = 0; i < nSamples; i++) {
+        for (int i = 0; i < nSamples; i++) {    // for every samples
             
             // Measure Accuracy
             int pred = argMax.getInt(i);
             int label = labels.get(i);
+
             if (pred == label) {
                 nCorrect++;
             }
+            System.out.println("pred: " + pred + ", label: " + label + ", nCorrect: " + nCorrect);
 
             // Measure Loss
             float[] probabilities = probs.getRow(i).toFloatVector();      // get the probabilities for current sample 
+            // for (float p : probabilities) {
+            //     if (Float.isNaN(loss)) {
+            //         System.out.println("loss is NaN");
+            //         break;
+            //     }
+
+            //     if (p == 0.0f) {
+            //         System.out.println("0 probability detected, something went wrong");
+            //         break;  
+            //     }
+            // }
+
+
             loss += LossFunction.compute_loss(probabilities, label);
         }
-   
-        stats.addBatch(nSamples, nCorrect, loss); // Update this worker's stats
-    }
 
+       if (nSamples == 0) {
+            System.out.println("nSamples == 0");
+            return new float[]{-1f, -1f};
+        }
+
+        if (loss == 0f) {
+            System.out.println("loss == 0, X length: " + X.length());
+            return new float[]{-1f, -1f};
+        }
+        if (Float.isNaN(loss) || Float.isInfinite(loss)) {
+            System.out.println("loss is NaN/Inf, X length: " + X.length());
+            return new float[]{-1f, -1f};
+        }
+
+        if (nCorrect == 0) {
+            System.out.println("nCorrect == 0");
+            return new float[]{-1f, -1f};
+        }
+        
+        // stats.addBatch(nSamples, nCorrect, loss); // Update this worker's stats
+
+        float accuracy = (float) nCorrect / nSamples;
+        float avgLoss = loss / nSamples;
+        return new float[]{accuracy, avgLoss};
+    }
+    
     // ===========================================================================
 
     public String predictSingle(String jsonValue) {

@@ -155,3 +155,7 @@ gunzip SUSY.csv.gz
 
 
 
+## Improve congvergence:
+ - change model
+ - change constants => velocity, inertia, C1, C2
+ - increase the number of children

@@ -98,8 +98,10 @@ public class Coordinator implements Runnable {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); // not effective Kafka Streams commit by itself. It works only for plain
-                                                                      // KafkaConsumers/KafkaProducers
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); 
+        
+            // not effective Kafka Streams commit by itself. It works only for plain KafkaConsumers / KafkaProducers
+
         // props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         // props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
@@ -136,7 +138,7 @@ public class Coordinator implements Runnable {
             .peek((k, msg) -> {
                 logger.log(
                     "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
-                    ", loss: " + msg.loss +", weights.length=" + Dl4jParamUtils.sampleFlat(msg.weights)
+                    ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights)
                 );
             });
 
@@ -174,11 +176,14 @@ public class Coordinator implements Runnable {
                 .peek((k, msg) -> {
                     logger.log(
                         "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
-                        ", loss: " + msg.loss +", weights.length=" + Dl4jParamUtils.sampleFlat(msg.weights)
+                        ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights)
                     );
                 })
                 .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 
         }
+
+        // Task 2 ===============================================================================================================
+        // input stream 8 and output stream 9
 
         KStream<String, String> prediction_stream = builder.stream(
             PREDICTION_INPUT_TOPIC,
@@ -191,7 +196,7 @@ public class Coordinator implements Runnable {
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
             
-        // =======================================================================================================
+        // ===============================================================================================================
 
         Topology topology = builder.build();
 

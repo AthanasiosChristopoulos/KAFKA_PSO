@@ -29,7 +29,7 @@ public class Config {
     public final String SAVE_MODEL_NAME;
 
     public final float W_INERTIA;
-    public final float W_INERTIA_G_BEST;
+    // public final float W_INERTIA_G_BEST;
     public final float C;
     public final float C1;
     public final float C2;
@@ -48,8 +48,7 @@ public class Config {
                 .load();
         
         this.DATASET = getenv(dotenv, "DATASET", "iris");
-        System.out.println("DATASET: " + DATASET);
-        // this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
+        System.out.println("DATASET: " + DATASET);        
         this.DATA_TOPIC = this.DATASET + "-input";
         this.TEST_TOPIC = this.DATASET + "-test";
 
@@ -70,8 +69,8 @@ public class Config {
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
 
         } else {
-            throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);
-            
+
+            throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
         }
 
         this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
@@ -86,15 +85,23 @@ public class Config {
         this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
 
-        this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
-        this.W_INERTIA_G_BEST = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+        this.FULLY_INFORMED = Boolean.parseBoolean(getenv(dotenv, "FULLY_INFORMED", "false"));
+
+        // this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
+        // this.W_INERTIA_G_BEST = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+
+        if(this.FULLY_INFORMED == true) {
+            this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
+        } else {
+            this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+        }
+
         this.C = Float.parseFloat(getenv(dotenv, "C", "1.7"));
         this.C1 = Float.parseFloat(getenv(dotenv, "C1", "1.0"));
         this.C2 = Float.parseFloat(getenv(dotenv, "C2", "2.0"));
 
         this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")); // create new RUN_ID based on time
 
-        this.FULLY_INFORMED = Boolean.parseBoolean(getenv(dotenv, "FULLY_INFORMED", "false"));
         this.DEBUG_KAFKA = Boolean.parseBoolean(getenv(dotenv, "DEBUG_KAFKA", "false"));
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));

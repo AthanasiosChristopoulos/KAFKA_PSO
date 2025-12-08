@@ -38,6 +38,12 @@ if [[ "$1" != "--debug" ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )
+    elif [[ 1 -eq 2 ]]; then
+        TOPICS=(
+            "$PBEST_WEIGHTS_TOPIC"
+            "$GLOBAL_WEIGHTS_TOPIC"
+            "$LOCAL_WEIGHTS_TOPIC"
+        )
     else
         TOPICS=(
             # "$PBEST_WEIGHTS_TOPIC"

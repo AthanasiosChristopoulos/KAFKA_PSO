@@ -29,14 +29,43 @@ public class LossFunction {
 
     public static float compute_loss_L2(float[] probs, int label) {
 
+        if(probs.length == 0) {
+            return -1f;
+        }
+
         float[] target = new float[probs.length]; // convert to different one hot encoding: 2 => [0, 0, 1]
         target[label] = 1f;
 
         float sum = 0;
         for (int i = 0; i < probs.length; i++) {
+            // System.out.println("Probs: " +  probs[i] + ", target: " + target[i]);
+                        
+            if (Float.isNaN(probs[i])) {
+                System.out.println("probs[i] is NaN");
+            }
+            if (Float.isNaN(target[i])) {
+                System.out.println("target[i] is NaN");
+            }
+
             float d = probs[i] - target[i];
             sum += d * d;   // L2, means squared
         }
+        
+        if (Float.isInfinite(sum)) {
+            System.out.println("sum is Inf");
+            return -1f;
+        }
+
+        if (Float.isNaN(sum)) {
+            System.out.println("sum is NaN");
+            return -1f;
+        }
+        // if(sum == 0) {
+        //     System.out.println("Sum is 0");
+        //     for (int i = 0; i < probs.length; i++) {
+        //         System.out.println("Probs: " +  probs[i] + ", target: " + target[i]);
+        //     }
+        // }
 
         return 0.5f * sum;     // classical MSE    
     }

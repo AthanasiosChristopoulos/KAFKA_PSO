@@ -53,6 +53,12 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private String stateStoreName;
     private String keyName;
 
+    private boolean accuracy_invalid = false;
+    private boolean loss_invalid = false;
+
+    private float accuracy = -1f;
+    private float loss = 10000f;
+
     public WorkerTransformer(int workerId) {
 
         this.workerId = workerId;
@@ -113,20 +119,55 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             return null;
         }
 
-        predictor.callPredictionsBatch(buffer);
+        stats.reset();
+
+        // float accuracy, loss = predictor.callPredictionsBatch(buffer);
+        try {
+            float[] accLoss = predictor.callPredictionsBatch(buffer);
+            accuracy = accLoss[0];
+            loss = accLoss[1];
+            // System.out.println("loss: " + loss + ", accuracy: " + accuracy);
+        }
+        catch (Exception e) {
+            logger.log("Error iterating bestStore: " + e.getMessage());
+            System.out.println("Error iterating bestStore: " + e.getMessage());
+
+            e.printStackTrace();
+        }
+
+
         buffer.clear();
         batchesRead++;
 
-        float accuracy = stats.getAccuracy();
-        float loss = stats.getLoss();
-        if (accuracy == 0.0) {
-            System.out.println("Accuracy Invalid");
+        // float accuracy = stats.getAccuracy();
+        // float loss = stats.getLoss();
+
+        if (accuracy == 0f) {
+            
+            if(accuracy_invalid == false) {
+                System.out.println("Accuracy Invalid");
+                accuracy_invalid = true;
+            }
             return null;
         }
 
+        if (loss == 0f) {
+            if(loss_invalid == false) {
+                System.out.println("Loss Invalid");
+                loss_invalid = true;
+            }
+            System.out.println("Loss Invalid");
+            return null;
+        }
+
+        accuracy_invalid = false;
+        loss_invalid = false;
+
         float[] weights = Dl4jParamUtils.modelToFlatList(model);
 
-        if(loss < stats.getBestLoss()) {
+        // Send pBest or current weights ===================================================================
+
+        if(Math.round(loss * 1000f) / 1000f < stats.getBestLoss()) {    // send always when improvement. TODO send only when significant improvement
 
             stats.setBestAccuracy(accuracy);
             stats.setBestLoss(loss);
@@ -136,6 +177,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
+                        ", actuall loss: " + loss + 
                         ", msgIndex = " + msgIndex +
                         ", n_predictions: " + stats.getNumPredictions() + ", n_correct: " + stats.getNumCorrect());
 
@@ -144,7 +186,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             return new KeyValue<>(keyName, msg);
         }
 
-        if (batchesRead >= N_BATCHES) {
+        if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES
 
             logger.log("Sending current weights ...");
 
@@ -154,12 +196,12 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
             return new KeyValue<>("current_weights", msg);
-
         }
 
         float[] velocity = new float[this.pBestWeights.length];
 
-        // get the State Store ==================================================================================
+
+        // Update to next position, Get the State Store ===================================================================
 
         if (FULLY_INFORMED == true) {
 
@@ -185,7 +227,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
-        stats.reset();
         logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
                     ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity) + 
                     ", with loss: " + loss + ", with accuracy: " + accuracy);

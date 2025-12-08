@@ -43,7 +43,6 @@ public class Dl4jModelFactory {
 		// System.out.println("Using Iris Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.dataType(DataType.HALF) 
 				.seed(123) // or pass seed from outside
 				.list()
 				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
@@ -82,7 +81,6 @@ public class Dl4jModelFactory {
 		// System.out.println("Using Wine Model");
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.dataType(DataType.HALF) 
                 .seed(123)
                 .list()
                 .layer(new DenseLayer.Builder()
@@ -120,7 +118,6 @@ public class Dl4jModelFactory {
 		// System.out.println("Using MNIST Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.dataType(DataType.HALF) 
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
@@ -164,7 +161,6 @@ public class Dl4jModelFactory {
 		// System.out.println("Using SUSY Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.dataType(DataType.HALF)
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()

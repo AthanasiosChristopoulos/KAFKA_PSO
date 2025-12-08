@@ -23,15 +23,11 @@ public class PsoUpdater {
         Config cfg = Config.getInstance();
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
-        if(FULLY_INFORMED == true) {
-            this.W_INERTIA = cfg.W_INERTIA;
-        } else {
-           this.W_INERTIA = cfg.W_INERTIA_G_BEST;
-        }
-
+        this.W_INERTIA = cfg.W_INERTIA;
         this.C = cfg.C;
         this.C1 = cfg.C1;
         this.C2 = cfg.C2;
+
         this.NUM_WORKERS = cfg.NUM_WORKERS;
 
         float[] x = Dl4jParamUtils.modelToFlatList(model);
@@ -62,8 +58,8 @@ public class PsoUpdater {
             float r2 = rnd.nextFloat();  
 
             float cognitive = C1 * r1 * (pbest[k] - x_i[k]);
-            float social    = C2 * r2 * (gbest[k] - x_i[k]);
-            float inertia   = W_INERTIA * velocity[k];
+            float social = C2 * r2 * (gbest[k] - x_i[k]);
+            float inertia = W_INERTIA * velocity[k];
 
             velocity_i_1[k] = inertia + cognitive + social;
             x_i_1[k] = x_i[k] + velocity_i_1[k];
