@@ -133,10 +133,12 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
             this.pBestWeights = weights;
 
+            String msgIndex = java.util.UUID.randomUUID().toString();
+
             logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
+                        ", msgIndex = " + msgIndex +
                         ", n_predictions: " + stats.getNumPredictions() + ", n_correct: " + stats.getNumCorrect());
 
-            String msgIndex = java.util.UUID.randomUUID().toString();
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
             return new KeyValue<>(keyName, msg);
@@ -185,7 +187,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         stats.reset();
         logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
+                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity) + 
+                    ", with loss: " + loss + ", with accuracy: " + accuracy);
 
         return null;
     }

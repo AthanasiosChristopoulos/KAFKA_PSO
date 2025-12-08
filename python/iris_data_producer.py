@@ -18,6 +18,14 @@ DATASET = os.getenv("DATASET")
 
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
+NUMBER_OF_DATA_REPEATS_TEST = int(os.getenv("NUMBER_OF_DATA_REPEATS_TEST"))
+
+if(DATASET != "iris" and DATASET != "wine"):
+    NUMBER_OF_DATA_REPEATS = 1
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
+print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
+print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
@@ -139,21 +147,14 @@ def load_dataset():
         y = y_train
         class_names = [str(i) for i in range(10)]           # "0".."9" each is one different number
 
-    # elif DATASET == "susy":
-    #     data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)  # (5000000, 19), the 19th is the label
-    #     y = data[:, 0].astype(int)            # first column = label (0/1)
-    #     X = data[:, 1:].astype(np.float32)    # remaining 18 columns = features
-    #     class_names = [str(i) for i in sorted(set(y))]
-
-
     elif DATASET == "susy":
-        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)
-
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000) # 80000 - 100000
+                                                                             # (5000000, 19), the 19th is the label
         y_all = data[:, 0].astype(int)
         X_all = data[:, 1:].astype(np.float32)
 
         # ===== Train/Test Split =====
-        train_size = 55000
+        train_size = 60000
 
         X = X_all[:train_size]          # training features
         y = y_all[:train_size]          # training labels
@@ -163,7 +164,7 @@ def load_dataset():
 
         class_names = [str(i) for i in sorted(set(y_all))]
         
-        return X, y, X_test, y_test, class_names
+        return X.tolist(), y, X_test.tolist(), y_test, class_names
 
     else:
         print("Invalid Dataset selected")
@@ -172,7 +173,7 @@ def load_dataset():
     scaler = StandardScaler().fit(X)
     X_scaled = scaler.transform(X).tolist()
     
-    return X_scaled, y, class_names
+    return X_scaled, y, None, None, class_names
 
 
 def main():
@@ -186,44 +187,75 @@ def main():
 
     if args.all:
         
-        while data_repeats < NUMBER_OF_DATA_REPEATS:
-            
-            for index in range(len(X)):
-                features = X[index]
-                label = int(y[index])
-                label_name = class_names[label]
-
-                msg = {
-                    "sample_index": index,
-                    "features": features,
-                    "label": label
-                }
-
-                producer.send(INPUT_TOPIC, value=msg)
-                producer.flush() 
-            
-            data_repeats += 1
-            
-        while data_repeats < NUMBER_OF_DATA_REPEATS:
-            
-            for index in range(len(X_test)):
-                features = X_test[index]
-                label = int(y_test[index])
-                label_name = class_names[label]
-
-                msg = {
-                    "sample_index": index,
-                    "features": features,
-                    "label": label
-                }
-
-                producer.send(TEST_TOPIC, value=msg)
-                producer.flush() 
-            
-            data_repeats += 1
-                        
-        print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        # Load to Training Topic
         
+        # while data_repeats < NUMBER_OF_DATA_REPEATS:
+            
+        #     for index in range(len(X)):
+        #         features = X[index]
+        #         label = int(y[index])
+        #         label_name = class_names[label]
+
+        #         msg = {
+        #             "sample_index": index,
+        #             "features": features,
+        #             "label": label
+        #         }
+
+        #         producer.send(INPUT_TOPIC, value=msg)
+        #         producer.flush() 
+            
+        #     data_repeats += 1
+        
+        # print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        
+        # Load to Test Topic =====================================================================
+
+        data_repeats = 0
+        
+        if (X_test != None) or (y_test != None):     
+            while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                
+                for index in range(len(X_test)):
+                    features = X_test[index]
+                    label = int(y_test[index])
+                    label_name = class_names[label]
+
+                    msg = {
+                        "sample_index": index,
+                        "features": features,
+                        "label": label
+                    }
+
+                    producer.send(TEST_TOPIC, value=msg)
+                    producer.flush() 
+                
+                data_repeats += 1
+                            
+            print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+        
+        else:
+            
+            while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                
+                for index in range(len(X)):
+                    features = X[index]
+                    label = int(y[index])
+                    label_name = class_names[label]
+
+                    msg = {
+                        "sample_index": index,
+                        "features": features,
+                        "label": label
+                    }
+
+                    producer.send(TEST_TOPIC, value=msg)
+                    producer.flush() 
+                
+                data_repeats += 1
+                            
+            print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+            
     elif args.streaming:
          
         while True:

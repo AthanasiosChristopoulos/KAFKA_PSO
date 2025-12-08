@@ -75,6 +75,24 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic iris-input --from-beginning
   
+# iris-test: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic iris-test --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic iris-test
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic iris-test
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic iris-test --from-beginning
+  
+
 # wine: ======================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
@@ -92,6 +110,23 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic wine-input --from-beginning
   
+# wine-test: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic wine-test --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic wine-test
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic wine-test
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic wine-test --from-beginning
+
 # mnist: ======================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
