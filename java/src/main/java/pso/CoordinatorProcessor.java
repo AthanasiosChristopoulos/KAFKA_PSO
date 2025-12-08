@@ -54,6 +54,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final BatchPrediction globalPredictor;
 
     private final String DATA_TOPIC;
+    private final String TEST_TOPIC;
+    
     private final int BATCH_SIZE;
     private final float DESIRED_ACCURACY;
     private final String RUN_ID;
@@ -81,6 +83,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.NUM_WORKERS = cfg.NUM_WORKERS;
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.DATA_TOPIC = cfg.DATA_TOPIC;
+        this.TEST_TOPIC = cfg.TEST_TOPIC;
         this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
         this.RUN_ID = cfg.RUN_ID;    
 
@@ -95,7 +98,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         this.consumer = new KafkaConsumer<>(consumerProps);
-        this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
+        // this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
+        this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));     
 
         logger.log("Coordinator started");
         System.out.println("Coordinator started");

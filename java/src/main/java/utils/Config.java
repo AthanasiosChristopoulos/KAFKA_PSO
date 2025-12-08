@@ -14,6 +14,8 @@ public class Config {
 
     public final String DATASET;
     public final String DATA_TOPIC;
+    public final String TEST_TOPIC;
+
     public final String PBEST_WEIGHTS_TOPIC;
     public final String LOCAL_WEIGHTS_TOPIC;
     public final String GLOBAL_WEIGHTS_TOPIC;
@@ -49,6 +51,7 @@ public class Config {
         System.out.println("DATASET: " + DATASET);
         // this.DATA_TOPIC = getenv(dotenv, "DATA_TOPIC", "iris-input");
         this.DATA_TOPIC = this.DATASET + "-input";
+        this.TEST_TOPIC = this.DATASET + "-test";
 
         if("iris".equals(this.DATASET)) {
             this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));

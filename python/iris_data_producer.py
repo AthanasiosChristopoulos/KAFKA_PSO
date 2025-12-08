@@ -15,7 +15,7 @@ loaded = load_dotenv("../java/.env")
 print("Dotenv loaded:", loaded)
 
 DATASET = os.getenv("DATASET")
-DATA_TOPIC = os.getenv("DATA_TOPIC")
+
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
 
@@ -30,7 +30,8 @@ if args.pred:
 else:
     # INPUT_TOPIC = DATA_TOPIC
     INPUT_TOPIC = DATASET + "-input"
-    
+    TEST_TOPIC = DATASET + "-test"
+
     
 producer = KafkaProducer(
     bootstrap_servers = "localhost:9092",
@@ -137,23 +138,33 @@ def load_dataset():
         X = X_train[:150].reshape(-1, 28 * 28).astype("float32")  # [60000, 784], by default mnist has 60000 samples
         y = y_train
         class_names = [str(i) for i in range(10)]           # "0".."9" each is one different number
-    
+
     # elif DATASET == "susy":
-    #     data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)    # (5000000, 19), the 19th is the label
-    #     X = data[:, :-1]                 # all columns except last are the features
-    #     y = data[:, -1].astype(int)      # last column is the label label
+    #     data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)  # (5000000, 19), the 19th is the label
+    #     y = data[:, 0].astype(int)            # first column = label (0/1)
+    #     X = data[:, 1:].astype(np.float32)    # remaining 18 columns = features
     #     class_names = [str(i) for i in sorted(set(y))]
 
+
     elif DATASET == "susy":
-        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)  # (5000000, 19), the 19th is the label
-        y = data[:, 0].astype(int)            # first column = label (0/1)
-        X = data[:, 1:].astype(np.float32)    # remaining 18 columns = features
-        class_names = [str(i) for i in sorted(set(y))]
-     
-    # elif DATASET == "susy":
-    #     X, y = load_susy_sample1("../data/SUSY.csv", sample_size=60000) # (5000000, 19)
-    #     class_names = [str(i) for i in sorted(set(y))]
-            
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=60000)
+
+        y_all = data[:, 0].astype(int)
+        X_all = data[:, 1:].astype(np.float32)
+
+        # ===== Train/Test Split =====
+        train_size = 55000
+
+        X = X_all[:train_size]          # training features
+        y = y_all[:train_size]          # training labels
+
+        X_test = X_all[train_size:]     # test features (5000)
+        y_test = y_all[train_size:]     # test labels  (5000)
+
+        class_names = [str(i) for i in sorted(set(y_all))]
+        
+        return X, y, X_test, y_test, class_names
+
     else:
         print("Invalid Dataset selected")
         exit(0)
@@ -166,8 +177,10 @@ def load_dataset():
 
 def main():
 
-    X_scaled, y, class_names = load_dataset()
-
+    # X_scaled, y, class_names = load_dataset()
+    
+    X, y, X_test, y_test, class_names = load_dataset()
+    
     index = 0
     data_repeats = 0
 
@@ -175,8 +188,8 @@ def main():
         
         while data_repeats < NUMBER_OF_DATA_REPEATS:
             
-            for index in range(len(X_scaled)):
-                features = X_scaled[index]
+            for index in range(len(X)):
+                features = X[index]
                 label = int(y[index])
                 label_name = class_names[label]
 
@@ -191,13 +204,31 @@ def main():
             
             data_repeats += 1
             
+        while data_repeats < NUMBER_OF_DATA_REPEATS:
+            
+            for index in range(len(X_test)):
+                features = X_test[index]
+                label = int(y_test[index])
+                label_name = class_names[label]
+
+                msg = {
+                    "sample_index": index,
+                    "features": features,
+                    "label": label
+                }
+
+                producer.send(TEST_TOPIC, value=msg)
+                producer.flush() 
+            
+            data_repeats += 1
+                        
         print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
         
     elif args.streaming:
          
         while True:
-            index = random.randrange(len(X_scaled)) # we need random samples (if in order, they would belong to the same class)
-            features = X_scaled[index]
+            index = random.randrange(len(X)) # we need random samples (if in order, they would belong to the same class)
+            features = X[index]
             label = int(y[index])
             label_name = class_names[label]
 
