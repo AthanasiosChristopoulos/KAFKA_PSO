@@ -40,6 +40,8 @@ public class Config {
     public final String LOSS_FUNCTION;
     public final int TOP_K_VALUE;
 
+    public final float VEL_MAX_FACTOR;
+
     public Config() {
         
         Dotenv dotenv = Dotenv
@@ -106,6 +108,7 @@ public class Config {
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
+        this.VEL_MAX_FACTOR = Float.parseFloat(getenv(dotenv, "VEL_MAX_FACTOR", "0.1"));
     }
 
     public static Config getInstance() {

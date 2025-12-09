@@ -33,20 +33,12 @@ def load_susy_data(max_rows=80000, train_size=60000, path="../data/SUSY.csv"):
 
 def build_susy_model(input_dim=18, num_classes=2):
 
-    # model = keras.Sequential([
-    #     layers.Input(shape=(input_dim,)),
-    #     layers.Dense(128, activation="relu"),
-    #     layers.Dense(128, activation="relu"),
-    #     layers.Dense(num_classes, activation="softmax")
-    # ])
-
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
-        layers.Dense(300, activation="relu"),
-        layers.Dense(300, activation="relu"),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(128, activation="relu"),
         layers.Dense(num_classes, activation="softmax")
     ])
-
 
     # For integer labels (0/1), use sparse_categorical_crossentropy
     model.compile(
@@ -58,6 +50,34 @@ def build_susy_model(input_dim=18, num_classes=2):
     model.summary()
     return model
 
+
+def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
+    flat = []
+
+    for layer in model.layers:
+        if not isinstance(layer, keras.layers.Dense):
+            continue
+
+        weights = layer.get_weights()
+        if len(weights) != 2:
+            continue
+
+        W, b = weights  # W: (in_size, out_size), b: (out_size,)
+        in_size, out_size = W.shape
+
+        for j in range(out_size):
+            for i in range(in_size):
+                flat.append(float(W[i, j]))
+            flat.append(float(b[j]))
+
+    flat = np.array(flat, dtype=np.float32)
+
+    with open(path, "w") as f:
+        for v in flat:
+            f.write(f"{v}\n")
+
+    print(f"Saved {len(flat)} weights to {path}")
+    return flat
 
 def main():
     X_train, y_train, X_test, y_test, class_names = load_susy_data(1000000, 900000, "../data/SUSY.csv")
@@ -75,5 +95,8 @@ def main():
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
+    
+    save_model_as_flat_txt(model, path="susy_model_weights.txt")
+
 if __name__ == "__main__":
     main()

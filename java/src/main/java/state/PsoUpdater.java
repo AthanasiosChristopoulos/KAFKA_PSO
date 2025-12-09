@@ -17,6 +17,8 @@ public class PsoUpdater {
     private final boolean FULLY_INFORMED;
 
     private float[] velocity; 
+    private final float VMAX;    
+    private final float VMAX_FACTOR;
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
@@ -33,12 +35,41 @@ public class PsoUpdater {
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         velocity = new float[x.length];
 
+        this.VMAX_FACTOR = cfg.VEL_MAX_FACTOR;
+
+        // float xmin = Float.POSITIVE_INFINITY;
+        // float xmax = Float.NEGATIVE_INFINITY;
+        // for (float v : x) {
+        //     if (v < xmin) xmin = v;
+        //     if (v > xmax) xmax = v;
+        // }
+
+        float xmin = -1.0f; // Each individual weight is allowed to exist only in the range [-1, 1].
+        float xmax = 1.0f;  // Weight Initialization: ~[-0.1, 0.1] (He, Xavier, Uniform, Normal).
+                    // During training, most weights stay relatively small (in practice < 0.2 or < 0.5).
+
+        float range = xmax - xmin;  // the xmax - xmin discussed in the paper 
+        // if range is degenerate, fall back to something small
+        if (range == 0f) {
+            range = 1.0f;
+        }
+
+        this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
+
         randomizeVelocity(workerId, 0.01f);
     }
 
     //================================================================================================
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {
+    private float clampVelocity(float v) {
+        if (v > VMAX) return VMAX;
+        if (v < -VMAX) return -VMAX;
+        return v;
+    }
+
+    //================================================================================================
+
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST 
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         int dim = x_i.length;
@@ -61,7 +92,8 @@ public class PsoUpdater {
             float social = C2 * r2 * (gbest[k] - x_i[k]);
             float inertia = W_INERTIA * velocity[k];
 
-            velocity_i_1[k] = inertia + cognitive + social;
+            // velocity_i_1[k] = inertia + cognitive + social;
+            velocity_i_1[k] = clampVelocity(inertia + cognitive + social);  // velocity clamping implementation
             x_i_1[k] = x_i[k] + velocity_i_1[k];
         }
 
@@ -73,46 +105,7 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    // public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {
-
-    //     float[] x_i = Dl4jParamUtils.modelToFlatList(model);
-
-    //     float[] socialAggregate = new float[x_i.length];
-    //     Random rnd = new Random();
-
-    //     // for pBest_j in neighbor_pBests:
-    //     for (float[] pBest_j : neighborPBestList) {
-
-    //         if (pBest_j.length != x_i.length) {
-    //             throw new IllegalArgumentException("pBest size mismatch");
-    //         }
-
-    //         for (int k = 0; k < x_i.length; k++) {
-    //             float p_i_j = rnd.nextFloat();  // in [0,1)
-    //             socialAggregate[k] += p_i_j * (pBest_j[k] - x_i[k]);
-    //         }
-    //     }
-
-    //     float scale = C / (float) NUM_WORKERS;
-    //     for (int k = 0; k < socialAggregate.length; k++) {
-    //         socialAggregate[k] *= scale;
-    //     }
-
-    //     float[] velocity_i_1 = new float[x_i.length];
-    //     float[] x_i_1 = new float[x_i.length];
-
-    //     for (int k = 0; k < x_i.length; k++) {
-    //         velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
-    //         x_i_1[k] = x_i[k] + velocity_i_1[k];
-    //     }
-
-    //     Dl4jParamUtils.updateModel(model, x_i_1);
-
-    //     this.velocity = velocity_i_1;
-    //     return this.velocity;
-    // }
-
-    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {
+    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) { // for FULLY INFORMED
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         float[] socialAggregate = new float[x_i.length];
@@ -157,7 +150,10 @@ public class PsoUpdater {
         float[] x_i_1 = new float[x_i.length];
 
         for (int k = 0; k < x_i.length; k++) {
-            velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
+            
+            // velocity_i_1[k] = W_INERTIA * velocity[k] + socialAggregate[k];
+            velocity_i_1[k] = clampVelocity(W_INERTIA * velocity[k] + socialAggregate[k]);
+
             x_i_1[k] = x_i[k] + velocity_i_1[k];
         }
 

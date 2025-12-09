@@ -189,25 +189,25 @@ def main():
         
         # Load to Training Topic
         
-        # while data_repeats < NUMBER_OF_DATA_REPEATS:
+        while data_repeats < NUMBER_OF_DATA_REPEATS:
             
-        #     for index in range(len(X)):
-        #         features = X[index]
-        #         label = int(y[index])
-        #         label_name = class_names[label]
+            for index in range(len(X)):
+                features = X[index]
+                label = int(y[index])
+                label_name = class_names[label]
 
-        #         msg = {
-        #             "sample_index": index,
-        #             "features": features,
-        #             "label": label
-        #         }
+                msg = {
+                    "sample_index": index,
+                    "features": features,
+                    "label": label
+                }
 
-        #         producer.send(INPUT_TOPIC, value=msg)
-        #         producer.flush() 
+                producer.send(INPUT_TOPIC, value=msg)
+                producer.flush() 
             
-        #     data_repeats += 1
+            data_repeats += 1
         
-        # print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
         
         # Load to Test Topic =====================================================================
 

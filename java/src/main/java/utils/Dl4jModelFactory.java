@@ -40,7 +40,7 @@ public class Dl4jModelFactory {
 	// Iris Dataset Model Architecture 
 
 	public static MultiLayerNetwork createIrisModel() {
-		// System.out.println("Using Iris Model");
+		System.out.println("Using Iris Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123) // or pass seed from outside
@@ -78,7 +78,7 @@ public class Dl4jModelFactory {
 	// Wine Dataset Model Architecture 
 
 	public static MultiLayerNetwork createWineModel() {
-		// System.out.println("Using Wine Model");
+		System.out.println("Using Wine Model");
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
@@ -115,7 +115,7 @@ public class Dl4jModelFactory {
 	// MINST Dataset Model Architecture 
 
 	public static MultiLayerNetwork createMNISTModel() {
-		// System.out.println("Using MNIST Model");
+		System.out.println("Using MNIST Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -158,7 +158,7 @@ public class Dl4jModelFactory {
 	// SUSY Dataset Model Architecture 
 
 	public static MultiLayerNetwork createSUSYModel() {
-		// System.out.println("Using SUSY Model");
+		System.out.println("Using SUSY Model");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)

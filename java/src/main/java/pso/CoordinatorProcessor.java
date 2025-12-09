@@ -34,8 +34,8 @@ import java.time.Duration;
 import utils.*;
 import state.*;
 
-public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, String> {
-    private ProcessorContext<String, String> context;
+public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
+    private ProcessorContext<String, WeightsMessage> context;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -103,14 +103,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.consumer = new KafkaConsumer<>(consumerProps);
         // this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));     
-
-        logger.log("Coordinator started");
-        System.out.println("Coordinator started");
-
     }
 
     @Override
-    public void init(ProcessorContext<String, String> context) {
+    public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
     }
 
@@ -136,113 +132,94 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
-        float[] weights = msg.weights;
-        if (weights == null) {
-            return;
-        }
-
-        weightsBuffer.put(workerId, weights);
-
-        // Run only if all workers have reported their position 
-        if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+        if ("current_weights".equals(record.key())) {
+            
+            float[] weights = msg.weights;
+            if (weights == null) {
+                return;
+            }
         
-            float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
+            weightsBuffer.put(workerId, weights);
 
-            Dl4jParamUtils.updateModel(globalModel, avgWeights);
+            // Run only if all workers have reported their position 
+            if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+            
+                float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
-            // ======== evaluate accuracy of globalModel using BatchPrediction ========
+                Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
-            List<String> evalBatch = new ArrayList<>();
+                // ======== evaluate accuracy of globalModel using BatchPrediction ========
 
-            while (evalBatch.size() < BATCH_SIZE) {  // foll eval_batch before evaluating performance 
+                List<String> evalBatch = new ArrayList<>();
 
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+                while (evalBatch.size() < BATCH_SIZE) {  // foll eval_batch before evaluating performance 
 
-                if (records.isEmpty()) {
-                    System.out.println("Records is empty");
-                    break; // no more data, use whatever we have
-                }
+                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
-                for (ConsumerRecord<String, String> rec : records) {
-                    if (rec.value() != null) {
-                        evalBatch.add(rec.value());
+                    if (records.isEmpty()) {
+                        System.out.println("Records is empty");
+                        break; // no more data, use whatever we have
+                    }
+
+                    for (ConsumerRecord<String, String> rec : records) {
+                        if (rec.value() != null) {
+                            evalBatch.add(rec.value());
+                        }
                     }
                 }
-            }
 
-            globalStats.reset();       
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
-            accuracy = accLoss[0];
-            loss = accLoss[1];
+                globalStats.reset();       
+                float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
+                accuracy = accLoss[0];
+                loss = accLoss[1];
 
-            // float accuracy = globalStats.getAccuracy();
+                // float accuracy = globalStats.getAccuracy();
 
-            logger.log("Global model accuracy: " + accuracy);
-            System.out.println("Global model accuracy: " + accuracy);
+                logger.log("Global model accuracy: " + accuracy);
+                System.out.println("Global model accuracy: " + accuracy);
 
-            weightsBuffer.clear();
+                weightsBuffer.clear();
 
-            if (accuracy >= this.DESIRED_ACCURACY) {
-                Dl4jParamUtils.saveModel(globalModel);
-                control.requestStop();
+                if (accuracy >= this.DESIRED_ACCURACY) {
+                    Dl4jParamUtils.saveModel(globalModel);
+                    control.requestStop();
+                    return;
+                }
+
+            } 
+        
+        } else {
+
+            // =================
+            // PBEST / GBEST BRANCH
+            // Now using WeightsMessage instead of JSON
+            // =================
+
+            float candidateAccuracy = msg.accuracy;
+            float[] candidateWeights = msg.weights;
+
+            if (candidateWeights == null) {
+                logger.log("Received pBest from worker " + workerId + " with null weights, skipping");
                 return;
             }
 
-        } 
-        
-        // else {    // Receive pBest updates 
+            // Update global best if this pBest is better
+            if (gBestWeights == null || candidateAccuracy > gBestAccuracy) {
+                gBestAccuracy = candidateAccuracy;
 
-        //     Object pBestObj = msg.get("pBestWeights");
-        //     if (!(pBestObj instanceof List<?> pBestList)) {
-        //         return;
-        //     }
+                // Keep our own copy
+                gBestWeights = Arrays.copyOf(candidateWeights, candidateWeights.length);
 
-        //     Object accObj = msg.get("accuracy");
-        //     if (!(accObj instanceof Number accuracyNumber)) {
-        //         logger.log("Received pBest from worker " + workerId + " without numeric accuracy, skipping");
-        //         return;
-        //     }
-        //     float accuracy = accuracyNumber.floatValue();
+                // Build a new WeightsMessage representing gBest
+                WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, gBestAccuracy, msg.loss, gBestWeights);
 
-        //     if (gBestWeights == null || accuracy > gBestAccuracy) {
-        //         gBestAccuracy = accuracy;
-               
-        //         float[] pBestWeights = new float[pBestList.size()];
-        //         for (int i = 0; i < pBestList.size(); i++) {
-        //             pBestWeights[i] = ((Number) pBestList.get(i)).floatValue();
-        //         }
+                logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
 
-        //         gBestWeights  = pBestWeights;
+                // Forward to downstream (this will go to GLOBAL_WEIGHTS_TOPIC in the topology)
+                context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
 
-        //         var payload = new HashMap<String, Object>();
-        //         payload.put("id_worker", Integer.parseInt(workerId));
-        //         payload.put("pBestMsgIndex", msg.get("pBestMsgIndex"));
-        //         payload.put("accuracy", gBestAccuracy);
-
-        //         List<Float> gBestListOut = new ArrayList<>(gBestWeights.length);
-        //         for (float v : gBestWeights) {
-        //             gBestListOut.add(v);
-        //         }
-        //         payload.put("gBestWeights", gBestListOut); 
-
-        //         try {
-        //             String json = MAPPER.writeValueAsString(payload);
-    
-        //             logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
-        //             logger.log("gBestJSON: " + json);
-
-        //             context.forward(new Record<>(
-        //                     "gBest",    // key: all to same partition
-        //                     json,       // value: the JSON is the records value 
-        //                     record.timestamp()
-        //             ));
-
-        //         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-        //             e.printStackTrace(); // or log it and skip sending
-        //         }
-
-        //     }
-        // }
+            }
+        }
     }
 
     @Override
