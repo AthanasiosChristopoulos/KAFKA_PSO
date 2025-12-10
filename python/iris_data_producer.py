@@ -9,6 +9,7 @@ from kafka import KafkaProducer
 import argparse
 import numpy as np
 import random
+import pandas as pd
 
 from dotenv import load_dotenv
 loaded = load_dotenv("../java/.env")
@@ -164,6 +165,39 @@ def load_dataset():
 
         class_names = [str(i) for i in sorted(set(y_all))]
         
+        return X.tolist(), y, X_test.tolist(), y_test, class_names
+
+
+    elif DATASET == "bank":
+
+        df = pd.read_csv("../data/bank-additional-full.csv", sep=";")
+
+        max_rows = 70000
+        df = df.iloc[:max_rows].copy()
+
+        y_all = (df["y"] == "yes").astype(int).values       # convert yes OR no to int
+
+        df_features = df.drop(columns=["y"])                # keep only features
+
+        X_all_df = pd.get_dummies(df_features, drop_first=True)     # One-hot encode categorical columns
+        X_all = X_all_df.astype(np.float32).values      # Convert to float32 numpy array
+
+        train_size = 60000  # means test size is 10000
+
+        X_train_raw = X_all[:train_size]
+        y = y_all[:train_size]
+
+        X_test_raw = X_all[train_size:]
+        y_test = y_all[train_size:]
+
+        mean = X_train_raw.mean(axis=0, keepdims=True)
+        std = X_train_raw.std(axis=0, keepdims=True) + 1e-8
+
+        X = (X_train_raw - mean) / std
+        X_test = (X_test_raw - mean) / std
+
+        class_names = [str(i) for i in sorted(set(y_all))]
+
         return X.tolist(), y, X_test.tolist(), y_test, class_names
 
     else:

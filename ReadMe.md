@@ -159,8 +159,7 @@ gunzip SUSY.csv.gz
  - Not too hard, but not as easy as iris
  - Needs to come, not from python, but externally in like a .csv
  - The model that is going to be used on it should be between 10000 - 100000
- - 
-
+ 
 
 ## Improve congvergence:
  - change model
