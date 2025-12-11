@@ -23,7 +23,8 @@ public class Config {
     public final String PREDICTION_OUTPUT_TOPIC;
 
     public final int NUM_WORKERS;
-    public final int BATCH_SIZE;
+    public final int TRAIN_SIZE;
+    public final int TEST_SIZE;
     public final int N_BATCHES;
     public final float DESIRED_ACCURACY;
     public final String SAVE_MODEL_NAME;
@@ -41,7 +42,7 @@ public class Config {
     public final int TOP_K_VALUE;
 
     public final float VEL_MAX_FACTOR;
-    public final float SIGNIFICANT_LOSS;
+    public final float SIGNIFICANT_LOSS_DIFF;
 
     public Config() {
         
@@ -76,7 +77,6 @@ public class Config {
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_BANK", "2"));
 
         } else {
-
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
         }
 
@@ -87,7 +87,8 @@ public class Config {
         this.PREDICTION_OUTPUT_TOPIC = getenv(dotenv, "PREDICTION_OUTPUT_TOPIC", "iris-output");
 
         this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "5"));
-        this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
+        this.TRAIN_SIZE = Integer.parseInt(getenv(dotenv, "TRAIN_SIZE", "30"));
+        this.TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
         this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
@@ -99,8 +100,10 @@ public class Config {
 
         if(this.FULLY_INFORMED == true) {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
+
         } else {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+
         }
 
         this.C = Float.parseFloat(getenv(dotenv, "C", "1.7"));
@@ -115,7 +118,7 @@ public class Config {
 
         this.VEL_MAX_FACTOR = Float.parseFloat(getenv(dotenv, "VEL_MAX_FACTOR", "0.1"));
 
-        this.SIGNIFICANT_LOSS = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS", "3.1"));
+        this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
 
     }
 

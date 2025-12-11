@@ -120,6 +120,18 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
+    public static float magnitude(float[] flat) {
+        float sum = 0f;
+
+        for (float v : flat) {
+            sum += v * v; 
+        }
+
+        return (float) Math.sqrt(sum);
+    }
+
+    //=====================================================================================================
+
     public static String sampleFlats(Collection<float[]> flats) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");

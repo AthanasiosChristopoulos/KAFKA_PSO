@@ -31,7 +31,7 @@ public class Worker implements Runnable {
 
     private final int workerId;
     
-    private final int BATCH_SIZE;
+    private final int TRAIN_SIZE;
     private final int N_BATCHES;
     private final String DATA_TOPIC;
     private final String PBEST_WEIGHTS_TOPIC;
@@ -53,7 +53,7 @@ public class Worker implements Runnable {
         this.workerId = workerId;
 
         Config cfg = Config.getInstance();
-        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.TRAIN_SIZE = cfg.TRAIN_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;         
         this.DATA_TOPIC = cfg.DATA_TOPIC;
         this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;

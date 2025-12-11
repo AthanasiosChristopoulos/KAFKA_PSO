@@ -38,7 +38,7 @@ dos2unix run_streams.sh
     Repeat this until global model converges to an accuracy > 95%:
         2) Each worker does:
                 
-            Repeat this for N_BATCH_SIZE:
+            Repeat this for N_TRAIN_SIZE:
                 => evaluate the current position using a batch of data and a loss function (non differentiable) or a fitness function:
                     <code> fitness = model.evaluate(X_train, Y_train, verbose=0) </code>
                 => if this is a personal best fitness, update pBest.
@@ -155,8 +155,8 @@ gunzip SUSY.csv.gz
             - build_keras_model()
             - evaluate_model()
 
-
 ## New Dataset - Specifications:
+
  - Needs to be a well known ML dataset.
  - Not too hard, but not as easy as iris
  - Needs to come, not from python, but externally in like a .csv
@@ -167,3 +167,9 @@ gunzip SUSY.csv.gz
  - change model
  - change constants => velocity, inertia, C1, C2
  - increase the number of children
+
+## What to look at for training process:
+ - convergence (the ideal result is located, but the swarm doesnt converge on it)
+ - the ideal result will not be located
+ - The swarm converged on bad solution / local maximum
+ - Trade-off between exploration and convergence

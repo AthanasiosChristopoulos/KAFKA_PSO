@@ -36,7 +36,8 @@ public class Dl4jModelFactory {
 				return createSUSYModel();
 
 		} else if ("bank-input".equals(DATA_TOPIC)) {
-				return createBankModel();
+				// return createBankModel();
+				return createBankModel40K();
 
 		} else {
             throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
@@ -119,7 +120,7 @@ public class Dl4jModelFactory {
         // 1027 weights all in all
 
 	// ======================================================================================================================
-	// MINST Dataset Model Architecture 
+	// MNIST Dataset Model Architecture 
 
 	public static MultiLayerNetwork createMNISTModel() {
 		System.out.println("Using MNIST Model");
@@ -203,7 +204,8 @@ public class Dl4jModelFactory {
 	// Bank Dataset Model Architecture 
 
 	public static MultiLayerNetwork createBankModel() {
-		int outputSize = 1; // because sigmoid, single logit
+		System.out.println("Using BANK Model");
+		int outputSize = 1;
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -232,7 +234,6 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
-
 	
 	// Number of weights in the network calculation:  
         // For Hidden Layer 1   => 53 * 64 + 64  
@@ -240,6 +241,47 @@ public class Dl4jModelFactory {
         // For Output Layer     => 64 * 1 + 1
         // 7681 weights all in all
 		// this is comparable to NN4K
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createBankModel40K() {
+		System.out.println("Using BANK Model");
+		int outputSize = 1; 
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.updater(new Adam(1e-3))
+				.l2(1e-4)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)
+						.nOut(256)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(256)
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
+						.nIn(128)
+						.nOut(outputSize)
+						.activation(Activation.SIGMOID)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+	
+	// Number of weights in the network calculation:  
+        // For Hidden Layer 1   => 53 * 256 + 256  
+        // For Hidden Layer 2   => 256 * 128 + 128
+        // For Output Layer     => 128 * 1 + 1
+        // 46849 weights all in all
+		// this is comparable to NN40K
 
 
 }

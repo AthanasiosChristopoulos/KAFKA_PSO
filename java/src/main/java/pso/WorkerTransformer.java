@@ -28,10 +28,10 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final int workerId;
-    private final int BATCH_SIZE;
+    private final int TRAIN_SIZE;
     private final int N_BATCHES;
     private final boolean FULLY_INFORMED;
-    private final float SIGNIFICANT_LOSS;
+    private final float SIGNIFICANT_LOSS_DIFF;
 
     private final CustomLogger logger;
 
@@ -59,6 +59,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     private float accuracy = -1f;
     private float loss = 10000f;
+    private int nSamples = 0;
+    private int nCorrect = 0;
 
     private float local_gBestAccuracy = -1f;
     private float local_gBestLoss = 10000f;
@@ -69,10 +71,10 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         this.workerId = workerId;
         
         Config cfg = Config.getInstance();
-        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.TRAIN_SIZE = cfg.TRAIN_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
-        this.SIGNIFICANT_LOSS = cfg.SIGNIFICANT_LOSS;
+        this.SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
@@ -108,7 +110,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         if (!printedOffset) {
             printedOffset = true;
-            logger.log("Starting at -> " +"Offset: " + context.offset() + ", Partition: " + context.partition() +
+            logger.log("Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
         }
         
@@ -118,7 +120,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         buffer.add(value);
 
-        if (buffer.size() < BATCH_SIZE) {
+        if (buffer.size() < TRAIN_SIZE) {
             return null;
         }
 
@@ -130,6 +132,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             float[] accLoss = predictor.callPredictionsBatch(buffer);
             accuracy = accLoss[0];
             loss = accLoss[1];
+            nSamples = (int) accLoss[2];
+            nCorrect = (int) accLoss[3];
+
             // System.out.println("loss: " + loss + ", accuracy: " + accuracy);
         }
         catch (Exception e) {
@@ -160,9 +165,9 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < stats.getBestLoss(); 
                 // boolean has pBest improved or not ?
 
-        boolean significant_diff_to_gBest = Math.abs(loss - local_gBestLoss) > SIGNIFICANT_LOSS;
+        boolean significant_diff_to_gBest = Math.abs(loss - local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
         // if(significant_diff_to_gBest != true) {
-        //     System.out.println("SIGNIFICANT_LOSS: " + SIGNIFICANT_LOSS);
+        //     System.out.println("SIGNIFICANT_LOSS_DIFF: " + SIGNIFICANT_LOSS_DIFF);
         // }
                 // is the loss significant enough to be reported ?
 
@@ -177,7 +182,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
             logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
                         ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
-                        ", n_predictions: " + stats.getNumPredictions() + ", n_correct: " + stats.getNumCorrect());
+                        ", nSamples: " + nSamples + ", nCorrect: " + nCorrect);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
@@ -210,7 +215,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 velocity = psoUpdater.updateX(model, null);
 
             } else {
-                logger.log("pBest Weights:\n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
+                logger.log("pBest Weights with accuracy: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = psoUpdater.updateX(model, neighborPBestList);
             }
 
@@ -226,9 +231,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
-        logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-                    ", with loss: " + loss + ", with accuracy: " + accuracy +
-                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
+        // logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
+        //             ", with loss: " + loss + ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity) + 
+        //             ", with accuracy: " + accuracy);
+
+          logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
+                    ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
+                    ", with accuracy: " + accuracy);
 
         return null;
     }
@@ -245,8 +254,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
+                                                                // this is GlobalKTable it will run for all of them
+            // int count = 0;
+            while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
+                                    // They have names: "pBest" + workerId
 
-            while (it.hasNext()) {
+                // logger.log("Runnig: " + count);
+                // count = count + 1;                   
                 KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
                 WeightsMessage msg = entry.value.value(); 
                 if (msg == null || msg.weights == null || msg.weights.length == 0) {
@@ -257,6 +271,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
                 neighbors.add(pBestArr);
             }
+
 
         } catch (Exception e) {
             logger.log("Error iterating bestStore: " + e.getMessage());

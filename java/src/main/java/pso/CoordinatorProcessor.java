@@ -46,6 +46,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     
     private float[] gBestWeights = null;
     private float gBestAccuracy = 0f;
+    private float gBestLoss = 10000f;
 
     private int round = 0;
 
@@ -56,7 +57,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final String DATA_TOPIC;
     private final String TEST_TOPIC;
 
-    private final int BATCH_SIZE;
+    private final int TEST_SIZE;
     private final float DESIRED_ACCURACY;
     private final String RUN_ID;
 
@@ -86,7 +87,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         Config cfg = Config.getInstance();
         this.NUM_WORKERS = cfg.NUM_WORKERS;
-        this.BATCH_SIZE = cfg.BATCH_SIZE;
+        this.TEST_SIZE = cfg.TEST_SIZE;
         this.DATA_TOPIC = cfg.DATA_TOPIC;
         this.TEST_TOPIC = cfg.TEST_TOPIC;
         this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
@@ -149,10 +150,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
                 // ======== evaluate accuracy of globalModel using BatchPrediction ========
-
                 List<String> evalBatch = new ArrayList<>();
 
-                while (evalBatch.size() < BATCH_SIZE) {  // foll eval_batch before evaluating performance 
+                while (evalBatch.size() < TEST_SIZE) {  // foll eval_batch before evaluating performance 
 
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
@@ -173,8 +173,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 accuracy = accLoss[0];
                 loss = accLoss[1];
 
-                // float accuracy = globalStats.getAccuracy();
-
                 logger.log("Global model accuracy: " + accuracy);
                 System.out.println("Global model accuracy: " + accuracy);
 
@@ -188,34 +186,14 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             } 
         
-        } else {
+        } else {    // update gBest
 
-            // =================
-            // PBEST / GBEST BRANCH
-            // Now using WeightsMessage instead of JSON
-            // =================
+            if (msg.loss < gBestLoss) {
+                gBestLoss = msg.loss;
+                
+                WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
-            float candidateAccuracy = msg.accuracy;
-            float[] candidateWeights = msg.weights;
-
-            if (candidateWeights == null) {
-                logger.log("Received pBest from worker " + workerId + " with null weights, skipping");
-                return;
-            }
-
-            // Update global best if this pBest is better
-            if (gBestWeights == null || candidateAccuracy > gBestAccuracy) {
-                gBestAccuracy = candidateAccuracy;
-
-                // Keep our own copy
-                gBestWeights = Arrays.copyOf(candidateWeights, candidateWeights.length);
-
-                // Build a new WeightsMessage representing gBest
-                WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, gBestAccuracy, msg.loss, gBestWeights);
-
-                logger.log("New gBest from worker " + workerId + " with accuracy " + gBestAccuracy);
-
-                // Forward to downstream (this will go to GLOBAL_WEIGHTS_TOPIC in the topology)
+                logger.log("New gBest from worker " + workerId + " with loss: " +  msg.loss + " and with accuracy: " +  msg.accuracy);
                 context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
 
             }

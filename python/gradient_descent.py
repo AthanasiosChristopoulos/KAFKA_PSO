@@ -203,6 +203,81 @@ def run_bank():
     save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
 # ======================================================================
+# MNIST DATASET
+# ======================================================================
+
+def load_mnist_data():
+    """
+    Loads MNIST from tf.keras.datasets, normalizes to [0,1],
+    and returns train/test splits plus class names.
+    """
+    print("[MNIST] Loading from tf.keras.datasets.mnist")
+    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+    # Normalize to [0,1]
+    X_train = X_train.astype("float32") / 255.0
+    X_test  = X_test.astype("float32") / 255.0
+
+    # Shapes: (60000, 28, 28), (10000, 28, 28)
+    print("[MNIST] Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("[MNIST] Test  shape:", X_test.shape, "Labels:", y_test.shape)
+
+    class_names = [str(i) for i in range(10)]
+    return X_train, y_train, X_test, y_test, class_names
+
+
+def build_mnist_model(input_shape=(28, 28)):
+    """
+    Simple MLP for MNIST: Flatten -> Dense -> Dense -> Output(10).
+    Uses sparse_categorical_crossentropy so labels can stay int.
+    """
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Flatten(),
+        layers.Dense(256, activation="relu"),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(10, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+
+def run_mnist():
+    X_train, y_train, X_test, y_test, class_names = load_mnist_data()
+
+    model = build_mnist_model(input_shape=X_train.shape[1:])
+
+    print("\n[MNIST] Training...")
+    history = model.fit(
+        X_train,
+        y_train,
+        validation_split=0.1,   # 10% of train used as validation
+        epochs=5,
+        batch_size=128,
+        verbose=2,
+    )
+
+    print("\n[MNIST] Evaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"[MNIST] Test loss: {test_loss:.4f}")
+    print(f"[MNIST] Test accuracy: {test_acc:.4f}")
+
+    # Make sure the directory exists on disk
+    # os.makedirs("model_serialization", exist_ok=True)
+
+    save_model_as_flat_txt(
+        model,
+        path=f"model_serialization/{DATASET}_model_weights.txt"
+    )
+
+# ======================================================================
 # Main
 # ======================================================================
 
@@ -213,9 +288,11 @@ def main():
         run_susy()
     elif DATASET == "bank":
         run_bank()
+    elif DATASET == "mnist":
+        run_mnist()
     else:
         print("DATASET not detected")
-
+        
 if __name__ == "__main__":
     main()
 

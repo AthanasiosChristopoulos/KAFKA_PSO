@@ -127,21 +127,22 @@ public class Coordinator implements Runnable {
         local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, globalStats));
 
         // Task 1 =======================================================================================================
-        // input stream 3 and output stream 6
-        if(1 == 1) { // for debuggging purposes
+        // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
+        
+        if(FULLY_INFORMED != true) {
 
-            KStream<String, WeightsMessage> pBest_weights_stream = builder.stream(
-                PBEST_WEIGHTS_TOPIC,
-                Consumed.with(Serdes.String(), weightsSerde)
-            );
+            if(1 == 1) { // for debuggging purposes
 
-            pBest_weights_stream
-                .process(() -> new CoordinatorProcessor(globalModel, globalStats))
-                .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+                KStream<String, WeightsMessage> pBest_weights_stream = builder.stream(
+                    PBEST_WEIGHTS_TOPIC,
+                    Consumed.with(Serdes.String(), weightsSerde)
+                );
 
-        } else {
+                pBest_weights_stream
+                    .process(() -> new CoordinatorProcessor(globalModel, globalStats))
+                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
-            if(FULLY_INFORMED != true) {
+            } else {
 
                 KStream<String, WeightsMessage> pBestJsonStream = builder.stream(
                     PBEST_WEIGHTS_TOPIC,
@@ -178,7 +179,7 @@ public class Coordinator implements Runnable {
                             .withCachingDisabled() 
                 )
                 .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
-                    Duration.ofSeconds(1), // flush every one second
+                    Duration.ofSeconds(1),              // flush every one second
                     Suppressed.BufferConfig.unbounded()
                 ));
 
@@ -187,14 +188,15 @@ public class Coordinator implements Runnable {
                     .filter((k, v) -> v != null)
                     .peek((k, msg) -> {
                         logger.log(
-                            "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
-                            ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights)
+                            "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + 
+                            ", acc: " + msg.accuracy + ", loss: " + msg.loss + ", weights: " + 
+                            Dl4jParamUtils.sampleFlat(msg.weights)
                         );
                     })
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 
             }
         }
-
+        
         // Task 2 ===============================================================================================================
         // input stream 8 and output stream 9
 

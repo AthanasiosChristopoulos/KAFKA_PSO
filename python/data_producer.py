@@ -21,7 +21,7 @@ PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
 NUMBER_OF_DATA_REPEATS_TEST = int(os.getenv("NUMBER_OF_DATA_REPEATS_TEST"))
 
-if(DATASET != "iris" and DATASET != "wine"):
+if(DATASET != "iris" and DATASET != "wine" and DATASET != "mnist"):
     NUMBER_OF_DATA_REPEATS = 1
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
@@ -218,25 +218,25 @@ def main():
         
         # Load to Training Topic
         
-        while data_repeats < NUMBER_OF_DATA_REPEATS:
+        # while data_repeats < NUMBER_OF_DATA_REPEATS:
             
-            for index in range(len(X)):
-                features = X[index]
-                label = int(y[index])
-                label_name = class_names[label]
+        #     for index in range(len(X)):
+        #         features = X[index]
+        #         label = int(y[index])
+        #         label_name = class_names[label]
 
-                msg = {
-                    "sample_index": index,
-                    "features": features,
-                    "label": label
-                }
+        #         msg = {
+        #             "sample_index": index,
+        #             "features": features,
+        #             "label": label
+        #         }
 
-                producer.send(INPUT_TOPIC, value=msg)
-                producer.flush() 
+        #         producer.send(INPUT_TOPIC, value=msg)
+        #         producer.flush() 
             
-            data_repeats += 1
+        #     data_repeats += 1
         
-        print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        # print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
         
         # Load to Test Topic =====================================================================
 
