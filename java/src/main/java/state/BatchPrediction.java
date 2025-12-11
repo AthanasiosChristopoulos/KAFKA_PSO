@@ -137,6 +137,7 @@ public class BatchPrediction {
             }
 
         // ====== SOFTMAX / MULTI-CLASS CASE ======
+
         } else {
             INDArray argMax = probs.argMax(1);   // [batch]
 
@@ -163,9 +164,10 @@ public class BatchPrediction {
         }
 
         float accuracy = (float) nCorrect / nSamples;
-        float avgLoss = loss / nSamples;
+        // float avgLoss = loss / nSamples;         // not averaging loss seems to lead to higher performance
+        // return new float[]{accuracy, avgLoss};
 
-        return new float[]{accuracy, avgLoss};
+        return new float[]{accuracy, loss};
     }
 
     

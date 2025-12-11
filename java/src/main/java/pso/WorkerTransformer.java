@@ -31,6 +31,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private final int BATCH_SIZE;
     private final int N_BATCHES;
     private final boolean FULLY_INFORMED;
+    private final float SIGNIFICANT_LOSS;
 
     private final CustomLogger logger;
 
@@ -59,7 +60,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private float accuracy = -1f;
     private float loss = 10000f;
 
-    private float gBestAccuracy = -1f;
+    private float local_gBestAccuracy = -1f;
+    private float local_gBestLoss = 10000f;
 
 
     public WorkerTransformer(int workerId) {
@@ -70,6 +72,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         this.BATCH_SIZE = cfg.BATCH_SIZE;
         this.N_BATCHES = cfg.N_BATCHES;   
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
+        this.SIGNIFICANT_LOSS = cfg.SIGNIFICANT_LOSS;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
@@ -105,12 +108,8 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         if (!printedOffset) {
             printedOffset = true;
-            logger.log(
-                "Starting at -> " +
-                "Offset: " + context.offset() +
-                ", Partition: " + context.partition() +
-                ", Topic: " + context.topic()
-            );
+            logger.log("Starting at -> " +"Offset: " + context.offset() + ", Partition: " + context.partition() +
+                            ", Topic: " + context.topic());
         }
         
         if (value == null) {
@@ -126,6 +125,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         stats.reset();
 
         // float accuracy, loss = predictor.callPredictionsBatch(buffer);
+
         try {
             float[] accLoss = predictor.callPredictionsBatch(buffer);
             accuracy = accLoss[0];
@@ -140,18 +140,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         buffer.clear();
         batchesRead++;
-
-        // float accuracy = stats.getAccuracy();
-        // float loss = stats.getLoss();
-
-        // if (accuracy == 0f) {
-            
-        //     if(accuracy_invalid == false) {
-        //         System.out.println("Accuracy Invalid");
-        //         accuracy_invalid = true;
-        //     }
-        //     return null;
-        // }
 
         if (loss == 0f) {
             if(loss_invalid == false) {
@@ -169,7 +157,16 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         // Send pBest or current weights ===================================================================
 
-        if(Math.round(loss * 1000f) / 1000f < stats.getBestLoss()) {    // send always when improvement. TODO send only when significant improvement
+        boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < stats.getBestLoss(); 
+                // boolean has pBest improved or not ?
+
+        boolean significant_diff_to_gBest = Math.abs(loss - local_gBestLoss) > SIGNIFICANT_LOSS;
+        // if(significant_diff_to_gBest != true) {
+        //     System.out.println("SIGNIFICANT_LOSS: " + SIGNIFICANT_LOSS);
+        // }
+                // is the loss significant enough to be reported ?
+
+        if(improvement_to_pBest && significant_diff_to_gBest) {    // send always when improvement. TODO send only when significant improvement
 
             stats.setBestAccuracy(accuracy);
             stats.setBestLoss(loss);
@@ -179,8 +176,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
-                        ", actuall loss: " + loss + 
-                        ", msgIndex = " + msgIndex +
+                        ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
                         ", n_predictions: " + stats.getNumPredictions() + ", n_correct: " + stats.getNumCorrect());
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
@@ -188,7 +184,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             return new KeyValue<>(keyName, msg);
         }
 
-        if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES
+        if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES. For FedAvg
 
             logger.log("Sending current weights ...");
 
@@ -212,6 +208,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (neighborPBestList == null || neighborPBestList.isEmpty()) {
                 logger.log("No neighbor pBest found; skipping social update this round.");
                 velocity = psoUpdater.updateX(model, null);
+
             } else {
                 logger.log("pBest Weights:\n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = psoUpdater.updateX(model, neighborPBestList);
@@ -223,15 +220,15 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights) + ", gBest Accuracy: " + gBestAccuracy);
+                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights) + ", gBest Accuracy: " + local_gBestAccuracy);
             }
 
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
         logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity) + 
-                    ", with loss: " + loss + ", with accuracy: " + accuracy);
+                    ", with loss: " + loss + ", with accuracy: " + accuracy +
+                    ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity));
 
         return null;
     }
@@ -292,10 +289,15 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
         }
 
         float[] gBestWeights = best.weights;
-        if(best.accuracy > gBestAccuracy) {  // update gBestAccuracy
-            gBestAccuracy = best.accuracy;
-        }
+        // if(best.accuracy > local_gBestAccuracy) {  // update local_gBestAccuracy
+        //     local_gBestAccuracy = best.accuracy;
+        // }
         
+        if(best.loss < local_gBestLoss) {  // update local_gBestAccuracy
+            local_gBestLoss = best.loss;
+            local_gBestAccuracy = best.accuracy;
+        }
+
         if (gBestWeights == null || gBestWeights.length == 0) {
             logger.log("gBestWeights is empty for key '" + keyName + "'");
             return null;

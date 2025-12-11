@@ -20,7 +20,7 @@ if os.path.exists(env_path):
 DATASET = os.getenv("DATASET", "iris")
 
 # ======================================================================
-# Common: save model weights in flat format, DL4J-style
+# Save model weights in flat format
 # ======================================================================
 
 def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
@@ -53,7 +53,7 @@ def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
     return flat
 
 # ======================================================================
-# SUSY pipeline
+# SUSY DATASET
 # ======================================================================
 
 def load_susy_data(max_rows=80000, train_size=60000, path="../data/SUSY.csv"):

@@ -200,7 +200,7 @@ public class Dl4jModelFactory {
 		// 38018
 	
 	// ======================================================================================================================
-	// SUSY Dataset Model Architecture 
+	// Bank Dataset Model Architecture 
 
 	public static MultiLayerNetwork createBankModel() {
 		int outputSize = 1; // because sigmoid, single logit
@@ -236,11 +236,10 @@ public class Dl4jModelFactory {
 	
 	// Number of weights in the network calculation:  
         // For Hidden Layer 1   => 53 * 64 + 64  
-        // For Hidden Layer 2   => 64 *  + 128
-        // For Output Layer     => 128 * 10 + 10
-        // 235146 weights all in all
-		// 400000 == NN400K
-		// this is comparable to NN400K
+        // For Hidden Layer 2   => 64 * 64 + 64
+        // For Output Layer     => 64 * 1 + 1
+        // 7681 weights all in all
+		// this is comparable to NN4K
 
 
 }

@@ -41,6 +41,7 @@ public class Config {
     public final int TOP_K_VALUE;
 
     public final float VEL_MAX_FACTOR;
+    public final float SIGNIFICANT_LOSS;
 
     public Config() {
         
@@ -113,6 +114,9 @@ public class Config {
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
         this.VEL_MAX_FACTOR = Float.parseFloat(getenv(dotenv, "VEL_MAX_FACTOR", "0.1"));
+
+        this.SIGNIFICANT_LOSS = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS", "3.1"));
+
     }
 
     public static Config getInstance() {
