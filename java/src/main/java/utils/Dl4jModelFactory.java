@@ -10,6 +10,9 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.nd4j.linalg.api.buffer.DataType;
 
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.linalg.learning.config.Adam;
+
 public class Dl4jModelFactory {
         
 	private static final Config cfg = Config.getInstance();
@@ -31,6 +34,10 @@ public class Dl4jModelFactory {
 				
 		} else if ("susy-input".equals(DATA_TOPIC)) {
 				return createSUSYModel();
+
+		} else if ("bank-input".equals(DATA_TOPIC)) {
+				return createBankModel();
+
 		} else {
             throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
 		}
@@ -192,4 +199,48 @@ public class Dl4jModelFactory {
 		// 19202 weights all in all
 		// 38018
 	
+	// ======================================================================================================================
+	// SUSY Dataset Model Architecture 
+
+	public static MultiLayerNetwork createBankModel() {
+		int outputSize = 1; // because sigmoid, single logit
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.updater(new Adam(1e-3))
+				.l2(1e-4)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
+						.nIn(64)
+						.nOut(outputSize)
+						.activation(Activation.SIGMOID)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	
+	// Number of weights in the network calculation:  
+        // For Hidden Layer 1   => 53 * 64 + 64  
+        // For Hidden Layer 2   => 64 *  + 128
+        // For Output Layer     => 128 * 10 + 10
+        // 235146 weights all in all
+		// 400000 == NN400K
+		// this is comparable to NN400K
+
+
 }

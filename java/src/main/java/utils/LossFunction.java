@@ -72,6 +72,30 @@ public class LossFunction {
 
     // =============================================================================================
 
+   public static float compute_loss_sigmoid(float probsScalar, int label) {
+
+        float p = probsScalar;
+
+        if (p < 1e-7f) p = 1e-7f;
+        if (p > 1f - 1e-7f) p = 1f - 1e-7f;
+
+        float loss = (float)(- (label * Math.log(p) + (1 - label) * Math.log(1f - p)));
+
+        if (Float.isInfinite(loss)) {
+            System.out.println("Sigmoid loss is Inf");
+            return -1f;
+        }
+
+        if (Float.isNaN(loss)) {
+            System.out.println("Sigmoid loss is NaN");
+            return -1f;
+        }
+
+        return loss;
+    }
+
+    // =============================================================================================
+
     public static float compute_loss_CE(float[] probs, int label) {
 
         float eps = 0.0000001f;            

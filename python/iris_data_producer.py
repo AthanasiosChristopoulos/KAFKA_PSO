@@ -148,6 +148,8 @@ def load_dataset():
         y = y_train
         class_names = [str(i) for i in range(10)]           # "0".."9" each is one different number
 
+# ==================================================================================================
+
     elif DATASET == "susy":
         data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000) # 80000 - 100000
                                                                              # (5000000, 19), the 19th is the label
@@ -167,35 +169,27 @@ def load_dataset():
         
         return X.tolist(), y, X_test.tolist(), y_test, class_names
 
+# ==================================================================================================
 
     elif DATASET == "bank":
+        data = np.loadtxt("../data/processed_bank.csv", delimiter=",", dtype=np.float32, skiprows=1)
 
-        df = pd.read_csv("../data/bank-additional-full.csv", sep=";")
+        # Last column is the label
+        y_all = data[:, -1].astype(int)
 
-        max_rows = 70000
-        df = df.iloc[:max_rows].copy()
+        # All other columns are features
+        X_all = data[:, :-1].astype(np.float32)
 
-        y_all = (df["y"] == "yes").astype(int).values       # convert yes OR no to int
+        # ===== Train/Test Split =====
+        train_size = 30000    # adjust as you want
 
-        df_features = df.drop(columns=["y"])                # keep only features
+        X = X_all[:train_size]        # training features
+        y = y_all[:train_size]        # training labels
 
-        X_all_df = pd.get_dummies(df_features, drop_first=True)     # One-hot encode categorical columns
-        X_all = X_all_df.astype(np.float32).values      # Convert to float32 numpy array
+        X_test = X_all[train_size:]   # test features
+        y_test = y_all[train_size:]   # test labels
 
-        train_size = 60000  # means test size is 10000
-
-        X_train_raw = X_all[:train_size]
-        y = y_all[:train_size]
-
-        X_test_raw = X_all[train_size:]
-        y_test = y_all[train_size:]
-
-        mean = X_train_raw.mean(axis=0, keepdims=True)
-        std = X_train_raw.std(axis=0, keepdims=True) + 1e-8
-
-        X = (X_train_raw - mean) / std
-        X_test = (X_test_raw - mean) / std
-
+        # Class names: ["0", "1"]
         class_names = [str(i) for i in sorted(set(y_all))]
 
         return X.tolist(), y, X_test.tolist(), y_test, class_names
@@ -209,6 +203,7 @@ def load_dataset():
     
     return X_scaled, y, None, None, class_names
 
+# ==================================================================================================
 
 def main():
 

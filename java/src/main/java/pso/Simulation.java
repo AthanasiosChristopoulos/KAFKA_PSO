@@ -31,7 +31,7 @@ public class Simulation {
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n[Shutdown] JVM is stopping, workers will close via their KafkaStreams hooks.");
+            System.out.println("\n[Shutdown] JVM is stopping, workers will close.");
         }));
 
         coordinatorThread.join(); 
