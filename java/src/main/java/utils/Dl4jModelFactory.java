@@ -39,6 +39,12 @@ public class Dl4jModelFactory {
 				// return createBankModel();
 				return createBankModel40K();
 
+		} else if ("adult-input".equals(DATA_TOPIC)) {
+				return createAdultModel();
+
+		} else if ("covertype-input".equals(DATA_TOPIC)) {
+				return createCovertypeModel();
+
 		} else {
             throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
 		}
@@ -282,6 +288,92 @@ public class Dl4jModelFactory {
         // For Output Layer     => 128 * 1 + 1
         // 46849 weights all in all
 		// this is comparable to NN40K
+
+
+	public static MultiLayerNetwork createAdultModel() {
+		System.out.println("Using ADULT_INCOME Model");
+		int outputSize = 1; // sigmoid, single logit (binary classification)
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.updater(new Adam(1e-3))
+				.l2(1e-4)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)      // Adult input features after one-hot + scaling
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
+						.nIn(64)
+						.nOut(outputSize)
+						.activation(Activation.SIGMOID)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// Number of weights in the network calculation:
+	// For Hidden Layer 1   => NEURAL_INPUT * 64 + 64
+	// For Hidden Layer 2   => 64 * 64 + 64
+	// For Output Layer     => 64 * 1 + 1
+	// Total weights        => (NEURAL_INPUT * 64 + 64) + (64 * 64 + 64) + (64 * 1 + 1)
+	//                      => (NEURAL_INPUT * 64) + 64 + 4096 + 64 + 64 + 1
+	//                      => (NEURAL_INPUT * 64) + 4289
+	//
+	// Example: if Adult preprocessing produces NEURAL_INPUT = 108 features,
+	// Total weights = 108 * 64 + 4289 = 6912 + 4289 = 11201
+	// (comparable to NN~10K)
+
+	// ======================================================================================================================
+	// COVERTYPE Dataset Model Architecture
+
+	public static MultiLayerNetwork createCovertypeModel() {
+		System.out.println("Using COVERTYPE Model");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)    
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT)  
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// Number of weights in the network calculation:
+	// For Hidden Layer 1   => 54 * 128 + 128
+	// For Hidden Layer 2   => 128 * 128 + 128
+	// For Output Layer     => 128 * 7 + 7
+	// Total weights        => (54*128+128) + (128*128+128) + (128*7+7)
+	//                      => (6912+128) + (16384+128) + (896+7)
+	//                      => 7040 + 16512 + 903
+	//                      => 24455 weights all in all
+	// this is comparable to ~NN25K
 
 
 }

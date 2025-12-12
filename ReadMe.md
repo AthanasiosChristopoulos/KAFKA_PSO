@@ -146,7 +146,8 @@ gunzip SUSY.csv.gz
  - 1) Add new .env variables
  - 2) Update NEURAL_INPUT and NEURAL_OUTPUT in Config.java
  - 3) Define new createModel function in Dl4jModelFactory
- - 4) append in iris_data_producer.py the load_dataset() function an elif
+ - 4) Create train and test Kafka Topics
+ - 5) Append in data_producer.py the load_dataset() function an elif
 
  - Extra:
     - update in evaluate_model.py, by adding elifs to functions:

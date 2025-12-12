@@ -113,14 +113,7 @@ def run_susy():
     model = build_susy_model(input_dim=X_train.shape[1])
 
     print("\n[SUSY] Training...")
-    history = model.fit(
-        X_train,
-        y_train,
-        validation_split=0.1,
-        epochs=3,
-        batch_size=256,
-        verbose=2
-    )
+    history = model.fit(X_train, y_train, validation_split=0.1, epochs=3,  batch_size=256, verbose=2)
 
     print("\n[SUSY] Evaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
@@ -134,30 +127,25 @@ def run_susy():
 # ======================================================================
 
 def load_bank_data(path="../data/bank-additional-full.csv"):
-    print(f"[BANK] Loading from: {path}")
+    print(f"Loading from: {path}")
     df = pd.read_csv(path, sep=';')
 
-    # Label: yes/no → 1/0
+    # Label: yes or no to 1 or 0
     y = (df["y"] == "yes").astype(int).values
 
-    # Features: all except y, one-hot encoded
     X = pd.get_dummies(df.drop(columns=["y"]), drop_first=True).astype(np.float32).values
 
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=0.2,
-        random_state=123,
-        stratify=y
-    )
-
-    # Scale features
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123, stratify=y)
+        # random_state=123 => sudo randomly ordered dataset
+        # stratify = y: Split the data so that each class in y appears in the train and test sets 
+            # in the same proportion as the original dataset.
+    
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test  = scaler.transform(X_test)
 
-    print("[BANK] Train shape:", X_train.shape, "Labels:", y_train.shape)
-    print("[BANK] Test  shape:", X_test.shape, "Labels:", y_test.shape)
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("Test  shape:", X_test.shape, "Labels:", y_test.shape)
 
     return X_train, X_test, y_train, y_test
 
@@ -186,19 +174,13 @@ def run_bank():
 
     model = build_bank_model(input_dim=X_train.shape[1])
 
-    print("\n[BANK] Training...")
-    history = model.fit(
-        X_train, y_train,
-        validation_split=0.2,
-        epochs=3,
-        batch_size=256,
-        verbose=2
-    )
+    print("\nTraining...")
+    history = model.fit(X_train, y_train, validation_split=0.2,epochs=3,batch_size=256,verbose=2)
 
-    print("\n[BANK] Evaluating on test set...")
+    print("\nEvaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"[BANK] Test loss: {test_loss:.4f}")
-    print(f"[BANK] Test accuracy: {test_acc:.4f}")
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
 
     save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
@@ -207,30 +189,21 @@ def run_bank():
 # ======================================================================
 
 def load_mnist_data():
-    """
-    Loads MNIST from tf.keras.datasets, normalizes to [0,1],
-    and returns train/test splits plus class names.
-    """
-    print("[MNIST] Loading from tf.keras.datasets.mnist")
+    print("Loading from tf.keras.datasets.mnist")
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
 
-    # Normalize to [0,1]
     X_train = X_train.astype("float32") / 255.0
     X_test  = X_test.astype("float32") / 255.0
 
-    # Shapes: (60000, 28, 28), (10000, 28, 28)
-    print("[MNIST] Train shape:", X_train.shape, "Labels:", y_train.shape)
-    print("[MNIST] Test  shape:", X_test.shape, "Labels:", y_test.shape)
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("Test shape:", X_test.shape, "Labels:", y_test.shape)
 
     class_names = [str(i) for i in range(10)]
     return X_train, y_train, X_test, y_test, class_names
 
 
 def build_mnist_model(input_shape=(28, 28)):
-    """
-    Simple MLP for MNIST: Flatten -> Dense -> Dense -> Output(10).
-    Uses sparse_categorical_crossentropy so labels can stay int.
-    """
+    
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Flatten(),
@@ -254,28 +227,183 @@ def run_mnist():
 
     model = build_mnist_model(input_shape=X_train.shape[1:])
 
-    print("\n[MNIST] Training...")
-    history = model.fit(
-        X_train,
-        y_train,
-        validation_split=0.1,   # 10% of train used as validation
-        epochs=5,
-        batch_size=128,
-        verbose=2,
-    )
+    print("\nTraining...")
+    history = model.fit(X_train,y_train,validation_split=0.1,epochs=5,batch_size=128,verbose=2,)
 
-    print("\n[MNIST] Evaluating on test set...")
+    print("\nEvaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"[MNIST] Test loss: {test_loss:.4f}")
-    print(f"[MNIST] Test accuracy: {test_acc:.4f}")
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
 
-    # Make sure the directory exists on disk
-    # os.makedirs("model_serialization", exist_ok=True)
+    save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
-    save_model_as_flat_txt(
-        model,
-        path=f"model_serialization/{DATASET}_model_weights.txt"
+# ======================================================================
+# Adult income DATASET
+# ======================================================================
+
+def load_adult_data():
+    
+    train_path="../data/adult.data"
+    test_path="../data/adult.test"
+    
+    cols = [
+        "age", "workclass", "fnlwgt", "education", "education-num",
+        "marital-status", "occupation", "relationship", "race", "sex",
+        "capital-gain", "capital-loss", "hours-per-week", "native-country","income"
+    ]
+
+    df_train = pd.read_csv(train_path, header=None, names=cols,sep=",",engine="python",skipinitialspace=True)
+    df_test = pd.read_csv(test_path,header=None,names=cols,sep=",",engine="python",skipinitialspace=True,skiprows=1)
+
+    df_test["income"] = df_test["income"].astype(str).str.replace(".", "", regex=False)
+
+    df_train.replace("?", np.nan, inplace=True)
+    df_test.replace("?", np.nan, inplace=True)
+
+    df_train.dropna(inplace=True)
+    df_test.dropna(inplace=True)
+
+    y_train = (df_train["income"] == ">50K").astype(np.int32).values
+    y_test  = (df_test["income"] == ">50K").astype(np.int32).values
+
+    X_train_df = df_train.drop(columns=["income"])
+    X_test_df  = df_test.drop(columns=["income"])
+
+    X_train_oh = pd.get_dummies(X_train_df, drop_first=True)
+    X_test_oh  = pd.get_dummies(X_test_df, drop_first=True)
+
+    X_test_oh = X_test_oh.reindex(columns=X_train_oh.columns, fill_value=0)
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train_oh).astype(np.float32)
+    X_test  = scaler.transform(X_test_oh).astype(np.float32)
+
+    class_names = ["<=50K", ">50K"]
+
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("Test  shape:", X_test.shape, "Labels:", y_test.shape)
+    print("Class names:", class_names)
+
+    return X_train, y_train, X_test, y_test, class_names
+
+# ======================================================================
+
+def build_adult_model(input_dim):
+
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(1, activation="sigmoid"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="binary_crossentropy",
+        metrics=["accuracy"],
     )
+
+    model.summary()
+    return model
+
+# ======================================================================
+
+def run_adult():
+    X_train, y_train, X_test, y_test, class_names = load_adult_data()
+    
+    train_path="../data/adult.data"
+    test_path="../data/adult.test"
+    
+    model = build_adult_model(input_dim=X_train.shape[1])
+
+    print("\nTraining...")
+    history = model.fit(X_train, y_train, validation_split=0.1, epochs=10, batch_size=256,verbose=2)
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+    return model
+
+# ======================================================================
+# COVERTYPE DATASET
+# ======================================================================
+
+def load_covertype_data(path="../data/covertype.csv", max_rows=None):
+    
+    print(f"dfLoading from: {path}")
+
+    if max_rows is None:
+        df = pd.read_csv(path)
+    else:
+        df = pd.read_csv(path, nrows=max_rows)
+
+    print("dfRaw shape:", df.shape)
+
+    # Label is last column
+    y_all = df.iloc[:, -1].astype(int).values     
+    X_all = df.iloc[:, :-1].astype(np.float32).values  # features
+
+    # ===== Train/Test Split =====
+
+    n = X_all.shape[0]
+    train_size = int(0.8 * n)
+
+    X_train_raw = X_all[:train_size]
+    y_train = y_all[:train_size]
+
+    X_test_raw = X_all[train_size:]
+    y_test = y_all[train_size:]
+
+    # ===== Scale features (fit on train only) =====
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train_raw).astype(np.float32)
+    X_test  = scaler.transform(X_test_raw).astype(np.float32)
+
+    class_names = [str(i) for i in range(7)]  # "0".."6" (since we shifted labels)
+
+    print("dfTrain shape:", X_train.shape, "Labels:", y_train.shape)
+    print("dfTest  shape:", X_test.shape, "Labels:", y_test.shape)
+    print("dfClasses:", class_names)
+
+    return X_train, y_train, X_test, y_test, class_names
+
+
+def build_covertype_model(input_dim, num_classes=7):
+ 
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+
+def run_covertype():
+    
+    X_train, y_train, X_test, y_test, class_names = load_covertype_data(path="../data/covertype.csv", max_rows=None)
+
+    model = build_covertype_model(input_dim=X_train.shape[1], num_classes=len(class_names))
+
+    print("\ndfTraining...")
+    history = model.fit(X_train, y_train, validation_split=0.1, epochs=5, batch_size=256, verbose=2)
+
+    print("\ndf Evaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"dfTest loss: {test_loss:.4f}")
+    print(f"dfTest accuracy: {test_acc:.4f}")
+
+    return model
 
 # ======================================================================
 # Main
@@ -290,9 +418,17 @@ def main():
         run_bank()
     elif DATASET == "mnist":
         run_mnist()
+    elif DATASET == "adult":
+        run_adult()
+    elif DATASET == "covertype":
+        run_covertype()
     else:
         print("DATASET not detected")
         
 if __name__ == "__main__":
     main()
 
+
+# load_{dataset_name}_data()
+# build_{dataset_name}_model()
+# run_{dataset_name}()

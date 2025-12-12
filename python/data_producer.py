@@ -194,6 +194,89 @@ def load_dataset():
 
         return X.tolist(), y, X_test.tolist(), y_test, class_names
 
+    # ====================================================================================================
+
+    elif DATASET == "adult":
+        
+        # Adult columns (UCI)
+        cols = [
+            "age", "workclass", "fnlwgt", "education", "education-num",
+            "marital-status", "occupation", "relationship", "race", "sex",
+            "capital-gain", "capital-loss", "hours-per-week", "native-country",
+            "income"
+        ]
+
+        # ===== Load TRAIN from adult.data =====
+        df_train = pd.read_csv("../data/adult.data", header=None, names=cols, sep=",",engine="python",skipinitialspace=True)
+
+        # ===== Load TEST from adult.test =====
+        df_test = pd.read_csv("../data/adult.test", header=None, names=cols, sep=",",
+            engine="python",
+            skipinitialspace=True,
+            skiprows=1
+        )
+
+        # Fix test labels: ">50K." -> ">50K"
+        df_test["income"] = df_test["income"].astype(str).str.replace(".", "", regex=False)
+
+        # Treat '?' as missing and drop rows with missing values
+        df_train.replace("?", np.nan, inplace=True)
+        df_test.replace("?", np.nan, inplace=True)
+        df_train.dropna(inplace=True)
+        df_test.dropna(inplace=True)
+
+        # ===== Labels: income -> 0/1 =====
+        # 1 means >50K, 0 means <=50K
+        y = (df_train["income"] == ">50K").astype(int).values
+        y_test = (df_test["income"] == ">50K").astype(int).values
+
+        # ===== Features: drop label, one-hot encode categoricals =====
+        X_train_df = df_train.drop(columns=["income"])
+        X_test_df  = df_test.drop(columns=["income"])
+
+        X_train_oh = pd.get_dummies(X_train_df, drop_first=True)
+        X_test_oh  = pd.get_dummies(X_test_df, drop_first=True)
+
+        # Align test columns to train columns
+        X_test_oh = X_test_oh.reindex(columns=X_train_oh.columns, fill_value=0)
+
+        # Convert to float32
+        X_train_raw = X_train_oh.astype(np.float32).values
+        X_test_raw  = X_test_oh.astype(np.float32).values
+
+        # ===== Scale (fit on train, apply to test) =====
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train_raw).astype(np.float32)
+        X_test  = scaler.transform(X_test_raw).astype(np.float32)
+
+        class_names = ["<=50K", ">50K"]
+
+        return X_train.tolist(), y, X_test.tolist(), y_test, class_names
+
+    # ====================================================================================================
+    
+    elif DATASET == "covertype":
+
+        data = np.loadtxt("../data/covertype.csv", delimiter=",", dtype=np.float32, skiprows=1)
+
+        # Assume label is last column
+        y_all = data[:, -1].astype(int)
+        X_all = data[:, :-1].astype(np.float32)
+        
+        # ===== Train/Test Split =====
+        train_size = int(0.8 * len(y_all))  
+
+        X = X_all[:train_size]
+        y = y_all[:train_size]
+
+        X_test = X_all[train_size:]
+        y_test = y_all[train_size:]
+
+        class_names = [str(i) for i in range(7)] 
+
+        return X.tolist(), y, X_test.tolist(), y_test, class_names
+
+
     else:
         print("Invalid Dataset selected")
         exit(0)
@@ -216,56 +299,11 @@ def main():
 
     if args.all:
         
-        # Load to Training Topic
+        # Load to Training Topic ==================================================================
         
-        # while data_repeats < NUMBER_OF_DATA_REPEATS:
+        if(1 == 1):
             
-        #     for index in range(len(X)):
-        #         features = X[index]
-        #         label = int(y[index])
-        #         label_name = class_names[label]
-
-        #         msg = {
-        #             "sample_index": index,
-        #             "features": features,
-        #             "label": label
-        #         }
-
-        #         producer.send(INPUT_TOPIC, value=msg)
-        #         producer.flush() 
-            
-        #     data_repeats += 1
-        
-        # print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
-        
-        # Load to Test Topic =====================================================================
-
-        data_repeats = 0
-        
-        if (X_test != None) or (y_test != None):     
-            while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
-                
-                for index in range(len(X_test)):
-                    features = X_test[index]
-                    label = int(y_test[index])
-                    label_name = class_names[label]
-
-                    msg = {
-                        "sample_index": index,
-                        "features": features,
-                        "label": label
-                    }
-
-                    producer.send(TEST_TOPIC, value=msg)
-                    producer.flush() 
-                
-                data_repeats += 1
-                            
-            print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
-        
-        else:
-            
-            while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+            while data_repeats < NUMBER_OF_DATA_REPEATS:
                 
                 for index in range(len(X)):
                     features = X[index]
@@ -278,12 +316,61 @@ def main():
                         "label": label
                     }
 
-                    producer.send(TEST_TOPIC, value=msg)
+                    producer.send(INPUT_TOPIC, value=msg)
                     producer.flush() 
                 
                 data_repeats += 1
-                            
-            print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+            
+            print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        
+        # Load to Test Topic =====================================================================
+        
+        if(1 == 1):
+                
+            data_repeats = 0
+            
+            if (X_test != None) or (y_test != None):     
+                while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                    
+                    for index in range(len(X_test)):
+                        features = X_test[index]
+                        label = int(y_test[index])
+                        label_name = class_names[label]
+
+                        msg = {
+                            "sample_index": index,
+                            "features": features,
+                            "label": label
+                        }
+
+                        producer.send(TEST_TOPIC, value=msg)
+                        producer.flush() 
+                    
+                    data_repeats += 1
+                                
+                print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+                
+            else:
+                
+                while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                    
+                    for index in range(len(X)):
+                        features = X[index]
+                        label = int(y[index])
+                        label_name = class_names[label]
+
+                        msg = {
+                            "sample_index": index,
+                            "features": features,
+                            "label": label
+                        }
+
+                        producer.send(TEST_TOPIC, value=msg)
+                        producer.flush() 
+                    
+                    data_repeats += 1
+                                
+                print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
             
     elif args.streaming:
          

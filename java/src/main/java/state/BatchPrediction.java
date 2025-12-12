@@ -67,6 +67,7 @@ public class BatchPrediction {
 
                 if (featList.size() != NEURAL_INPUT) {
                     logger.log("Wrong features length. Got " + featList.size() + " but NEURAL_INPUT = " + NEURAL_INPUT);
+                    System.out.println("Wrong features length. Waiting for " + featList.size() + ", but NEURAL_INPUT = " + NEURAL_INPUT);
                     continue;   // skip non-conforming record
                 }
 
@@ -114,8 +115,8 @@ public class BatchPrediction {
 
         // ====== SIGMOID / BINARY CASE ======
 
-        if ("bank".equals(this.DATASET)) {
-        
+        if ("bank".equals(this.DATASET) || "adult".equals(this.DATASET)) {
+            logger.log("I am here_1");
             for (int i = 0; i < nSamples; i++) {
 
                 float p = probs.getFloat(i, 0);
@@ -165,6 +166,7 @@ public class BatchPrediction {
         float accuracy = (float) nCorrect / nSamples;
         // float avgLoss = loss / nSamples;         // not averaging loss seems to lead to higher performance
         // return new float[]{accuracy, avgLoss};
+        logger.log("I am here_2 " + "nSamples: " + nSamples );
 
         return new float[]{accuracy, loss, nSamples, nCorrect};
     }

@@ -76,6 +76,14 @@ public class Config {
             this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_BANK", "21"));
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_BANK", "2"));
 
+        } else if("adult".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_ADULT_INCOME", "14"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_ADULT_INCOME", "2"));
+
+        } else if("covertype".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_COVERTYPE", "54"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_COVERTYPE", "7"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
         }

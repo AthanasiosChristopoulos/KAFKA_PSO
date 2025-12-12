@@ -38,6 +38,7 @@ public class LossFunction {
 
         float sum = 0;
         for (int i = 0; i < probs.length; i++) {
+            
             // System.out.println("Probs: " +  probs[i] + ", target: " + target[i]);
                         
             if (Float.isNaN(probs[i])) {
