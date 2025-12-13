@@ -53,7 +53,7 @@ public class CustomLogger {
     
     //=====================================================================================\
 
-    public static CustomLogger getCoordinatorInstance() {
+    public static CustomLogger getInstanceForCoordinator() {
         if(coordinatorInstance == null) {
             coordinatorInstance = new CustomLogger(-1);
         }

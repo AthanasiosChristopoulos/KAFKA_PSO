@@ -126,18 +126,13 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
         stats.reset();
 
-        // float accuracy, loss = predictor.callPredictionsBatch(buffer);
-
         try {
             float[] accLoss = predictor.callPredictionsBatch(buffer);
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
             nCorrect = (int) accLoss[3];
-
-            // System.out.println("loss: " + loss + ", accuracy: " + accuracy);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.log("Error iterating bestStore: " + e.getMessage());
             System.out.println("Error iterating bestStore: " + e.getMessage());
             e.printStackTrace();

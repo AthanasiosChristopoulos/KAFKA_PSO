@@ -55,6 +55,7 @@ public class Coordinator implements Runnable {
     private final CustomLogger logger;
 
     private final MultiLayerNetwork globalModel; // x_g , current model
+    private final MultiLayerNetwork bestGlobalModel;
     private final Stats globalStats;
 
     private final BatchPrediction predictor;
@@ -75,12 +76,14 @@ public class Coordinator implements Runnable {
         this.FULLY_INFORMED = cfg.FULLY_INFORMED;
         this.DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
-        this.logger = CustomLogger.getCoordinatorInstance();
+        this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.globalModel = Dl4jModelFactory.createModel();
+        this.bestGlobalModel = Dl4jModelFactory.createModel();
+
         this.globalStats = new Stats();     
 
-        this.predictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats, logger);
+        this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
 
         this.DATASET = cfg.DATASET;
 
@@ -124,7 +127,7 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, globalStats));
+        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats)); 
 
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
@@ -139,7 +142,7 @@ public class Coordinator implements Runnable {
                 );
 
                 pBest_weights_stream
-                    .process(() -> new CoordinatorProcessor(globalModel, globalStats))
+                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats))      // doesnt actually edit the global model
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
             } else {
@@ -207,7 +210,7 @@ public class Coordinator implements Runnable {
 
         prediction_stream
             .peek((k, v) -> { System.out.println("New Prediction Record: " + v); })
-            .mapValues(json -> predictor.predictSingle(json))   // simple transformer
+            .mapValues(json -> predictor.predictSingleBest(json))   // simple transformer
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
             

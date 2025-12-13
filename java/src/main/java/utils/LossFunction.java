@@ -80,7 +80,7 @@ public class LossFunction {
         if (p < 1e-7f) p = 1e-7f;
         if (p > 1f - 1e-7f) p = 1f - 1e-7f;
 
-        float loss = (float)(- (label * Math.log(p) + (1 - label) * Math.log(1f - p)));
+        float loss = (float)(- (label * Math.log(p) + (1 - label) * Math.log(1f - p))); // Binary Cross Entropy Loss Function
 
         if (Float.isInfinite(loss)) {
             System.out.println("Sigmoid loss is Inf");

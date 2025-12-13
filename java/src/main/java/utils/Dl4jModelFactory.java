@@ -33,7 +33,8 @@ public class Dl4jModelFactory {
 				return createMNISTModel();
 				
 		} else if ("susy-input".equals(DATA_TOPIC)) {
-				return createSUSYModel();
+				// return createSUSYModel();
+				return createSUSYModel_CE();
 
 		} else if ("bank-input".equals(DATA_TOPIC)) {
 				// return createBankModel();
@@ -205,7 +206,39 @@ public class Dl4jModelFactory {
 		// For Output Layer     => 128 * 2 + 2
 		// 19202 weights all in all
 		// 38018
+
 	
+	// ======================================================================================================================
+	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
+
+	public static MultiLayerNetwork createSUSYModel_CE() {
+		System.out.println("Using SUSY Model");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)  // 18
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
+						.nIn(128)
+						.nOut(1)  // 2
+						.activation(Activation.SIGMOID)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
 	// ======================================================================================================================
 	// Bank Dataset Model Architecture 
 
@@ -289,6 +322,7 @@ public class Dl4jModelFactory {
         // 46849 weights all in all
 		// this is comparable to NN40K
 
+	// ======================================================================================================================
 
 	public static MultiLayerNetwork createAdultModel() {
 		System.out.println("Using ADULT_INCOME Model");
@@ -323,16 +357,11 @@ public class Dl4jModelFactory {
 	}
 
 	// Number of weights in the network calculation:
-	// For Hidden Layer 1   => NEURAL_INPUT * 64 + 64
+	// For Hidden Layer 1   => 96 * 64 + 64
 	// For Hidden Layer 2   => 64 * 64 + 64
 	// For Output Layer     => 64 * 1 + 1
-	// Total weights        => (NEURAL_INPUT * 64 + 64) + (64 * 64 + 64) + (64 * 1 + 1)
-	//                      => (NEURAL_INPUT * 64) + 64 + 4096 + 64 + 64 + 1
-	//                      => (NEURAL_INPUT * 64) + 4289
-	//
-	// Example: if Adult preprocessing produces NEURAL_INPUT = 108 features,
-	// Total weights = 108 * 64 + 4289 = 6912 + 4289 = 11201
-	// (comparable to NN~10K)
+	// Total weights = 10433
+	// this is comparable to NN40K)
 
 	// ======================================================================================================================
 	// COVERTYPE Dataset Model Architecture
@@ -373,7 +402,7 @@ public class Dl4jModelFactory {
 	//                      => (6912+128) + (16384+128) + (896+7)
 	//                      => 7040 + 16512 + 903
 	//                      => 24455 weights all in all
-	// this is comparable to ~NN25K
+	// this is comparable to NN40K
 
 
 }

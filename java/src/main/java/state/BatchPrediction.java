@@ -24,20 +24,34 @@ public class BatchPrediction {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final MultiLayerNetwork model;
+    private final MultiLayerNetwork bestModel;
+
     private final Stats stats;
     private static BatchPrediction coordinatorInstance = null;
 
     private final CustomLogger logger;
 
+    // for Worker =======================================================================================================
+
     public BatchPrediction(MultiLayerNetwork model, Stats stats, CustomLogger logger) {
         this.model = model;
+        this.bestModel = null;
         this.stats = stats;
         this.logger = logger;
     }
 
-    public static BatchPrediction getCoordinatorInstance(MultiLayerNetwork model, Stats stats, CustomLogger logger) {
+    // for Coordinator ==================================================================================================
+
+    public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, Stats stats, CustomLogger logger) {
+        this.model = model;
+        this.bestModel = bestModel;
+        this.stats = stats;
+        this.logger = logger;
+    }
+
+    public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, Stats stats, CustomLogger logger) {
         if(coordinatorInstance == null) {
-            coordinatorInstance = new BatchPrediction(model, stats, logger);
+            coordinatorInstance = new BatchPrediction(model, bestModel, stats, logger);
             return coordinatorInstance;
         } 
         return coordinatorInstance;
@@ -115,8 +129,7 @@ public class BatchPrediction {
 
         // ====== SIGMOID / BINARY CASE ======
 
-        if ("bank".equals(this.DATASET) || "adult".equals(this.DATASET)) {
-            logger.log("I am here_1");
+        if ("bank".equals(this.DATASET) || "adult".equals(this.DATASET) || "susy".equals(this.DATASET)) {
             for (int i = 0; i < nSamples; i++) {
 
                 float p = probs.getFloat(i, 0);
@@ -166,7 +179,6 @@ public class BatchPrediction {
         float accuracy = (float) nCorrect / nSamples;
         // float avgLoss = loss / nSamples;         // not averaging loss seems to lead to higher performance
         // return new float[]{accuracy, avgLoss};
-        logger.log("I am here_2 " + "nSamples: " + nSamples );
 
         return new float[]{accuracy, loss, nSamples, nCorrect};
     }
@@ -174,7 +186,7 @@ public class BatchPrediction {
     
     // ===========================================================================
 
-    public String predictSingle(String jsonValue) {
+    public String predictSingleBest(String jsonValue) {
         if (jsonValue == null || jsonValue.isEmpty()) {
             return null;
         }
@@ -186,7 +198,7 @@ public class BatchPrediction {
 
             List<?> featList = (List<?>) obj.get("features");
             if (featList == null || featList.size() != NEURAL_INPUT) {
-                return null; // bad record
+                return null; 
             }
 
             float[] features = new float[NEURAL_INPUT];
@@ -194,10 +206,9 @@ public class BatchPrediction {
                 features[i] = ((Number) featList.get(i)).floatValue();
             }
 
-            // Create [1, NEURAL_INPUT] INDArray
             INDArray X = Nd4j.create(features).reshape(1, NEURAL_INPUT);
-            INDArray probs = model.output(X, false);   // [1, NEURAL_OUTPUT]
-            int pred = probs.argMax(1).getInt(0);      // single prediction
+            INDArray probs = bestModel.output(X, false);  
+            int pred = probs.argMax(1).getInt(0);     
 
             Object sampleIndex = obj.get("sample_index");
             Object label_name = obj.get("label_name");

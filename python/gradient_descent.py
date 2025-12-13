@@ -1,5 +1,9 @@
 
 import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,10 +11,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
-# Disable GPU + reduce TF logs (same as before)
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # CPU only
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 from dotenv import load_dotenv
 env_path = os.path.join("..", "java", ".env")
@@ -330,42 +330,44 @@ def run_adult():
 # COVERTYPE DATASET
 # ======================================================================
 
-def load_covertype_data(path="../data/covertype.csv", max_rows=None):
-    
-    print(f"dfLoading from: {path}")
+def load_covertype_data(path="../data/covertype.csv"):
 
-    if max_rows is None:
-        df = pd.read_csv(path)
-    else:
-        df = pd.read_csv(path, nrows=max_rows)
+    label_col = "Cover_Type"
+    print(f"Loading from: {path}")
 
-    print("dfRaw shape:", df.shape)
+    df = pd.read_csv(path)
+    print("Raw shape:", df.shape)
 
-    # Label is last column
-    y_all = df.iloc[:, -1].astype(int).values     
-    X_all = df.iloc[:, :-1].astype(np.float32).values  # features
+    y_all = df[label_col].astype(np.int64).to_numpy()      # 1..7
+    X_all = df.drop(columns=[label_col]).astype(np.float32).to_numpy()
 
-    # ===== Train/Test Split =====
+    y_all = y_all - 1
+
+    rng = np.random.default_rng(123)
+    idx = rng.permutation(len(y_all))
+    X_all = X_all[idx]
+    y_all = y_all[idx]
 
     n = X_all.shape[0]
     train_size = int(0.8 * n)
 
     X_train_raw = X_all[:train_size]
     y_train = y_all[:train_size]
-
     X_test_raw = X_all[train_size:]
     y_test = y_all[train_size:]
 
-    # ===== Scale features (fit on train only) =====
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train_raw).astype(np.float32)
     X_test  = scaler.transform(X_test_raw).astype(np.float32)
 
-    class_names = [str(i) for i in range(7)]  # "0".."6" (since we shifted labels)
+    class_names = [str(i) for i in range(7)]
 
-    print("dfTrain shape:", X_train.shape, "Labels:", y_train.shape)
-    print("dfTest  shape:", X_test.shape, "Labels:", y_test.shape)
-    print("dfClasses:", class_names)
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape, "y range:", (y_train.min(), y_train.max()))
+    print("Test  shape:", X_test.shape,  "Labels:", y_test.shape,  "y range:", (y_test.min(), y_test.max()))
+    print("Classes:", class_names)
+
+    print("Train label counts:", np.bincount(y_train, minlength=7))
+    print("Test  label counts:", np.bincount(y_test, minlength=7))
 
     return X_train, y_train, X_test, y_test, class_names
 
@@ -391,7 +393,7 @@ def build_covertype_model(input_dim, num_classes=7):
 
 def run_covertype():
     
-    X_train, y_train, X_test, y_test, class_names = load_covertype_data(path="../data/covertype.csv", max_rows=None)
+    X_train, y_train, X_test, y_test, class_names = load_covertype_data(path="../data/covertype.csv")
 
     model = build_covertype_model(input_dim=X_train.shape[1], num_classes=len(class_names))
 

@@ -38,7 +38,7 @@ if [[ "$1" != "--debug" ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )
-    elif [[ 1 -eq 2 ]]; then
+    elif [[ 1 -eq 1 ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"

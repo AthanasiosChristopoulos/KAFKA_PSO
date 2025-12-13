@@ -107,7 +107,7 @@ public class Config {
         // this.W_INERTIA_G_BEST = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
 
         if(this.FULLY_INFORMED == true) {
-            this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
+            this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_FULLY", "0.9"));
 
         } else {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));

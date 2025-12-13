@@ -8,7 +8,6 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exe
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
 ```
 
-
 ## Formulas for PSO / velocity update:
 
  - Neighbor best (classical PSO):
@@ -16,8 +15,6 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:
 
  - Fully informed:
     - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
-
-
 
 
 ```bash
@@ -55,7 +52,6 @@ dos2unix run_streams.sh
             => Averages x_i of all particles into x_g and use that to evaluate overall performance of the model
                 => only if this x_g has a high enough accuracy (higher than desired accuracy) do we conclude training
                 
-
 
 ## Git:
 
@@ -106,6 +102,7 @@ git rm -r --cached target
 
 ```
 
+# Notes: =========================================================================
 
 ## Kafka Message Documentation:
 
@@ -162,15 +159,71 @@ gunzip SUSY.csv.gz
  - Not too hard, but not as easy as iris
  - Needs to come, not from python, but externally in like a .csv
  - The model that is going to be used on it should be between 10000 - 100000
- 
+ - i need you to find a tensorflow solution online which achieves a high accuracy
+ - i need multiple classes (5 up to 10) and each class has about the same class appearance frequency 
+        - even class distribution among the samples
 
 ## Improve congvergence:
  - change model
  - change constants => velocity, inertia, C1, C2
  - increase the number of children
+ - look how velocity amplitude behaves
+    - velocity show always start big and then becose smaller
 
 ## What to look at for training process:
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
  - the ideal result will not be located
  - The swarm converged on bad solution / local maximum
  - Trade-off between exploration and convergence
+
+## Velocity:
+ - Is initialized to have a significant amplitude at the start
+ - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
+ 		- velocity like simulated annealing ? Make it reduce over time
+ - **W_INERTIA_FULLY > W_INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
+    ```java
+    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
+    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]
+    ```
+
+## DATASETS: =========================================================
+
+### Susy:
+    2 Classes
+    Balanced
+    80% on Gradient Descent
+
+### Bank:
+    2 Classes
+    Unbalanced 1/10 vs 9/10
+    90% Gradient Descent, 90% on PSO
+    Did the client subscribe to a bank term deposit after the marketing phone calls ?
+        yes → the client did subscribe (opened a term deposit)
+        no → the client did not subscribe
+
+### Adult Income:
+    2 Classes
+    1/3 vs 2/3 Split between classes
+    85% on Gradient Descent, 75% on PSO
+    If the income is over 50k or not
+
+### Covertype:
+    7 Classes
+    Uneven distribution:
+        Counts:
+            Class_0: 14978
+            Class_1: 40106
+            Class_2: 1718
+            Class_3: 1687
+            Class_4: 2045
+            Class_5: 1715
+            Class_6: 1751
+
+        Percentages:
+            Class_0: 23.40%
+            Class_1: 62.67%
+            Class_2: 2.68%
+            Class_3: 2.64%
+            Class_4: 3.20%
+            Class_5: 2.68%
+            Class_6: 2.74%

@@ -37,13 +37,6 @@ public class PsoUpdater {
 
         this.VMAX_FACTOR = cfg.VEL_MAX_FACTOR;
 
-        // float xmin = Float.POSITIVE_INFINITY;
-        // float xmax = Float.NEGATIVE_INFINITY;
-        // for (float v : x) {
-        //     if (v < xmin) xmin = v;
-        //     if (v > xmax) xmax = v;
-        // }
-
         float xmin = -1.0f; // Each individual weight is allowed to exist only in the range [-1, 1].
         float xmax = 1.0f;  // Weight Initialization: ~[-0.1, 0.1] (He, Xavier, Uniform, Normal).
                     // During training, most weights stay relatively small (in practice < 0.2 or < 0.5).
@@ -56,7 +49,7 @@ public class PsoUpdater {
 
         this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
 
-        randomizeVelocity(workerId, 0.01f);
+        randomizeVelocity(workerId, 0.1f);
     }
 
     //================================================================================================
@@ -69,7 +62,7 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST 
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST, not fully informed
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         int dim = x_i.length;
@@ -88,12 +81,10 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness
             float r2 = rnd.nextFloat();  
 
-            float cognitive = C1 * r1 * (pbest[k] - x_i[k]);
-            float social = C2 * r2 * (gbest[k] - x_i[k]);
-            float inertia = W_INERTIA * velocity[k];
+            float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
 
             // velocity_i_1[k] = inertia + cognitive + social;
-            velocity_i_1[k] = clampVelocity(inertia + cognitive + social);  // velocity clamping implementation
+            velocity_i_1[k] = clampVelocity(velocity_value);  // velocity clamping implementation
             x_i_1[k] = x_i[k] + velocity_i_1[k];
         }
 
@@ -111,7 +102,7 @@ public class PsoUpdater {
         float[] socialAggregate = new float[x_i.length];
         Random rnd = new Random();
 
-        // ===== handle "no neighbors" case: pure inertia step =====
+        // neighborPBestList empty case (initialization)
         if (neighborPBestList == null || neighborPBestList.isEmpty()) {
             float[] velocity_i_1 = new float[x_i.length];
             float[] x_i_1 = new float[x_i.length];
@@ -127,8 +118,8 @@ public class PsoUpdater {
             return this.velocity;
         }
 
-        // ===== normal fully-informed case with neighbors =====
-        // for pBest_j in neighbor_pBests:
+        // Normal fully-informed case with neighbors:
+        
         for (float[] pBest_j : neighborPBestList) {
 
             if (pBest_j.length != x_i.length) {

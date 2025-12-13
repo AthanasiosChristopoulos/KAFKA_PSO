@@ -51,6 +51,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int round = 0;
 
     private final MultiLayerNetwork globalModel; // x_g , current model
+    private final MultiLayerNetwork bestGlobalModel; 
+    private float bestGlobalModelAccuracy = -1f;
+
     private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
@@ -74,16 +77,17 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     // ======================================================================
 
-    public CoordinatorProcessor(MultiLayerNetwork model, Stats stats) {
+    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats) {
 
         this.control = CoordinatorControl.getInstance();
 
-        this.logger = CustomLogger.getCoordinatorInstance();
+        this.logger = CustomLogger.getInstanceForCoordinator();
 
-        this.globalModel = model;
-        this.globalStats = stats;    
+        this.globalModel = globalModel;
+        this.bestGlobalModel = bestGlobalModel;
+        this.globalStats = globalStats;    
 
-        this.globalPredictor = BatchPrediction.getCoordinatorInstance(globalModel, globalStats, logger);
+        this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
 
         Config cfg = Config.getInstance();
         this.NUM_WORKERS = cfg.NUM_WORKERS;
@@ -173,17 +177,25 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 accuracy = accLoss[0];
                 loss = accLoss[1];
 
-                logger.log("Global model accuracy: " + accuracy);
-                System.out.println("Global model accuracy: " + accuracy);
+                // update bestGlobalModelAccuracy ========================================================
+                if(accuracy > bestGlobalModelAccuracy) {    
+                    Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
+                    bestGlobalModelAccuracy = accuracy;
+                    logger.log("New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+
+                    if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
+                        logger.log("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
+                        System.out.println("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
+                        Dl4jParamUtils.saveModel(bestGlobalModel);
+                        control.requestStop();
+                        return;
+                    }
+                }
+                
+                logger.log("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
+                System.out.println("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
 
                 weightsBuffer.clear();
-
-                if (accuracy >= this.DESIRED_ACCURACY) {
-                    Dl4jParamUtils.saveModel(globalModel);
-                    control.requestStop();
-                    return;
-                }
-
             } 
         
         } else {    // update gBest
@@ -200,9 +212,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
     }
 
+    // ==================================================================================================================================
+
     @Override
     public void close() {
-        // nothing special
+
     }
 
     

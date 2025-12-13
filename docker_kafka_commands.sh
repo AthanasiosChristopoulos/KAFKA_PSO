@@ -376,7 +376,7 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic prediction_input --from-beginning
+  --topic prediction_input
 
 # PREDICTION_OUTPUT_TOPIC ==============================================================
 
@@ -390,4 +390,4 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic prediction_output --from-beginning
+  --topic prediction_output
