@@ -133,7 +133,7 @@ public class Worker implements Runnable {
             .filter((k, v) -> v != null);
 
         KStream<String, WeightsMessage>[] branches = dataStream.branch(
-            (key, value) -> keyName.equals(key),   // branch[0]: pBest/gBest updates
+            (key, value) -> keyName.equals(key),   // branch[0]: pBest / gBest updates
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 

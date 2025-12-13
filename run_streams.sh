@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ./java
-
+delete=2
 set -a           # auto-export all variables
 source .env
 set +a
@@ -38,7 +38,7 @@ if [[ "$1" != "--debug" ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )
-    elif [[ 1 -eq 1 ]]; then
+    elif [[ 1 -eq "$delete" ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"

@@ -1,35 +1,35 @@
 #!/bin/bash
 
 set -a           # auto-export all variables
+cd ../java
 source .env
 set +a
 
 # --- Reset section -----------------------------------------------------------
-if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
-    for ((i=0; i<NUM_WORKERS; i++)); do
-        app="pso-worker-$i"
-        docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-            --application-id "$app" \
-            --input-topics iris-input \
-            --bootstrap-server localhost:9092 \
-            --force
-    done
+for ((i=0; i<NUM_WORKERS; i++)); do
+    app="pso-worker-$i"
+    docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
+        --application-id "$app" \
+        --input-topics iris-input \
+        --bootstrap-server localhost:9092 \
+        --force
+done
 
-    # app="pso-coordinator"
-    # docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-    #     --application-id "$app" \
-    #     --input-topics local-weights-topic \
-    #     --bootstrap-server localhost:9092 \
-    #     --force
+app="pso-coordinator"
+docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
+    --application-id "$app" \
+    --input-topics local-weights-topic \
+    --bootstrap-server localhost:9092 \
+    --force
 
-fi
+
 
 echo "$FULLY_INFORMED"
 echo "$PBEST_WEIGHTS_TOPIC"
 echo "$GLOBAL_WEIGHTS_TOPIC"
 
-if [[ "1" == "1" ]]; then
+if [[ "1" == "2" ]]; then
 
     BROKER="broker"
     BOOTSTRAP="localhost:9092"

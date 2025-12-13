@@ -162,7 +162,10 @@ gunzip SUSY.csv.gz
  - i need you to find a tensorflow solution online which achieves a high accuracy
  - i need multiple classes (5 up to 10) and each class has about the same class appearance frequency 
         - even class distribution among the samples
-
+ - no CNN (like no image recognition)
+ - have enough rows / samples like somewhere near 80000
+ - have a reasonable amount of features (not over 100)
+ 
 ## Improve congvergence:
  - change model
  - change constants => velocity, inertia, C1, C2
@@ -191,7 +194,7 @@ gunzip SUSY.csv.gz
 ### Susy:
     2 Classes
     Balanced
-    80% on Gradient Descent
+    80% on Gradient Descent, 77% on PSO
 
 ### Bank:
     2 Classes
@@ -209,6 +212,7 @@ gunzip SUSY.csv.gz
 
 ### Covertype:
     7 Classes
+    85% on Gradient Descent, 80% on PSO
     Uneven distribution:
         Counts:
             Class_0: 14978

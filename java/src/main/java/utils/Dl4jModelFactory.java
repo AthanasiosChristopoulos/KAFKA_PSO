@@ -16,6 +16,7 @@ import org.nd4j.linalg.learning.config.Adam;
 public class Dl4jModelFactory {
         
 	private static final Config cfg = Config.getInstance();
+	private static final String DATASET = cfg.DATASET;
 	private static final String DATA_TOPIC = cfg.DATA_TOPIC;
     public static final int NEURAL_INPUT = cfg.NEURAL_INPUT;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
@@ -23,31 +24,37 @@ public class Dl4jModelFactory {
 	public static MultiLayerNetwork createModel() {
 		// System.out.println("DATA_TOPIC: " + DATA_TOPIC);
 
-		if("iris-input".equals(DATA_TOPIC)) {
+		if("iris".equals(DATA_TOPIC)) {
 				return createIrisModel();
 
-		} else if ("wine-input".equals(DATA_TOPIC)) {
+		} else if ("wine".equals(DATASET)) {
 				return createWineModel();
 
-		} else if ("mnist-input".equals(DATA_TOPIC)) {
+		} else if ("mnist".equals(DATASET)) {
 				return createMNISTModel();
 				
-		} else if ("susy-input".equals(DATA_TOPIC)) {
+		} else if ("susy".equals(DATASET)) {
 				// return createSUSYModel();
 				return createSUSYModel_CE();
 
-		} else if ("bank-input".equals(DATA_TOPIC)) {
+		} else if ("bank".equals(DATASET)) {
 				// return createBankModel();
 				return createBankModel40K();
 
-		} else if ("adult-input".equals(DATA_TOPIC)) {
+		} else if ("adult".equals(DATASET)) {
 				return createAdultModel();
 
-		} else if ("covertype-input".equals(DATA_TOPIC)) {
+		} else if ("covertype".equals(DATASET)) {
 				return createCovertypeModel();
 
+		} else if ("har".equals(DATASET)) {
+				return createHarModel();
+
+		}  else if ("pendigits".equals(DATASET)) {
+				return createPenDigitsModel();
+
 		} else {
-            throw new IllegalArgumentException("Invalid DATA_TOPIC: " + DATA_TOPIC);
+            throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
 	}
 
@@ -404,5 +411,90 @@ public class Dl4jModelFactory {
 	//                      => 24455 weights all in all
 	// this is comparable to NN40K
 
+	// ======================================================================================================================
+	// HAR (UCI Human Activity Recognition) Dataset Model Architecture
+
+	public static MultiLayerNetwork createHarModel() {
+		System.out.println("Using HAR Model");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)  // 561
+						.nOut(32)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(32)
+						.nOut(32)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(32)
+						.nOut(NEURAL_OUTPUT)  // 6
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+
+	// Number of weights in the network calculation:
+	// For Hidden Layer 1   => 561 * 32 + 32
+	// For Hidden Layer 2   => 32 * 32 + 32
+	// For Output Layer     => 32 * 6 + 6
+	// 19046 weights all in all
+	//
+	// Breakdown:
+	// Hidden1: 561*32 = 17952, +32 biases  = 17984
+	// Hidden2: 32*32  = 1024,  +32 biases  = 1056
+	// Output : 32*6   = 192,   +6 biases   = 198
+	// Total  : 17984 + 1056 + 198 = 19038  <-- wait, check below
+	//
+	// NOTE: Correct total is:
+	// 17984 + 1056 + 198 = 19238
+	// (So the correct "all in all" number is 19238 parameters.)
+
+	// ======================================================================================================================
+	// PENDIGITS Dataset Model Architecture
+
+	public static MultiLayerNetwork createPenDigitsModel() {
+		System.out.println("Using PenDigits Model");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NEURAL_INPUT)   // 16 
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT) // 10 (digits 0..9)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+
+	// Number of weights in the network calculation:
+	// For Hidden Layer 1   => 16 * 128 + 128
+	// For Hidden Layer 2   => 128 * 128 + 128
+	// For Output Layer     => 128 * 10 + 10
+	// 19978 weights 
 
 }

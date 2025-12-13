@@ -65,7 +65,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private float local_gBestAccuracy = -1f;
     private float local_gBestLoss = 10000f;
 
-
     public WorkerTransformer(int workerId) {
 
         this.workerId = workerId;

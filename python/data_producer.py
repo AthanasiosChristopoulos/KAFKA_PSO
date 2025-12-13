@@ -47,7 +47,8 @@ else:
     INPUT_TOPIC = DATASET + "-input"
     TEST_TOPIC = DATASET + "-test"
 
-    
+print(f"Running this on input topic: {INPUT_TOPIC}")
+
 producer = KafkaProducer(
     bootstrap_servers = "localhost:9092",
     value_serializer = lambda v: json.dumps(v).encode("utf-8") # convert json int bytes before sending
@@ -148,7 +149,8 @@ def load_susy_sample1(path, sample_size=60000):     # choose specific labels equ
 # ========================================================================================
 
 def load_dataset():
-
+    
+    global NUMBER_OF_DATA_REPEATS, NUMBER_OF_DATA_REPEATS_TEST
     X = y = class_names = None
     
     if DATASET == "iris":
@@ -313,7 +315,70 @@ def load_dataset():
         evaluate_dataset(X_train, y_train, X_test, y_test)
 
         return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
+    
+    # ====================================================================================================
 
+    elif DATASET == "har":
+        
+        base_path="../data/"
+        
+        train_x_path = os.path.join(base_path, "X_train.txt")
+        train_y_path = os.path.join(base_path, "y_train.txt")
+        test_x_path  = os.path.join(base_path, "X_test.txt")
+        test_y_path  = os.path.join(base_path, "y_test.txt")
+
+        print(f"[HAR] Loading from: {base_path}")
+        X_train = np.loadtxt(train_x_path, dtype=np.float32)
+        y_train = np.loadtxt(train_y_path, dtype=np.int64)
+        X_test  = np.loadtxt(test_x_path,  dtype=np.float32)
+        y_test  = np.loadtxt(test_y_path,  dtype=np.int64)
+
+        y_train = y_train - 1   # 1 ... 6 -> 0 ... 5
+        y_test  = y_test - 1
+
+        class_names = [str(i) for i in range(6)]
+
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_test  = scaler.transform(X_test).astype(np.float32)
+
+        return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
+
+    # ====================================================================================================
+    
+    elif DATASET == "pendigits":
+        NUMBER_OF_DATA_REPEATS = NUMBER_OF_DATA_REPEATS_TEST = 5
+        base_path="../data"
+        
+        train_path = os.path.join(base_path, "pendigits.tra")
+        test_path  = os.path.join(base_path, "pendigits.tes")
+
+        print(f"Loading from: {base_path}")
+
+        train = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
+        test  = np.loadtxt(test_path,  delimiter=",", dtype=np.float32)
+
+        # last column is label
+        X_train = train[:, :-1].astype(np.float32)     # (n, 16)
+        y_train = train[:, -1].astype(np.int64)        # (n,)
+        X_test  = test[:, :-1].astype(np.float32)
+        y_test  = test[:, -1].astype(np.int64)
+
+        class_names = [str(i) for i in range(10)]
+
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_test  = scaler.transform(X_test).astype(np.float32)
+
+        print("Train shape:", X_train.shape, "Labels:", y_train.shape,
+            "y range:", (int(y_train.min()), int(y_train.max())),
+            "counts:", np.bincount(y_train, minlength=10))
+        print("Test  shape:", X_test.shape,  "Labels:", y_test.shape,
+            "y range:", (int(y_test.min()), int(y_test.max())),
+            "counts:", np.bincount(y_test, minlength=10))
+        print("Classes:", class_names)
+
+        return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
 
     else:
         print("Invalid Dataset selected")
@@ -423,7 +488,8 @@ def main():
     
     # =================================================================================================================
       
-    if args.streaming:
+    elif args.streaming:
+        
         while True:
             index = random.randrange(len(X_train))      # we need random samples (if in order, they would belong to the same class)
             features = X_train[index]

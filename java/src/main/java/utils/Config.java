@@ -84,6 +84,14 @@ public class Config {
             this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_COVERTYPE", "54"));
             this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_COVERTYPE", "7"));
 
+        } else if("har".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_HAR", "54"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_HAR", "7"));
+
+        }  else if("pendigits".equals(this.DATASET)) {
+            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "54"));
+            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "7"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
         }
