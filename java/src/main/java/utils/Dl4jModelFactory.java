@@ -22,9 +22,9 @@ public class Dl4jModelFactory {
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
 	public static MultiLayerNetwork createModel() {
-		// System.out.println("DATA_TOPIC: " + DATA_TOPIC);
+		// System.out.println("DATASET: " + DATASET);
 
-		if("iris".equals(DATA_TOPIC)) {
+		if("iris".equals(DATASET)) {
 				return createIrisModel();
 
 		} else if ("wine".equals(DATASET)) {

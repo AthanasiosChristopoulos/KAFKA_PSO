@@ -99,52 +99,6 @@ def evaluate_dataset(X_train, y_train, X_test, y_test):
         "counts:", np.bincount(y_test, minlength=7))
 
 
-# ========================================================================================
-
-def load_susy_sample1(path, sample_size=60000):     # choose specific labels equally
-    per_class = sample_size // 2
-    zeros = []
-    ones = []
-    seen0 = 0
-    seen1 = 0
-
-    with open(path, "r") as f:
-        for line in f:
-            parts = line.strip().split(",")
-            if not parts or len(parts) < 2:
-                continue
-
-            *feat_strs, label_str = parts
-            label = int(float(label_str))  # SUSY labels are 0/1 but may be "0.0"
-
-            features = [float(v) for v in feat_strs]
-
-            if label == 0:
-                seen0 += 1
-                if len(zeros) < per_class:
-                    zeros.append((features, label))
-                else:
-                    j = random.randrange(seen0)
-                    if j < per_class:
-                        zeros[j] = (features, label)
-            else:
-                seen1 += 1
-                if len(ones) < per_class:
-                    ones.append((features, label))
-                else:
-                    j = random.randrange(seen1)
-                    if j < per_class:
-                        ones[j] = (features, label)
-
-    # combine and shuffle
-    data = zeros + ones
-    random.shuffle(data)
-
-    X = np.array([row[0] for row in data], dtype=np.float32)
-    y = np.array([row[1] for row in data], dtype=np.int64)
-
-    return X, y
-
 
 # ========================================================================================
 
@@ -155,17 +109,27 @@ def load_dataset():
     
     if DATASET == "iris":
         iris = load_iris()
-        X = iris.data
-        y = iris.target
+        X, y = shuffle(iris.data, iris.target)
         class_names = iris.target_names.tolist()
-
+        
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X).tolist() 
+    
+        return X_scaled, y, None, None, class_names
+    
     # ==================================================================================================
 
-    elif DATASET == "wine":   # <-- remove the space in "wine -input"
+    elif DATASET == "wine":  
         wine = load_wine()
-        X = wine.data              # shape (178, 13)
-        y = wine.target            # 0,1,2
+        X, y = shuffle(wine.data, wine.target)
+        # X = wine.data              # shape (178, 13)
+        # y = wine.target            # 0,1,2
         class_names = wine.target_names.tolist()
+        
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X).tolist() 
+    
+        return X_scaled, y, None, None, class_names
     
     # ==================================================================================================
 
@@ -464,7 +428,7 @@ def main():
                                 
                 print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
                 
-            else:
+            else:   # If there are no explicit training samples then load the training samples in the test topic
                 
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     

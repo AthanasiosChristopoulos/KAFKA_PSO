@@ -35,21 +35,16 @@ public class PsoUpdater {
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         velocity = new float[x.length];
 
-        this.VMAX_FACTOR = cfg.VEL_MAX_FACTOR;
+        this.VMAX_FACTOR = cfg.VMAX_FACTOR;
 
-        float xmin = -1.0f; // Each individual weight is allowed to exist only in the range [-1, 1].
-        float xmax = 1.0f;  // Weight Initialization: ~[-0.1, 0.1] (He, Xavier, Uniform, Normal).
-                    // During training, most weights stay relatively small (in practice < 0.2 or < 0.5).
+        float xmin = -1.0f; // Each individual weight is allowed to change at this rate
+        float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
 
         float range = xmax - xmin;  // the xmax - xmin discussed in the paper 
-        // if range is degenerate, fall back to something small
-        if (range == 0f) {
-            range = 1.0f;
-        }
 
         this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
 
-        randomizeVelocity(workerId, 0.1f);
+        randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
     }
 
     //================================================================================================
@@ -85,6 +80,7 @@ public class PsoUpdater {
 
             // velocity_i_1[k] = inertia + cognitive + social;
             velocity_i_1[k] = clampVelocity(velocity_value);  // velocity clamping implementation
+            // velocity_i_1[k] = velocity_value;
             x_i_1[k] = x_i[k] + velocity_i_1[k];
         }
 

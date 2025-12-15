@@ -41,7 +41,7 @@ public class Config {
     public final String LOSS_FUNCTION;
     public final int TOP_K_VALUE;
 
-    public final float VEL_MAX_FACTOR;
+    public final float VMAX_FACTOR;
     public final float SIGNIFICANT_LOSS_DIFF;
 
     public Config() {
@@ -132,7 +132,7 @@ public class Config {
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
-        this.VEL_MAX_FACTOR = Float.parseFloat(getenv(dotenv, "VEL_MAX_FACTOR", "0.1"));
+        this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
 
         this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
 
