@@ -44,6 +44,8 @@ public class Config {
     public final float VMAX_FACTOR;
     public final float SIGNIFICANT_LOSS_DIFF;
 
+    public final int SAMPLING_CONSTANT;
+
     public Config() {
         
         Dotenv dotenv = Dotenv
@@ -135,6 +137,8 @@ public class Config {
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
 
         this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
+
+        this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
 
     }
 

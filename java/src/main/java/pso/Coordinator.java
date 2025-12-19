@@ -38,6 +38,7 @@ import state.*;
 
 public class Coordinator implements Runnable {
 
+    private static Config cfg = Config.getInstance();
     public final String DATASET;
     private final String PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC;
@@ -48,6 +49,7 @@ public class Coordinator implements Runnable {
     private final String RUN_ID;
     private final boolean FULLY_INFORMED;
     private final boolean DEBUG_KAFKA;
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private Map<String, Object> payload = new HashMap<>();
@@ -61,7 +63,6 @@ public class Coordinator implements Runnable {
     private final BatchPrediction predictor;
 
     public Coordinator() {
-
         Config cfg = Config.getInstance();
         this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
         this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
@@ -154,7 +155,7 @@ public class Coordinator implements Runnable {
                 .peek((k, msg) -> {
                     logger.log(
                         "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
-                        ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights)
+                        ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
                     );
                 });
 
@@ -193,7 +194,7 @@ public class Coordinator implements Runnable {
                         logger.log(
                             "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + 
                             ", acc: " + msg.accuracy + ", loss: " + msg.loss + ", weights: " + 
-                            Dl4jParamUtils.sampleFlat(msg.weights)
+                            Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
                         );
                     })
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 

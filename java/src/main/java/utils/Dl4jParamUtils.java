@@ -23,7 +23,11 @@ import java.util.*;
 
 public class Dl4jParamUtils {   
 
+    private static Config cfg = Config.getInstance();
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+
     public static float[] modelToFlatList(MultiLayerNetwork model) {
+
         List<Float> flatList = new ArrayList<>();
 
         for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
@@ -98,19 +102,75 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static String sampleFlat(float[] flat) {
-        int n = Math.min(3, flat.length);
+    public static String sampleFlat(float[] flat, int numberOfSamples) {
 
         StringBuilder sb = new StringBuilder();
         sb.append("[");
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < numberOfSamples; i++) {
             sb.append(String.format("%.5f", flat[i]));
-            if (i < n - 1) sb.append(", ");
+            if (i < numberOfSamples - 1) sb.append(", ");
         }
 
-        if (flat.length > 3) {
-            sb.append(", ...");
+        sb.append(", ...]");
+        return sb.toString();
+    }
+
+    //=====================================================================================================
+
+    public static String sampleFlatSorted(float[] flat, int numberOfSamples) {
+
+        int[] topIdx = new int[numberOfSamples];
+        for (int i = 0; i < numberOfSamples; i++) {
+            topIdx[i] = -1;
+        }
+        
+        for (int i = 0; i < flat.length; i++) {
+            float amp = Math.abs(flat[i]);
+
+            for (int pos = 0; pos < numberOfSamples; pos++) {
+                if (topIdx[pos] == -1 || amp > Math.abs(flat[topIdx[pos]])) {
+
+                    for (int k = numberOfSamples - 1; k > pos; k--) {
+                        topIdx[k] = topIdx[k - 1];
+                    }
+
+                    topIdx[pos] = i;
+                    break;
+                }
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+
+        for (int i = 0; i < numberOfSamples; i++) {
+            sb.append(String.format("%.5f", flat[topIdx[i]]));
+            if (i < numberOfSamples - 1) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append(", ...]");
+        return sb.toString();
+    }
+
+    //=====================================================================================================
+
+    public static String sampleFlats(Collection<float[]> flats) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+
+        int idx = 0;
+        int size = flats.size();
+
+        for (float[] flat : flats) {
+            sb.append(sampleFlat(flat, SAMPLING_CONSTANT));   
+
+            if (idx < size - 1) {
+                sb.append(",\n");
+            }
+            idx++;
         }
 
         sb.append("]");
@@ -128,29 +188,6 @@ public class Dl4jParamUtils {
         }
 
         return (float) Math.sqrt(sum);
-    }
-
-    //=====================================================================================================
-
-    public static String sampleFlats(Collection<float[]> flats) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        int idx = 0;
-        int size = flats.size();
-
-        for (float[] flat : flats) {
-            sb.append(sampleFlat(flat));   // reuse your existing sampling function
-
-            if (idx < size - 1) {
-                sb.append(",\n");
-            }
-            idx++;
-        }
-
-        sb.append("]");
-
-        return sb.toString();
     }
 
     //=====================================================================================================

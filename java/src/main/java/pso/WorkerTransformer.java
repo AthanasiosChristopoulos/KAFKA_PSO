@@ -25,6 +25,8 @@ import state.*;
 
 public class WorkerTransformer implements Transformer<String, String, KeyValue<String, WeightsMessage>> {
 
+    private static Config cfg = Config.getInstance();
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final int workerId;
@@ -32,6 +34,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     private final int N_BATCHES;
     private final boolean FULLY_INFORMED;
     private final float SIGNIFICANT_LOSS_DIFF;
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private final CustomLogger logger;
 
@@ -219,19 +222,15 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights) + ", gBest Accuracy: " + local_gBestAccuracy);
+                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + ", gBest Accuracy: " + local_gBestAccuracy);
             }
 
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
-        // logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-        //             ", with loss: " + loss + ", with velocity: " + Dl4jParamUtils.sampleFlat(velocity) + 
-        //             ", with accuracy: " + accuracy);
-
-          logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model)) +
-                    ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
-                    ", with accuracy: " + accuracy);
+        logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT) +
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
+                ", with accuracy: " + accuracy);
 
         return null;
     }
@@ -312,7 +311,6 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
             return null;
         }
 
-        // logger.log("gBestWeights: " + Dl4jParamUtils.sampleFlat(gBestWeights));
         return gBestWeights;
     }
 

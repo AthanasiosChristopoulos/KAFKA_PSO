@@ -172,6 +172,7 @@ gunzip SUSY.csv.gz
  - increase the number of children
  - look how velocity amplitude behaves
     - velocity show always start big and then becose smaller
+ -  Fully Informed seems to be slower, but converging more surely (its always improving)
 
 ## What to look at for training process:
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
@@ -231,3 +232,7 @@ gunzip SUSY.csv.gz
             Class_4: 3.20%
             Class_5: 2.68%
             Class_6: 2.74%
+
+## Non Functional Requirements: =========================================================
+
+	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον

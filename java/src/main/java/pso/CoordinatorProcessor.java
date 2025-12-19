@@ -57,12 +57,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
+    private static Config cfg = Config.getInstance();
     private final String DATA_TOPIC;
     private final String TEST_TOPIC;
-
     private final int TEST_SIZE;
     private final float DESIRED_ACCURACY;
     private final String RUN_ID;
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private final KafkaConsumer<String, String> consumer;
 
@@ -161,8 +162,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
 
                     if (records.isEmpty()) {
-                        System.out.println("Records is empty");
-                        break; // no more data, use whatever we have
+                        System.out.println("Test Records run out. Training is over.");
+                        control.requestStop(); // no more test data, training is over
+                        return;
                     }
 
                     for (ConsumerRecord<String, String> rec : records) {
@@ -178,22 +180,24 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 loss = accLoss[1];
 
                 // update bestGlobalModelAccuracy ========================================================
+
+                logger.log("Global bestAccuracy: " + bestGlobalModelAccuracy + ", global model: " + accuracy + ", and weights sample: "
+                    + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                System.out.println("Global bestAccuracy: " + bestGlobalModelAccuracy + ", global model: " + accuracy + ", and weights sample: "
+                    + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+
                 if(accuracy > bestGlobalModelAccuracy) {    
                     Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                     bestGlobalModelAccuracy = accuracy;
                     logger.log("New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
 
                     if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
-                        logger.log("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
-                        System.out.println("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
+
                         Dl4jParamUtils.saveModel(bestGlobalModel);
                         control.requestStop();
                         return;
                     }
                 }
-                
-                logger.log("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
-                System.out.println("Global model accuracy: " + accuracy + ", bestAccuracy: " + bestGlobalModelAccuracy);
 
                 weightsBuffer.clear();
             } 
