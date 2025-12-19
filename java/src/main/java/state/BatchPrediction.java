@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
+
 import utils.*;
+import message.*;
 
 public class BatchPrediction {
 
@@ -59,61 +61,45 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public float[] callPredictionsBatch(List<String> jsonValues) {
+    public float[] callPredictionsBatch(List<DataMessage> batch) {
 
-        if (jsonValues == null || jsonValues.isEmpty()) {
-            logger.log("json values are empty");
+        if (batch == null || batch.isEmpty()) {
+            logger.log("batch is empty");
             return new float[]{-1f, -1f};
         }
 
         List<float[]> featureList = new ArrayList<>();
         List<Integer> labels = new ArrayList<>();
 
-        for (String value : jsonValues) {   // extract features, labels out of json values for data batch
-            try {
-                Map<String, Object> obj = MAPPER.readValue(value, new TypeReference<Map<String, Object>>() {});
+        for (DataMessage msg : batch) {
+            if (msg == null) continue;
 
-                List<?> featList = (List<?>) obj.get("features");
-                if (featList == null) {
-                    logger.log("Missing 'features' key in JSON");
-                    continue;
-                }
-
-                if (featList.size() != NEURAL_INPUT) {
-                    logger.log("Wrong features length. Got " + featList.size() + " but NEURAL_INPUT = " + NEURAL_INPUT);
-                    System.out.println("Wrong features length. Waiting for " + featList.size() + ", but NEURAL_INPUT = " + NEURAL_INPUT);
-                    continue;   // skip non-conforming record
-                }
-
-                float[] features = new float[NEURAL_INPUT];
-                for (int i = 0; i < NEURAL_INPUT; i++) {
-                    features[i] = ((Number) featList.get(i)).floatValue();
-                }
-
-                if (!obj.containsKey("label")) {
-                    logger.log("Missing 'label' key in JSON");
-                    continue;
-                }
-
-                int label = ((Number) obj.get("label")).intValue();   // 0/1 or class index
-
-                featureList.add(features);
-                labels.add(label);
-
-            } catch (Exception e) {
-                logger.log("Error parsing JSON: " + e.getMessage());
+            float[] feats = msg.features;
+            if (feats == null) {
+                logger.log("Null features in DataMessage");
+                continue;
             }
+
+            if (feats.length != NEURAL_INPUT) {
+                logger.log("Wrong features length. Got " + feats.length + " but NEURAL_INPUT = " + NEURAL_INPUT);
+                System.out.println("Wrong features length. Got " + feats.length + " but NEURAL_INPUT = " + NEURAL_INPUT);
+                continue; // skip non-conforming record
+            }
+
+            featureList.add(feats);
+            labels.add(msg.label);
         }
 
         int nSamples = featureList.size();
         if (nSamples == 0) {
-            logger.log("No samples after parsing jsonValues");
+            logger.log("No samples after parsing batch");
             return new float[]{-1f, -1f};
         }
 
         float[][] data = new float[nSamples][NEURAL_INPUT];
         for (int i = 0; i < nSamples; i++) {
-            data[i] = featureList.get(i);
+            // copy to avoid surprises if upstream reuses arrays (optional but safe)
+            System.arraycopy(featureList.get(i), 0, data[i], 0, NEURAL_INPUT);
         }
 
         INDArray X = Nd4j.create(data);              // [batch, NEURAL_INPUT]
@@ -140,10 +126,8 @@ public class BatchPrediction {
 
                 int label = labels.get(i);   // 0 or 1
 
-                int pred = (p >= 0.5f) ? 1 : 0;  // Prediction with threshold 0.5
-                if (pred == label) {
-                    nCorrect++;
-                }
+                int pred = (p >= 0.5f) ? 1 : 0;
+                if (pred == label) nCorrect++;
 
                 float sampleLoss = LossFunction.compute_loss_sigmoid(p, label);
                 loss += sampleLoss;
@@ -155,12 +139,10 @@ public class BatchPrediction {
             INDArray argMax = probs.argMax(1);   // [batch]
 
             for (int i = 0; i < nSamples; i++) {
-                int pred = argMax.getInt(i);     // index of class with max prob
+                int pred = argMax.getInt(i);
                 int label = labels.get(i);
 
-                if (pred == label) {
-                    nCorrect++;
-                }
+                if (pred == label) nCorrect++;
 
                 float[] probabilities = probs.getRow(i).toFloatVector();
                 loss += LossFunction.compute_loss(probabilities, label);
@@ -177,54 +159,33 @@ public class BatchPrediction {
         }
 
         float accuracy = (float) nCorrect / nSamples;
-        // float avgLoss = loss / nSamples;         // not averaging loss seems to lead to higher performance
-        // return new float[]{accuracy, avgLoss};
-
         return new float[]{accuracy, loss, nSamples, nCorrect};
     }
 
-    
+        
     // ===========================================================================
 
-    public String predictSingleBest(String jsonValue) {
-        if (jsonValue == null || jsonValue.isEmpty()) {
+    public String predictSingleBest(DataMessage msg) {
+        if (msg == null || msg.features == null || msg.features.length != NEURAL_INPUT) {
             return null;
         }
 
         try {
-            Map<String, Object> obj = MAPPER.readValue(
-                    jsonValue, new TypeReference<Map<String, Object>>() {}
-            );
-
-            List<?> featList = (List<?>) obj.get("features");
-            if (featList == null || featList.size() != NEURAL_INPUT) {
-                return null; 
-            }
-
-            float[] features = new float[NEURAL_INPUT];
-            for (int i = 0; i < NEURAL_INPUT; i++) {
-                features[i] = ((Number) featList.get(i)).floatValue();
-            }
-
-            INDArray X = Nd4j.create(features).reshape(1, NEURAL_INPUT);
-            INDArray probs = bestModel.output(X, false);  
-            int pred = probs.argMax(1).getInt(0);     
-
-            Object sampleIndex = obj.get("sample_index");
-            Object label_name = obj.get("label_name");
+            INDArray X = Nd4j.create(msg.features).reshape(1, NEURAL_INPUT);
+            INDArray probs = bestModel.output(X, false);
+            int pred = probs.argMax(1).getInt(0);
 
             Map<String, Object> out = new HashMap<>();
-            out.put("sample_index", sampleIndex);
+            out.put("sample_index", msg.sampleIndex);
             out.put("prediction", pred);
-            out.put("true_label_name", label_name);
 
             return MAPPER.writeValueAsString(out);
+
         } catch (Exception e) {
             logger.log("Error in predictSingle: " + e.getMessage());
             return null;
         }
     }
-
 }
 
 

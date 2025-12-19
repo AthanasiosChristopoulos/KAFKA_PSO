@@ -17,8 +17,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.serialization.Serde;
-import message.data_message.DataMessage;
-import message.data_message.DataMessageSerde;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsConfig;
@@ -34,16 +32,16 @@ public class Worker implements Runnable {
 
     private final int workerId;
     
-    private final int TRAIN_SIZE;
-    private final int N_BATCHES;
-    private final String DATA_TOPIC;
-    private final String PBEST_WEIGHTS_TOPIC;
-    private final String LOCAL_WEIGHTS_TOPIC;
-    private final String GLOBAL_WEIGHTS_TOPIC;
-    private final String RUN_ID;
-
-    private final boolean FULLY_INFORMED;
-    private final boolean DEBUG_KAFKA;
+    private static Config cfg = Config.getInstance();
+    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
+    private final int N_BATCHES = cfg.N_BATCHES;   
+    private final String DATA_TOPIC = cfg.DATA_TOPIC;
+    private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
+    private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
+    private final String GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+    private final String RUN_ID = cfg.RUN_ID;  
+    private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
+    private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
     private String stateStoreName;
     private String keyName;
@@ -54,17 +52,6 @@ public class Worker implements Runnable {
     public Worker(int workerId) {
 
         this.workerId = workerId;
-
-        Config cfg = Config.getInstance();
-        this.TRAIN_SIZE = cfg.TRAIN_SIZE;
-        this.N_BATCHES = cfg.N_BATCHES;         
-        this.DATA_TOPIC = cfg.DATA_TOPIC;
-        this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
-        this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
-        this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
-        this.RUN_ID = cfg.RUN_ID;   
-        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
-        this.DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);                
 

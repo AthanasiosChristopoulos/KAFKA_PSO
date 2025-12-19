@@ -32,7 +32,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
-
 import utils.*; 
 import state.*; 
 import message.*; 
@@ -40,16 +39,17 @@ import message.*;
 public class Coordinator implements Runnable {
 
     private static Config cfg = Config.getInstance();
-    public final String DATASET;
-    private final String PBEST_WEIGHTS_TOPIC;
-    private final String LOCAL_WEIGHTS_TOPIC;
-    private final String GLOBAL_WEIGHTS_TOPIC;
-    public final String PREDICTION_INPUT_TOPIC;
-    public final String PREDICTION_OUTPUT_TOPIC;
+    public final String DATASET = cfg.DATASET;
+    private final String DATA_TOPIC = cfg.DATA_TOPIC;
+    private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
+    private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
+    private final String GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
+    public final String PREDICTION_INPUT_TOPIC = cfg.PREDICTION_INPUT_TOPIC;
+    public final String PREDICTION_OUTPUT_TOPIC = cfg.PREDICTION_OUTPUT_TOPIC;
 
-    private final String RUN_ID;
-    private final boolean FULLY_INFORMED;
-    private final boolean DEBUG_KAFKA;
+    private final String RUN_ID = cfg.RUN_ID;
+    private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
+    private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -64,19 +64,8 @@ public class Coordinator implements Runnable {
     private final BatchPrediction predictor;
 
     public Coordinator() {
-        Config cfg = Config.getInstance();
-        this.PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
-        this.LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
-        this.GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
-        this.PREDICTION_INPUT_TOPIC = cfg.PREDICTION_INPUT_TOPIC;
-        this.PREDICTION_OUTPUT_TOPIC = cfg.PREDICTION_OUTPUT_TOPIC;
 
         System.out.println("Coordinator: " + PREDICTION_INPUT_TOPIC + ", " + PREDICTION_OUTPUT_TOPIC);
-
-        this.RUN_ID = cfg.RUN_ID;
-
-        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
-        this.DEBUG_KAFKA = cfg.DEBUG_KAFKA;
 
         this.logger = CustomLogger.getInstanceForCoordinator();
 
@@ -87,10 +76,7 @@ public class Coordinator implements Runnable {
 
         this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
 
-        this.DATASET = cfg.DATASET;
-
         System.out.println("Running on Dataset: " + this.DATASET);
-
     }
 
     @Override

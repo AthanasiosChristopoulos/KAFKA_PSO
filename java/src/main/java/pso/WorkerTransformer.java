@@ -26,15 +26,15 @@ import message.*;
 
 public class WorkerTransformer implements Transformer<String, DataMessage, KeyValue<String, WeightsMessage>> {
 
-    private static Config cfg = Config.getInstance();
+    private final int workerId;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final int workerId;
-    private final int TRAIN_SIZE;
-    private final int N_BATCHES;
-    private final boolean FULLY_INFORMED;
-    private final float SIGNIFICANT_LOSS_DIFF;
+    private static Config cfg = Config.getInstance();
+    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
+    private final int N_BATCHES = cfg.N_BATCHES;  
+    private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
+    private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private final CustomLogger logger;
@@ -72,12 +72,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public WorkerTransformer(int workerId) {
 
         this.workerId = workerId;
-        
-        Config cfg = Config.getInstance();
-        this.TRAIN_SIZE = cfg.TRAIN_SIZE;
-        this.N_BATCHES = cfg.N_BATCHES;   
-        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
-        this.SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 

@@ -40,8 +40,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final int NUM_WORKERS;
-
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
     private final Map<String, float[]> pBestBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
     
@@ -59,14 +57,15 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final BatchPrediction globalPredictor;
 
     private static Config cfg = Config.getInstance();
-    private final String DATA_TOPIC;
-    private final String TEST_TOPIC;
-    private final int TEST_SIZE;
-    private final float DESIRED_ACCURACY;
-    private final String RUN_ID;
-    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+    private final int NUM_WORKERS = cfg.NUM_WORKERS;
+    private final String DATA_TOPIC = cfg.DATA_TOPIC;
+    private final String TEST_TOPIC = cfg.TEST_TOPIC;
+    private final int TEST_SIZE = cfg.TEST_SIZE;
+    private final float DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
+    private final String RUN_ID = cfg.RUN_ID;   
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
 
-    private final KafkaConsumer<String, String> consumer;
+    private final KafkaConsumer<String, DataMessage> consumer;
 
     private int count = 0;
 
@@ -90,25 +89,16 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.globalStats = globalStats;    
 
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
-
-        Config cfg = Config.getInstance();
-        this.NUM_WORKERS = cfg.NUM_WORKERS;
-        this.TEST_SIZE = cfg.TEST_SIZE;
-        this.DATA_TOPIC = cfg.DATA_TOPIC;
-        this.TEST_TOPIC = cfg.TEST_TOPIC;
-        this.DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
-        this.RUN_ID = cfg.RUN_ID;    
         
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);
         consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         logger.log("TEST_TOPIC: " + TEST_TOPIC);
         this.consumer = new KafkaConsumer<>(consumerProps);
-        // this.consumer.subscribe(Collections.singletonList(DATA_TOPIC));     
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));     
     }
 
@@ -156,11 +146,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
                 // ======== evaluate accuracy of globalModel using BatchPrediction ========
-                List<String> evalBatch = new ArrayList<>();
+                List<DataMessage> evalBatch = new ArrayList<>();
 
                 while (evalBatch.size() < TEST_SIZE) {  // foll eval_batch before evaluating performance 
 
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+                    ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(500));
 
                     if (records.isEmpty()) {
                         System.out.println("Test Records run out. Training is over.");
@@ -168,7 +158,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         return;
                     }
 
-                    for (ConsumerRecord<String, String> rec : records) {
+                    for (ConsumerRecord<String, DataMessage> rec : records) {
                         if (rec.value() != null) {
                             evalBatch.add(rec.value());
                         }
