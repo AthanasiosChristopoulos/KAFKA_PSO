@@ -24,7 +24,7 @@ import utils.*;
 import state.*;
 import message.*; 
 
-public class WorkerTransformer implements Transformer<String, String, KeyValue<String, WeightsMessage>> {
+public class WorkerTransformer implements Transformer<String, DataMessage, KeyValue<String, WeightsMessage>> {
 
     private static Config cfg = Config.getInstance();
 
@@ -43,7 +43,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
 
     private ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>> bestStore;
 
-    private final List<String> buffer = new ArrayList<>();
+    private final List<DataMessage> buffer = new ArrayList<>();
 
     private final MultiLayerNetwork model;
     private final Stats stats;
@@ -109,7 +109,7 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
     //=========================================================================================================================
 
     @Override
-    public KeyValue<String, WeightsMessage> transform(String key, String value) {
+    public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage value) {
 
         if (!printedOffset) {
             printedOffset = true;

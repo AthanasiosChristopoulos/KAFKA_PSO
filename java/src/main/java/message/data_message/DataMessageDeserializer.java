@@ -1,4 +1,4 @@
-package utils;
+package message.data_message;
 
 import org.apache.kafka.common.serialization.Deserializer;
 

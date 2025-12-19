@@ -1,4 +1,4 @@
-package utils;
+package message;
 
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -16,7 +16,7 @@ public class WeightsMessageSerializer implements Serializer<WeightsMessage> {
         }
 
         int idWorker = data.idWorker;
-
+    
         String msgIndex = data.msgIndex;
 
         byte[] msgBytes = msgIndex.getBytes(StandardCharsets.UTF_8);    // calculate strings size as bytes

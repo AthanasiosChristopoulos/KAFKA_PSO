@@ -17,6 +17,8 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.serialization.Serde;
+import message.data_message.DataMessage;
+import message.data_message.DataMessageSerde;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsConfig;
@@ -125,7 +127,7 @@ public class Worker implements Runnable {
         // Task 1 ================================================================================================
         // input stream 1 and output stream 2_1 and stream 2_2
         
-        KStream<String, String> rawDataStream = builder.stream(
+        KStream<String, DataMessage> rawDataStream = builder.stream(
             DATA_TOPIC,
             Consumed.with(Serdes.String(), dataMessageSerde)
         );

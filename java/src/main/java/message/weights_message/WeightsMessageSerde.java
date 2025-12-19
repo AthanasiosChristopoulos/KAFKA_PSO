@@ -1,4 +1,4 @@
-package utils;
+package message;
 
 import org.apache.kafka.common.serialization.Serdes;
 
