@@ -14,6 +14,11 @@ import argparse
 import numpy as np
 import random
 import pandas as pd
+import struct
+from array import array
+
+# ========================================================================================
+# Env + Args =============================================================================
 
 from dotenv import load_dotenv
 loaded = load_dotenv("../java/.env")
@@ -24,6 +29,8 @@ DATASET = os.getenv("DATASET")
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
 NUMBER_OF_DATA_REPEATS_TEST = int(os.getenv("NUMBER_OF_DATA_REPEATS_TEST"))
+
+BATCH_FLUSH = int(os.getenv("BATCH_FLUSH"))
 
 if(DATASET != "iris" and DATASET != "wine" and DATASET != "mnist"):
     NUMBER_OF_DATA_REPEATS = 1
@@ -49,9 +56,28 @@ else:
 
 print(f"Running this on input topic: {INPUT_TOPIC}")
 
+# ========================================================================================
+# Kafka Producer =========================================================================
+
+def serialize_data_message(sample_index: int, features: np.ndarray, label: int) -> bytes:
+    features = np.asarray(features, dtype=np.float32)
+    n = int(features.size)
+
+    header = struct.pack(">iii", int(sample_index), int(label), n)
+
+    # Convert to big-endian float32 without copying when possible
+    be = features.astype(">f4", copy=False)
+
+    return header + be.tobytes()
+
+# producer = KafkaProducer(
+#     bootstrap_servers = "localhost:9092",
+#     value_serializer = lambda v: json.dumps(v).encode("utf-8") # convert json int bytes before sending
+# )
+
 producer = KafkaProducer(
-    bootstrap_servers = "localhost:9092",
-    value_serializer = lambda v: json.dumps(v).encode("utf-8") # convert json int bytes before sending
+    bootstrap_servers="localhost:9092",
+    value_serializer=lambda m: serialize_data_message(m["sample_index"], m["features"], m["label"])
 )
 
 # ========================================================================================
@@ -164,7 +190,10 @@ def load_dataset():
 
         evaluate_dataset(X_train, y_train, X_test, y_test)
         
-        return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
+        X_train = np.ascontiguousarray(X_train, dtype=np.float32)
+        X_test  = np.ascontiguousarray(X_test, dtype=np.float32)
+
+        return X_train, y_train, X_test, y_test, class_names
 
     # ==================================================================================================
 
@@ -390,8 +419,12 @@ def main():
                     }
 
                     producer.send(INPUT_TOPIC, value=msg)
-                    producer.flush() 
-                
+                    
+                    if index % BATCH_FLUSH == 0:
+                        producer.flush()
+
+                producer.flush()
+
                 data_repeats += 1
             
             print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
@@ -402,7 +435,7 @@ def main():
                 
             data_repeats = 0
             
-            if (X_test != None) or (y_test != None):     
+            if (X_test.any()) or (y_test.any()):     
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     
                     for index in range(len(X_test)):

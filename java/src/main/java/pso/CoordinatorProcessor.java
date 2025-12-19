@@ -33,6 +33,7 @@ import java.time.Duration;
 
 import utils.*;
 import state.*;
+import message.*; 
 
 public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
     private ProcessorContext<String, WeightsMessage> context;

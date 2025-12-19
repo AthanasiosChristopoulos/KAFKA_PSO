@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 
 import utils.*;
 import state.*;
+import message.*; 
 
 public class Worker implements Runnable {
 
@@ -92,6 +93,7 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
         props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
         
+        Serde<DataMessage> dataMessageSerde = new DataMessageSerde();
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
         StreamsBuilder builder = new StreamsBuilder();
@@ -125,7 +127,7 @@ public class Worker implements Runnable {
         
         KStream<String, String> rawDataStream = builder.stream(
             DATA_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String())
+            Consumed.with(Serdes.String(), dataMessageSerde)
         );
 
         KStream<String, WeightsMessage> dataStream = rawDataStream

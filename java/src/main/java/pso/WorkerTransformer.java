@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import utils.*;
 import state.*;
+import message.*; 
 
 public class WorkerTransformer implements Transformer<String, String, KeyValue<String, WeightsMessage>> {
 
