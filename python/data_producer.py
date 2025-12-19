@@ -306,6 +306,8 @@ def load_dataset():
         X_train = scaler.fit_transform(X_train).astype(np.float32)
         X_test  = scaler.transform(X_test).astype(np.float32)
 
+        evaluate_dataset(X_train, y_train, X_test, y_test)
+
         return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
 
     # ====================================================================================================
@@ -322,7 +324,6 @@ def load_dataset():
         train = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
         test  = np.loadtxt(test_path,  delimiter=",", dtype=np.float32)
 
-        # last column is label
         X_train = train[:, :-1].astype(np.float32)     # (n, 16)
         y_train = train[:, -1].astype(np.int64)        # (n,)
         X_test  = test[:, :-1].astype(np.float32)
@@ -334,13 +335,7 @@ def load_dataset():
         X_train = scaler.fit_transform(X_train).astype(np.float32)
         X_test  = scaler.transform(X_test).astype(np.float32)
 
-        print("Train shape:", X_train.shape, "Labels:", y_train.shape,
-            "y range:", (int(y_train.min()), int(y_train.max())),
-            "counts:", np.bincount(y_train, minlength=10))
-        print("Test  shape:", X_test.shape,  "Labels:", y_test.shape,
-            "y range:", (int(y_test.min()), int(y_test.max())),
-            "counts:", np.bincount(y_test, minlength=10))
-        print("Classes:", class_names)
+        evaluate_dataset(X_train, y_train, X_test, y_test)
 
         return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
 

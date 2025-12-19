@@ -160,27 +160,27 @@ public class WorkerTransformer implements Transformer<String, String, KeyValue<S
                 // boolean has pBest improved or not ?
 
         boolean significant_diff_to_gBest = Math.abs(loss - local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
-        // if(significant_diff_to_gBest != true) {
-        //     System.out.println("SIGNIFICANT_LOSS_DIFF: " + SIGNIFICANT_LOSS_DIFF);
-        // }
                 // is the loss significant enough to be reported ?
 
-        if(improvement_to_pBest && significant_diff_to_gBest) {    // send always when improvement. TODO send only when significant improvement
+        if(improvement_to_pBest) {    // update self always when improvement 
 
             stats.setBestAccuracy(accuracy);
             stats.setBestLoss(loss);
 
             this.pBestWeights = weights;
 
-            String msgIndex = java.util.UUID.randomUUID().toString();
+            if(significant_diff_to_gBest) { // send only when significant improvement
+            
+                String msgIndex = java.util.UUID.randomUUID().toString();
 
-            logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
-                        ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
-                        ", nSamples: " + nSamples + ", nCorrect: " + nCorrect);
+                logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +
+                            ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
+                            ", nSamples: " + nSamples + ", nCorrect: " + nCorrect);
 
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+                WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
-            return new KeyValue<>(keyName, msg);
+                return new KeyValue<>(keyName, msg);
+            }
         }
 
         if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES. For FedAvg
