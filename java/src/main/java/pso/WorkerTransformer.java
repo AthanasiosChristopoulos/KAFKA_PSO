@@ -103,12 +103,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     @Override
-    public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage value) {
+    public KeyValue<String, WeightsMessage> transform(String key, DataMessage value) {
 
         if (!printedOffset) {
             printedOffset = true;
             logger.log("Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
+
+            logger.log("Sample DataMessage: " + value.toString());
         }
         
         if (value == null) {

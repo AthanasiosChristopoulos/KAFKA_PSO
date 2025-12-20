@@ -82,7 +82,7 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
         props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
         
-        Serde<DataMessage> dataMessageSerde = new DataMessageSerde();
+        Serde<DataMessage> dataSerde = new DataMessageSerde();
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
         StreamsBuilder builder = new StreamsBuilder();
@@ -116,7 +116,7 @@ public class Worker implements Runnable {
         
         KStream<String, DataMessage> rawDataStream = builder.stream(
             DATA_TOPIC,
-            Consumed.with(Serdes.String(), dataMessageSerde)
+            Consumed.with(Serdes.String(), dataSerde)
         );
 
         KStream<String, WeightsMessage> dataStream = rawDataStream

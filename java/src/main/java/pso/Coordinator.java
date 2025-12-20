@@ -101,6 +101,7 @@ public class Coordinator implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "3"); // 3 Threads since we have 3 Tasks {Task 0, Task 1, Task 2}
         props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
 
+        Serde<DataMessage> dataSerde = new DataMessageSerde();
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
         CoordinatorControl control = CoordinatorControl.getInstance();
@@ -191,14 +192,14 @@ public class Coordinator implements Runnable {
         // Task 2 ===============================================================================================================
         // input stream 8 and output stream 9
 
-        KStream<String, String> prediction_stream = builder.stream(
+        KStream<String, DataMessage> prediction_stream = builder.stream(
             PREDICTION_INPUT_TOPIC,
-            Consumed.with(Serdes.String(), Serdes.String())
+            Consumed.with(Serdes.String(), dataSerde)
         );
 
         prediction_stream
             .peek((k, v) -> { System.out.println("New Prediction Record: " + v); })
-            .mapValues(json -> predictor.predictSingleBest(json))   // simple transformer
+            .mapValues(dataMessage -> predictor.predictSingleBest(dataMessage))   // simple transformer
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
             

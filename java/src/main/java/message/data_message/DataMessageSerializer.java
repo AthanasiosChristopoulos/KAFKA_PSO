@@ -1,4 +1,4 @@
-package message.data_message;
+package message;
 
 import org.apache.kafka.common.serialization.Serializer;
 

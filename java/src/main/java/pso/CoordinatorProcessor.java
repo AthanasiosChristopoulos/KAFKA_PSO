@@ -76,6 +76,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private float accuracy = -1f;
     private float loss = 10000f;
 
+    private boolean sampledDataMessage = false;
+
     // ======================================================================
 
     public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats) {
@@ -124,7 +126,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
 
-        // logger.log("RECEIVED value: " + value);
         String workerId = String.valueOf(msg.idWorker);
 
         logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId);
@@ -159,7 +160,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                     }
 
                     for (ConsumerRecord<String, DataMessage> rec : records) {
+
                         if (rec.value() != null) {
+                            if(sampledDataMessage == false) {
+                                logger.log("Sample DataMessage: " + rec.value().toString());
+                                sampledDataMessage = true;
+                            }
                             evalBatch.add(rec.value());
                         }
                     }
