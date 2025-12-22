@@ -21,7 +21,7 @@ END_PATTERNS = [
 
 # ========================================================================================
 
-def run_once(n_workers: int, logs_dir: Path):
+def run_once(n_workers, logs_dir):
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = logs_dir / f"run_{n_workers}.log"
 
@@ -57,13 +57,15 @@ def run_once(n_workers: int, logs_dir: Path):
 
     # Wait for a clean shutdown
     try:
-        p.wait(timeout=30)
+        p.wait(timeout=5)
     except subprocess.TimeoutExpired:
         p.kill()
 
     end = time.time()
     elapsed = end - start
 
+    print(f"Results for N_WORKERS = {n_workers} : best accuracy: {best_acc} - training time: {elapsed}")
+    
     return best_acc, elapsed, str(log_path)
 
 # ========================================================================================
@@ -91,7 +93,6 @@ def main():
         w = csv.DictWriter(f, fieldnames=["N_WORKERS", "ACCURACY", "TRAIN_TIME_SEC", "LOG"])
         w.writeheader()
         w.writerows(results)
-
 
     xs = [r["N_WORKERS"] for r in results]
 

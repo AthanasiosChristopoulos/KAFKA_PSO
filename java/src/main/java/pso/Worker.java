@@ -189,7 +189,7 @@ public class Worker implements Runnable {
             }
 
             while (!control.isStopRequested()) {
-                Thread.sleep(500); // poll every 500ms
+                Thread.sleep(50); // poll every 500ms
             }
             System.out.println("[Worker " + workerId + " ] Stopping because desired accuracy was reached.");
             streams.close();

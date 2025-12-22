@@ -78,7 +78,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private boolean sampledDataMessage = false;
 
-    // ======================================================================
+    // ================================================================================================================
 
     public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats) {
 
@@ -96,7 +96,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);
         consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         logger.log("TEST_TOPIC: " + TEST_TOPIC);
@@ -108,6 +108,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
     }
+
+    // ================================================================================================================
 
     @Override
     public void process(Record<String, WeightsMessage> record) {
@@ -147,6 +149,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 Dl4jParamUtils.updateModel(globalModel, avgWeights);
 
                 // ======== evaluate accuracy of globalModel using BatchPrediction ========
+
                 List<DataMessage> evalBatch = new ArrayList<>();
 
                 while (evalBatch.size() < TEST_SIZE) {  // foll eval_batch before evaluating performance 
