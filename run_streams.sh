@@ -7,7 +7,9 @@ source .env
 set +a
 
 if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then
-  export N_WORKERS="$1"
+    export N_WORKERS="$1"
+else
+    export N_WORKERS=5
 fi
 
 # --- Reset section -----------------------------------------------------------
@@ -69,8 +71,6 @@ if [[ "$1" != "--debug" ]]; then
             --partitions 1 --if-not-exists
     done
 
-    echo pause 1 second
-    sleep 1
     echo Executing ...
 
 fi

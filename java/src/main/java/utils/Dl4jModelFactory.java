@@ -21,6 +21,8 @@ public class Dl4jModelFactory {
     public static final int NEURAL_INPUT = cfg.NEURAL_INPUT;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
+	public static final boolean printModel = false;
+
 	public static MultiLayerNetwork createModel() {
 		// System.out.println("DATASET: " + DATASET);
 
@@ -62,7 +64,9 @@ public class Dl4jModelFactory {
 	// Iris Dataset Model Architecture 
 
 	public static MultiLayerNetwork createIrisModel() {
-		System.out.println("Using Iris Model");
+		if(printModel) {
+			System.out.println("Using Iris Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123) // or pass seed from outside
@@ -100,7 +104,9 @@ public class Dl4jModelFactory {
 	// Wine Dataset Model Architecture 
 
 	public static MultiLayerNetwork createWineModel() {
-		System.out.println("Using Wine Model");
+		if(printModel) {
+			System.out.println("Using Wine Model");
+		}
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
@@ -137,7 +143,9 @@ public class Dl4jModelFactory {
 	// MNIST Dataset Model Architecture 
 
 	public static MultiLayerNetwork createMNISTModel() {
-		System.out.println("Using MNIST Model");
+		if(printModel) {
+			System.out.println("Using MNIST Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -180,7 +188,9 @@ public class Dl4jModelFactory {
 	// SUSY Dataset Model Architecture 
 
 	public static MultiLayerNetwork createSUSYModel() {
-		System.out.println("Using SUSY Model");
+		if(printModel) {
+			System.out.println("Using SUSY Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -219,7 +229,9 @@ public class Dl4jModelFactory {
 	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
 
 	public static MultiLayerNetwork createSUSYModel_CE() {
-		System.out.println("Using SUSY Model");
+		if(printModel) {
+			System.out.println("Using SUSY Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -250,8 +262,10 @@ public class Dl4jModelFactory {
 	// Bank Dataset Model Architecture 
 
 	public static MultiLayerNetwork createBankModel() {
-		System.out.println("Using BANK Model");
 		int outputSize = 1;
+		if(printModel) {
+			System.out.println("Using BANK Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -291,8 +305,10 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 
 	public static MultiLayerNetwork createBankModel40K() {
-		System.out.println("Using BANK Model");
 		int outputSize = 1; 
+		if(printModel) {
+			System.out.println("Using BANK Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -332,8 +348,10 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 
 	public static MultiLayerNetwork createAdultModel() {
-		System.out.println("Using ADULT_INCOME Model");
 		int outputSize = 1; // sigmoid, single logit (binary classification)
+		if(printModel) {
+			System.out.println("Using ADULT_INCOME Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -374,7 +392,9 @@ public class Dl4jModelFactory {
 	// COVERTYPE Dataset Model Architecture
 
 	public static MultiLayerNetwork createCovertypeModel() {
-		System.out.println("Using COVERTYPE Model");
+		if(printModel) {
+			System.out.println("Using Covertype Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -415,7 +435,9 @@ public class Dl4jModelFactory {
 	// HAR (UCI Human Activity Recognition) Dataset Model Architecture
 
 	public static MultiLayerNetwork createHarModel() {
-		System.out.println("Using HAR Model");
+		if(printModel) {
+			System.out.println("Using HAR Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
@@ -463,7 +485,9 @@ public class Dl4jModelFactory {
 	// PENDIGITS Dataset Model Architecture
 
 	public static MultiLayerNetwork createPenDigitsModel() {
-		System.out.println("Using PenDigits Model");
+		if(printModel) {
+			System.out.println("Using PenDigits Model");
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)

@@ -70,7 +70,7 @@ def run_once(n_workers: int, logs_dir: Path):
 
 def main():
     # logs_dir = BASE_DIR / "experiment_logs"
-    logs_dir = Path("./experiment_logs")
+    logs_dir = Path("./experimental_results/experiment_logs")
 
     results = []
 
@@ -105,7 +105,7 @@ def main():
     plt.title("Accuracy vs N_WORKERS")
     plt.xticks(xs)
     plt.grid(True)
-    plt.savefig("accuracy_vs_workers.png", dpi=200)
+    plt.savefig("experimental_results/accuracy_vs_workers.png", dpi=200)
     plt.close()
 
     # Plot 2: Training time vs N_WORKERS ===========================================================
@@ -118,7 +118,7 @@ def main():
     plt.title("Training Time vs N_WORKERS")
     plt.xticks(xs)
     plt.grid(True)
-    plt.savefig("time_vs_workers.png", dpi=200)
+    plt.savefig("experimental_results/time_vs_workers.png", dpi=200)
     plt.close()
 
 if __name__ == "__main__":
