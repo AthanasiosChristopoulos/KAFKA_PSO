@@ -72,7 +72,12 @@ public class Worker implements Runnable {
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);
+
+        // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);     // different group Id, processing of the same data
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + "_" + RUN_ID);        // same group Id, parallel processing
+        props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams-" + RUN_ID + "-worker-" + workerId);
+        props.put(StreamsConfig.CLIENT_ID_CONFIG, "pso-worker-" + RUN_ID + "-" + workerId);
+
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -162,7 +167,8 @@ public class Worker implements Runnable {
 
             System.out.println("[Worker " + workerId + "] started.");
 
-            if(workerId == 0 && DEBUG_KAFKA == true) {
+            // if(workerId == 0 && DEBUG_KAFKA == true) {
+            if(DEBUG_KAFKA == true) {
                 System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
 
                 try { 

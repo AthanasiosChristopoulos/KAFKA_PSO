@@ -9,6 +9,8 @@ public class LossFunction {
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
     private static final int k = cfg.TOP_K_VALUE;
 
+    private static boolean sampled = false;
+
     public static float compute_loss(float[] probs, int label) {
         
         if ("L2".equals(LOSS_FUNCTION)) {
@@ -117,17 +119,21 @@ public class LossFunction {
         if (n == 0) return 0f;
 
         int k_value = Math.min(k, n);
-        // System.out.println("K: " + K);
         
         float[] target = new float[n];
         target[label] = 1f;
 
         float[] absResiduals = new float[n];
         for (int i = 0; i < n; i++) {   // calculate all the residuals (k independent)
-            absResiduals[i] = Math.abs(probs[i] - target[i]);
+            absResiduals[i] = Math.abs(probs[i] - target[i]);   // the magnitudes
         }
 
-        Arrays.sort(absResiduals);      // sort them
+        Arrays.sort(absResiduals);  // sort ascending order
+
+        if(sampled == false) {
+            System.out.println("Sample Sorted: " + Arrays.toString(absResiduals));
+            sampled = true;
+        }
 
         float sumTopK = 0f;
         for (int i = n - k_value; i < n; i++) {

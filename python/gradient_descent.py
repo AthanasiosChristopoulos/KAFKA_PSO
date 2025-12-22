@@ -56,7 +56,7 @@ def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
 # SUSY DATASET
 # ======================================================================
 
-def load_susy_data(max_rows=80000, train_size=60000, path="../data/SUSY.csv"):
+def load_susy_data(max_rows=1000000, train_size=900000, path="../data/SUSY.csv"):
     print(f"[SUSY] Loading from: {path}")
     data = np.loadtxt(path, delimiter=",", max_rows=max_rows)
 
@@ -78,42 +78,99 @@ def load_susy_data(max_rows=80000, train_size=60000, path="../data/SUSY.csv"):
 
     return X_train, y_train, X_test, y_test, class_names
 
+# ===============================================================================
+
+# def build_susy_model(input_dim=18):
+#     # Binary classification 0/1 with a single sigmoid output
+#     model = keras.Sequential([
+#         layers.Dense(128, activation='relu', input_shape=(input_dim,)),
+#         layers.Dense(64, activation='relu'),
+#         layers.Dense(1, activation='sigmoid')
+#     ])
+
+#     model.compile(
+#         optimizer='adam',
+#         loss='binary_crossentropy',
+#         metrics=['accuracy']
+#     )
+
+#     model.summary()
+#     return model
+
 
 def build_susy_model(input_dim=18):
-    # Binary classification 0/1 with a single sigmoid output
-    model = keras.Sequential([
-        layers.Dense(128, activation='relu', input_shape=(input_dim,)),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
-    ])
+    inp = keras.Input(shape=(input_dim,))
+
+    x = layers.BatchNormalization()(inp)
+
+    # Block 1
+    x = layers.Dense(512, kernel_regularizer=keras.regularizers.l2(1e-5))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.30)(x)
+
+    # Block 2
+    x = layers.Dense(256, kernel_regularizer=keras.regularizers.l2(1e-5))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.25)(x)
+
+    # Block 3
+    x = layers.Dense(128, kernel_regularizer=keras.regularizers.l2(1e-5))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.20)(x)
+
+    # Head
+    out = layers.Dense(1, activation="sigmoid")(x)
+
+    model = keras.Model(inp, out)
+
+    # If AdamW is available in your TF version:
+    try:
+        opt = keras.optimizers.AdamW(learning_rate=2e-3, weight_decay=1e-5)
+    except Exception:
+        opt = keras.optimizers.Adam(learning_rate=2e-3)
 
     model.compile(
-        optimizer='adam',
-        loss='binary_crossentropy',
-        metrics=['accuracy']
+        optimizer=opt,
+        loss="binary_crossentropy",
+        metrics=[
+            # keras.metrics.AUC(name="auc"),
+            keras.metrics.BinaryAccuracy(name="acc"),
+        ],
     )
-
+    
     model.summary()
     return model
 
-def run_susy():
-    # You can adjust max_rows/train_size as you like
-    X_train, y_train, X_test, y_test, class_names = load_susy_data(
-        max_rows=1_000_000,
-        train_size=900_000,
-        path="../data/SUSY.csv"
-    )
+# ===============================================================================
 
-    # If you want normalization, uncomment:
-    # mean = X_train.mean(axis=0, keepdims=True)
-    # std = X_train.std(axis=0, keepdims=True) + 1e-8
-    # X_train = (X_train - mean) / std
-    # X_test  = (X_test  - mean) / std
-
+def run_susy():                                                                                 
+    
+    # X_train, y_train, X_test, y_test, class_names = load_susy_data(max_rows=5000000, train_size=4000000, path="../data/SUSY.csv")
+    
+    X_train, y_train, X_test, y_test, class_names = load_susy_data(max_rows=1000000, train_size=900000, path="../data/SUSY.csv")
+    
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train).astype(np.float32)
+    X_test  = scaler.transform(X_test).astype(np.float32)
+    
     model = build_susy_model(input_dim=X_train.shape[1])
 
     print("\n[SUSY] Training...")
-    history = model.fit(X_train, y_train, validation_split=0.1, epochs=3,  batch_size=256, verbose=2)
+    # callbacks = [
+    #     keras.callbacks.EarlyStopping(
+    #         monitor="val_auc", mode="max", patience=3, restore_best_weights=True
+    #     ),
+    #     keras.callbacks.ReduceLROnPlateau(
+    #         monitor="val_auc", mode="max", factor=0.5, patience=1, min_lr=1e-5
+    #     ),
+    # ]
+    
+    history = model.fit(X_train, y_train, validation_split=0.1, epochs=3,  batch_size=4096, verbose=2, 
+                        # callbacks=callbacks, 
+                        shuffle=True)
 
     print("\n[SUSY] Evaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
@@ -149,6 +206,7 @@ def load_bank_data(path="../data/bank-additional-full.csv"):
 
     return X_train, X_test, y_train, y_test
 
+# ===============================================================================
 
 def build_bank_model(input_dim):
     model = keras.Sequential([
@@ -167,10 +225,10 @@ def build_bank_model(input_dim):
     model.summary()
     return model
 
+# ===============================================================================
+
 def run_bank():
-    X_train, X_test, y_train, y_test = load_bank_data(
-        path="../data/bank-additional-full.csv"
-    )
+    X_train, X_test, y_train, y_test = load_bank_data(path="../data/bank-additional-full.csv")
 
     model = build_bank_model(input_dim=X_train.shape[1])
 
@@ -201,6 +259,7 @@ def load_mnist_data():
     class_names = [str(i) for i in range(10)]
     return X_train, y_train, X_test, y_test, class_names
 
+# ===============================================================================
 
 def build_mnist_model(input_shape=(28, 28)):
     
@@ -221,6 +280,7 @@ def build_mnist_model(input_shape=(28, 28)):
     model.summary()
     return model
 
+# ===============================================================================
 
 def run_mnist():
     X_train, y_train, X_test, y_test, class_names = load_mnist_data()
@@ -371,6 +431,7 @@ def load_covertype_data(path="../data/covertype.csv"):
 
     return X_train, y_train, X_test, y_test, class_names
 
+# ===============================================================================
 
 def build_covertype_model(input_dim, num_classes=7):
  
@@ -390,6 +451,7 @@ def build_covertype_model(input_dim, num_classes=7):
     model.summary()
     return model
 
+# ===============================================================================
 
 def run_covertype():
     
@@ -435,6 +497,7 @@ def load_har_data(base_path="../data/"):
 
     return X_train, y_train, X_test, y_test, class_names
 
+# ===============================================================================
 
 def build_har_model(input_dim=561, num_classes=6):
 
@@ -454,6 +517,7 @@ def build_har_model(input_dim=561, num_classes=6):
     model.summary()
     return model
 
+# ===============================================================================
 
 def run_har():
     X_train, y_train, X_test, y_test, class_names = load_har_data(
@@ -516,6 +580,7 @@ def load_pendigits_data(base_path="../data"):
 
     return X_train, y_train, X_test, y_test, class_names
 
+# ===============================================================================
 
 def build_pendigits_model(input_dim=16, num_classes=10):
 
@@ -535,6 +600,7 @@ def build_pendigits_model(input_dim=16, num_classes=10):
     model.summary()
     return model
 
+# ===============================================================================
 
 def run_pendigits():
     X_train, y_train, X_test, y_test, class_names = load_pendigits_data()
@@ -560,6 +626,191 @@ def run_pendigits():
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
+# ======================================================================
+# CIFAR-10 DATASET
+# ======================================================================
+
+def load_cifar10_data(normalize=True, one_hot=False):
+    """
+    Returns:
+      X_train: (50000, 32, 32, 3) float32
+      y_train: (50000,) int64   OR (50000,10) if one_hot=True
+      X_test : (10000, 32, 32, 3) float32
+      y_test : (10000,) int64   OR (10000,10) if one_hot=True
+      class_names: list[str] length 10
+    """
+    (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+
+    y_train = y_train.squeeze().astype(np.int64)
+    y_test  = y_test.squeeze().astype(np.int64)
+
+    X_train = X_train.astype(np.float32)
+    X_test  = X_test.astype(np.float32)
+
+    if normalize:
+        X_train /= 255.0
+        X_test  /= 255.0
+
+    if one_hot:
+        y_train = keras.utils.to_categorical(y_train, 10).astype(np.float32)
+        y_test  = keras.utils.to_categorical(y_test, 10).astype(np.float32)
+
+    class_names = [
+        "airplane","automobile","bird","cat","deer",
+        "dog","frog","horse","ship","truck"
+    ]
+
+    print("[CIFAR-10] Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("[CIFAR-10] Test  shape:", X_test.shape,  "Labels:", y_test.shape)
+    print("[CIFAR-10] Classes:", class_names)
+
+    return X_train, y_train, X_test, y_test, class_names
+
+# =======================================================================================================
+
+def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, weight_decay=1e-4):
+
+    def conv_bn_relu(x, filters, kernel_size=3, strides=1):
+        x = layers.Conv2D(
+            filters, kernel_size, strides=strides, padding="same",
+            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+        )(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Activation("relu")(x)
+        return x
+
+    def residual_block(x, filters, downsample=False):
+        strides = 2 if downsample else 1
+        shortcut = x
+
+        # First conv
+        y = layers.Conv2D(
+            filters, 3, strides=strides, padding="same",
+            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+        )(x)
+        y = layers.BatchNormalization()(y)
+        y = layers.Activation("relu")(y)
+
+        # Second conv
+        y = layers.Conv2D(
+            filters, 3, strides=1, padding="same",
+            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+        )(y)
+        y = layers.BatchNormalization()(y)
+
+        # Match shortcut shape if needed
+        if downsample or shortcut.shape[-1] != filters:
+            shortcut = layers.Conv2D(
+                filters, 1, strides=strides, padding="same",
+                use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+            )(shortcut)
+            shortcut = layers.BatchNormalization()(shortcut)
+
+        out = layers.Add()([shortcut, y])
+        out = layers.Activation("relu")(out)
+        return out
+
+    inp = keras.Input(shape=input_shape)
+
+    # Stem
+    x = conv_bn_relu(inp, 16, 3, 1)
+
+    # Stage 1: 16 filters, 3 blocks
+    for _ in range(3):
+        x = residual_block(x, 16, downsample=False)
+
+    # Stage 2: 32 filters, 3 blocks (first downsample)
+    x = residual_block(x, 32, downsample=True)
+    for _ in range(2):
+        x = residual_block(x, 32, downsample=False)
+
+    # Stage 3: 64 filters, 3 blocks (first downsample)
+    x = residual_block(x, 64, downsample=True)
+    for _ in range(2):
+        x = residual_block(x, 64, downsample=False)
+
+    # Head
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(
+        128, activation="relu",
+        kernel_regularizer=keras.regularizers.l2(weight_decay)
+    )(x)
+    x = layers.Dropout(0.25)(x)
+    out = layers.Dense(num_classes, activation="softmax")(x)
+
+    model = keras.Model(inp, out)
+
+    # Optimizer: Adam is fine; SGD+momentum often edges higher for CIFAR.
+    # We'll use SGD+Nesterov for a classic reliable CIFAR setup.
+    opt = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=True)
+
+    model.compile(
+        optimizer=opt,
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+
+# ======================================================================
+# Run / Train / Evaluate
+# ======================================================================
+
+def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
+    X_train, y_train, X_test, y_test, class_names = load_cifar10_data(
+        normalize=True,
+        one_hot=False
+    )
+
+    model = build_cifar10_model(input_shape=X_train.shape[1:], num_classes=10)
+
+    # Data augmentation (standard CIFAR-ish): pad+random crop + flip
+    if use_augmentation:
+        aug = keras.Sequential([
+            layers.RandomFlip("horizontal"),
+            layers.ZeroPadding2D(padding=4),
+            layers.RandomCrop(32, 32),
+        ])
+        train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+        train_ds = train_ds.shuffle(50000).batch(batch_size).map(
+            lambda x, y: (aug(x, training=True), y),
+            num_parallel_calls=tf.data.AUTOTUNE
+        ).prefetch(tf.data.AUTOTUNE)
+    else:
+        train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+        train_ds = train_ds.shuffle(50000).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+    test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+    # Learning-rate schedule (simple step-down)
+    def lr_schedule(epoch, lr):
+        # classic CIFAR schedule: drop at 50% and 75% of training
+        if epoch == int(epochs * 0.5) or epoch == int(epochs * 0.75):
+            return lr * 0.1
+        return lr
+
+    callbacks = [
+        keras.callbacks.LearningRateScheduler(lr_schedule, verbose=1),
+        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True),
+    ]
+
+    print("\n[CIFAR-10] Training...")
+    history = model.fit(
+        train_ds,
+        validation_data=test_ds,
+        epochs=epochs,
+        verbose=2,
+        callbacks=callbacks
+    )
+
+    print("\n[CIFAR-10] Evaluating on test set...")
+    test_loss, test_acc = model.evaluate(test_ds, verbose=0)
+    print(f"[CIFAR-10] Test loss: {test_loss:.4f}")
+    print(f"[CIFAR-10] Test accuracy: {test_acc:.4f}")
+
+    return model, history, class_names
 
 # ======================================================================
 # Main
@@ -582,6 +833,8 @@ def main():
         run_har()  
     elif DATASET == "pendigits":
         run_pendigits()      
+    elif DATASET == "cifar10":
+        run_cifar10()
     else:
         print("DATASET not detected")
         

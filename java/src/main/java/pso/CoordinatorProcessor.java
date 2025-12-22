@@ -51,13 +51,16 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final MultiLayerNetwork globalModel; // x_g , current model
     private final MultiLayerNetwork bestGlobalModel; 
+    private float accuracy = -1f;
+    private float loss = 10000f;
     private float bestGlobalModelAccuracy = -1f;
+    private float bestLoss = 10000f;
 
     private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
     private static Config cfg = Config.getInstance();
-    private final int NUM_WORKERS = cfg.NUM_WORKERS;
+    private final int N_WORKERS = cfg.N_WORKERS;
     private final String DATA_TOPIC = cfg.DATA_TOPIC;
     private final String TEST_TOPIC = cfg.TEST_TOPIC;
     private final int TEST_SIZE = cfg.TEST_SIZE;
@@ -72,9 +75,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final CoordinatorControl control;
 
     private final CustomLogger logger;
-
-    private float accuracy = -1f;
-    private float loss = 10000f;
 
     private boolean sampledDataMessage = false;
 
@@ -140,7 +140,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             weightsBuffer.put(workerId, weights);
 
             // Run only if all workers have reported their position 
-            if (weightsBuffer.size() == NUM_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+            if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
             
                 float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
@@ -176,24 +176,28 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 accuracy = accLoss[0];
                 loss = accLoss[1];
 
-                // update bestGlobalModelAccuracy ========================================================
-
-                logger.log("Global bestAccuracy: " + bestGlobalModelAccuracy + ", global model: " + accuracy + ", and weights sample: "
-                    + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
-                System.out.println("Global bestAccuracy: " + bestGlobalModelAccuracy + ", global model: " + accuracy + ", and weights sample: "
-                    + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                // update bestGlobalModelAccuracy + bestLoss ========================================================
 
                 if(accuracy > bestGlobalModelAccuracy) {    
                     Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                     bestGlobalModelAccuracy = accuracy;
                     logger.log("New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+                }
 
-                    if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
+                if(loss < bestLoss) {    
+                    bestLoss = loss;
+                }
 
-                        Dl4jParamUtils.saveModel(bestGlobalModel);
-                        control.requestStop();
-                        return;
-                    }
+                logger.log("Global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                System.out.println("Global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+
+
+                if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
+                    Dl4jParamUtils.saveModel(bestGlobalModel);
+                    control.requestStop();
+                    return;
                 }
 
                 weightsBuffer.clear();

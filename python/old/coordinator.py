@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Dense
 
 from dotenv import load_dotenv
 load_dotenv()
-NUM_WORKERS = int(os.getenv("NUM_WORKERS"))
+N_WORKERS = int(os.getenv("N_WORKERS"))
 DATA_TOPIC = os.getenv("DATA_TOPIC")
 LOCAL_WEIGHTS_TOPIC = os.getenv("LOCAL_WEIGHTS_TOPIC")
 GLOBAL_WEIGHTS_TOPIC = os.getenv("GLOBAL_WEIGHTS_TOPIC")
@@ -167,7 +167,7 @@ def main():
             bufs = []
             worker_id_seen = set()
             
-            while(len(bufs) < NUM_WORKERS):
+            while(len(bufs) < N_WORKERS):
                 
                 records = consumer.poll(timeout_ms=5000)   # Ask the broker for any new messages, wait up to 500 milliseconds, 
                                                             # and return whatever batch (‘pack’) of record arrives.
@@ -211,10 +211,10 @@ def main():
                         worker_id_seen.add(worker_id)
                         logging.info(f"Got weights from worker {worker_id}")
                         
-                        if len(bufs) >= NUM_WORKERS:
+                        if len(bufs) >= N_WORKERS:
                             break
                                             
-                    if len(bufs) >= NUM_WORKERS:
+                    if len(bufs) >= N_WORKERS:
                         break
             
             average = np.mean(bufs, axis=0).tolist()

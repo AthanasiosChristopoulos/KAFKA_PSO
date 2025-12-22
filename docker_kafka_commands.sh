@@ -170,6 +170,10 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --create --topic susy-input --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic susy-input --partitions 40 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --describe --topic susy-input
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \

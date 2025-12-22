@@ -6,11 +6,15 @@ set -a           # auto-export all variables
 source .env
 set +a
 
+if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then
+  export N_WORKERS="$1"
+fi
+
 # --- Reset section -----------------------------------------------------------
 
 if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
-    for ((i=0; i<NUM_WORKERS; i++)); do
+    for ((i=0; i<N_WORKERS; i++)); do
         app="pso-worker-$i"
         docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
             --application-id "$app" \

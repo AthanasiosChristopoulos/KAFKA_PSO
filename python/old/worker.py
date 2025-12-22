@@ -13,7 +13,7 @@ from kafka.coordinator.assignors.roundrobin import RoundRobinPartitionAssignor
 
 from dotenv import load_dotenv
 load_dotenv()
-NUM_WORKERS = int(os.getenv("NUM_WORKERS"))
+N_WORKERS = int(os.getenv("N_WORKERS"))
 MAX_EPOCHS = int(os.getenv("MAX_EPOCHS"))
 DATA_TOPIC = os.getenv("DATA_TOPIC")
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
@@ -164,7 +164,7 @@ def update_x():
         p_i_j = np.random.rand(*x_i.shape).astype(np.float32)  # p_i_j random coefficient
         social_aggregate += p_i_j * (pBest_j - x_i)
 
-    social_aggregate = social_aggregate * (C_SOCIAL / NUM_WORKERS)
+    social_aggregate = social_aggregate * (C_SOCIAL / N_WORKERS)
 
     velocity_i_1 = W_INERTIA * velocity_i + social_aggregate
     x_i_1 = x_i + velocity_i_1

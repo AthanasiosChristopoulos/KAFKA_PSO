@@ -13,7 +13,7 @@ public class PsoUpdater {
     private final float C;
     private final float C1;
     private final float C2;
-    private final int NUM_WORKERS;
+    private final int N_WORKERS;
     private final boolean FULLY_INFORMED;
 
     private float[] velocity; 
@@ -30,7 +30,7 @@ public class PsoUpdater {
         this.C1 = cfg.C1;
         this.C2 = cfg.C2;
 
-        this.NUM_WORKERS = cfg.NUM_WORKERS;
+        this.N_WORKERS = cfg.N_WORKERS;
 
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         velocity = new float[x.length];
@@ -128,7 +128,7 @@ public class PsoUpdater {
             }
         }
 
-        float scale = C / (float) NUM_WORKERS;
+        float scale = C / (float) N_WORKERS;
         for (int k = 0; k < socialAggregate.length; k++) {
             socialAggregate[k] *= scale;
         }

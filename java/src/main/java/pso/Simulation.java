@@ -12,7 +12,7 @@ public class Simulation {
     public static void main(String[] args) throws Exception {
         
         Config cfg = Config.getInstance();
-        int numWorkers = cfg.NUM_WORKERS;
+        int numWorkers = cfg.N_WORKERS;
 
         System.out.println("============== Simulation Start ======================");
         System.out.println("Starting Coordinator ...");

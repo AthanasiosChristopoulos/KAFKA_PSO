@@ -171,12 +171,17 @@ def load_dataset():
         
         # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000) # 80000 - 100000
                                                                              # (5000000, 19), the 19th is the label
-        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000, skiprows=80000)
+                                                                            #  5000000
+                                                                            #    80000
+                                                                            #  3200000
+                                                                            #   120000
+        # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000, skiprows=80000)
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=2420000)
         y_all = data[:, 0].astype(int)
         X_all = data[:, 1:].astype(np.float32)
 
         # ===== Train/Test Split =====
-        train_size = 60000
+        train_size = 2400000
         
         X_all, y_all = shuffle(X_all, y_all)
 
@@ -397,7 +402,10 @@ def main():
     if args.all:   
          
         # Load to Training Topic ==================================================================
-        if(1 == 1):
+        
+        load_training_data = True
+        
+        if(load_training_data):
             
             while data_repeats < NUMBER_OF_DATA_REPEATS:
                 
@@ -418,7 +426,7 @@ def main():
                         "label": label
                     }
 
-                    producer.send(INPUT_TOPIC, value=msg)
+                    producer.send(INPUT_TOPIC, value=msg)   # this has key=None ... essentially this means use round robin for partitioning the records 
                     
                     if index % BATCH_FLUSH == 0:
                         producer.flush()
@@ -431,7 +439,9 @@ def main():
         
         # Load to Test Topic =====================================================================
         
-        if(1 == 1):
+        load_test_data = True
+        
+        if(load_test_data):
                 
             data_repeats = 0
             
@@ -479,7 +489,7 @@ def main():
                 print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
     
     # =================================================================================================================
-      
+    
     elif args.streaming:
         
         while True:

@@ -22,7 +22,7 @@ public class Config {
     public final String PREDICTION_INPUT_TOPIC;
     public final String PREDICTION_OUTPUT_TOPIC;
 
-    public final int NUM_WORKERS;
+    public final int N_WORKERS;
     public final int TRAIN_SIZE;
     public final int TEST_SIZE;
     public final int N_BATCHES;
@@ -48,10 +48,7 @@ public class Config {
 
     public Config() {
         
-        Dotenv dotenv = Dotenv
-                .configure()
-                .ignoreIfMissing() 
-                .load();
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
         
         this.DATASET = getenv(dotenv, "DATASET", "iris");
         System.out.println("DATASET: " + DATASET);        
@@ -104,7 +101,9 @@ public class Config {
         this.PREDICTION_INPUT_TOPIC = getenv(dotenv, "PREDICTION_INPUT_TOPIC", "iris-output");
         this.PREDICTION_OUTPUT_TOPIC = getenv(dotenv, "PREDICTION_OUTPUT_TOPIC", "iris-output");
 
-        this.NUM_WORKERS = Integer.parseInt(getenv(dotenv, "NUM_WORKERS", "5"));
+        this.N_WORKERS = Integer.parseInt(getenv(dotenv, "N_WORKERS", "5"));
+        System.out.println("N_WORKERS: " + N_WORKERS);
+
         this.TRAIN_SIZE = Integer.parseInt(getenv(dotenv, "TRAIN_SIZE", "30"));
         this.TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
         this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
@@ -146,15 +145,14 @@ public class Config {
         return instance;
     }
 
-    private String getenv(Dotenv dotenv, String key, String defaultValue) {
+    private static String getenv(Dotenv dotenv, String key, String def) {
+        String v = System.getenv(key);      // check exported variables first
+        if (v != null && !v.isBlank()) return v;
 
-        String value = dotenv.get(key);
-        if (value != null) {
-            return value;
-        }
-        
-        System.out.println("Return Default Value");
+        v = dotenv.get(key);                // check .env file variables second
+        if (v != null && !v.isBlank()) return v;
 
-        return defaultValue;
+        return def;
     }
+
 }

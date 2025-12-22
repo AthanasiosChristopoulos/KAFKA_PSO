@@ -1,57 +1,5 @@
 
 
-## Run
-
-```bash
-mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
-```
-
-## Formulas for PSO / velocity update:
-
- - Neighbor best (classical PSO):
-    - v_i(t + 1) = c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X) + w * v_i(t)
-
- - Fully informed:
-    - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
-
-
-```bash
-
-chmod 777 run_streams.sh
-dos2unix run_streams.sh
-./run_streams.sh --reset
-
-```
-
-## Distributed, data parallel PSO Protocol:
-
-1) Initialization of particles, randomize their initial positions + velocities
-    => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
-    => assign each worker (N WORKERS, working in parallel) 1 particle (this number could vary, worker could be assigned 1...M particles)
-    => distribute training data to each particle 
-
-    Repeat this until global model converges to an accuracy > 95%:
-        2) Each worker does:
-                
-            Repeat this for N_TRAIN_SIZE:
-                => evaluate the current position using a batch of data and a loss function (non differentiable) or a fitness function:
-                    <code> fitness = model.evaluate(X_train, Y_train, verbose=0) </code>
-                => if this is a personal best fitness, update pBest.
-
-                => Receive pBests of all particles (or gBest) from Coordinator
-                => update velocity (potentially using new pBests) and calculate next position x_i_1 using new velocity value
-                    => <code> v_i_new = w * v_i + (c / M) * sum(j, random * (pBest_j - x_i) </code>
-                    => <code> x_i_1 = x_i + v_i_1 </code>
-                
-            => sends the current position x_i and then return to original loop
-
-        3) The coordinator does:
-            => Coordinator receives pBest and updates them (either updates whole pBest list or just gBest), informing the workers
-            => Averages x_i of all particles into x_g and use that to evaluate overall performance of the model
-                => only if this x_g has a high enough accuracy (higher than desired accuracy) do we conclude training
-                
 
 ## Git:
 
@@ -102,8 +50,87 @@ git rm -r --cached target
 
 ```
 
-# Notes: =========================================================================
 
+## Run
+
+```bash
+mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
+mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
+mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
+```
+
+## Formulas for PSO / velocity update:
+
+ - Neighbor best (classical PSO):
+    - v_i(t + 1) = c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X) + w * v_i(t)
+
+ - Fully informed:
+    - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
+
+
+```bash
+
+chmod 777 run_streams.sh
+dos2unix run_streams.sh
+./run_streams.sh --reset
+
+```
+
+## Partitioning: =========================================================
+
+N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
+    5 workers ⇒ each gets ~8 partitions (if 40 partitions)
+    10 workers ⇒ each gets ~4 partitions
+    20 workers ⇒ each gets ~2 partitions
+
+If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
+
+## Project Architecture Description
+
+The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
+These are the topics that run on Kafka:
+    DATA_TOPIC
+    TEST_TOPIC
+    PBEST_WEIGHTS_TOPIC
+    LOCAL_WEIGHTS_TOPIC
+    GLOBAL_WEIGHTS_TOPIC
+    PREDICTION_INPUT_TOPIC
+    PREDICTION_OUTPUT_TOPIC
+
+The N Kafka Streams workers read from the Data Topic and train on their own local model. The Data Topic holds a partitioned Dataset,
+this is how each worker adds to the parallelization of the processing of the training data. Each Worker trains on different partitions,
+i.e. different training data from other workers.
+
+
+## Distributed, data parallel PSO Protocol:
+
+1) Initialization of particles, randomize their initial positions + velocities
+    => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
+    => assign each worker (N WORKERS, working in parallel) 1 particle (this number could vary, worker could be assigned 1...M particles)
+    => distribute training data to each particle 
+
+    While True loop (break condition inside this logic):
+        2) Each worker does:
+                
+            Repeat this for N_TRAIN_SIZE:
+                => evaluate the current position using a batch of data (TRAIN_SIZE) and a loss function (non differentiable):
+                => if this is a personal best loss, update pBest (personal best weights - model).
+                    => communicate also the pBest to PBEST_WEIGHTS_TOPIC, where everyone will read it
+
+                => Receive pBests of all particles (or gBest) from Coordinator
+                => update velocity (potentially using new pBests) and calculate next position x_i_1 using new velocity value
+                    => <code> v_i_new = w * v_i + (c / M) * sum(j, random * (pBest_j - x_i) </code>
+                    => <code> x_i_1 = x_i + v_i_1 </code>
+                
+            => sends the current position x_i (for FedAvg) and then return to original loop
+
+        3) The coordinator does:
+            => Coordinator receives pBest and updates them (either updates whole pBest list or just gBest), informing the workers
+            => Averages x_i of all particles into x_g and use that to evaluate overall performance of the model
+                => Only if this x_g has a high enough accuracy (higher than DESIRED_ACCURACY) or if the DATA_TOPIC / TEST_TOPIC data has been exhausted,
+                   does training conclude.
+                => The execution doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
+                
 ## Kafka Message Documentation:
 
 Input pBest-weights-topic:
@@ -138,7 +165,6 @@ Input input-weights-topic:
 
 
 ## Input new Dataset - Model:
-gunzip SUSY.csv.gz
 
  - 1) Add new .env variables
  - 2) Update NEURAL_INPUT and NEURAL_OUTPUT in Config.java
@@ -236,3 +262,11 @@ gunzip SUSY.csv.gz
 ## Non Functional Requirements: =========================================================
 
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
+
+## Experimentation: =========================================================
+
+ - Need to measure:
+    - Diagramm 1: y-axis: Accuracy - N_Workers
+    - Diagramm 2: y-axis: Training Time - N_Workers
+
+- Run for N_Workers = [5, 10, 15, 20]

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 import os
 load_dotenv()
-NUM_WORKERS = int(os.getenv("NUM_WORKERS"))
+N_WORKERS = int(os.getenv("N_WORKERS"))
 
 processes = []
 
@@ -35,7 +35,7 @@ try:
 
     processes.append(p_coordinator)
     
-    for i in range(NUM_WORKERS):
+    for i in range(N_WORKERS):
         
         p = subprocess.Popen(["python3", "worker.py", "--id", str(i)]) # Open process, control it via p
         

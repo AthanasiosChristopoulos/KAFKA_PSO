@@ -7,7 +7,7 @@ set +a
 
 # --- Reset section -----------------------------------------------------------
 
-for ((i=0; i<NUM_WORKERS; i++)); do
+for ((i=0; i<N_WORKERS; i++)); do
     app="pso-worker-$i"
     docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
         --application-id "$app" \
