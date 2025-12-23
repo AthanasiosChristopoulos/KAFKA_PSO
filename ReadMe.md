@@ -75,8 +75,9 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
-
-## Partitioning: =========================================================
+## =====================================================================================================================
+## =====================================================================================================================
+## Partitioning: =======================================================================================================
 
 N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
     5 workers ⇒ each gets ~8 partitions (if 40 partitions)
@@ -279,4 +280,22 @@ Input input-weights-topic:
     - Diagramm 1: y-axis: Accuracy - N_Workers
     - Diagramm 2: y-axis: Training Time - N_Workers
 
-- Run for N_Workers = [5, 10, 15, 20]
+ - Run for N_Workers = [5, 10, 15, 20]
+ 
+ - Performance Measurements:
+    - htop (shows logical CPUs and ||| represent CPU time usage on each logical CPU)
+        - 6 physical cores × 2 threads = 12 logical CPUs
+        - 12 physical cores × 1 thread = 12 logical CPUs
+        - use <code>lscpu</code> to evaluate CPU number and number of threads
+            - number of physical cores: Core(s) per socket: 6
+            - number of threads on its core: Thread(s) per core: 2
+
+    - nvidia-smi -l 1
+
+ - Performance Theory:
+    - True parallelism comes from CPU cores
+    - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem
+
+ - Kill Zombie Java processes:
+    - sudo pkill -2 java
+    - ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25

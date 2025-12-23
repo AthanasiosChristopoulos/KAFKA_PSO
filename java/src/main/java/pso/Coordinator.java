@@ -6,7 +6,6 @@ import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
@@ -18,7 +17,6 @@ import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.streams.kstream.Grouped;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.streams.StreamsConfig;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -232,23 +230,24 @@ public class Coordinator implements Runnable {
             }
         });
 
-        // Watcher thread: waits for desired accuracy, then stops the streams ===========================================
-        // Thread controlThread = new Thread(() -> {
-        //     try {
-        //         while (!control.isStopRequested()) {
-        //             Thread.sleep(500); // poll every 500ms
-        //         }
-        //         System.out.println("[Coordinator] Stopping because desired accuracy was reached.");
-        //         streams.close();
-        //     } catch (InterruptedException ie) {
-        //         Thread.currentThread().interrupt();
-        //     } finally {
-        //         latch.countDown();
-        //     }
-        // }, "coordinator-control-thread");
+        // ===============================================================================================================
 
-        // controlThread.setDaemon(true);
-        // controlThread.start();
+        Thread controlThread = new Thread(() -> {
+            try {
+                while (!control.isStopRequested()) {
+                    Thread.sleep(200);
+                }
+                System.out.println("[Coordinator] Stop requested -> closing streams");
+                streams.close(Duration.ofSeconds(10));
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            } finally {
+                latch.countDown();
+            }
+        }, "coordinator-control-thread");
+
+        controlThread.setDaemon(true);
+        controlThread.start();
 
         // ===============================================================================================================
 
@@ -281,7 +280,7 @@ public class Coordinator implements Runnable {
                 }
             }
 
-            latch.await(); 
+            latch.await(); // wait until Kafka Streams has consumed the test topic and you have exited 
 
         } catch (Throwable e) {
             System.out.println("[Coordinator] Error in KafkaStreams: " + e.getMessage());

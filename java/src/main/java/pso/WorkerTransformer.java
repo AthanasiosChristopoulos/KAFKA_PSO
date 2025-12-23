@@ -29,8 +29,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private final int workerId;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
     private static Config cfg = Config.getInstance();
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  

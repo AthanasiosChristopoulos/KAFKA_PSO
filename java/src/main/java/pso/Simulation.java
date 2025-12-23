@@ -34,9 +34,9 @@ public class Simulation {
             System.out.println("\n[Shutdown] JVM is stopping, workers will close.");
         }));
 
-        coordinatorThread.join(); 
+        coordinatorThread.join(); // if finished every worker waits on the coordinator
 
         System.out.println("============== Simulation stop ==============");
-        System.exit(1);
+        // System.exit(0);
     }
 }

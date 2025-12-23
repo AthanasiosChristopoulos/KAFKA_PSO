@@ -19,7 +19,6 @@ import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.serialization.Serde;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.streams.StreamsConfig;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +47,8 @@ public class Worker implements Runnable {
     private String keyName;
 
     private final CustomLogger logger;
-    private final CoordinatorControl control;
+    private final CoordinatorControl control;   // the coordinator is the one who finished when he has exhausted all the testing data
+                                                // the he requestStop on the control and everything closes
 
     public Worker(int workerId) {
 
@@ -155,12 +155,9 @@ public class Worker implements Runnable {
             e.printStackTrace();
         });
 
-        CountDownLatch latch = new CountDownLatch(1);
-
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("[Worker " + workerId + "] Shutting down KafkaStreams");
             streams.close();
-            latch.countDown();
         }));
 
         try {
@@ -195,12 +192,9 @@ public class Worker implements Runnable {
             System.out.println("[Worker " + workerId + " ] Stopping because desired accuracy was reached.");
             streams.close();
 
-            latch.await();
-
         } catch (Throwable e) {
             System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());
             streams.close();
-            latch.countDown();
         }
 
         System.out.println("[Worker " + workerId + "] Exiting run()");
