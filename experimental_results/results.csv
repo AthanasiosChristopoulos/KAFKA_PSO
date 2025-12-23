@@ -1,5 +1,5 @@
 N_WORKERS,ACCURACY,TRAIN_TIME_SEC,LOG
-2,0.722,15.885356187820435,experimental_results/experiment_logs/run_2.log
-4,0.678,16.16152596473694,experimental_results/experiment_logs/run_4.log
-6,0.696,17.96505641937256,experimental_results/experiment_logs/run_6.log
-8,0.688,21.831157445907593,experimental_results/experiment_logs/run_8.log
+2,0.636,12.071722507476807,experimental_results/experiment_logs/run_2.log
+4,0.694,13.379783153533936,experimental_results/experiment_logs/run_4.log
+5,0.7057292,13.488513946533203,experimental_results/experiment_logs/run_5.log
+6,0.7786458,14.49134874343872,experimental_results/experiment_logs/run_6.log

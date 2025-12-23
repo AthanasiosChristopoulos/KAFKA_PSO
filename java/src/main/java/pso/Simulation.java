@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
 import java.util.logging.LogManager;
+import org.nd4j.linalg.factory.Nd4j;
 
 import utils.*; 
 
@@ -16,6 +17,7 @@ public class Simulation {
 
         System.out.println("============== Simulation Start ======================");
         System.out.println("Starting Coordinator ...");
+        System.out.println("ND4J backend = " + Nd4j.getBackend());  // says the hardware this is running on
 
         Coordinator coordinator = new Coordinator();
         Thread coordinatorThread = new Thread(coordinator, "coordinator");

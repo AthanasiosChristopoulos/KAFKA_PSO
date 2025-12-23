@@ -7,7 +7,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-WORKERS_LIST = [5, 10, 15, 20]
+WORKERS_LIST = [2, 4, 5, 6]
+WORKERS_LIST = [2, 4, 6, 8]
+
+# WORKERS_LIST = [5, 10, 15, 20]
 # WORKERS_LIST = [5, 10, 15]
 # WORKERS_LIST = [15]
 

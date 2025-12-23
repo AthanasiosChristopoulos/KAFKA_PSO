@@ -291,7 +291,7 @@ Input input-weights-topic:
             - number of threads on its core: Thread(s) per core: 2
 
     - nvidia-smi -l 1
-
+    - <code>nvidia-smi -q</code>  // see gpu specs
  - Performance Theory:
     - True parallelism comes from CPU cores
     - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem
