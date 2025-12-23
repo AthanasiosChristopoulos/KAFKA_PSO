@@ -14,7 +14,8 @@ import java.util.HashMap;
 import java.util.Arrays;
 
 import utils.*;
-import message.*;
+import message.data_message.*; 
+import message.weights_message.*; 
 
 public class BatchPrediction {
 
