@@ -47,12 +47,39 @@ git config --list
 	  git
 	  
  - Python Packages:
-	pip install numpy pandas scikit-learn tensorflow kafka-python python-dotenv --break-system-packages
+```bash
+pip install numpy --break-system-packages
+pip install pandas --break-system-packages
+pip install scikit-learn --break-system-packages
+pip install tensorflow --break-system-packages
+pip install kafka-python --break-system-packages
+pip install python-dotenv --break-system-packages
+pip install matplotlib --break-system-packages
 
+```
 
  - python3 --version
    pip3 --version
 
+
+# Docker on Ubuntu (either with commands or with docker desktop): =======================================
+
+ - docker desktop:
+	- https://www.youtube.com/watch?v=FWWq83IGUgw
+ - command line:
+
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+newgrp docker
+# logout and login
+groups 		# verify that you are in the docker group
+docker ps
+docker run --rm hello-world
+docker compose up
+```
  - sudo apt install docker.io
  - sudo systemctl enable docker
  - sudo systemctl status docker

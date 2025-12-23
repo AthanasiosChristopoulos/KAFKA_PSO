@@ -26,7 +26,8 @@ import java.util.concurrent.CountDownLatch;
 
 import utils.*;
 import state.*;
-import message.*; 
+import message.data_message.*; 
+import message.weights_message.*; 
 
 public class Worker implements Runnable {
 

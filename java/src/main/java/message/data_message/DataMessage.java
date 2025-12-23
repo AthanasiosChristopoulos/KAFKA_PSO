@@ -1,7 +1,6 @@
 
-package message;
+package message.data_message;
 
-import java.util.List;
 
 public class DataMessage {
     public int sampleIndex;

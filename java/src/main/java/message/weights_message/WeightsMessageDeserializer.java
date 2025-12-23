@@ -1,4 +1,4 @@
-package message;
+package message.weights_message;
 
 import org.apache.kafka.common.serialization.Deserializer;
 

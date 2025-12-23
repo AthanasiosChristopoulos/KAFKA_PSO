@@ -85,7 +85,7 @@ N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
 
 If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
 
-## Project Architecture Description
+## Project Architecture Description:
 
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
@@ -193,6 +193,7 @@ Input input-weights-topic:
  - have a reasonable amount of features (not over 100)
  
 ## Improve congvergence:
+
  - change model
  - change constants => velocity, inertia, C1, C2
  - increase the number of children
@@ -201,12 +202,14 @@ Input input-weights-topic:
  -  Fully Informed seems to be slower, but converging more surely (its always improving)
 
 ## What to look at for training process:
+
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
  - the ideal result will not be located
  - The swarm converged on bad solution / local maximum
  - Trade-off between exploration and convergence
 
 ## Velocity:
+
  - Is initialized to have a significant amplitude at the start
  - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
  		- velocity like simulated annealing ? Make it reduce over time

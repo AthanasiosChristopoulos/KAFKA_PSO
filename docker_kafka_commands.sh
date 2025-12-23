@@ -5,10 +5,6 @@
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic iris-input --partitions 1 --if-not-exists
-
-docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
   --create --topic pbest-weights-topic --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
@@ -21,14 +17,13 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic prediction_input --partitions 1 --if-not-exists
+  --create --topic prediction-input --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic prediction_output --partitions 1 --if-not-exists
+  --create --topic prediction-output --partitions 1 --if-not-exists
 
-cd python
-python3 iris_data_producer.py --all
+# ==============================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --list 
@@ -437,29 +432,29 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic prediction_input --partitions 1 --if-not-exists
+  --create --topic prediction-input --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --delete --topic prediction_input
+  --delete --topic prediction-input
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 --describe --topic prediction_input
+  --bootstrap-server localhost:9092 --describe --topic prediction-input
 
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic prediction_input
+  --topic prediction-input
 
 # PREDICTION_OUTPUT_TOPIC ==============================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic prediction_output --partitions 1 --if-not-exists
+  --create --topic prediction-output --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --delete --topic prediction_output
+  --delete --topic prediction-output
 
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic prediction_output
+  --topic prediction-output

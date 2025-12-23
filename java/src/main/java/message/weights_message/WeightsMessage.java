@@ -1,8 +1,5 @@
 
-package message;
-
-
-import java.util.List;
+package message.weights_message;
 
 public class WeightsMessage {
     public int idWorker;

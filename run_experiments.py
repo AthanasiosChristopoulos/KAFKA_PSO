@@ -7,9 +7,9 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-# WORKERS_LIST = [5, 10, 15, 20]
+WORKERS_LIST = [5, 10, 15, 20]
 # WORKERS_LIST = [5, 10, 15]
-WORKERS_LIST = [15]
+# WORKERS_LIST = [15]
 
 RUN_SCRIPT = "./run_streams.sh"
 

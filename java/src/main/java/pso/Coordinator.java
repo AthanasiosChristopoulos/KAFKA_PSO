@@ -34,7 +34,8 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import utils.*; 
 import state.*; 
-import message.*; 
+import message.data_message.*; 
+import message.weights_message.*; 
 
 public class Coordinator implements Runnable {
 
