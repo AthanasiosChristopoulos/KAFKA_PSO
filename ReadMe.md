@@ -221,7 +221,8 @@ Input input-weights-topic:
 ### Susy:
     2 Classes
     Balanced
-    80% on Gradient Descent, 77% on PSO
+    80% on Gradient Descent, 72% on PSO
+    5000000 Samples
 
 ### Bank:
     2 Classes
@@ -258,6 +259,12 @@ Input input-weights-topic:
             Class_4: 3.20%
             Class_5: 2.68%
             Class_6: 2.74%
+
+### Pendigits:
+    16 Features, 10 Classes 
+    99% on Gradient Descent, 70% on PSO
+    Evenly Distrivuted
+    1000 samples
 
 ## Non Functional Requirements: =========================================================
 

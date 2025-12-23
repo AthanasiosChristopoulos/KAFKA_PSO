@@ -7,9 +7,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-WORKERS_LIST = [5, 10, 15, 20]
-# BASE_DIR = Path(__file__).resolve().parent
-# RUN_SCRIPT = BASE_DIR.parent / "run_streams.sh"
+# WORKERS_LIST = [5, 10, 15, 20]
+# WORKERS_LIST = [5, 10, 15]
+WORKERS_LIST = [15]
+
 RUN_SCRIPT = "./run_streams.sh"
 
 ACC_RE = re.compile(r"Global bestAccuracy:\s*([0-9]*\.?[0-9]+)")
@@ -88,7 +89,7 @@ def main():
         results.append({"N_WORKERS": n, "ACCURACY": acc, "TRAIN_TIME_SEC": secs, "LOG": log_path})
 
     # Save CSV
-    csv_path = Path("results.csv")
+    csv_path = Path("experimental_results/results.csv")
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["N_WORKERS", "ACCURACY", "TRAIN_TIME_SEC", "LOG"])
         w.writeheader()
