@@ -183,20 +183,18 @@ Input input-weights-topic:
 
 ## New Dataset - Specifications:
 
- - Needs to be a well known ML dataset.
- - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent 
-    - Also necessary to define those 3 functions, implementing the model on python (tensorflow):
+ - Needs to be a relatively well known ML dataset.
+ - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent with a simple dense NN on tensorflow
+    - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
         - load_{dataset_name}_data()
         - build_{dataset_name}_model()
         - run_{dataset_name}()
-
  - Needs to come, not from python, but externally in like a .csv
  - The model that is going to be used on it should have a significant number of weights (100000 - 1000000)
- - i need you to find a tensorflow solution online which achieves a high accuracy
- - i need multiple classes (5 up to 10) and each class has about the same class appearance frequency 
-        - even class distribution among the samples
+ - Needs to have multiple classes, more than 3 (ideally 4 up to 7)
+        - Also, we need even class distribution among the samples
  - no CNN (like no image recognition)
- - have enough rows / samples like somewhere near 80000
+ - have enough rows / samples, somewhere around 220000 and above
  - have a reasonable amount of features (not over 100)
  
 ## Improve congvergence:
@@ -236,11 +234,12 @@ Input input-weights-topic:
 
 ### Bank:
     2 Classes
-    Unbalanced 1/10 vs 9/10
+    Unbalanced 1/10 class_0 vs 9/10 class_1
     90% Gradient Descent, 90% on PSO
+
     Did the client subscribe to a bank term deposit after the marketing phone calls ?
-        yes → the client did subscribe (opened a term deposit)
-        no → the client did not subscribe
+        - class_0: yes → the client did subscribe (opened a term deposit)
+        - class_1: no → the client did not subscribe
 
 ### Adult Income:
     2 Classes
@@ -271,6 +270,7 @@ Input input-weights-topic:
             Class_6: 2.74%
 
 ### Pendigits:
+
     16 Features, 10 Classes 
     99% on Gradient Descent, 70% on PSO
     Evenly Distrivuted
