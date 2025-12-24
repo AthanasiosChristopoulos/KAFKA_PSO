@@ -21,7 +21,6 @@ import java.nio.file.StandardOpenOption;
 import java.io.BufferedWriter;
 
 import java.util.*;
-import java.util.Arrays;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -30,6 +29,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 import utils.*;
 import state.*;
@@ -38,8 +38,6 @@ import message.weights_message.*;
 
 public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
     private ProcessorContext<String, WeightsMessage> context;
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
     private final Map<String, float[]> pBestBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
@@ -79,9 +77,16 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private boolean sampledDataMessage = false;
 
+    private long t0;
+    private long t1;
+    private double lastActivitySeconds = 0.0;
+
     // ================================================================================================================
 
-    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats) {
+    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats, long t0, long t1) {
+        
+        this.t0 = t0;
+        this.t1 = t1;
 
         this.control = CoordinatorControl.getInstance();
 
@@ -114,6 +119,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     @Override
     public void process(Record<String, WeightsMessage> record) {
+
         if (control.isStopRequested()) return;
         
         if(count == 0) {
@@ -130,8 +136,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
 
         String workerId = String.valueOf(msg.idWorker);
-
-        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId);
+        
+        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId + ", lastActivitySeconds:" + lastActivitySeconds);
 
         if ("current_weights".equals(record.key())) {
             
@@ -153,7 +159,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
                 List<DataMessage> evalBatch = new ArrayList<>();
 
-                while (evalBatch.size() < TEST_SIZE) {  // foll eval_batch before evaluating performance 
+                while (evalBatch.size() < TEST_SIZE) {  // eval_batch before evaluating performance 
 
                     ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(500));
 
@@ -191,10 +197,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 if(loss < bestLoss) {    
                     bestLoss = loss;
                 }
-
-                logger.log("Global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                
+                updateTime();
+                logger.log(lastActivitySeconds + ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                             ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
-                System.out.println("Global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                
+                System.out.println(lastActivitySeconds + ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                             ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
 
@@ -225,10 +233,26 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     @Override
     public void close() {
+        try {
+            consumer.wakeup();                // breaks poll safely
+        } catch (Exception ignored) {}
 
+        try {
+            consumer.close(Duration.ofSeconds(5));
+        } catch (Exception ignored) {
+
+        }
     }
 
+    //=========================================================================================================================
+
+    private void updateTime() {
+        t1 = System.nanoTime();
+        lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 100.0) / 100.0;
+    }
     
+    //=========================================================================================================================
+
     private static float[] averageWeights(List<float[]> bufs) {
         if (bufs == null || bufs.isEmpty()) return new float[0];
 

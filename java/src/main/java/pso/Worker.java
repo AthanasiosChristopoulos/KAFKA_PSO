@@ -21,20 +21,19 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 
 import utils.*;
 import state.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class Worker implements Runnable {
 
     private final int workerId;
     
     private static Config cfg = Config.getInstance();
-    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
-    private final int N_BATCHES = cfg.N_BATCHES;   
     private final String DATA_TOPIC = cfg.DATA_TOPIC;
     private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
@@ -46,15 +45,14 @@ public class Worker implements Runnable {
     private String stateStoreName;
     private String keyName;
 
-    private final CustomLogger logger;
     private final CoordinatorControl control;   // the coordinator is the one who finished when he has exhausted all the testing data
                                                 // the he requestStop on the control and everything closes
+    private long t0 = System.nanoTime();
+    private final AtomicLong t1  = new AtomicLong(t0);
 
     public Worker(int workerId) {
 
         this.workerId = workerId;
-
-        this.logger = CustomLogger.getWorkerInstance(workerId);                
 
         if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
@@ -77,7 +75,8 @@ public class Worker implements Runnable {
         // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);     // different group Id, processing of the same data
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + "_" + RUN_ID);        // same group Id, parallel processing
         props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams-" + RUN_ID + "-worker-" + workerId);
-        props.put(StreamsConfig.CLIENT_ID_CONFIG, "pso-worker-" + RUN_ID + "-" + workerId);
+        props.put(StreamsConfig.CLIENT_ID_CONFIG, "pso-worker-" + workerId + "-RUN-" + RUN_ID);
+            // Kafka Streams this that client id as a prefix when naming its threads,
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
@@ -126,7 +125,7 @@ public class Worker implements Runnable {
         );
 
         KStream<String, WeightsMessage> dataStream = rawDataStream
-            .transform(() -> new WorkerTransformer(workerId))
+            .transform(() -> new WorkerTransformer(workerId, t0, t1))
             .filter((k, v) -> v != null);
 
         KStream<String, WeightsMessage>[] branches = dataStream.branch(
@@ -179,8 +178,7 @@ public class Worker implements Runnable {
                     System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
 
                     for (TaskMetadata task : tm.activeTasks()) {
-                        System.out.println("  ACTIVE Task: " + task.taskId()
-                            + " partitions=" + task.topicPartitions());
+                        System.out.println("  ACTIVE Task: " + task.taskId() + " partitions=" + task.topicPartitions());
                     }
 
                 }
@@ -189,8 +187,12 @@ public class Worker implements Runnable {
             while (!control.isStopRequested()) {
                 Thread.sleep(50); // poll every 500ms
             }
-            System.out.println("[Worker " + workerId + " ] Stopping because desired accuracy was reached.");
+            System.out.println("[Worker " + workerId + " ] stopping");
             streams.close();
+
+            double seconds = (t1.get() - t0) / 1_000_000_000.0;
+            System.out.printf("[Worker %d] Wall time: %.3f seconds%n", workerId, seconds);
+
 
         } catch (Throwable e) {
             System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());

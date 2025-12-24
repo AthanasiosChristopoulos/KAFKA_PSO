@@ -8,8 +8,6 @@ set +a
 
 if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then
     export N_WORKERS="$1"
-else
-    export N_WORKERS=5
 fi
 
 # --- Reset section -----------------------------------------------------------

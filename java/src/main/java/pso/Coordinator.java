@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -62,6 +63,9 @@ public class Coordinator implements Runnable {
 
     private final BatchPrediction predictor;
 
+    private long t0 = System.nanoTime();
+    private long t1 = System.nanoTime();
+    
     public Coordinator() {
 
         System.out.println("Coordinator: " + PREDICTION_INPUT_TOPIC + ", " + PREDICTION_OUTPUT_TOPIC);
@@ -115,7 +119,7 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats)); 
+        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats, t0, t1)); 
 
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
@@ -130,7 +134,7 @@ public class Coordinator implements Runnable {
                 );
 
                 pBest_weights_stream
-                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats))      // doesnt actually edit the global model
+                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats, t0, t1))      // doesnt actually edit the global model
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
             } else {
@@ -237,25 +241,35 @@ public class Coordinator implements Runnable {
                 while (!control.isStopRequested()) {
                     Thread.sleep(200);
                 }
-                System.out.println("[Coordinator] Stop requested -> closing streams");
-                streams.close(Duration.ofSeconds(10));
+                System.out.println("[Coordinator] Stop requested, closing streams");
+                streams.close();
+
+                latch.countDown();
+
+                t1 = System.nanoTime();
+                final double seconds = (t1 - t0) / 1_000_000_000.0;
+
+                System.out.printf("[Coordinator] Wall time: %.3f seconds%n", seconds);
+
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-            } finally {
-                latch.countDown();
             }
+
         }, "coordinator-control-thread");
 
         controlThread.setDaemon(true);
         controlThread.start();
 
         // ===============================================================================================================
+        // This runs on exception
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {     // executes when doing Ctrl + C, SIGINT -> JVM -> addShutdownHook
             System.out.println("[Coordinator] Shutting down KafkaStreams");
             streams.close();
             latch.countDown();
         }));
+
+        // ===============================================================================================================
 
         try {
             streams.start();

@@ -297,5 +297,7 @@ Input input-weights-topic:
     - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem
 
  - Kill Zombie Java processes:
-    - sudo pkill -2 java
-    - ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25
+    ```bash
+    ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
+    sudo pkill -2 java
+    ```

@@ -14,16 +14,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
 
 import utils.*;
 import state.*;
 import message.data_message.*; 
-import message.weights_message.*; 
+import message.weights_message.*;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WorkerTransformer implements Transformer<String, DataMessage, KeyValue<String, WeightsMessage>> {
 
@@ -68,9 +67,19 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private float local_gBestAccuracy = -1f;
     private float local_gBestLoss = 10000f;
 
-    public WorkerTransformer(int workerId) {
+    private long t0;
+    private final AtomicLong t1 ;
+    private double lastActivitySeconds = 0.0;
+
+    private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
+
+    // ====================================================================================================================
+    
+    public WorkerTransformer(int workerId, long t0, AtomicLong t1) {
 
         this.workerId = workerId;
+        this.t0 = t0;
+        this.t1 = t1;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
@@ -110,8 +119,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                             ", Topic: " + context.topic());
 
             logger.log("Sample DataMessage: " + value.toString());
+            seenPartitions.add(context.partition());
         }
         
+
         if (value == null) {
             return null;
         }
@@ -218,17 +229,29 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + ", gBest Accuracy: " + local_gBestAccuracy);
+                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
+                    ", gBest Accuracy: " + local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
             }
 
             velocity = psoUpdater.updateX(model, this.pBestWeights, gBestWeights);
         }
 
-        logger.log("Updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT) +
+        updateTime();
+
+        logger.log(lastActivitySeconds + 
+                ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT) +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
                 ", with accuracy: " + accuracy);
 
         return null;
+    }
+
+    //=========================================================================================================================
+
+    private void updateTime() {
+        long now = System.nanoTime();
+        t1.set(now);
+        lastActivitySeconds = Math.round(((now - t0) / 1_000_000_000.0) * 100.0) / 100.0;
     }
 
     //=========================================================================================================================
@@ -364,5 +387,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
+
+        logger.log("[Worker " + workerId + "] Seen partitions: " + seenPartitions);
+
     }
 }
