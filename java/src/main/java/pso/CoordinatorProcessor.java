@@ -36,6 +36,8 @@ import state.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
+import org.apache.kafka.common.TopicPartition;
+
 public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
     private ProcessorContext<String, WeightsMessage> context;
 
@@ -81,6 +83,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private long t1;
     private double lastActivitySeconds = 0.0;
 
+    private final Deque<DataMessage> carry = new ArrayDeque<>();
+
+    private int test_count = 0;
     // ================================================================================================================
 
     public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats, long t0, long t1) {
@@ -157,29 +162,38 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
                 // ======== evaluate accuracy of globalModel using BatchPrediction ========
 
-                List<DataMessage> evalBatch = new ArrayList<>();
+                // List<DataMessage> evalBatch = new ArrayList<>();
 
-                while (evalBatch.size() < TEST_SIZE) {  // eval_batch before evaluating performance 
+                // while (evalBatch.size() < TEST_SIZE) {  // eval_batch before evaluating performance 
 
-                    ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(500));
+                //     ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
 
-                    if (records.isEmpty()) {
-                        System.out.println("Test Records run out. Training is over.");
-                        control.requestStop(); // no more test data, training is over
-                        return;
-                    }
+                //     if (records.isEmpty()) {
+                //         System.out.println("Test Records run out. Training is over.");
+                //         control.requestStop(); // no more test data, training is over
+                //         return;
+                //     }
 
-                    for (ConsumerRecord<String, DataMessage> rec : records) {
+                //     for (ConsumerRecord<String, DataMessage> rec : records) {
 
-                        if (rec.value() != null) {
-                            if(sampledDataMessage == false) {
-                                logger.log("Sample DataMessage: " + rec.value().toString());
-                                sampledDataMessage = true;
-                            }
-                            evalBatch.add(rec.value());
-                        }
-                    }
+                //         if (rec.value() != null) {
+                //             if(sampledDataMessage == false) {
+                //                 logger.log("Sample DataMessage: " + rec.value().toString());
+                //                 sampledDataMessage = true;
+                //             }
+                //             evalBatch.add(rec.value());
+                //         }
+                //     }
+                // }
+                
+                List<DataMessage> evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
+                if (evalBatch == null) {
+                    System.out.println("Test Records run out. Training is over.");
+                    control.requestStop();
+                    return;
                 }
+
+                logConsumerOffsets();   // evaluate consumer position
 
                 globalStats.reset();       
                 float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
@@ -199,12 +213,15 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 }
                 
                 updateTime();
-                logger.log(lastActivitySeconds + ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
-                
-                System.out.println(lastActivitySeconds + ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                logger.log(test_count + ") time: " + lastActivitySeconds + 
+                            ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                             ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
+                System.out.println(test_count + ") time: " + lastActivitySeconds + 
+                            ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+
+                test_count++;
 
                 if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
                     Dl4jParamUtils.saveModel(bestGlobalModel);
@@ -248,9 +265,68 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private void updateTime() {
         t1 = System.nanoTime();
-        lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 100.0) / 100.0;
+        lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 10.0) / 10.0;
     }
-    
+
+    //=========================================================================================================================
+
+    private List<DataMessage> readExactlyTestSizeBatch(int testSize) {
+        List<DataMessage> evalBatch = new ArrayList<>(testSize);
+
+        // Use leftovers from previous poll
+        while (evalBatch.size() < testSize && !carry.isEmpty()) {
+            evalBatch.add(carry.removeFirst());
+        }
+
+        while (evalBatch.size() < testSize) {
+            ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
+
+            if (records.isEmpty()) {
+                return null; // means "no more data"
+            }
+
+            for (ConsumerRecord<String, DataMessage> rec : records) {
+                DataMessage dm = rec.value();
+                if (dm == null) continue;
+
+                if (evalBatch.size() < testSize) {
+                    evalBatch.add(dm);
+                } else {
+                    carry.addLast(dm);
+                }
+            }
+        }
+
+        return evalBatch;
+    }
+    //=========================================================================================================================
+
+    private void logConsumerOffsets() {
+        try {
+            Set<TopicPartition> asg = consumer.assignment();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Consumer position: ");
+
+            Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+
+            for (TopicPartition tp : asg) {
+                long pos = consumer.position(tp);   // current offset (position == offset)
+                long end = ends.getOrDefault(tp, -1L);
+
+                sb.append("[")
+                    .append(tp.topic()).append("-").append(tp.partition())
+                    .append(" pos = ").append(pos)
+                    .append(" end = ").append(end)
+                    .append("] ");
+            }
+
+            logger.log(sb.toString());
+        } catch (Exception e) {
+            logger.log("Coordinator failed to log consumer offsets: " + e.getMessage());
+        }
+    }
+   
     //=========================================================================================================================
 
     private static float[] averageWeights(List<float[]> bufs) {

@@ -1,7 +1,16 @@
 Apps from built in App Store:
  - telegram
  - vscode
- 
+
+# Vscode: ====================================================================================
+ - Extensions:
+	- Docker Python Java Github 
+ - Settings:
+	- Ctrl + Shift + P / Preferences: Open Keyboard Shortcuts:
+		- go back: Alt + Left
+
+
+
 Apps using dpkg:
  - sudo dpkg -i <file_name>.deb
  - Chrome

@@ -72,6 +72,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private double lastActivitySeconds = 0.0;
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
+    private long lastOffset = 0;
 
     // ====================================================================================================================
     
@@ -121,7 +122,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log("Sample DataMessage: " + value.toString());
             seenPartitions.add(context.partition());
         }
-        
+        lastOffset = context.offset();
 
         if (value == null) {
             return null;
@@ -388,7 +389,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             buffer.clear();
         }
 
-        logger.log("[Worker " + workerId + "] Seen partitions: " + seenPartitions);
+        logger.log("Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
     }
 }

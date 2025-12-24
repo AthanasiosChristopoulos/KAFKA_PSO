@@ -181,15 +181,15 @@ def load_dataset():
         X_all = data[:, 1:].astype(np.float32)
 
         # ===== Train/Test Split =====
-        train_size = 2400000
-        
+        train_size = 2400000    # there are approximately 60000 messages inside each partition (40 partitions in topic)
+                                # the test size is 20000
         X_all, y_all = shuffle(X_all, y_all)
 
-        X_train = X_all[:train_size]          # training features
-        y_train = y_all[:train_size]          # training labels
+        X_train = X_all[:train_size]       
+        y_train = y_all[:train_size]
 
-        X_test = X_all[train_size:]     # test features (5000)
-        y_test = y_all[train_size:]     # test labels  (5000)
+        X_test = X_all[train_size:]     
+        y_test = y_all[train_size:]    
 
         class_names = [str(i) for i in sorted(set(y_all))]
 

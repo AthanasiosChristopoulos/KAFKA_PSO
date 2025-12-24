@@ -24,10 +24,25 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --create --topic prediction-output --partitions 1 --if-not-exists
 
 # ==============================================================
+# Evaluate position:
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --list 
 
+docker exec -it broker \
+  /opt/kafka/bin/kafka-run-class.sh \
+  org.apache.kafka.tools.GetOffsetShell \
+  --bootstrap-server localhost:9092 \
+  --topic susy-input \
+  --time -1
+
+docker exec -it broker \
+  /opt/kafka/bin/kafka-run-class.sh \
+  org.apache.kafka.tools.GetOffsetShell \
+  --bootstrap-server localhost:9092 \
+  --topic susy-test \
+  --time -1
+  
 exit 0
 
 #  ==============================================================
@@ -169,7 +184,8 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --create --topic susy-input --partitions 40 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 --describe --topic susy-input
+  --bootstrap-server localhost:9092 \
+  --describe --topic susy-input
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
@@ -186,7 +202,8 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --create --topic susy-test --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 --describe --topic susy-test
+  --bootstrap-server localhost:9092 \
+  --describe --topic susy-test
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
