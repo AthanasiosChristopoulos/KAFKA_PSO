@@ -290,7 +290,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                                     // They have names: "pBest" + workerId
 
                 // logger.log("Runnig: " + count);
-                // count = count + 1;                   
+                // count = count + 1;  
+                                 
                 KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
                 WeightsMessage msg = entry.value.value(); 
                 if (msg == null || msg.weights == null || msg.weights.length == 0) {

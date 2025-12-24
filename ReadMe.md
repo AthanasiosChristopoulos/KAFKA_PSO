@@ -75,7 +75,7 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
-## =====================================================================================================================
+
 ## =====================================================================================================================
 ## Partitioning: =======================================================================================================
 
@@ -131,6 +131,7 @@ i.e. different training data from other workers.
                 => Only if this x_g has a high enough accuracy (higher than DESIRED_ACCURACY) or if the DATA_TOPIC / TEST_TOPIC data has been exhausted,
                    does training conclude.
                 => The execution doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
+          
                 
 ## Kafka Message Documentation:
 
@@ -183,9 +184,14 @@ Input input-weights-topic:
 ## New Dataset - Specifications:
 
  - Needs to be a well known ML dataset.
- - Not too hard, but not as easy as iris
+ - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent 
+    - Also necessary to define those 3 functions, implementing the model on python (tensorflow):
+        - load_{dataset_name}_data()
+        - build_{dataset_name}_model()
+        - run_{dataset_name}()
+
  - Needs to come, not from python, but externally in like a .csv
- - The model that is going to be used on it should be between 10000 - 100000
+ - The model that is going to be used on it should have a significant number of weights (100000 - 1000000)
  - i need you to find a tensorflow solution online which achieves a high accuracy
  - i need multiple classes (5 up to 10) and each class has about the same class appearance frequency 
         - even class distribution among the samples
