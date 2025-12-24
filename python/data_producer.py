@@ -176,13 +176,19 @@ def load_dataset():
                                                                             #  3200000
                                                                             #   120000
         # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000, skiprows=80000)
-        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=2420000)
+        # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=2420000)    # 60000 per partition
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=420000)      # 10000 per partition
+
         y_all = data[:, 0].astype(int)
         X_all = data[:, 1:].astype(np.float32)
 
         # ===== Train/Test Split =====
-        train_size = 2400000    # there are approximately 60000 messages inside each partition (40 partitions in topic)
-                                # the test size is 20000
+        # train_size = 2400000      # there are approximately 60000 messages inside each partition (40 partitions in topic)
+        #                           # the test size is 20000
+        
+        train_size = 400000         # there are approximately 10000 messages inside each partition (40 partitions in topic)
+                                    # the test size is 20000
+
         X_all, y_all = shuffle(X_all, y_all)
 
         X_train = X_all[:train_size]       

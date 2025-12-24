@@ -86,6 +86,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final Deque<DataMessage> carry = new ArrayDeque<>();
 
     private int test_count = 0;
+
     // ================================================================================================================
 
     public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats, long t0, long t1) {
@@ -125,7 +126,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     @Override
     public void process(Record<String, WeightsMessage> record) {
 
-        if (control.isStopRequested()) return;
+        if (control.isStopRequested(-1)) return;
         
         if(count == 0) {
             context.recordMetadata().ifPresent(meta -> 
@@ -188,8 +189,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 
                 List<DataMessage> evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
                 if (evalBatch == null) {
-                    System.out.println("Test Records run out. Training is over.");
-                    control.requestStop();
+                    System.out.println("Test Records run out. Something is wrong");
+                    // control.requestStop();
                     return;
                 }
 
@@ -225,7 +226,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
                 if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
                     Dl4jParamUtils.saveModel(bestGlobalModel);
-                    control.requestStop();
+                    control.requestStopFinal();
                     return;
                 }
 
@@ -282,8 +283,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
 
             if (records.isEmpty()) {
-                return null; // means "no more data"
+                if (resetToBeginningIfAtEnd()) {
+                    continue; 
+                }
+
+                continue;
             }
+
 
             for (ConsumerRecord<String, DataMessage> rec : records) {
                 DataMessage dm = rec.value();
@@ -299,6 +305,47 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         return evalBatch;
     }
+
+    //=========================================================================================================================
+
+    private boolean resetToBeginningIfAtEnd() {
+
+        Set<TopicPartition> asg = consumer.assignment();
+        if (asg == null || asg.isEmpty()) {
+            return false;
+        }
+
+        Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+
+        boolean allAtEnd = true;
+        for (TopicPartition tp : asg) {
+            long pos = consumer.position(tp);
+            long end = ends.getOrDefault(tp, -1L);
+
+            // If end is unknown, treat as "not at end"
+            if (end < 0) {
+                allAtEnd = false;
+                break;
+            }
+
+            if (pos < end) {
+                allAtEnd = false;
+                break;
+            }
+        }
+
+        if (allAtEnd) {
+
+            carry.clear();
+            consumer.seekToBeginning(asg);
+            consumer.poll(Duration.ZERO);
+            logger.log("Reached end-of-topic; resetting consumer to beginning (offset 0).");
+            return true;
+        }
+
+        return false;
+    }
+
     //=========================================================================================================================
 
     private void logConsumerOffsets() {

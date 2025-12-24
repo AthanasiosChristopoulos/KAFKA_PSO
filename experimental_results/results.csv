@@ -1,5 +1,4 @@
-N_WORKERS,ACCURACY,TRAIN_TIME_SEC,LOG
-2,0.636,12.071722507476807,experimental_results/experiment_logs/run_2.log
-4,0.694,13.379783153533936,experimental_results/experiment_logs/run_4.log
-5,0.7057292,13.488513946533203,experimental_results/experiment_logs/run_5.log
-6,0.7786458,14.49134874343872,experimental_results/experiment_logs/run_6.log
+N_WORKERS,ACCURACY,TRAIN_TIME_SEC,COORD_WALL_TIME_SEC,LAST_WORKER_WALL_TIME_SEC,LOG
+2,0.78,26.86137580871582,20.66,16.925,experimental_results/experiment_logs/run_2.log
+4,0.79,22.436708211898804,15.856,12.152,experimental_results/experiment_logs/run_4.log
+6,0.75,21.60406494140625,14.732,11.045,experimental_results/experiment_logs/run_6.log

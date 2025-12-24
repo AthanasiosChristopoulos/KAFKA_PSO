@@ -3,7 +3,7 @@ package pso;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.ProcessorContext;
-
+import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
@@ -21,8 +21,13 @@ import message.data_message.*;
 import message.weights_message.*;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.kafka.streams.processor.PunctuationType;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public class WorkerTransformer implements Transformer<String, DataMessage, KeyValue<String, WeightsMessage>> {
 
@@ -68,11 +73,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private float local_gBestLoss = 10000f;
 
     private long t0;
-    private final AtomicLong t1 ;
+    private final AtomicLong t1;
     private double lastActivitySeconds = 0.0;
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
+
+    private static final long IDLE_MS = 3000; // <-- set what you want (e.g. 3s)
+    private static final long CHECK_EVERY_MS = 250; // how often we check
 
     // ====================================================================================================================
     
@@ -107,6 +115,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public void init(ProcessorContext context) {
         this.context = context;
         this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>>) context.getStateStore(stateStoreName);
+
+        context.schedule(Duration.ofMillis(CHECK_EVERY_MS), PunctuationType.WALL_CLOCK_TIME, timestamp -> {
+            long idleNs = System.nanoTime() - t1.get();
+            if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
+                logger.log("[Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
+                CoordinatorControl.getInstance().requestStop(workerId);
+            }
+        });
+
     }
 
     //=========================================================================================================================

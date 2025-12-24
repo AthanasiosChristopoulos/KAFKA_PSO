@@ -65,7 +65,7 @@ public class Coordinator implements Runnable {
 
     private long t0 = System.nanoTime();
     private long t1 = System.nanoTime();
-    
+
     public Coordinator() {
 
         System.out.println("Coordinator: " + PREDICTION_INPUT_TOPIC + ", " + PREDICTION_OUTPUT_TOPIC);
@@ -238,8 +238,8 @@ public class Coordinator implements Runnable {
 
         Thread controlThread = new Thread(() -> {
             try {
-                while (!control.isStopRequested()) {
-                    Thread.sleep(200);
+                while (!control.isStopRequested(-1)) {
+                    Thread.sleep(100);
                 }
                 System.out.println("[Coordinator] Stop requested, closing streams");
                 streams.close();

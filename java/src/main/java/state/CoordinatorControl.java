@@ -1,23 +1,97 @@
+// package state;
+
+// import java.util.concurrent.atomic.AtomicBoolean;
+
+// import utils.*;
+
+// public class CoordinatorControl {
+
+//     private static Config cfg = Config.getInstance();
+
+//     private final AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
+//     private static final CoordinatorControl instance = new CoordinatorControl();
+
+//     private static int count = cfg.N_WORKERS;
+
+//     public void requestStop(int workerId) {
+//         stopRequestedWorker(workerId) = true;
+//         count = count - 1;
+//         if(count == 0) {
+//             stopRequestedFinal.set(true);
+//         }
+//     }
+
+//     public boolean isStopRequested(int workerId) {
+//         if(workerId == -1) {    // coordinator called
+//             stopRequestedFinal.get();
+//         } else {
+
+//         }
+//         return stopRequestedWorker(workerId);
+//     }
+
+//     public static CoordinatorControl getInstance() {
+//         return instance;
+//     }
+// }
+
+
 package state;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import utils.*;
+
 public class CoordinatorControl {
 
-    private final AtomicBoolean stopRequested = new AtomicBoolean(false);
+    private static final Config cfg = Config.getInstance();
+    private static final int N_WORKERS = cfg.N_WORKERS;
+    private static int count = N_WORKERS;
+
     private static final CoordinatorControl instance = new CoordinatorControl();
 
+    private final AtomicBoolean[] workerStopRequested = new AtomicBoolean[N_WORKERS];
+    private final AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
+
+    // =================================================================================================
+
     private CoordinatorControl() {
+        for (int i = 0; i < N_WORKERS; i++) {
+            workerStopRequested[i] = new AtomicBoolean(false);
+        }
+    }
+    
+    // =================================================================================================
 
+    public void requestStop(int workerId) {
+        if (workerId < 0 || workerId >= N_WORKERS) {
+            throw new IllegalArgumentException("Invalid workerId: " + workerId);
+        }
+
+        if (workerStopRequested[workerId].compareAndSet(false, true)) {
+            count = count - 1;
+            if (count <= 0) {
+                stopRequestedFinal.set(true);
+            }
+        }
     }
 
-    public void requestStop() {
-        stopRequested.set(true);
+    // =================================================================================================
+
+    public void requestStopFinal() {
+        stopRequestedFinal.set(true);
     }
 
-    public boolean isStopRequested() {
-        return stopRequested.get();
+    // =================================================================================================
+
+    public boolean isStopRequested(int workerId) {
+        if (workerId < 0 || workerId >= N_WORKERS) {
+            return stopRequestedFinal.get();
+        }
+        return stopRequestedFinal.get() || workerStopRequested[workerId].get();
     }
+
+    // =================================================================================================
 
     public static CoordinatorControl getInstance() {
         return instance;

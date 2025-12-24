@@ -7,10 +7,14 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-WORKERS_LIST = [2, 4, 6, 8]
+WORKERS_LIST = [2, 4, 6]
+# WORKERS_LIST = [2, 4, 6, 8]
 RUN_SCRIPT = "./run_streams.sh"
 
-ACC_RE = re.compile(r"Global bestAccuracy:\s*([0-9]*\.?[0-9]+)")
+ACC_RE = re.compile(
+    r"global\s+bestAccuracy:\s*([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE
+)
 
 END_PATTERNS = [
     re.compile(r"Training is over\.", re.IGNORECASE),
