@@ -548,7 +548,6 @@ def run_har():
 # Pen Digits Dataset
 # ======================================================================
 
-
 def load_pendigits_data(base_path="../data"):
 
     train_path = os.path.join(base_path, "pendigits.tra")
@@ -813,88 +812,63 @@ def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
 # =======================================================================================================
 # HIGGS
 # =======================================================================================================
-
-AUTOTUNE = tf.data.AUTOTUNE
-
 def load_higgs_data(
-    path: str,
-    *,
-    batch_size: int = 4096,
-    train_rows: int = 300_000,
-    val_rows: int = 50_000,
-    test_rows: int = 50_000,
-    shuffle_buffer: int = 200_000,
-    seed: int = 42,
-) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset, int]:
+    path: str = "../data/higgs/HIGGS.csv.gz",
+    nrows: int = 220_000,
+    test_size: float = 0.15,
+    val_size: float = 0.15,
+    random_state: int = 123,
+    standardize: bool = True,
+):
+    print(f"Loading HIGGS from: {path}")
 
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"File not found: {path}\n"
-            "Download 'HIGGS.csv.gz' from the UCI HIGGS dataset page and pass the local path."
-        )
+    df = pd.read_csv(path, sep=",", header=None, nrows=nrows)
 
-    input_dim = 29
-    total_take = train_rows + val_rows + test_rows
+    y = df.iloc[:, 0].astype(np.int32).values
+    X = df.iloc[:, 1:].astype(np.float32).values
 
-    # Define column defaults for CSV parsing:
-    # 1 label + 29 features
-    record_defaults = [tf.constant(0, dtype=tf.int32)] + [tf.constant(0.0, dtype=tf.float32)] * input_dim
-
-    def _parse_line(*cols):
-        # cols is a list/tup of tensors (label + features)
-        y = tf.cast(cols[0], tf.int32)
-        x = tf.stack([tf.cast(c, tf.float32) for c in cols[1:]], axis=0)  # (29,)
-        return x, y
-
-    # Works with .gz as well; tf.data can read compressed text.
-    ds = tf.data.experimental.CsvDataset(
-        filenames=[path],
-        record_defaults=record_defaults,
-        header=False,
-        field_delim=",",
-        use_quote_delim=True,
+    # train / test
+    X_trainval, X_test, y_trainval, y_test = train_test_split(
+        X, y,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=y
     )
 
-    ds = ds.map(_parse_line, num_parallel_calls=AUTOTUNE).take(total_take)
+    # train / val
+    val_frac = val_size / (1.0 - test_size)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_trainval,
+        y_trainval,
+        test_size=val_frac,
+        random_state=random_state,
+        stratify=y_trainval
+    )
 
-    # Split sequentially (simple + deterministic)
-    train_ds = ds.take(train_rows)
-    remainder = ds.skip(train_rows)
-    val_ds = remainder.take(val_rows)
-    test_ds = remainder.skip(val_rows).take(test_rows)
+    if standardize:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_val   = scaler.transform(X_val)
+        X_test  = scaler.transform(X_test)
+    else:
+        scaler = None
 
-    # Shuffle only training
-    train_ds = train_ds.shuffle(shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
+    print("Train:", X_train.shape, y_train.shape)
+    print("Val:  ", X_val.shape, y_val.shape)
+    print("Test: ", X_test.shape, y_test.shape)
 
-    # Batch + prefetch
-    train_ds = train_ds.batch(batch_size).prefetch(AUTOTUNE)
-    val_ds = val_ds.batch(batch_size).prefetch(AUTOTUNE)
-    test_ds = test_ds.batch(batch_size).prefetch(AUTOTUNE)
-
-    return train_ds, val_ds, test_ds, input_dim
+    return X_train, y_train, X_val, y_val, X_test, y_test, scaler
 
 # =======================================================================================================
 
 def build_higgs_model(
     input_dim: int = 29,
-    *,
     hidden1: int = 1024,
     hidden2: int = 512,
     hidden3: int = 128,
     dropout: float = 0.15,
     lr: float = 1e-3,
 ) -> tf.keras.Model:
-    """
-    Dense model with ~700k parameters by default:
-      29 -> 1024 -> 512 -> 128 -> 1
-
-    Param count approx:
-      29*1024 + 1024
-    + 1024*512 + 512
-    + 512*128 + 128
-    + 128*1 + 1
-    ≈ 30k + 525k + 65k + 129 ≈ 620k (plus biases) => within 100k..1M.
-    """
     inputs = tf.keras.Input(shape=(input_dim,), name="features")
     x = tf.keras.layers.Dense(hidden1, activation="relu")(inputs)
     x = tf.keras.layers.Dropout(dropout)(x)
@@ -909,53 +883,40 @@ def build_higgs_model(
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
         loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
         metrics=[
-            tf.keras.metrics.BinaryAccuracy(name="acc", threshold=0.0),  # threshold on logits==0 <=> prob 0.5
+            tf.keras.metrics.BinaryAccuracy(name="acc", threshold=0.0),
             tf.keras.metrics.AUC(name="auc", from_logits=True),
         ],
     )
     return model
 
+
 # =======================================================================================================
+def run_higgs():
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler = load_higgs_data()
 
-def run_higgs(
-    dataset_path: str = "../data/higgs/HIGGS.csv",
-    batch_size: int = 4096,
-    train_rows: int = 300_000,
-    val_rows: int = 50_000,
-    test_rows: int = 50_000,
-    epochs: int = 10,
-):
-
-    train_ds, val_ds, test_ds, input_dim = load_higgs_data(
-        dataset_path,
-        batch_size=batch_size,
-        train_rows=train_rows,
-        val_rows=val_rows,
-        test_rows=test_rows,
-    )
-
-    model = build_higgs_model(input_dim=input_dim)
+    model = build_higgs_model(input_dim=X_train.shape[1])
 
     print(model.summary())
-    print(f"Total parameters: {model.count_params():,}")
 
-    callbacks = [
-        tf.keras.callbacks.EarlyStopping(monitor="val_auc", patience=3, mode="max", restore_best_weights=True),
-        tf.keras.callbacks.ReduceLROnPlateau(monitor="val_auc", factor=0.5, patience=2, mode="max", min_lr=1e-5),
-    ]
-
-    model.fit(
-        train_ds,
-        validation_data=val_ds,
-        epochs=epochs,
-        callbacks=callbacks,
-        verbose=1,
+    history = model.fit(
+        X_train,
+        y_train,
+        validation_data=(X_val, y_val),
+        epochs=10,
+        batch_size=4096,
+        shuffle=True,
+        verbose=1
     )
 
-    results = model.evaluate(test_ds, verbose=1)
-    print("\nTest metrics:", dict(zip(model.metrics_names, results)))
+    print("\nEvaluating on test set...")
+    test_loss, test_acc, test_auc = model.evaluate(X_test, y_test, verbose=0)
+
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test acc:  {test_acc:.4f}")
+    print(f"Test AUC:  {test_auc:.4f}")
 
     return model
+
 
 # ======================================================================
 # Main

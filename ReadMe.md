@@ -197,6 +197,73 @@ Input input-weights-topic:
  - have enough rows / samples, somewhere around 220000 and above
  - have a reasonable amount of features (not over 100)
  
+ - an example of such functions for the dataset "bank_dataset" is detailed here:
+
+```python
+# ======================================================================
+# BANK DATASET
+# ======================================================================
+
+def load_bank_data(path="../data/bank-additional-full.csv"):
+    print(f"Loading from: {path}")
+    df = pd.read_csv(path, sep=';')
+
+    # Label: yes or no to 1 or 0
+    y = (df["y"] == "yes").astype(int).values
+
+    X = pd.get_dummies(df.drop(columns=["y"]), drop_first=True).astype(np.float32).values
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123, stratify=y)
+        # random_state=123 => sudo randomly ordered dataset
+        # stratify = y: Split the data so that each class in y appears in the train and test sets 
+            # in the same proportion as the original dataset.
+    
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test  = scaler.transform(X_test)
+
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("Test  shape:", X_test.shape, "Labels:", y_test.shape)
+
+    return X_train, X_test, y_train, y_test
+
+# ===============================================================================
+
+def build_bank_model(input_dim):
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(64, activation='relu'),
+        layers.Dense(64, activation='relu'),
+        layers.Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+    )
+
+    model.summary()
+    return model
+
+# ===============================================================================
+
+def run_bank():
+    X_train, X_test, y_train, y_test = load_bank_data(path="../data/bank-additional-full.csv")
+
+    model = build_bank_model(input_dim=X_train.shape[1])
+
+    print("\nTraining...")
+    history = model.fit(X_train, y_train, validation_split=0.2,epochs=3,batch_size=256,verbose=2)
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+    save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
+```
+
 ## Improve congvergence:
 
  - change model
