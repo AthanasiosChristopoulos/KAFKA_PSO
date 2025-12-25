@@ -94,7 +94,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         this.model = Dl4jModelFactory.createModel();
         this.stats = new Stats();
-        this.predictor = new BatchPrediction(model, stats, logger);
+        this.predictor = new BatchPrediction(model, logger);
         this.psoUpdater = new PsoUpdater(model, workerId);
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
@@ -291,7 +291,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 // logger.log("Runnig: " + count);
                 // count = count + 1;  
-                                 
+
                 KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
                 WeightsMessage msg = entry.value.value(); 
                 if (msg == null || msg.weights == null || msg.weights.length == 0) {

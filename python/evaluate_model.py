@@ -33,23 +33,23 @@ if os.path.exists(env_path):
     load_dotenv(env_path)
 
 DATASET = os.getenv("DATASET", "iris")
-NEURAL_INPUT = NEURAL_OUTPUT = 0
+NUM_FEATURES = NUM_CLASSES = 0
 
 if(DATASET == "iris"):
-    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_IRIS", "4"))
-    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_IRIS", "3"))
+    NUM_FEATURES = int(os.getenv("NUM_FEATURES_IRIS", "4"))
+    NUM_CLASSES = int(os.getenv("NUM_CLASSES_IRIS", "3"))
     
 elif (DATASET == "wine"):
-    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_WINE", "13"))
-    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_WINE", "3"))   
+    NUM_FEATURES = int(os.getenv("NUM_FEATURES_WINE", "13"))
+    NUM_CLASSES = int(os.getenv("NUM_CLASSES_WINE", "3"))   
 
 elif (DATASET == "mnist"):
-    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_MNIST", "784"))
-    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_MNIST", "10"))   
+    NUM_FEATURES = int(os.getenv("NUM_FEATURES_MNIST", "784"))
+    NUM_CLASSES = int(os.getenv("NUM_CLASSES_MNIST", "10"))   
     
 elif (DATASET == "susy"):
-    NEURAL_INPUT = int(os.getenv("NUM_FEATURES_SUSSY", "18"))
-    NEURAL_OUTPUT = int(os.getenv("NUM_CLASSES_SUSSY", "2"))
+    NUM_FEATURES = int(os.getenv("NUM_FEATURES_SUSSY", "18"))
+    NUM_CLASSES = int(os.getenv("NUM_CLASSES_SUSSY", "2"))
 
 # =======================================================================================================
 # 1. Load flat weights from file
@@ -68,30 +68,30 @@ def reconstruct_layer_weights_for_keras(flat):
     # (in_size, out_size) for each dense layer in order
     if DATASET == "iris":
         layer_shapes = [
-            (NEURAL_INPUT, 16),     # Layer 1
+            (NUM_FEATURES, 16),     # Layer 1
             (16, 16),               # Layer 2
-            (16, NEURAL_OUTPUT),    # Output Layer
+            (16, NUM_CLASSES),    # Output Layer
         ]
         
     elif DATASET == "wine":
         layer_shapes = [
-            (NEURAL_INPUT, 32),
+            (NUM_FEATURES, 32),
             (32, 16),
-            (16, NEURAL_OUTPUT),
+            (16, NUM_CLASSES),
         ]
         
     elif DATASET == "mnist":
         layer_shapes = [
-            (NEURAL_INPUT, 256),  
+            (NUM_FEATURES, 256),  
             (256, 128),           
-            (128, NEURAL_OUTPUT), 
+            (128, NUM_CLASSES), 
         ]
 
     elif DATASET == "susy":
         layer_shapes = [
-            (NEURAL_INPUT, 128),   # Dense 1
+            (NUM_FEATURES, 128),   # Dense 1
             (128, 128),            # Dense 2
-            (128, NEURAL_OUTPUT),  # Output
+            (128, NUM_CLASSES),  # Output
         ]
                     
     else:
@@ -135,40 +135,40 @@ def build_keras_model():
     if DATASET == "iris":
         model = keras.Sequential(
             [
-                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Input(shape=(NUM_FEATURES,)),
                 layers.Dense(16, activation="relu", name="dense1"),
                 layers.Dense(16, activation="relu", name="dense2"),
-                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+                layers.Dense(NUM_CLASSES, activation="softmax", name="output"),
             ]
         )
         
     elif DATASET == "wine":
         model = keras.Sequential(
             [
-                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Input(shape=(NUM_FEATURES,)),
                 layers.Dense(32, activation="relu", name="dense1"),
                 layers.Dense(16, activation="relu", name="dense2"),
-                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+                layers.Dense(NUM_CLASSES, activation="softmax", name="output"),
             ]
         )
         
     elif DATASET == "mnist":
         model = keras.Sequential(
             [
-                layers.Input(shape=(NEURAL_INPUT,)),   
+                layers.Input(shape=(NUM_FEATURES,)),   
                 layers.Dense(256, activation="relu", name="dense1"),
                 layers.Dense(128, activation="relu", name="dense2"),
-                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+                layers.Dense(NUM_CLASSES, activation="softmax", name="output"),
             ]
         )
 
     elif DATASET == "susy":
         model = keras.Sequential(
             [
-                layers.Input(shape=(NEURAL_INPUT,)),
+                layers.Input(shape=(NUM_FEATURES,)),
                 layers.Dense(128, activation="relu", name="dense1"),
                 layers.Dense(128, activation="relu", name="dense2"),
-                layers.Dense(NEURAL_OUTPUT, activation="softmax", name="output"),
+                layers.Dense(NUM_CLASSES, activation="softmax", name="output"),
             ]
         )
 
@@ -224,12 +224,12 @@ def evaluate_model(model):
     if DATASET == "iris":
         
         iris = load_iris()
-        X_raw = iris["data"].astype(np.float32)   # shape [150, NEURAL_INPUT]
+        X_raw = iris["data"].astype(np.float32)   # shape [150, NUM_FEATURES]
         y = iris["target"]                        # shape [150,]
         
     elif DATASET == "wine":
         iris = load_wine()
-        X_raw = iris["data"].astype(np.float32)   # shape [150, NEURAL_INPUT]
+        X_raw = iris["data"].astype(np.float32)   # shape [150, NUM_FEATURES]
         y = iris["target"]                        # shape [150,]    
     
     elif DATASET == "mnist":
@@ -299,7 +299,7 @@ def evaluate_model_kafka(model, num_samples: int = 150):
 
     consumer.close()
 
-    X = np.array(X_list, dtype=np.float32)   # shape [num_samples, NEURAL_INPUT]
+    X = np.array(X_list, dtype=np.float32)   # shape [num_samples, NUM_FEATURES]
     y = np.array(y_list, dtype=np.int64)     # shape [num_samples]
 
     print(f"Collected {X.shape[0]} samples from Kafka")

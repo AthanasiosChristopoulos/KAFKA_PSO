@@ -8,7 +8,6 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
-import org.nd4j.linalg.api.buffer.DataType;
 
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.learning.config.Adam;
@@ -17,8 +16,8 @@ public class Dl4jModelFactory {
         
 	private static final Config cfg = Config.getInstance();
 	private static final String DATASET = cfg.DATASET;
-	private static final String DATA_TOPIC = cfg.DATA_TOPIC;
-    public static final int NEURAL_INPUT = cfg.NEURAL_INPUT;
+    public static final int NUM_FEATURES = cfg.NUM_FEATURES;
+    public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
 	public static final boolean printModel = false;
@@ -36,8 +35,8 @@ public class Dl4jModelFactory {
 				return createMNISTModel();
 				
 		} else if ("susy".equals(DATASET)) {
-				// return createSUSYModel();
-				return createSUSYModel_CE();
+				// return createSUSYModel_SOFTMAX();
+				return createSUSYModel();
 
 		} else if ("bank".equals(DATASET)) {
 				// return createBankModel();
@@ -72,7 +71,7 @@ public class Dl4jModelFactory {
 				.seed(123) // or pass seed from outside
 				.list()
 				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
-						.nIn(NEURAL_INPUT)
+						.nIn(NUM_FEATURES)
 						.nOut(16)
 						.activation(Activation.RELU)
 						.build())
@@ -112,7 +111,7 @@ public class Dl4jModelFactory {
                 .seed(123)
                 .list()
                 .layer(new DenseLayer.Builder()
-                        .nIn(NEURAL_INPUT)
+                        .nIn(NUM_FEATURES)
                         .nOut(32)
                         .activation(Activation.RELU)
                         .build())
@@ -151,7 +150,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)
+						.nIn(NUM_FEATURES)
 						.nOut(256)
 						.activation(Activation.RELU)
 						.build())
@@ -187,7 +186,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 
-	public static MultiLayerNetwork createSUSYModel() {
+	public static MultiLayerNetwork createSUSYModel_SOFTMAX() {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
@@ -196,7 +195,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)  // 18
+						.nIn(NUM_FEATURES)  // 18
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
@@ -228,7 +227,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
 
-	public static MultiLayerNetwork createSUSYModel_CE() {
+	public static MultiLayerNetwork createSUSYModel() {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
@@ -237,7 +236,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)  // 18
+						.nIn(NUM_FEATURES)  // 18
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
@@ -248,7 +247,7 @@ public class Dl4jModelFactory {
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
 						.nIn(128)
-						.nOut(1)  // 2
+						.nOut(NEURAL_OUTPUT)  
 						.activation(Activation.SIGMOID)
 						.build())
 				.build();
@@ -274,7 +273,7 @@ public class Dl4jModelFactory {
 				.l2(1e-4)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)
+						.nIn(NUM_FEATURES)
 						.nOut(64)
 						.activation(Activation.RELU)
 						.build())
@@ -285,7 +284,7 @@ public class Dl4jModelFactory {
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
 						.nIn(64)
-						.nOut(outputSize)
+						.nOut(NEURAL_OUTPUT)
 						.activation(Activation.SIGMOID)
 						.build())
 				.build();
@@ -317,7 +316,7 @@ public class Dl4jModelFactory {
 				.l2(1e-4)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)
+						.nIn(NUM_FEATURES)
 						.nOut(256)
 						.activation(Activation.RELU)
 						.build())
@@ -348,7 +347,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 
 	public static MultiLayerNetwork createAdultModel() {
-		int outputSize = 1; // sigmoid, single logit (binary classification)
+
 		if(printModel) {
 			System.out.println("Using ADULT_INCOME Model");
 		}
@@ -360,7 +359,7 @@ public class Dl4jModelFactory {
 				.l2(1e-4)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)      // Adult input features after one-hot + scaling
+						.nIn(NUM_FEATURES)      // Adult input features after one-hot + scaling
 						.nOut(64)
 						.activation(Activation.RELU)
 						.build())
@@ -371,7 +370,7 @@ public class Dl4jModelFactory {
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
 						.nIn(64)
-						.nOut(outputSize)
+						.nOut(NEURAL_OUTPUT)
 						.activation(Activation.SIGMOID)
 						.build())
 				.build();
@@ -400,7 +399,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)    
+						.nIn(NUM_FEATURES)    
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
@@ -443,7 +442,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)  // 561
+						.nIn(NUM_FEATURES)  // 561
 						.nOut(32)
 						.activation(Activation.RELU)
 						.build())
@@ -493,7 +492,7 @@ public class Dl4jModelFactory {
 				.seed(123)
 				.list()
 				.layer(new DenseLayer.Builder()
-						.nIn(NEURAL_INPUT)   // 16 
+						.nIn(NUM_FEATURES)   // 16 
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())

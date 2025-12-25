@@ -814,7 +814,7 @@ def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
 # =======================================================================================================
 def load_higgs_data(
     path: str = "../data/higgs/HIGGS.csv.gz",
-    nrows: int = 220_000,
+    nrows: int = 620_000,
     test_size: float = 0.15,
     val_size: float = 0.15,
     random_state: int = 123,
@@ -891,7 +891,9 @@ def build_higgs_model(
 
 
 # =======================================================================================================
+
 def run_higgs():
+
     X_train, y_train, X_val, y_val, X_test, y_test, scaler = load_higgs_data()
 
     model = build_higgs_model(input_dim=X_train.shape[1])

@@ -9,7 +9,8 @@ public class Config {
 
     private static Config instance = new Config();     // Singleton
 
-    public final int NEURAL_INPUT;      // Number of Features of Dataset
+    public final int NUM_FEATURES;      // Number of Features of Dataset
+    public final int NUM_CLASSES;     // Number of Classes of Dataset
     public final int NEURAL_OUTPUT;     // Number of Classes of Dataset
 
     public final String DATASET;
@@ -39,6 +40,7 @@ public class Config {
     public final boolean FULLY_INFORMED;
     public final boolean DEBUG_KAFKA;
     public final String LOSS_FUNCTION;
+    public final String LOSS_COMBINE;
     public final int TOP_K_VALUE;
 
     public final float VMAX_FACTOR;
@@ -54,45 +56,51 @@ public class Config {
         System.out.println("DATASET: " + DATASET);        
         this.DATA_TOPIC = this.DATASET + "-input";
         this.TEST_TOPIC = this.DATASET + "-test";
-
+        
         if("iris".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
         
         } else if("wine".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
 
         } else if("mnist".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
 
         } else if("susy".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
 
         } else if("bank".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_BANK", "21"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_BANK", "2"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_BANK", "21"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_BANK", "2"));
 
         } else if("adult".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_ADULT_INCOME", "14"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_ADULT_INCOME", "2"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_ADULT_INCOME", "14"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_ADULT_INCOME", "2"));
 
         } else if("covertype".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_COVERTYPE", "54"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_COVERTYPE", "7"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_COVERTYPE", "54"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_COVERTYPE", "7"));
 
         } else if("har".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_HAR", "54"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_HAR", "7"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_HAR", "54"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_HAR", "7"));
 
         }  else if("pendigits".equals(this.DATASET)) {
-            this.NEURAL_INPUT = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "54"));
-            this.NEURAL_OUTPUT = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "7"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "54"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "7"));
 
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
+        }
+
+        if(this.NUM_CLASSES == 2) {
+            this.NEURAL_OUTPUT = 1;
+        } else {
+            this.NEURAL_OUTPUT = this.NUM_CLASSES;
         }
 
         this.PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
@@ -131,6 +139,7 @@ public class Config {
 
         this.DEBUG_KAFKA = Boolean.parseBoolean(getenv(dotenv, "DEBUG_KAFKA", "false"));
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
+        this.LOSS_COMBINE = getenv(dotenv, "LOSS_COMBINE", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
@@ -138,9 +147,10 @@ public class Config {
         this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
-
     }
 
+    // ==================================================================================================================================
+    
     public static Config getInstance() {
         return instance;
     }

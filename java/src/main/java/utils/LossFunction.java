@@ -7,17 +7,15 @@ public class LossFunction {
 
     private static final Config cfg = Config.getInstance();
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
-    private static final int k = cfg.TOP_K_VALUE;
+    private static final int TOP_K_VALUE = cfg.TOP_K_VALUE;
 
-    private static boolean sampled = false;
+    // =============================================================================================
+    // Loss Function Control:
 
     public static float compute_loss(float[] probs, int label) {
         
         if ("L2".equals(LOSS_FUNCTION)) {
             return compute_loss_L2(probs, label);
-
-        } else if ("TOP_K".equals(LOSS_FUNCTION)) {
-            return compute_loss_top_k(probs, label);
 
         } else if ("CROSS_ENTROPY".equals(LOSS_FUNCTION)) {
             return compute_loss_CE(probs, label);
@@ -29,6 +27,14 @@ public class LossFunction {
 
     // =============================================================================================
 
+    public static float compute_loss(float probs, int label) {
+        return compute_loss_binary_CE(probs, label);
+
+    }
+
+    // =============================================================================================
+    // Loss Functions:
+    
     public static float compute_loss_L2(float[] probs, int label) {
 
         if(probs.length == 0) {
@@ -75,14 +81,12 @@ public class LossFunction {
 
     // =============================================================================================
 
-   public static float compute_loss_sigmoid(float probsScalar, int label) {
+    public static float compute_loss_binary_CE(float probs, int label) {  // binary cross entropy
 
-        float p = probsScalar;
+        if (probs < 1e-7f) probs = 1e-7f;
+        if (probs > 1f - 1e-7f) probs = 1f - 1e-7f;
 
-        if (p < 1e-7f) p = 1e-7f;
-        if (p > 1f - 1e-7f) p = 1f - 1e-7f;
-
-        float loss = (float)(- (label * Math.log(p) + (1 - label) * Math.log(1f - p))); // Binary Cross Entropy Loss Function
+        float loss = (float)(- (label * Math.log(probs) + (1 - label) * Math.log(1f - probs))); // Binary Cross Entropy Loss Function
 
         if (Float.isInfinite(loss)) {
             System.out.println("Sigmoid loss is Inf");
@@ -112,34 +116,78 @@ public class LossFunction {
     }
     
     // =============================================================================================
+    // Combination Functions:
 
-    public static float compute_loss_top_k(float[] probs, int label) {
+    public static float sum(float[] sampleLosses) {
+        if (sampleLosses == null || sampleLosses.length == 0) return 0f;
 
-        int n = probs.length;
+        float s = 0f;
+        for (float v : sampleLosses) {
+            // optionally ignore bad sentinel values
+            if (Float.isNaN(v) || Float.isInfinite(v)) return Float.POSITIVE_INFINITY;
+            s += v;
+        }
+        return s;
+    }
+
+    // =============================================================================================
+
+    public static float average(float[] sampleLosses) {
+        if (sampleLosses == null || sampleLosses.length == 0) return 0f;
+
+        float s = sum(sampleLosses);
+        if (Float.isInfinite(s)) return s; // propagate infinity
+        return s / sampleLosses.length;
+    }
+
+    // =============================================================================================
+
+    public static float topKAverage(float[] sampleLosses) {
+
+        int n = sampleLosses.length;
         if (n == 0) return 0f;
 
-        int k_value = Math.min(k, n);
-        
-        float[] target = new float[n];
-        target[label] = 1f;
+        int k_edited = Math.min(TOP_K_VALUE, n);
 
-        float[] absResiduals = new float[n];
-        for (int i = 0; i < n; i++) {   // calculate all the residuals (k independent)
-            absResiduals[i] = Math.abs(probs[i] - target[i]);   // the magnitudes
+        float[] tmp = Arrays.copyOf(sampleLosses, n);
+        Arrays.sort(tmp);
+
+        float sum = 0f;
+        for (int i = n - k_edited; i < n; i++) {
+            sum += tmp[i];
         }
 
-        Arrays.sort(absResiduals);  // sort ascending order
-
-        if(sampled == false) {
-            System.out.println("Sample Sorted: " + Arrays.toString(absResiduals));
-            sampled = true;
-        }
-
-        float sumTopK = 0f;
-        for (int i = n - k_value; i < n; i++) {
-            sumTopK += absResiduals[i];
-        }
-
-        return sumTopK / k_value;
+        return sum / k_edited;
     }
+    
+
+    // public static float compute_loss_top_k(float[] probs, int label) {
+
+    //     int n = probs.length;
+    //     if (n == 0) return 0f;
+
+    //     int k_value = Math.min(k, n);
+        
+    //     float[] target = new float[n];
+    //     target[label] = 1f;
+
+    //     float[] absResiduals = new float[n];
+    //     for (int i = 0; i < n; i++) {   // calculate all the residuals (k independent)
+    //         absResiduals[i] = Math.abs(probs[i] - target[i]);   // the magnitudes
+    //     }
+
+    //     Arrays.sort(absResiduals);  // sort ascending order
+
+    //     if(sampled == false) {
+    //         System.out.println("Sample Sorted: " + Arrays.toString(absResiduals));
+    //         sampled = true;
+    //     }
+
+    //     float sumTopK = 0f;
+    //     for (int i = n - k_value; i < n; i++) {
+    //         sumTopK += absResiduals[i];
+    //     }
+
+    //     return sumTopK / k_value;
+    // }
 }

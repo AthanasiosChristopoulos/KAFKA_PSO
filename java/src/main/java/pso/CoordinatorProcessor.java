@@ -57,12 +57,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private float bestGlobalModelAccuracy = -1f;
     private float bestLoss = 10000f;
 
-    private final Stats globalStats;
     private final BatchPrediction globalPredictor;
 
     private static Config cfg = Config.getInstance();
     private final int N_WORKERS = cfg.N_WORKERS;
-    private final String DATA_TOPIC = cfg.DATA_TOPIC;
     private final String TEST_TOPIC = cfg.TEST_TOPIC;
     private final int TEST_SIZE = cfg.TEST_SIZE;
     private final float DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
@@ -89,7 +87,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     // ================================================================================================================
 
-    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, Stats globalStats, long t0, long t1) {
+    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, long t0, long t1) {
         
         this.t0 = t0;
         this.t1 = t1;
@@ -100,9 +98,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
-        this.globalStats = globalStats;    
 
-        this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
+        this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
         
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -196,7 +193,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
                 logConsumerOffsets();   // evaluate consumer position
 
-                globalStats.reset();       
                 float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
                 accuracy = accLoss[0];
                 loss = accLoss[1];
@@ -215,12 +211,14 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 
                 updateTime();
                 logger.log(test_count + ") time: " + lastActivitySeconds + 
-                            ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                            ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                            ", model acc: " + accuracy + " and loss: " + loss + 
+                            ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
                 System.out.println(test_count + ") time: " + lastActivitySeconds + 
-                            ", global bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", global model: " + accuracy + ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                            ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                            ", model acc: " + accuracy + " and loss: " + loss + 
+                            ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
                 test_count++;
 

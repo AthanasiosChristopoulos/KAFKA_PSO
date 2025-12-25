@@ -169,14 +169,14 @@ Input input-weights-topic:
 ## Input new Dataset - Model:
 
  - 1) Add new .env variables
- - 2) Update NEURAL_INPUT and NEURAL_OUTPUT in Config.java
+ - 2) Update NUM_FEATURES and NUM_CLASSES in Config.java
  - 3) Define new createModel function in Dl4jModelFactory
  - 4) Create train and test Kafka Topics
  - 5) Append in data_producer.py the load_dataset() function an elif
 
  - Extra:
     - update in evaluate_model.py, by adding elifs to functions:
-            - NEURAL_INPUT and NEURAL_OUTPUT
+            - NUM_FEATURES and NUM_CLASSES
             - reconstruct_layer_weights_for_keras()
             - build_keras_model()
             - evaluate_model()
@@ -185,6 +185,7 @@ Input input-weights-topic:
 
  - Needs to be a relatively well known ML dataset.
  - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent with a simple dense NN on tensorflow
+    - Its necessary for accuracy to be 90% and not be evaluated on AUC (Area Under the Curve)
     - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
         - load_{dataset_name}_data()
         - build_{dataset_name}_model()
@@ -193,12 +194,13 @@ Input input-weights-topic:
  - The model that is going to be used on it should have a significant number of weights (100000 - 1000000)
  - Needs to have multiple classes, more than 3 (ideally 4 up to 7)
         - Also, we need even class distribution among the samples
+        - softmax / cross entropy loss should ideally be used here 
  - no CNN (like no image recognition)
  - have enough rows / samples, somewhere around 220000 and above
  - have a reasonable amount of features (not over 100)
  
  - an example of such functions for the dataset "bank_dataset" is detailed here:
-
+ 
 ```python
 # ======================================================================
 # BANK DATASET

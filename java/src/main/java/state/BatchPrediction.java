@@ -20,41 +20,42 @@ import message.weights_message.*;
 public class BatchPrediction {
 
     private static final Config cfg = Config.getInstance();
-    public final int NEURAL_INPUT = cfg.NEURAL_INPUT;
+    public final int NUM_FEATURES = cfg.NUM_FEATURES;
+    public final int NUM_CLASSES = cfg.NUM_CLASSES;
     public final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
+
     public final String DATASET = cfg.DATASET;
- 
+    private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
+     private static final String LOSS_COMBINE = cfg.LOSS_COMBINE;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final MultiLayerNetwork model;
     private final MultiLayerNetwork bestModel;
 
-    private final Stats stats;
     private static BatchPrediction coordinatorInstance = null;
 
     private final CustomLogger logger;
 
     // for Worker =======================================================================================================
 
-    public BatchPrediction(MultiLayerNetwork model, Stats stats, CustomLogger logger) {
+    public BatchPrediction(MultiLayerNetwork model, CustomLogger logger) {
         this.model = model;
         this.bestModel = null;
-        this.stats = stats;
         this.logger = logger;
     }
 
     // for Coordinator ==================================================================================================
 
-    public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, Stats stats, CustomLogger logger) {
+    public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
         this.model = model;
         this.bestModel = bestModel;
-        this.stats = stats;
         this.logger = logger;
     }
 
-    public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, Stats stats, CustomLogger logger) {
+    public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
         if(coordinatorInstance == null) {
-            coordinatorInstance = new BatchPrediction(model, bestModel, stats, logger);
+            coordinatorInstance = new BatchPrediction(model, bestModel, logger);
             return coordinatorInstance;
         } 
         return coordinatorInstance;
@@ -81,9 +82,9 @@ public class BatchPrediction {
                 continue;
             }
 
-            if (feats.length != NEURAL_INPUT) {
-                logger.log("Wrong features length. Got " + feats.length + " but NEURAL_INPUT = " + NEURAL_INPUT);
-                System.out.println("Wrong features length. Got " + feats.length + " but NEURAL_INPUT = " + NEURAL_INPUT);
+            if (feats.length != NUM_FEATURES) {
+                logger.log("Wrong features length. Got " + feats.length + " but NUM_FEATURES = " + NUM_FEATURES);
+                System.out.println("Wrong features length. Got " + feats.length + " but NUM_FEATURES = " + NUM_FEATURES);
                 continue; // skip non-conforming record
             }
 
@@ -97,15 +98,16 @@ public class BatchPrediction {
             return new float[]{-1f, -1f};
         }
 
-        float[][] data = new float[nSamples][NEURAL_INPUT];
+        float[][] data = new float[nSamples][NUM_FEATURES];
         for (int i = 0; i < nSamples; i++) {
             // copy to avoid surprises if upstream reuses arrays (optional but safe)
-            System.arraycopy(featureList.get(i), 0, data[i], 0, NEURAL_INPUT);
+            System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
 
-        INDArray X = Nd4j.create(data);              // [batch, NEURAL_INPUT]
-        INDArray probs = model.output(X, false);     // [batch, NEURAL_OUTPUT] or [batch,1] if sigmoid
+        INDArray X = Nd4j.create(data);              // [batch, NUM_FEATURES]
+        INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
 
+        
         if (probs == null || probs.size(0) == 0) {
             logger.log("Empty probs batch");
             return new float[]{-1f, -1f};
@@ -113,15 +115,16 @@ public class BatchPrediction {
 
         int nCorrect = 0;
         float loss = 0f;
+        float[] sampleLosses = new float[nSamples];
 
-        // ====== SIGMOID / BINARY CASE ======
+        // BINARY CASE (SIGMOID) ======================================================================
 
-        if ("bank".equals(this.DATASET) || "adult".equals(this.DATASET) || "susy".equals(this.DATASET)) {
+        if (NEURAL_OUTPUT == 1) {
+
             for (int i = 0; i < nSamples; i++) {
 
                 float p = probs.getFloat(i, 0);
 
-                // Clamp to avoid log(0)
                 if (p < 1e-7f) p = 1e-7f;
                 if (p > 1f - 1e-7f) p = 1f - 1e-7f;
 
@@ -130,13 +133,13 @@ public class BatchPrediction {
                 int pred = (p >= 0.5f) ? 1 : 0;
                 if (pred == label) nCorrect++;
 
-                float sampleLoss = LossFunction.compute_loss_sigmoid(p, label);
-                loss += sampleLoss;
+                sampleLosses[i] = LossFunction.compute_loss(p, label);
             }
 
-        // ====== SOFTMAX / MULTI-CLASS CASE ======
+        // MULTI-CLASS CASE (SOFTMAX) =================================================================
 
         } else {
+
             INDArray argMax = probs.argMax(1);   // [batch]
 
             for (int i = 0; i < nSamples; i++) {
@@ -146,8 +149,24 @@ public class BatchPrediction {
                 if (pred == label) nCorrect++;
 
                 float[] probabilities = probs.getRow(i).toFloatVector();
-                loss += LossFunction.compute_loss(probabilities, label);
+
+                sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
             }
+        }
+
+        // Combine Losses from Multiple Samples =======================================================
+
+        if ("TOP_K".equals(LOSS_COMBINE)) {
+            loss = LossFunction.topKAverage(sampleLosses);
+
+        } else if ("SUM".equals(LOSS_COMBINE)) {
+            loss = LossFunction.sum(sampleLosses);
+
+        } else if ("AVG".equals(LOSS_COMBINE)) {
+            loss = LossFunction.average(sampleLosses);
+
+        } else {
+            loss = LossFunction.average(sampleLosses);
         }
 
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {
@@ -167,12 +186,12 @@ public class BatchPrediction {
     // ===========================================================================
 
     public String predictSingleBest(DataMessage msg) {
-        if (msg == null || msg.features == null || msg.features.length != NEURAL_INPUT) {
+        if (msg == null || msg.features == null || msg.features.length != NUM_FEATURES) {
             return null;
         }
 
         try {
-            INDArray X = Nd4j.create(msg.features).reshape(1, NEURAL_INPUT);
+            INDArray X = Nd4j.create(msg.features).reshape(1, NUM_FEATURES);
             INDArray probs = bestModel.output(X, false);
             int pred = probs.argMax(1).getInt(0);
 

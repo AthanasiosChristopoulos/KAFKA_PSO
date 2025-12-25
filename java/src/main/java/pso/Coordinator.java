@@ -59,7 +59,6 @@ public class Coordinator implements Runnable {
 
     private final MultiLayerNetwork globalModel; // x_g , current model
     private final MultiLayerNetwork bestGlobalModel;
-    private final Stats globalStats;
 
     private final BatchPrediction predictor;
 
@@ -75,9 +74,7 @@ public class Coordinator implements Runnable {
         this.globalModel = Dl4jModelFactory.createModel();
         this.bestGlobalModel = Dl4jModelFactory.createModel();
 
-        this.globalStats = new Stats();     
-
-        this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, globalStats, logger);
+        this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         System.out.println("Running on Dataset: " + this.DATASET);
     }
@@ -119,7 +116,7 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats, t0, t1)); 
+        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1)); 
 
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
@@ -134,7 +131,7 @@ public class Coordinator implements Runnable {
                 );
 
                 pBest_weights_stream
-                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, globalStats, t0, t1))      // doesnt actually edit the global model
+                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1))      // doesnt actually edit the global model
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
             } else {
