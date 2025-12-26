@@ -15,7 +15,7 @@ public class LossFunction {
     public static float compute_loss(float[] probs, int label) {
         
         if ("L2".equals(LOSS_FUNCTION)) {
-            return compute_loss_L2(probs, label);
+            return compute_loss_MSE(probs, label);
 
         } else if ("CROSS_ENTROPY".equals(LOSS_FUNCTION)) {
             return compute_loss_CE(probs, label);
@@ -35,7 +35,7 @@ public class LossFunction {
     // =============================================================================================
     // Loss Functions:
     
-    public static float compute_loss_L2(float[] probs, int label) {
+    public static float compute_loss_MSE(float[] probs, int label) {
 
         if(probs.length == 0) {
             return -1f;
@@ -46,9 +46,7 @@ public class LossFunction {
 
         float sum = 0;
         for (int i = 0; i < probs.length; i++) {
-            
-            // System.out.println("Probs: " +  probs[i] + ", target: " + target[i]);
-                        
+                                    
             if (Float.isNaN(probs[i])) {
                 System.out.println("probs[i] is NaN");
             }
@@ -56,7 +54,7 @@ public class LossFunction {
                 System.out.println("target[i] is NaN");
             }
 
-            float d = probs[i] - target[i];
+            float d = probs[i] - target[i]; // probs[i] = [0, 1], when target[i] = y = [0 or 1]
             sum += d * d;   // L2, means squared
         }
         
@@ -69,14 +67,8 @@ public class LossFunction {
             System.out.println("sum is NaN");
             return -1f;
         }
-        // if(sum == 0) {
-        //     System.out.println("Sum is 0");
-        //     for (int i = 0; i < probs.length; i++) {
-        //         System.out.println("Probs: " +  probs[i] + ", target: " + target[i]);
-        //     }
-        // }
 
-        return 0.5f * sum;     // classical MSE    
+        return sum / probs.length;     // classical MSE , not half MSE (no need therea re no gradients in PSO)  
     }
 
     // =============================================================================================

@@ -185,21 +185,23 @@ Input input-weights-topic:
 
  - Needs to be a relatively well known ML dataset.
  - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent with a simple dense NN on tensorflow
-    - Its necessary for accuracy to be 90% and not be evaluated on AUC (Area Under the Curve)
-    - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
-        - load_{dataset_name}_data()
-        - build_{dataset_name}_model()
-        - run_{dataset_name}()
+    - This is a MUST: Its necessary for accuracy to be 90% and not be evaluated on AUC (Area Under the Curve)
+        - It needs to be evaluated with Accuracy
+
  - Needs to come, not from python, but externally in like a .csv
  - The model that is going to be used on it should have a significant number of weights (100000 - 1000000)
  - Needs to have multiple classes, more than 3 (ideally 4 up to 7)
         - Also, we need even class distribution among the samples
         - softmax / cross entropy loss should ideally be used here 
  - no CNN (like no image recognition)
- - have enough rows / samples, somewhere around 220000 and above
+ - Have enough rows / samples, somewhere around 10000 and above
  - have a reasonable amount of features (not over 100)
- 
- - an example of such functions for the dataset "bank_dataset" is detailed here:
+
+ - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
+        - load_{dataset_name}_data()
+        - build_{dataset_name}_model()
+        - run_{dataset_name}() 
+ - An example of such functions for the dataset "bank_dataset" is detailed here:
  
 ```python
 # ======================================================================
