@@ -15,6 +15,8 @@ import org.apache.kafka.streams.kstream.Suppressed;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.streams.kstream.Grouped;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.Topology.AutoOffsetReset;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 
@@ -36,11 +38,13 @@ import state.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
+
 public class Coordinator implements Runnable {
 
     private static Config cfg = Config.getInstance();
     public final String DATASET = cfg.DATASET;
     private final String DATA_TOPIC = cfg.DATA_TOPIC;
+    private final String TEST_TOPIC = cfg.TEST_TOPIC;
     private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
     private final String GLOBAL_WEIGHTS_TOPIC = cfg.GLOBAL_WEIGHTS_TOPIC;
@@ -62,6 +66,10 @@ public class Coordinator implements Runnable {
     private long t0 = System.nanoTime();
     private long t1 = System.nanoTime();
 
+    final String TEST_STORE = "test-data-store";
+
+    // ==============================================================================================================
+
     public Coordinator() {
 
         System.out.println("Coordinator: " + PREDICTION_INPUT_TOPIC + ", " + PREDICTION_OUTPUT_TOPIC);
@@ -75,6 +83,8 @@ public class Coordinator implements Runnable {
 
         System.out.println("Running on Dataset: " + this.DATASET);
     }
+
+    // ==============================================================================================================
 
     @Override
     public void run() {
@@ -103,6 +113,17 @@ public class Coordinator implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
+        // GlobalKTable Task (Test Topic) ==================================================================================
+
+        GlobalKTable<String, DataMessage> testTable = builder.globalTable(
+            TEST_TOPIC,
+            Consumed.with(Serdes.String(), dataSerde)
+                .withOffsetResetPolicy(Topology.AutoOffsetReset.EARLIEST),
+            Materialized.<String, DataMessage, KeyValueStore<Bytes, byte[]>>as(TEST_STORE)
+                .withKeySerde(Serdes.String())
+                .withValueSerde(dataSerde)
+        );
+
         // Task 0 =======================================================================================================
         // input stream 5
 
@@ -111,7 +132,7 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1)); 
+        local_weights_stream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, TEST_STORE));
 
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
@@ -126,7 +147,7 @@ public class Coordinator implements Runnable {
                 );
 
                 pBest_weights_stream
-                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1))      // doesnt actually edit the global model
+                    .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, TEST_STORE))      // doesnt actually edit the global model
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
             } else {
@@ -197,8 +218,8 @@ public class Coordinator implements Runnable {
             .mapValues(dataMessage -> predictor.predictSingleBest(dataMessage))   // simple transformer
             .filter((k, v) -> v != null) 
             .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
-            
-        // ===============================================================================================================
+
+        // =================================================================================================================================
 
         Topology topology = builder.build();
 
