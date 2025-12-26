@@ -256,7 +256,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         updateTime();
 
-        logger.log(lastActivitySeconds + 
+        logger.log("Time: " + lastActivitySeconds + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT) +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
                 ", with accuracy: " + accuracy);

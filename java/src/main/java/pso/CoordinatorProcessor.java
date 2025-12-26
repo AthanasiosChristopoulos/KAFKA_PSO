@@ -42,13 +42,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private ProcessorContext<String, WeightsMessage> context;
 
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
-    private final Map<String, float[]> pBestBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
     
-    private float[] gBestWeights = null;
     private float gBestAccuracy = 0f;
     private float gBestLoss = 10000f;
-
-    private int round = 0;
 
     private final MultiLayerNetwork globalModel; // x_g , current model
     private final MultiLayerNetwork bestGlobalModel; 
@@ -75,8 +71,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final CustomLogger logger;
 
-    private boolean sampledDataMessage = false;
-
     private long t0;
     private long t1;
     private double lastActivitySeconds = 0.0;
@@ -102,7 +96,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.bestGlobalModel = bestGlobalModel;
 
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
-        
+
         Properties consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);
@@ -112,12 +106,14 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         logger.log("TEST_TOPIC: " + TEST_TOPIC);
         this.consumer = new KafkaConsumer<>(consumerProps);
-        this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));     
+        this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
+        
     }
 
     @Override
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
+        loadAllTestDataOnce();
     }
 
     // ================================================================================================================
@@ -142,10 +138,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         String workerId = String.valueOf(msg.idWorker);
         
-        logger.log("RECEIVED value with msgIndex " + msg.msgIndex + ", from worker " + workerId + ", lastActivitySeconds:" + lastActivitySeconds);
-
         if ("current_weights".equals(record.key())) {
-            
+
+            // logger.log("Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
+    
             float[] weights = msg.weights;
             if (weights == null) {
                 return;
@@ -154,7 +150,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             weightsBuffer.put(workerId, weights);
 
             // Run only if all workers have reported their position 
-            if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+            if (weightsBuffer.size() == N_WORKERS && cachedTestSetLoaded) { // the particles of the workers should converge so asynchronous communication shouldnt matter
             
                 float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
@@ -225,7 +221,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 updateTime();
                 logger.log(test_count + ") time: " + lastActivitySeconds + 
                             ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", model acc: " + accuracy + " and loss: " + loss + 
+                            "accuracy: " + accuracy + " and loss: " + loss + 
                             ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
                 System.out.println(test_count + ") time: " + lastActivitySeconds + 
@@ -245,6 +241,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             } 
         
         } else {    // update gBest
+            
+            logger.log("Time: " + lastActivitySeconds + " pBest message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
             if (msg.loss < gBestLoss) {
                 gBestLoss = msg.loss;
@@ -320,25 +318,27 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //=========================================================================================================================
 
     private List<DataMessage> loadAllTestDataOnce() {
+
         if (cachedTestSetLoaded && cachedTestSet != null) {
+            logger.log("Using cached Test Set");
             return cachedTestSet;
         }
 
         consumer.poll(Duration.ZERO);
         Set<TopicPartition> asg = consumer.assignment();
 
-        // if (asg == null || asg.isEmpty()) {
-        //     // poll again to get assignment
-        //     consumer.poll(Duration.ofMillis(100));
-        //     asg = consumer.assignment();
-        // }
-        // if (asg == null || asg.isEmpty()) {
-        //     logger.log("Could not get assignment for TEST_TOPIC; cannot cache test set.");
-        //     return null;
-        // }
+        if (asg == null || asg.isEmpty()) {
+            // poll again to get assignment
+            consumer.poll(Duration.ofMillis(100));
+            asg = consumer.assignment();
+        }
+        if (asg == null || asg.isEmpty()) {
+            logger.log("Could not get assignment for TEST_TOPIC; cannot cache test set.");
+            return null;
+        }
 
-        // consumer.seekToBeginning(asg);
-        // consumer.poll(Duration.ZERO);
+        consumer.seekToBeginning(asg);
+        consumer.poll(Duration.ZERO);
 
         Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
 

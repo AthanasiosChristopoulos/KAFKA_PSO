@@ -1,0 +1,134 @@
+
+========================================================================================================================
+
+	Important Tasks:
+	
+	1) Limit communication:
+		Limit communication στο pBest_weights_topic pipeline:
+			-> οταν το loss εχει αλλαξει significantly 
+		
+		Limit communication στο local_weights_topic pipeline:
+			-> οταν η current κατασταση του particle θα αποτελεσει μια σημαντικη αλλαγη στο FedAvg => Global Model
+		
+			Geometric Monitoring:
+				- Actuall GM:
+					- Synchronization necessary
+				- χρηση παραλλαγης στο gm ωστe no syncs, δηλαδη να δουλευει asynchrously: 
+					- μονο οταν ενας worker υπερβαινει / κοβει το Α, τοτε μονο αυτος στελνει (no coordinator sync)
+					- indicating that this update will cause a significant difference in the FedAvg / globalAverage
+				- prediction models σημαινει προβλεψη pbest gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
+	
+	2) Experimentation - Setup:
+		- Different models
+		- Different Loss Functions
+		- Different Data (θελει real data ?)
+		- Measure performance and latencies
+		- Experimentation Setup:
+			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
+				- Actually mention / analyse the specs
+				- Run on both highend and lowend devices 
+			- Use and test as many different:
+				- model / method parameters as possible
+				- measurement methods (error definitions) 
+		- Measure / Diagrams of:
+			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
+			- how much time on average does it take you to process one record 
+				- this is supposed to be a streaming application: input_mbps < process_mbps
+			- x: Number of training samples - y: loss / accuracy / F1 score	
+			- Limit communication:
+				- Run without => identify latency
+				- Run with	  => makes training more efficient / faster
+			- This is affected by Model Size (Number of Weights - NN?K) / Number of workers / TRAIN_SIZE / FULLY_INFORMED (PROTOCOL used) / Loss Function:
+				- How much time until reached DESIRED_ACCURACY (Training Time) ?
+				- How much data until reached DESIRED_ACCURACY - How many epochs ?
+				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
+			- Performance and Accuracy Comparison with Gradient Descent
+			
+
+	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
+		- Improve code on Apache Kafka + Tensorflow:
+			- Parallelization (Threading / Instances):
+				- On Kafka Streams: Threading and more Kafka Streams instances
+				- Kafka Broker: More brokers
+				- Parallelize Inference (using an additional Kafka Streams Instance)
+				- How many workers / Kafka Streams instances per particle
+			- Kafka Streams settings
+		
+	6) Related Work + Research:
+		- Other attempts implementing PSO
+		- how does yours differ ?
+			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
+			- What scientific differences did you add / remove / what parameters did you use ?
+		
+	11) Add buffer as a statestore (on worker who is accumulating samples)
+	
+	12) Time / Accuracy Dependent constants (change the theory) => like simulated annealing
+			- Inertia W
+			- Social constants C1 and C2
+			
+	17) X_G state store - the global current position
+	
+	18) Federated Learning component of your project, averaging (FedAvg) and καθε ποσο κανω track το position
+		- μεχρι τωρα, καθε 60 updates. Θα πρεπει να αλλαξει αυτο, να κρινεται απο το ποσο εχει κανει diverge
+		- Measure of distance με προηγουμενη κατασταση (αμα εχει αλλαξει significantly ή κατασταση)
+	
+	19) velocity initialiazation (magnitude) + velocity magnitude management (clamping)
+			- correct value for Vmax ?
+			- split into "exploration phase" and "exploration phase"
+			
+	20) Partitioning, every worker needs to process different data - they need to be in the same group:
+		- Serialize data topic input as well (no JSON)
+		- Data parallel learning (workers are processing data in parallel)
+		- you have x data (doesnt change based on how many workers), divided by N workers. So training time must reduce. 
+		- Non IDD data if possible (this depends on the dataset)
+			- In datasets that dont provide this possibility just do Round Robin
+			- Otherwise you need to do it with keyed Records (decides to which partition in the kafka topic the Record goes to) and partitions
+		
+	22) Do the diagrams / experimentation on (Measurement is taken when all training data has been consumed):
+		- Evaluate multiple workers scenario (x_g performance gets worse ?)
+		- Accuracy - N workers (αυξουσα σχεση)
+		- Training Time - N workers	(φθινουσα σχεση)
+	
+	24) χωριζω τα δεδομενα ανα worker (N workers) αλλα αυξανω συνολικα τα δεδομενα κατα Ν
+		- Non IID dataset 	=> you dont need keyes in the records
+		- IID dataset 		=> You need keyes a worker has to train on his specific data
+			
+	26) CNNs - Evaluate multiple classes scenario
+
+	27) Work with GPU
+	
+	28) Get rid of Kafka Consumer just load test data in memory using statestore
+	
+========================================================================================================================
+
+	Backlog Tasks:
+	
+	1) GUI for:
+		- enviroment variables configuration 		
+		- monitoring training progress
+		- inference
+		- Finding a third party library GUI for defining a neural model architecture ?
+	
+	21) Instead of fully informed try out neighboors hoods => you need to look at the theory
+
+	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
+	
+========================================================================================================================
+
+	Thesis Structure:
+		- Motivation, Table of Contents
+		- Related Work / Thesis Contribution
+		- Introduction (Theoretical Background)
+		
+		- Implementation:
+			- Architecture (Kafka Topology, Project Class Hierarchy)
+			- Functional and Non Functional Requirements
+			
+		- Experimental Evaluation:
+			- Run it locally 
+			- Run it on a server
+			
+		- Future Work
+
+========================================================================================================================
+

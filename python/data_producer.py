@@ -196,8 +196,10 @@ def load_dataset():
         # train_size = 2400000      # there are approximately 60000 messages inside each partition (40 partitions in topic)
         #                           # the test size is 20000
         
-        train_size = 400000         # there are approximately 10000 messages inside each partition (40 partitions in topic)
+        # train_size = 400000         # there are approximately 10000 messages inside each partition (40 partitions in topic)
                                     # the test size is 20000
+
+        train_size = 419500 
 
         X_all, y_all = shuffle(X_all, y_all)
 
@@ -447,10 +449,10 @@ def main():
     
     X_train, y_train, X_test, y_test, class_names = load_dataset()
 
-    load_training_data = True
-    # load_training_data = False
-    # load_test_data = True
-    load_test_data = False
+    # load_training_data = True
+    load_training_data = False
+    load_test_data = True
+    # load_test_data = False
 
     index = 0
     data_repeats = 0

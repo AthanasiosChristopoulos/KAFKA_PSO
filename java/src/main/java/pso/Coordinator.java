@@ -52,9 +52,6 @@ public class Coordinator implements Runnable {
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    private Map<String, Object> payload = new HashMap<>();
-
     private final CustomLogger logger;
 
     private final MultiLayerNetwork globalModel; // x_g , current model
@@ -87,10 +84,8 @@ public class Coordinator implements Runnable {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); 
-        
             // not effective Kafka Streams commit by itself. It works only for plain KafkaConsumers / KafkaProducers
 
         // props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -121,7 +116,7 @@ public class Coordinator implements Runnable {
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
         
-        if(FULLY_INFORMED != true) {
+        if(FULLY_INFORMED != true) {    // if classical gBest PSO
 
             if(1 == 1) { // for debuggging purposes
 
