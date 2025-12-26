@@ -371,6 +371,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         cachedTestSetLoaded = true;
 
         logger.log("Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
+        logger.log("First 5 TEST samples:");
+        for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
+            logger.log("TEST[" + i + "]: " + cachedTestSet.get(i).toString());
+        }
+
         return cachedTestSet;
     }
     //=========================================================================================================================
