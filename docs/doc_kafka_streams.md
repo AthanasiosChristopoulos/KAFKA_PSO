@@ -24,7 +24,6 @@ A changelog stream interpreted as a table for each key, keep only the latest val
 
 ```
 
-
 ```java
 
 KTable<String, String> gBestTable = builder.table(  // table returns KTable<String, String> 
@@ -101,7 +100,7 @@ In a GlobalKTable (still keeps only the latest value per key):
         => They dont create a task
         => They run a dedicated internal consumer thread (is separate from the stream threads.)
 
-## Why i use GlobalKTable:
+## Why I use GlobalKTable:
  - To effectively perform parallelization using an additional thread. 
  - I cant do this with normal stream threads since state store is shared and topology cant be split into subtopologies
  - GlobalKTable creates its own independent subtopology, since the StateStore is instance independent, there is no dependency:
@@ -127,8 +126,14 @@ builder.stream(...).transform(() -> new BatchingTransformer(...), "gBestStore") 
 ============================================================================
 ## Kafka Streams - Instances - Threads - Tasks:
 
- - Threads run tasks
- - Each task = all processors (your KTable + your KStream + branches) for a given set of input partitions.
+- Hierarchy:
+    - Machine
+        - Instances
+            - Threads
+                - Task
+                
+- Threads run tasks
+- Each task = all processors (your KTable + your KStream + branches) for a given set of input partitions.
 
 Each task:
  - has its own instance of the processors (KTable internals, etc.),
