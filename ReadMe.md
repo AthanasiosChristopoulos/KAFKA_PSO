@@ -198,6 +198,7 @@ Input input-weights-topic:
  - have a reasonable amount of features (not over 100)
 
  - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
+        - evaluate_{dataset_name}()
         - load_{dataset_name}_data()
         - build_{dataset_name}_model()
         - run_{dataset_name}() 

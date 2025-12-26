@@ -862,6 +862,7 @@ def load_higgs_data(
 # =======================================================================================================
 
 def build_higgs_model(
+        
     input_dim: int = 29,
     hidden1: int = 1024,
     hidden2: int = 512,
@@ -920,6 +921,141 @@ def run_higgs():
     return model
 
 
+# ============================================================
+# WINE QUALITY DATASET
+# ============================================================
+
+def load_wine_quality_data(
+    path="./winequality.csv",
+    *,
+    num_classes: int = 4,
+    nrows: int | None = 220_000,
+    test_size: float = 0.2,
+    random_state: int = 123,
+):
+    """
+    Loads wine quality CSV and converts quality -> num_classes using quantiles.
+    """
+
+    print(f"Loading from: {path}")
+    df = pd.read_csv(path, sep=",", nrows=nrows)
+
+    if "quality" not in df.columns:
+        raise ValueError("CSV must contain a 'quality' column.")
+
+    # -------------------------
+    # Label processing
+    # -------------------------
+    y_raw = df["quality"].astype(float).values
+
+    # Quantile-based binning => balanced classes
+    quantiles = np.quantile(y_raw, np.linspace(0, 1, num_classes + 1))
+
+    # Protect against duplicate boundaries
+    quantiles = np.unique(quantiles)
+    if len(quantiles) < num_classes + 1:
+        raise ValueError(
+            "Not enough unique quality values to form "
+            f"{num_classes} classes."
+        )
+
+    y = np.digitize(y_raw, bins=quantiles[1:-1], right=False).astype(np.int32)
+
+    # -------------------------
+    # Features
+    # -------------------------
+    X = df.drop(columns=["quality"]).astype(np.float32).values
+
+    # Train / test split (stratified)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=y
+    )
+
+    # Standardize
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train).astype(np.float32)
+    X_test = scaler.transform(X_test).astype(np.float32)
+
+    return X_train, X_test, y_train, y_test
+
+
+# ============================================================
+# MODEL
+# ============================================================
+
+def build_wine_quality_model(input_dim: int, num_classes: int):
+    """
+    ~300k–700k parameters depending on input_dim.
+    """
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(512, activation="relu"),
+        layers.Dropout(0.15),
+        layers.Dense(512, activation="relu"),
+        layers.Dropout(0.15),
+        layers.Dense(256, activation="relu"),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Total params:", model.count_params())
+    return model
+
+
+# ============================================================
+# RUN PIPELINE
+# ============================================================
+
+def run_wine_quality(
+    path="./winequality.csv",
+    num_classes: int = 4,
+):
+    X_train, X_test, y_train, y_test = load_wine_quality_data(
+        path=path,
+        num_classes=num_classes,
+    )
+
+    evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=num_classes)
+
+    model = build_wine_quality_model(
+        input_dim=X_train.shape[1],
+        num_classes=num_classes
+    )
+
+    print("\nTraining...")
+    model.fit(
+        X_train,
+        y_train,
+        validation_split=0.2,
+        epochs=20,
+        batch_size=256,
+        verbose=2,
+        callbacks=[
+            keras.callbacks.EarlyStopping(
+                monitor="val_accuracy",
+                patience=3,
+                restore_best_weights=True
+            )
+        ]
+    )
+
+    print("\nEvaluating on test set...")
+    loss, acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {loss:.4f}")
+    print(f"Test accuracy: {acc:.4f}")
+
+    return model
+    
 # ======================================================================
 # Main
 # ======================================================================
@@ -945,6 +1081,11 @@ def main():
         run_cifar10()
     elif DATASET == "higgs":
         run_higgs()
+    elif DATASET == "wine-quality":
+        run_wine_quality(
+            path="../data/winequality.csv",
+            num_classes=4
+        )
     else:
         print("DATASET not detected")
         

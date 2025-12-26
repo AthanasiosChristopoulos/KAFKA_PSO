@@ -118,13 +118,17 @@ def shuffle(X, y):
     idx = rng.permutation(len(y))
     return X[idx], y[idx]
 
-def evaluate_dataset(X_train, y_train, X_test, y_test):
-    print("Train shape:", X_train.shape, "y range:", (int(y_train.min()), int(y_train.max())),
-        "counts:", np.bincount(y_train, minlength=7))     # how many samples you have for each class
-    print("Test  shape:", X_test.shape,  "y range:", (int(y_test.min()), int(y_test.max())),
-        "counts:", np.bincount(y_test, minlength=7))
-
-
+def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=7):
+    print(
+        "Train shape:", X_train.shape,
+        "y range:", (int(y_train.min()), int(y_train.max())),
+        "counts:", np.bincount(y_train, minlength=n_classes)
+    )
+    print(
+        "Test  shape:", X_test.shape,
+        "y range:", (int(y_test.min()), int(y_test.max())),
+        "counts:", np.bincount(y_test, minlength=n_classes)
+    )
 
 # ========================================================================================
 
@@ -387,6 +391,7 @@ def load_dataset():
     X_scaled = scaler.transform(X).tolist()
     
     return X_scaled, y, None, None, class_names
+
 
 # ==================================================================================================
 
