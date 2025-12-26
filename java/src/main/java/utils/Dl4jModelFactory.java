@@ -26,33 +26,36 @@ public class Dl4jModelFactory {
 		// System.out.println("DATASET: " + DATASET);
 
 		if("iris".equals(DATASET)) {
-				return createIrisModel();
+			return createIrisModel();
 
 		} else if ("wine".equals(DATASET)) {
-				return createWineModel();
+			return createWineModel();
 
 		} else if ("mnist".equals(DATASET)) {
-				return createMNISTModel();
+			return createMNISTModel();
 				
 		} else if ("susy".equals(DATASET)) {
-				// return createSUSYModel_SOFTMAX();
-				return createSUSYModel();
+			// return createSUSYModel_SOFTMAX();
+			return createSUSYModel();
 
 		} else if ("bank".equals(DATASET)) {
-				// return createBankModel();
-				return createBankModel40K();
+			// return createBankModel();
+			return createBankModel40K();
 
 		} else if ("adult".equals(DATASET)) {
-				return createAdultModel();
+			return createAdultModel();
 
 		} else if ("covertype".equals(DATASET)) {
-				return createCovertypeModel();
+			return createCovertypeModel();
 
 		} else if ("har".equals(DATASET)) {
-				return createHarModel();
+			return createHarModel();
 
-		}  else if ("pendigits".equals(DATASET)) {
-				return createPenDigitsModel();
+		} else if ("pendigits".equals(DATASET)) {
+			return createPenDigitsModel();
+
+		} else if ("winequality".equals(DATASET)) {
+			return createWineQualityModel();
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
@@ -520,4 +523,52 @@ public class Dl4jModelFactory {
 	// For Output Layer     => 128 * 10 + 10
 	// 19978 weights 
 
+	// ======================================================================================================================
+	// WineQuality Dataset Model Architecture
+
+	public static MultiLayerNetwork createWineQualityModel() {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				// Hidden Layer 1: nIn=inputDim, nOut=12, relu
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)     // 12 in your case
+						.nOut(12)
+						.activation(Activation.RELU)
+						.build())
+				// Hidden Layer 2: nIn=12, nOut=9, relu
+				.layer(new DenseLayer.Builder()
+						.nIn(12)
+						.nOut(9)
+						.activation(Activation.RELU)
+						.build())
+				// Output Layer: nIn=9, nOut=1, sigmoid, binary cross-entropy
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT)
+						.nIn(9)
+						.nOut(NEURAL_OUTPUT)
+						.activation(Activation.SIGMOID)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+
+	// ======================================================================================================================
+	// Number of weights in the network calculation (same style as your PenDigits comment):
+	//
+	// Hidden Layer 1  => inputDim * 12 + 12
+	// Hidden Layer 2  => 12 * 9 + 9
+	// Output Layer    => 9 * 1 + 1
+	//
+	// Total params    => (inputDim * 12 + 12) + (12 * 9 + 9) + (9 * 1 + 1)
+	//
+	// If inputDim = 12:
+	// Hidden Layer 1  => 12*12 + 12 = 156
+	// Hidden Layer 2  => 12*9  + 9  = 117
+	// Output Layer    => 9*1   + 1  = 10
+	// TOTAL           => 156 + 117 + 10 = 283 weights
 }

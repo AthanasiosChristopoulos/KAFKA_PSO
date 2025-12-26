@@ -84,6 +84,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final Deque<DataMessage> carry = new ArrayDeque<>();
 
     private int test_count = 0;
+    private volatile List<DataMessage> cachedTestSet = null;
+    private volatile boolean cachedTestSetLoaded = false;
 
     // ================================================================================================================
 
@@ -184,14 +186,25 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 //     }
                 // }
                 
-                List<DataMessage> evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
-                if (evalBatch == null) {
-                    System.out.println("Test Records run out. Something is wrong");
-                    // control.requestStop();
-                    return;
+                List<DataMessage> evalBatch;
+
+                if (TEST_SIZE == -1) {
+                    evalBatch = loadAllTestDataOnce();
+                    if (evalBatch == null || evalBatch.isEmpty()) {
+                        logger.log("TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
+                        return;
+                    }
+                } else {
+                    evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
+                    if (evalBatch == null) {
+                        System.out.println("Test Records run out. Something is wrong");
+                        return;
+                    }
                 }
 
-                logConsumerOffsets();   // evaluate consumer position
+                if (TEST_SIZE != -1) {
+                    logConsumerOffsets();       // evaluate consumer position
+                }
 
                 float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
                 accuracy = accLoss[0];
@@ -304,6 +317,62 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         return evalBatch;
     }
 
+    //=========================================================================================================================
+
+    private List<DataMessage> loadAllTestDataOnce() {
+        if (cachedTestSetLoaded && cachedTestSet != null) {
+            return cachedTestSet;
+        }
+
+        consumer.poll(Duration.ZERO);
+        Set<TopicPartition> asg = consumer.assignment();
+
+        // if (asg == null || asg.isEmpty()) {
+        //     // poll again to get assignment
+        //     consumer.poll(Duration.ofMillis(100));
+        //     asg = consumer.assignment();
+        // }
+        // if (asg == null || asg.isEmpty()) {
+        //     logger.log("Could not get assignment for TEST_TOPIC; cannot cache test set.");
+        //     return null;
+        // }
+
+        // consumer.seekToBeginning(asg);
+        // consumer.poll(Duration.ZERO);
+
+        Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+
+        List<DataMessage> all = new ArrayList<>(4096);
+
+        while (true) {   // Read until all partitions reach end offsets
+
+            ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(200));
+
+            for (ConsumerRecord<String, DataMessage> rec : records) {
+                DataMessage dm = rec.value();
+                if (dm != null) all.add(dm);
+            }
+
+            boolean allAtEnd = true;
+            for (TopicPartition tp : asg) {
+                long pos = consumer.position(tp);
+                long end = ends.getOrDefault(tp, -1L);
+
+                if (pos < end) {    // if not yet at end
+                    allAtEnd = false;
+                    break;
+                }
+            }
+
+            if (allAtEnd) break;    // if at end break
+        }
+
+        cachedTestSet = Collections.unmodifiableList(all);
+        cachedTestSetLoaded = true;
+
+        logger.log("Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
+        return cachedTestSet;
+    }
     //=========================================================================================================================
 
     private boolean resetToBeginningIfAtEnd() {

@@ -213,6 +213,42 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic susy-test --from-beginning
 
+# winequality: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic winequality-input --partitions 40 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --describe --topic winequality-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic winequality-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic winequality-input --from-beginning
+
+# winequality test: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic winequality-test --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --describe --topic winequality-test
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic winequality-test
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic winequality-test --from-beginning
+
 # bank: ======================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \

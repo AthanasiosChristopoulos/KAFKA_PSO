@@ -9,6 +9,7 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_wine
 from tensorflow.keras.datasets import mnist
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from kafka import KafkaProducer
 import argparse
 import numpy as np
@@ -36,6 +37,10 @@ if(DATASET != "iris" and DATASET != "wine" and DATASET != "mnist"):
     NUMBER_OF_DATA_REPEATS = 1
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "winequality"):
+    NUMBER_OF_DATA_REPEATS = 18
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -60,6 +65,7 @@ print(f"Running this on input topic: {INPUT_TOPIC}")
 # Kafka Producer =========================================================================
 
 def serialize_data_message(sample_index: int, features: np.ndarray, label: int) -> bytes:
+
     features = np.asarray(features, dtype=np.float32)
     n = int(features.size)
 
@@ -355,7 +361,8 @@ def load_dataset():
         return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
 
     # ====================================================================================================
-    
+    # pendigits
+
     elif DATASET == "pendigits":
         NUMBER_OF_DATA_REPEATS = NUMBER_OF_DATA_REPEATS_TEST = 5
         base_path="../data"
@@ -383,6 +390,45 @@ def load_dataset():
 
         return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
 
+    # ====================================================================================================
+    # winequality
+
+    elif DATASET == "winequality":
+
+        train_size = 6000
+        random_state = 123
+        path="../data/winequality.csv"
+    
+        print(f"Loading from: {path}")
+        df = pd.read_csv(path, sep=",")
+
+        df["type"] = df["type"].map({"white": 0, "red": 1})    # Map label: white=0, red=1
+
+        feature_cols = [c for c in df.columns if c != "type"]
+
+        # Drop NaN values
+        for c in feature_cols:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+        before = len(df)
+        df = df.dropna(subset=feature_cols + ["type"]).copy()
+        after = len(df)
+        print(f"Dropped rows with NaNs: {before - after}")
+
+        # y and X
+        y = df["type"].astype(np.int32).values
+        X = df[feature_cols].astype(np.float32).values
+
+        X, y = shuffle(X, y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=train_size, random_state=random_state, stratify=y)
+
+        # Standardize
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_test = scaler.transform(X_test).astype(np.float32)
+
+        return X_train, y_train, X_test, y_test, None
+
     else:
         print("Invalid Dataset selected")
         exit(0)
@@ -400,10 +446,14 @@ def main():
     # X_scaled, y, class_names = load_dataset()
     
     X_train, y_train, X_test, y_test, class_names = load_dataset()
-    
+
+    load_training_data = True
+    # load_training_data = False
+    # load_test_data = True
+    load_test_data = False
+
     index = 0
     data_repeats = 0
-    print(class_names)
     
     if args.eval:
         exit(0)
@@ -412,9 +462,7 @@ def main():
 
     if args.all:   
          
-        # Load to Training Topic ==================================================================
-        
-        load_training_data = True
+        # Load to Training Topic ==================================================================        
         
         if(load_training_data):
             
@@ -423,14 +471,7 @@ def main():
                 for index in range(len(X_train)):
                     features = X_train[index]
                     label = int(y_train[index])
-                    try:
-                        label_name = class_names[int(label)]
-                    except Exception as e:
-                        print("ERROR while indexing class_names")
-                        print("label value:", label)
-                        print("class_names length:", len(class_names))
-                        raise
-
+    
                     msg = {
                         "sample_index": index,
                         "features": features,
@@ -449,9 +490,7 @@ def main():
             print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
         
         # Load to Test Topic =====================================================================
-        
-        load_test_data = True
-        
+                
         if(load_test_data):
                 
             data_repeats = 0
@@ -462,7 +501,6 @@ def main():
                     for index in range(len(X_test)):
                         features = X_test[index]
                         label = int(y_test[index])
-                        label_name = class_names[label]
 
                         msg = {
                             "sample_index": index,
@@ -484,7 +522,6 @@ def main():
                     for index in range(len(X_train)):
                         features = X_train[index]
                         label = int(y_train[index])
-                        label_name = class_names[label]
 
                         msg = {
                             "sample_index": index,
@@ -507,14 +544,29 @@ def main():
             index = random.randrange(len(X_train))      # we need random samples (if in order, they would belong to the same class)
             features = X_train[index]
             label = int(y_train[index])
-            label_name = class_names[label]
+
+            # if class_names:
+            #     label_name = class_names[label]
+
+            #     msg = { 
+            #         "sample_index" : index,
+            #         "features": features,
+            #         "label": label,
+            #         "label_name": label_name
+            #     }
+
+            # else:
+            #     msg = { 
+            #         "sample_index" : index,
+            #         "features": features,
+            #         "label": label,
+            #     }          
 
             msg = { 
                 "sample_index" : index,
                 "features": features,
                 "label": label,
-                "label_name": label_name
-            }
+            } 
 
             producer.send(INPUT_TOPIC, value=msg) # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
             producer.flush()                # This sends everything that been buffered

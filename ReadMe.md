@@ -181,7 +181,11 @@ Input input-weights-topic:
             - build_keras_model()
             - evaluate_model()
 
+
 ## New Dataset - Specifications:
+
+ - Given the specifications i need you to give me a link to where someone showcases his model and the dataset and 
+    that he has achieved a 90% accuracy on that Dataset.
 
  - Needs to be a relatively well known ML dataset.
  - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent with a simple dense NN on tensorflow

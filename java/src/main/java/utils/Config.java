@@ -53,9 +53,9 @@ public class Config {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
         
         this.DATASET = getenv(dotenv, "DATASET", "iris");
-        System.out.println("DATASET: " + DATASET);        
         this.DATA_TOPIC = this.DATASET + "-input";
         this.TEST_TOPIC = this.DATASET + "-test";
+        System.out.println("DATASET: " + DATASET + ", DATA_TOPIC: " + DATA_TOPIC + ", TEST_TOPIC: " + TEST_TOPIC);        
         
         if("iris".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
@@ -89,9 +89,13 @@ public class Config {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_HAR", "54"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_HAR", "7"));
 
-        }  else if("pendigits".equals(this.DATASET)) {
+        } else if("pendigits".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "54"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "7"));
+
+        } else if("winequality".equals(this.DATASET)) {
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINEQUALITY", "12"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINEQUALITY", "2"));
 
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
