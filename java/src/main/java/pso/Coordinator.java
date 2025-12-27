@@ -81,7 +81,7 @@ public class Coordinator implements Runnable {
 
         this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
-        System.out.println("Running on Dataset: " + this.DATASET);
+        System.out.println("Running on Dataset: " + this.DATASET + ", with TEST_TOPIC: " + TEST_TOPIC);
     }
 
     // ==============================================================================================================
@@ -113,6 +113,7 @@ public class Coordinator implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
+        // =================================================================================================================
         // GlobalKTable Task (Test Topic) ==================================================================================
 
         GlobalKTable<String, DataMessage> testTable = builder.globalTable(

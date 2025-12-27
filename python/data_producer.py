@@ -510,9 +510,12 @@ def main():
                             "label": label
                         }
 
-                        producer.send(TEST_TOPIC, value=msg)
-                        producer.flush() 
+                        producer.send(TEST_TOPIC, key=str(index).encode("utf-8"), value=msg)
+
+                        if index % BATCH_FLUSH == 0:
+                            producer.flush()
                     
+                    producer.flush() 
                     data_repeats += 1
                                 
                 print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
@@ -531,9 +534,12 @@ def main():
                             "label": label
                         }
 
-                        producer.send(TEST_TOPIC, value=msg)
-                        producer.flush() 
-                    
+                        producer.send(TEST_TOPIC, key=str(index).encode("utf-8"), value=msg)
+
+                        if index % BATCH_FLUSH == 0:
+                            producer.flush()
+
+                    producer.flush() 
                     data_repeats += 1
                                 
                 print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")

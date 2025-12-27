@@ -28,6 +28,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
@@ -81,7 +82,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int test_count = 0;
 
     private final String testStoreName;
-    private KeyValueStore<String, DataMessage> testStore;
+    private KeyValueStore<String, ValueAndTimestamp<DataMessage>> testStore;
     private volatile List<DataMessage> cachedTestSet = null;
 
     // ================================================================================================================
@@ -119,8 +120,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     @Override
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
-        this.testStore = context.getStateStore(testStoreName);
-    }
+            
+        this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
+        }
 
     // ================================================================================================================
 
@@ -144,6 +146,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         String workerId = String.valueOf(msg.idWorker);
         
+        updateTime();
+
         if ("current_weights".equals(record.key())) {
 
             // logger.log("Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
@@ -224,8 +228,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                     bestLoss = loss;
                 }
                 
-                updateTime();
-
                 logger.log(test_count + ") time: " + lastActivitySeconds + 
                             ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                             "accuracy: " + accuracy + " and loss: " + loss + 
@@ -348,9 +350,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         try (var it = testStore.all()) {
             while (it.hasNext()) {
                 var kv = it.next();
-                if (kv.value != null) all.add(kv.value);
+                ValueAndTimestamp<DataMessage> vat = kv.value;
+                if (vat != null && vat.value() != null) {
+                    all.add(vat.value());
+                }
             }
         }
+
 
         all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);
@@ -366,7 +372,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int approximateStoreSize() {
         int count = 0;
         try (var it = testStore.all()) {
-            while (it.hasNext()) { it.next(); count++; }
+            while (it.hasNext()) {
+                var kv = it.next();
+                var vat = kv.value;
+                if (vat != null && vat.value() != null) count++;
+            }
         }
         return count;
     }

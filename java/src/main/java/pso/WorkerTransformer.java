@@ -103,10 +103,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
-            keyName = "pBest" + workerId;
+            keyName = "pBest" + workerId;   // this is the unique key, necessary for the statestore to work
         } else {
             stateStoreName = "gBestStore";
-            keyName = "gBest";
+            keyName = "gBest";              // the gBest is only one at a time, we only need 1 key (gBest weights get constantly overwritten)
         }
     }
 
