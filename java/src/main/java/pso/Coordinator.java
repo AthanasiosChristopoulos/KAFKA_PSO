@@ -10,8 +10,11 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.Suppressed;
+import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -38,6 +41,9 @@ import state.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.Stores;
+import org.apache.kafka.streams.state.StoreBuilder;
 
 public class Coordinator implements Runnable {
 
@@ -155,56 +161,152 @@ public class Coordinator implements Runnable {
 
             } else {
 
-                KStream<String, WeightsMessage> pBestJsonStream = builder.stream(
+                StoreBuilder<KeyValueStore<String, Float>> gBestEmitStore =
+                    Stores.keyValueStoreBuilder(
+                        Stores.persistentKeyValueStore("gBestEmitStore"),
+                        Serdes.String(),
+                        Serdes.Float()
+                    );
+
+                builder.addStateStore(gBestEmitStore);
+
+                KStream<String, WeightsMessage> pBestStream = builder.stream(
                     PBEST_WEIGHTS_TOPIC,
                     Consumed.with(Serdes.String(), weightsSerde)
-                )
-                .peek((k, msg) -> {
+                ).peek((k, msg) -> {
                     logger.log(
-                        "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
-                        ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
+                        "[pBest received] workerId: " + msg.idWorker
+                        + ", msgIndex: " + msg.msgIndex
+                        + ", acc: " + msg.accuracy
+                        + ", loss: " + msg.loss
+                        + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
                     );
                 });
 
-                KTable<String, WeightsMessage> gBestTable = pBestJsonStream
-                    .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
-                    .aggregate(
-                        () -> null,     // initial aggregate = null (no gBest yet)
-                        (key, newMsg, aggMsg) -> {
-                            if (aggMsg == null) {
-                                return newMsg;
-                            }
+                pBestStream
+                    .process(() -> new GBestProcessor(logger), "gBestEmitStore")
+                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+
+                // StoreBuilder<KeyValueStore<String, Float>> gBestEmitStore =
+                //     Stores.keyValueStoreBuilder(
+                //         Stores.persistentKeyValueStore("gBestEmitStore"),
+                //         Serdes.String(),
+                //         Serdes.Float()
+                //     );
+
+                // builder.addStateStore(gBestEmitStore);
+
+
+                // KStream<String, WeightsMessage> pBestJsonStream = builder.stream(
+                //     PBEST_WEIGHTS_TOPIC,
+                //     Consumed.with(Serdes.String(), weightsSerde)
+                // )
+                // .peek((k, msg) -> {
+                //     logger.log(
+                //         "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
+                //         ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
+                //     );
+                // });
+
+                // KTable<String, WeightsMessage> gBestTable = pBestJsonStream
+                //     .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
+                //     .aggregate(
+                //         () -> null,
+                //         (key, newMsg, aggMsg) -> {
+                //             if (aggMsg == null) return newMsg;
+                //             return (newMsg.loss < aggMsg.loss) ? newMsg : aggMsg;
+                //         },
+                //         Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore")
+                //             .withKeySerde(Serdes.String())
+                //             .withValueSerde(weightsSerde)
+                //     );
+
+                // KStream<String, WeightsMessage> gBestUpdates = gBestTable.toStream()
+                //     .transformValues(() -> new ValueTransformerWithKey<String, WeightsMessage, WeightsMessage>() {
+                //         private KeyValueStore<String, Float> lastEmittedLoss;
+
+                //         @Override
+                //         public void init(org.apache.kafka.streams.processor.ProcessorContext context) {
+                //             this.lastEmittedLoss = (KeyValueStore<String, Float>) context.getStateStore("gBestEmitStore");
+                //         }
+
+                //         @Override
+                //         public WeightsMessage transform(String key, WeightsMessage value) {
+                //             if (value == null) return null;
+                //             logger.log("I am here");
+                //             Float prev = lastEmittedLoss.get(key);
+                //             // epsilon helps with float noise; tune if needed
+                //             final float EPS = 1e-9f;
+
+                //             if (prev == null || value.loss < (prev - EPS)) {
+                //                 lastEmittedLoss.put(key, value.loss);
+                //                 return value;              // forward ONLY when improved
+                //             }
+                //             return null;                   // drop duplicates / non-improvements
+                //         }
+
+                //         @Override
+                //         public void close() {}
+
+                //     }, "gBestEmitStore")
+                //     .filter((k, v) -> v != null);
+
+                // gBestUpdates
+                //     .peek((k, msg) -> logger.log("[gBest sent] loss = " + msg.loss + " acc = " + msg.accuracy + " from worker " + msg.idWorker))
+                //     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+                    
+                // KStream<String, WeightsMessage> pBestJsonStream = builder.stream(
+                //     PBEST_WEIGHTS_TOPIC,
+                //     Consumed.with(Serdes.String(), weightsSerde)
+                // )
+                // .peek((k, msg) -> {
+                //     logger.log(
+                //         "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
+                //         ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
+                //     );
+                // });
+
+                // KTable<String, WeightsMessage> gBestTable = pBestJsonStream
+                //     .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
+                //     .aggregate(
+                //         () -> null,     // initial aggregate = null (no gBest yet)
+                //         (key, newMsg, aggMsg) -> {
+                //             if (aggMsg == null) {
+                //                 return newMsg;
+                //             }
                             
-                            float newLoss = newMsg.loss;
-                            float oldLoss = aggMsg.loss;
+                //             float newLoss = newMsg.loss;
+                //             float oldLoss = aggMsg.loss;
 
-                            if (newLoss < oldLoss) {
-                                return newMsg;
-                            }
-                            return aggMsg; // means keep aggMsg as the current aggregate
+                //             if (newLoss < oldLoss) {
+                //                 return newMsg;
+                //             }
+                //             return aggMsg; // means keep aggMsg as the current aggregate
 
-                        },
-                        Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore") 
-                            .withKeySerde(Serdes.String())  // 0 interatction with CoordinatorProcessor, this only relays / updates the gBest for the workers
-                            .withValueSerde(weightsSerde)   // the dtatestore is used here only, just to remember what the current aggregate is
-                            .withCachingDisabled() 
-                );
-                // .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
-                //     Duration.ofSeconds(1),              // flush every one second
-                //     Suppressed.BufferConfig.unbounded()
-                // ));
+                //         },
+                //         Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore") 
+                //             .withKeySerde(Serdes.String())  // 0 interatction with CoordinatorProcessor, this only relays / updates the gBest for the workers
+                //             .withValueSerde(weightsSerde)   // the dtatestore is used here only, just to remember what the current aggregate is
+                //             .withCachingDisabled() 
+                // );
+                // // .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
+                // //     Duration.ofSeconds(1),              // flush every one second
+                // //     Suppressed.BufferConfig.unbounded()
+                // // ));
 
-                gBestTable
-                    .toStream()
-                    .filter((k, v) -> v != null)
-                    .peek((k, msg) -> {
-                        logger.log(
-                            "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + 
-                            ", acc: " + msg.accuracy + ", loss: " + msg.loss + ", weights: " + 
-                            Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
-                        );
-                    })
-                    .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 
+                // gBestTable
+                //     .toStream()
+                //     .filter((k, v) -> v != null)
+                //     .peek((k, msg) -> {
+                //         logger.log(
+                //             "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + 
+                //             ", acc: " + msg.accuracy + ", loss: " + msg.loss + ", weights: " + 
+                //             Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
+                //         );
+                //     })
+                //     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde)); 
             }
         }
         
