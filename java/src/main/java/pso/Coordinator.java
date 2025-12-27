@@ -77,7 +77,7 @@ public class Coordinator implements Runnable {
     final String TEST_STORE = "test-data-store";
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
-    private final String taskInstance = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+    private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
 
     private String taskTag = "task=UNKNOWN";
 

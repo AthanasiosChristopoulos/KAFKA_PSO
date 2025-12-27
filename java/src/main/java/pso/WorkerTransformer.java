@@ -101,8 +101,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.ws = WorkerStatic.get(workerId);
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        // logger.log(taskInstance + " thread=" + Thread.currentThread().getName()+ ", Worker " + workerId + " WorkerTransformer started");
-        logger.log("Worker " + workerId + " WorkerTransformer started");
+        // logger.log(taskInstance + " " +taskInstance + " thread=" + Thread.currentThread().getName()+ ", Worker " + workerId + " WorkerTransformer started");
+        logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
 
@@ -125,7 +125,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         context.schedule(Duration.ofMillis(CHECK_EVERY_MS), PunctuationType.WALL_CLOCK_TIME, timestamp -> {
             long idleNs = System.nanoTime() - t1.get();
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
-                logger.log("[Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
+                logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
         });
@@ -139,10 +139,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (!printedOffset) {
             printedOffset = true;
-            logger.log("Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
+            logger.log(taskInstance + ", Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
 
-            logger.log("Sample DataMessage: " + value.toString());
+            logger.log(taskInstance + ", Sample DataMessage: " + value.toString());
             seenPartitions.add(context.partition());
         }
         lastOffset = context.offset();
@@ -164,7 +164,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         loss = accLoss[1];
         nSamples = (int) accLoss[2];
         nCorrect = (int) accLoss[3];
-        // logger.log("accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
+        // logger.log(taskInstance + ", accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
 
         buffer.clear();
         batchesRead++;
@@ -194,8 +194,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setBestAccuracy(accuracy);
-            // logger.log(taskInstance + " thread = " + Thread.currentThread().getName()+ ", best Loss: " + ws.stats.getBestLoss());
-            logger.log("best Loss: " + ws.stats.getBestLoss());
+            // logger.log(taskInstance + " " +taskInstance + " thread = " + Thread.currentThread().getName()+ ", best Loss: " + ws.stats.getBestLoss());
+            logger.log(taskInstance + ", best Loss: " + ws.stats.getBestLoss());
             ws.stats.setBestLoss(loss);
 
             this.pBestWeights = weights;
@@ -204,7 +204,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 
                 String msgIndex = java.util.UUID.randomUUID().toString();
 
-                logger.log("Improved loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy() +
+                logger.log(taskInstance + ", Improved loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy() +
                             ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
                             ", nSamples: " + nSamples + ", nCorrect: " + nCorrect);
 
@@ -216,7 +216,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES. For FedAvg
 
-            logger.log("Sending current weights ...");
+            logger.log(taskInstance + ", Sending current weights ...");
 
             batchesRead = 0;
             String msgIndex = java.util.UUID.randomUUID().toString();
@@ -236,11 +236,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             List<float[]> neighborPBestList = readNeighborPBestList();
 
             if (neighborPBestList == null || neighborPBestList.isEmpty()) {
-                logger.log("No neighbor pBest found; skipping social update this round.");
+                logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
                 velocity = ws.psoUpdater.updateX(ws.model, null);
 
             } else {
-                logger.log("pBest Weights with accuracy: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
+                logger.log(taskInstance + ", pBest Weights with accuracy: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
             }
 
@@ -250,7 +250,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log("gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
+                logger.log(taskInstance + ", gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
             }
 
@@ -259,7 +259,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         updateTime();
 
-        logger.log("Time: " + lastActivitySeconds + 
+        logger.log(taskInstance + ", Time: " + lastActivitySeconds + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
                 ", with accuracy: " + accuracy);
@@ -282,7 +282,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         List<float[]> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
-            logger.log("readNeighborPBestList: bestStore is null");
+            logger.log(taskInstance + ", readNeighborPBestList: bestStore is null");
             return neighbors;
         }
 
@@ -292,7 +292,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
                                     // They have names: "pBest" + workerId
 
-                // logger.log("Runnig: " + count);
+                // logger.log(taskInstance + ", Runnig: " + count);
                 // count = count + 1;  
 
                 KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
@@ -308,7 +308,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
 
         } catch (Exception e) {
-            logger.log("Error iterating bestStore: " + e.getMessage());
+            logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -321,19 +321,19 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private float[] readBestWeights() {
 
         if (bestStore == null) {
-            logger.log("bestStore is null");
+            logger.log(taskInstance + ", bestStore is null");
             return null;
         }
 
         ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
         if (wrapper == null) {
-            logger.log("gBestWeights returned null (no entry for key '" + keyName + "')");
+            logger.log(taskInstance + ", gBestWeights returned null (no entry for key '" + keyName + "')");
             return null;
         }
 
         WeightsMessage best = wrapper.value();
         if (best == null || best.weights == null || best.weights.length == 0) {
-            logger.log("gBestWeights is empty for key '" + keyName + "'");
+            logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
             return null;
         }
 
@@ -348,7 +348,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         if (gBestWeights == null || gBestWeights.length == 0) {
-            logger.log("gBestWeights is empty for key '" + keyName + "'");
+            logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
             return null;
         }
 
@@ -360,7 +360,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     // private void dumpBestStore() {
 
     //     if (bestStore == null) {
-    //         logger.log("[bestStore] Store is null!");
+    //         logger.log(taskInstance + ", [bestStore] Store is null!");
     //         return;
     //     }
 
@@ -374,13 +374,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //             WeightsMessage msg = entry.value.value(); // unwrap
     //             if (msg == null) {
-    //                 logger.log("[bestStore] key = " + entry.key + ", value = null");
+    //                 logger.log(taskInstance + ", [bestStore] key = " + entry.key + ", value = null");
     //                 continue;
     //             }
 
     //             int nWeights = (msg.weights != null) ? msg.weights.length : 0;
 
-    //             logger.log(
+    //             logger.log(taskInstance + " " +
     //                 "[bestStore] key = " + entry.key +
     //                 ", id_worker = " + msg.idWorker +
     //                 ", msgIndex = " + msg.msgIndex +
@@ -391,11 +391,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //         }
 
     //         if (empty) {
-    //             logger.log("[bestStore] Store is empty!");
+    //             logger.log(taskInstance + ", [bestStore] Store is empty!");
     //         }
 
     //     } catch (Exception e) {
-    //         logger.log("Error while dumping bestStore: " + e.getMessage());
+    //         logger.log(taskInstance + ", Error while dumping bestStore: " + e.getMessage());
     //         e.printStackTrace();
     //     }
     // }
@@ -410,7 +410,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             buffer.clear();
         }
 
-        logger.log("Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
+        logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
     }
 }
