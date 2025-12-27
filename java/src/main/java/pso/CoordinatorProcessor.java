@@ -93,6 +93,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
     private String taskTag = "task=UNKNOWN";
 
+    private static final long START_DELAY_NS = Duration.ofSeconds(1).toSeconds();
 
     // ================================================================================================================
 
@@ -136,13 +137,19 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.taskTag = "task=" + context.taskId() + " thread=" + Thread.currentThread().getName();
         logger.log(taskInstance + " INIT " + taskTag + " store=" + testStoreName);
 
-
     }
 
     // ================================================================================================================
 
     @Override
     public void process(Record<String, WeightsMessage> record) {
+
+        updateTime();
+
+        if (lastActivitySeconds < START_DELAY_NS) {
+            System.out.println();
+            return;
+        }
 
         if (control.isStopRequested(-1)) return;
         
@@ -161,7 +168,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         String workerId = String.valueOf(msg.idWorker);
         
-        updateTime();
+        
 
         // logger.log(taskInstance + ", Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 

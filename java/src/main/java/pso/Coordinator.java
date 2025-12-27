@@ -665,8 +665,8 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        // You can keep peek here if you want, but it will run in the RELAY app now
-        // pBestStream.peek((k, msg) -> logger.log("[pBest received] workerId=" + msg.idWorker + " loss=" + msg.loss));
+        pBestStream.peek((k, msg) -> logger.log("[pBest received] workerId = " + msg.idWorker + ", msgindex: " + msg.msgIndex
+                + ", accuracy: " + msg.accuracy + ", loss: " + msg.loss));
 
         pBestStream
             .transform(() -> new GBestTransformer(logger), "gBestEmitStore")

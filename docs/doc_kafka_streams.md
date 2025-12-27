@@ -128,7 +128,7 @@ builder.stream(...).transform(() -> new BatchingTransformer(...), "gBestStore") 
 
 - Hierarchy:
     - Machine
-        - Instances
+        - Instances (different application IDs)
             - Threads
                 - Task (smallest unit of compute, spawns only if multiple partitions)
                 
