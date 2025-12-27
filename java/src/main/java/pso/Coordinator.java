@@ -181,13 +181,13 @@ public class Coordinator implements Runnable {
                     PBEST_WEIGHTS_TOPIC,
                     Consumed.with(Serdes.String(), weightsSerde)
                 ).peek((k, msg) -> {
-            //         logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-            // + "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
-            //             + ", loss: " + msg.loss + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
-            //         );
-                    logger.log("[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
+                    logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
+            + "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
                         + ", loss: " + msg.loss + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
-                    );                 
+                    );
+                    // logger.log("[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
+                    //     + ", loss: " + msg.loss + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
+                    // );                 
                 });
 
                 // pBestStream

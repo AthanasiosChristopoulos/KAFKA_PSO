@@ -120,7 +120,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        // logger.log(taskInstance + ",TEST_TOPIC: " + TEST_TOPIC);
+        // logger.log(taskInstance + ", TEST_TOPIC: " + TEST_TOPIC);
 
         logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
             + " TEST_TOPIC=" + TEST_TOPIC + " testStoreName=" + testStoreName);
@@ -148,7 +148,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
         if(count == 0) {
             context.recordMetadata().ifPresent(meta -> 
-                logger.log(taskInstance + ",Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
+                logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
             );
         }
 
@@ -163,7 +163,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
         updateTime();
 
-        // logger.log(taskInstance + ",Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
+        // logger.log(taskInstance + ", Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
         float[] weights = msg.weights;
         if (weights == null) {
@@ -186,7 +186,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             if (TEST_SIZE == -1) {
                 evalBatch = getAllTestRowsFromStoreOnce();
                 if (evalBatch == null || evalBatch.isEmpty()) {
-                    logger.log(taskInstance + ",TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
+                    logger.log(taskInstance + ", TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
                     return;
                 }
             } else {
@@ -209,7 +209,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             if(accuracy > bestGlobalModelAccuracy) {    
                 Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                 bestGlobalModelAccuracy = accuracy;
-                logger.log(taskInstance + ",New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+                logger.log(taskInstance + ", New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
             }
 
             if(loss < bestLoss) {    
@@ -334,9 +334,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);
 
-        logger.log(taskInstance + ",Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
+        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-            logger.log(taskInstance + ",TEST[" + i + "]: " + cachedTestSet.get(i));
+            logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }
 
         return cachedTestSet;
@@ -357,7 +357,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     // private List<DataMessage> loadAllTestDataOnce() {
 
     //     if (cachedTestSetLoaded && cachedTestSet != null) {
-    //         logger.log(taskInstance + ",Using cached Test Set");
+    //         logger.log(taskInstance + ", Using cached Test Set");
     //         return cachedTestSet;
     //     }
 
@@ -370,7 +370,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //         asg = consumer.assignment();
     //     }
     //     if (asg == null || asg.isEmpty()) {
-    //         logger.log(taskInstance + ",Could not get assignment for TEST_TOPIC; cannot cache test set.");
+    //         logger.log(taskInstance + ", Could not get assignment for TEST_TOPIC; cannot cache test set.");
     //         return null;
     //     }
 
@@ -407,10 +407,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //     cachedTestSet = Collections.unmodifiableList(all);
     //     cachedTestSetLoaded = true;
 
-    //     logger.log(taskInstance + ",Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
-    //     logger.log(taskInstance + ",First 5 TEST samples:");
+    //     logger.log(taskInstance + ", Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
+    //     logger.log(taskInstance + ", First 5 TEST samples:");
     //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-    //         logger.log(taskInstance + ",TEST[" + i + "]: " + cachedTestSet.get(i).toString());
+    //         logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i).toString());
     //     }
 
     //     return cachedTestSet;
@@ -449,7 +449,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             carry.clear();
             consumer.seekToBeginning(asg);
             consumer.poll(Duration.ZERO);
-            logger.log(taskInstance + ",Reached end-of-topic; resetting consumer to beginning (offset 0).");
+            logger.log(taskInstance + ", Reached end-of-topic; resetting consumer to beginning (offset 0).");
             return true;
         }
 
@@ -480,7 +480,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             logger.log(sb.toString());
         } catch (Exception e) {
-            logger.log(taskInstance + ",Coordinator failed to log consumer offsets: " + e.getMessage());
+            logger.log(taskInstance + ", Coordinator failed to log consumer offsets: " + e.getMessage());
         }
     }
    
