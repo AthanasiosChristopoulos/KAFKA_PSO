@@ -22,10 +22,10 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     private KeyValueStore<String, Float> gBestLossStore;
 
     private float gBestLoss = Float.POSITIVE_INFINITY;
-    
+
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
-    private final String instanceTag = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+    private final String taskInstance = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
 
     private String taskTag = "task=UNKNOWN";
 
@@ -62,7 +62,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             WeightsMessage gBestMsg =
                 new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
-            logger.log(instanceTag + " CONSTRUCT thread=" + Thread.currentThread().getName()
+            logger.log(taskInstance + " CONSTRUCT thread=" + Thread.currentThread().getName()
             + "[gBest updated] workerId = " + msg.idWorker
                 + ", accuracy = " + msg.accuracy
                 + ", loss = " + msg.loss

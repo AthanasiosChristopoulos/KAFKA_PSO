@@ -39,6 +39,8 @@ public class Config {
 
     public final boolean FULLY_INFORMED;
     public final boolean DEBUG_KAFKA;
+    public final boolean LOG_TASK_INSTANCES;
+
     public final String LOSS_FUNCTION;
     public final String LOSS_COMBINE;
     public final int TOP_K_VALUE;
@@ -47,7 +49,7 @@ public class Config {
     public final float SIGNIFICANT_LOSS_DIFF;
 
     public final int SAMPLING_CONSTANT;
-
+    
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -142,6 +144,8 @@ public class Config {
         this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")); // create new RUN_ID based on time
 
         this.DEBUG_KAFKA = Boolean.parseBoolean(getenv(dotenv, "DEBUG_KAFKA", "false"));
+        this.LOG_TASK_INSTANCES = Boolean.parseBoolean(getenv(dotenv, "LOG_TASK_INSTANCES", "false"));
+
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
         this.LOSS_COMBINE = getenv(dotenv, "LOSS_COMBINE", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));

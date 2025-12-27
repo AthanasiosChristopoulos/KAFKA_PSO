@@ -59,6 +59,14 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exe
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
 ```
 
+## Run Docker:
+
+```bash
+docker compose up
+docker compose stop
+
+docker compose down     # CAREFUL deletes topics ??? 
+```
 ## Formulas for PSO / velocity update:
 
  - Neighbor best (classical PSO):

@@ -452,8 +452,8 @@ def main():
 
     load_training_data = True
     # load_training_data = False
-    # load_test_data = True
-    load_test_data = False
+    load_test_data = True
+    # load_test_data = False
 
     index = 0
     data_repeats = 0

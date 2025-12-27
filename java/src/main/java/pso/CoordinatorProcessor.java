@@ -90,7 +90,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
-    private final String instanceTag = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+    private final String taskInstance = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
     private String taskTag = "task=UNKNOWN";
 
 
@@ -122,7 +122,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         // logger.log("TEST_TOPIC: " + TEST_TOPIC);
 
-        logger.log(instanceTag + " thread=" + Thread.currentThread().getName()
+        logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
             + " TEST_TOPIC=" + TEST_TOPIC + " testStoreName=" + testStoreName);
             
         this.consumer = new KafkaConsumer<>(consumerProps);
@@ -134,7 +134,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.context = context;
         this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
         this.taskTag = "task=" + context.taskId() + " thread=" + Thread.currentThread().getName();
-        logger.log(instanceTag + " INIT " + taskTag + " store=" + testStoreName);
+        logger.log(taskInstance + " INIT " + taskTag + " store=" + testStoreName);
 
 
     }
@@ -216,7 +216,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 bestLoss = loss;
             }
             
-            logger.log(instanceTag + " thread=" + Thread.currentThread().getName()
+            logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
             + test_count + ") time: " + lastActivitySeconds + 
                         ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples
