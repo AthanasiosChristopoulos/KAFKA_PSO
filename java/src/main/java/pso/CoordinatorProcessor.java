@@ -52,6 +52,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final MultiLayerNetwork bestGlobalModel; 
     private float accuracy = -1f;
     private float loss = 10000f;
+    private int nSamples = 0;
+    private int nCorrect = 0;
     private float bestGlobalModelAccuracy = -1f;
     private float bestLoss = 10000f;
 
@@ -114,15 +116,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         logger.log("TEST_TOPIC: " + TEST_TOPIC);
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
-        
     }
 
     @Override
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
-            
         this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
-        }
+    }
 
     // ================================================================================================================
 
@@ -215,6 +215,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
                 accuracy = accLoss[0];
                 loss = accLoss[1];
+                nSamples = (int) accLoss[2];
+                nCorrect = (int) accLoss[3];
 
                 // update bestGlobalModelAccuracy + bestLoss ========================================================
 
@@ -230,7 +232,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 
                 logger.log(test_count + ") time: " + lastActivitySeconds + 
                             ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            "accuracy: " + accuracy + " and loss: " + loss + 
+                            ", accuracy: " + accuracy + ", with nSamples: " + nSamples
+                            + ", nCorrect: " + nCorrect + " and loss: " + loss + 
                             ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
                 System.out.println(test_count + ") time: " + lastActivitySeconds + 
@@ -258,7 +261,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 
                 WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
-                logger.log("New gBest from worker " + workerId + " with loss: " +  msg.loss + " and with accuracy: " +  msg.accuracy);
+                logger.log("New gBest from worker " + workerId + " with loss: " +  msg.loss + " and with accuracy: " +  msg.accuracy
+                        + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
+                
                 context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
 
             }

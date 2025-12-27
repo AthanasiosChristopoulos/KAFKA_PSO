@@ -26,7 +26,8 @@ public class BatchPrediction {
 
     public final String DATASET = cfg.DATASET;
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
-     private static final String LOSS_COMBINE = cfg.LOSS_COMBINE;
+    private static final String LOSS_COMBINE = cfg.LOSS_COMBINE;
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -36,6 +37,7 @@ public class BatchPrediction {
     private static BatchPrediction coordinatorInstance = null;
 
     private final CustomLogger logger;
+    private final boolean isCoordinator;
 
     // for Worker =======================================================================================================
 
@@ -43,6 +45,7 @@ public class BatchPrediction {
         this.model = model;
         this.bestModel = null;
         this.logger = logger;
+        this.isCoordinator = false;
     }
 
     // for Coordinator ==================================================================================================
@@ -51,6 +54,7 @@ public class BatchPrediction {
         this.model = model;
         this.bestModel = bestModel;
         this.logger = logger;
+        this.isCoordinator = true;
     }
 
     public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
@@ -100,11 +104,10 @@ public class BatchPrediction {
 
         float[][] data = new float[nSamples][NUM_FEATURES];
         for (int i = 0; i < nSamples; i++) {
-            // copy to avoid surprises if upstream reuses arrays (optional but safe)
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
 
-        INDArray X = Nd4j.create(data);              // [batch, NUM_FEATURES]
+        INDArray X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
         INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
 
         
@@ -179,6 +182,10 @@ public class BatchPrediction {
         }
 
         float accuracy = (float) nCorrect / nSamples;
+        if(isCoordinator) {
+            logger.log("BatchPrediction weights sample: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT)
+                + ", accuracy: " + accuracy + ", with nSamples: " + nSamples + ", nCorrect: " + nCorrect );
+        }
         return new float[]{accuracy, loss, nSamples, nCorrect};
     }
 

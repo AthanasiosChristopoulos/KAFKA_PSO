@@ -138,9 +138,9 @@ public class Coordinator implements Runnable {
         // Task 1 =======================================================================================================
         // input stream 3 and output stream 6 (ONLY IF FULLY_INFORMED == false)
         
-        if(FULLY_INFORMED != true) {    // if classical gBest PSO
+        if(FULLY_INFORMED == false) {    // if classical gBest PSO
 
-            if(1 == 1) { // for debuggging purposes
+            if(1 == 2) {
 
                 KStream<String, WeightsMessage> pBest_weights_stream = builder.stream(
                     PBEST_WEIGHTS_TOPIC,
@@ -150,6 +150,8 @@ public class Coordinator implements Runnable {
                 pBest_weights_stream
                     .process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, TEST_STORE))      // doesnt actually edit the global model
                     .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+            
+            // ===============================================================================================================
 
             } else {
 

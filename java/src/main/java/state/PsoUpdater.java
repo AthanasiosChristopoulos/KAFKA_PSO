@@ -14,7 +14,6 @@ public class PsoUpdater {
     private final float C1;
     private final float C2;
     private final int N_WORKERS;
-    private final boolean FULLY_INFORMED;
 
     private float[] velocity; 
     private final float VMAX;    
@@ -23,7 +22,6 @@ public class PsoUpdater {
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
         
         Config cfg = Config.getInstance();
-        this.FULLY_INFORMED = cfg.FULLY_INFORMED;
 
         this.W_INERTIA = cfg.W_INERTIA;
         this.C = cfg.C;
