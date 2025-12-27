@@ -184,9 +184,9 @@ public class Coordinator implements Runnable {
                             return aggMsg; // means keep aggMsg as the current aggregate
 
                         },
-                        Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore")
-                            .withKeySerde(Serdes.String())
-                            .withValueSerde(weightsSerde)
+                        Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as("gBestStore") 
+                            .withKeySerde(Serdes.String())  // 0 interatction with CoordinatorProcessor, this only relays / updates the gBest for the workers
+                            .withValueSerde(weightsSerde)   // the dtatestore is used here only, just to remember what the current aggregate is
                             .withCachingDisabled() 
                 )
                 .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
