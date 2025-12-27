@@ -31,7 +31,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import utils.*;
 import state.*;
@@ -87,6 +88,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private KeyValueStore<String, ValueAndTimestamp<DataMessage>> testStore;
     private volatile List<DataMessage> cachedTestSet = null;
 
+    private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
+    private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
+    private final String instanceTag = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+    private String taskTag = "task=UNKNOWN";
+
+
     // ================================================================================================================
 
 
@@ -113,7 +120,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        logger.log("TEST_TOPIC: " + TEST_TOPIC);
+        // logger.log("TEST_TOPIC: " + TEST_TOPIC);
+
+        logger.log(instanceTag + " thread=" + Thread.currentThread().getName()
+            + " TEST_TOPIC=" + TEST_TOPIC + " testStoreName=" + testStoreName);
+            
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
     }
@@ -122,6 +133,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
         this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
+        this.taskTag = "task=" + context.taskId() + " thread=" + Thread.currentThread().getName();
+        logger.log(instanceTag + " INIT " + taskTag + " store=" + testStoreName);
+
+
     }
 
     // ================================================================================================================
@@ -148,126 +163,81 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
         updateTime();
 
-        if ("current_weights".equals(record.key())) {
+        // logger.log("Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
-            // logger.log("Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
+        float[] weights = msg.weights;
+        if (weights == null) {
+            return;
+        }
     
-            float[] weights = msg.weights;
-            if (weights == null) {
-                return;
-            }
+        weightsBuffer.put(workerId, weights);
+
+        // Run only if all workers have reported their position 
+        if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
         
-            weightsBuffer.put(workerId, weights);
+            float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
-            // Run only if all workers have reported their position 
-            if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
+            Dl4jParamUtils.updateModel(globalModel, avgWeights);
+
+            // ======== evaluate accuracy of globalModel using BatchPrediction ========
             
-                float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
+            List<DataMessage> evalBatch;
 
-                Dl4jParamUtils.updateModel(globalModel, avgWeights);
-
-                // ======== evaluate accuracy of globalModel using BatchPrediction ========
-
-                // List<DataMessage> evalBatch = new ArrayList<>();
-
-                // while (evalBatch.size() < TEST_SIZE) {  // eval_batch before evaluating performance 
-
-                //     ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
-
-                //     if (records.isEmpty()) {
-                //         System.out.println("Test Records run out. Training is over.");
-                //         control.requestStop(); // no more test data, training is over
-                //         return;
-                //     }
-
-                //     for (ConsumerRecord<String, DataMessage> rec : records) {
-
-                //         if (rec.value() != null) {
-                //             if(sampledDataMessage == false) {
-                //                 logger.log("Sample DataMessage: " + rec.value().toString());
-                //                 sampledDataMessage = true;
-                //             }
-                //             evalBatch.add(rec.value());
-                //         }
-                //     }
-                // }
-                
-                List<DataMessage> evalBatch;
-
-                if (TEST_SIZE == -1) {
-                    evalBatch = getAllTestRowsFromStoreOnce();
-                    if (evalBatch == null || evalBatch.isEmpty()) {
-                        logger.log("TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
-                        return;
-                    }
-                } else {
-                    evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
-                    if (evalBatch == null) {
-                        System.out.println("Test Records run out. Something is wrong");
-                        return;
-                    }
-                }
-
-                if (TEST_SIZE != -1) {
-                    logConsumerOffsets();       // evaluate consumer position
-                }
-
-                float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
-                accuracy = accLoss[0];
-                loss = accLoss[1];
-                nSamples = (int) accLoss[2];
-                nCorrect = (int) accLoss[3];
-
-                // update bestGlobalModelAccuracy + bestLoss ========================================================
-
-                if(accuracy > bestGlobalModelAccuracy) {    
-                    Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
-                    bestGlobalModelAccuracy = accuracy;
-                    logger.log("New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
-                }
-
-                if(loss < bestLoss) {    
-                    bestLoss = loss;
-                }
-                
-                logger.log(test_count + ") time: " + lastActivitySeconds + 
-                            ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", accuracy: " + accuracy + ", with nSamples: " + nSamples
-                            + ", nCorrect: " + nCorrect + " and loss: " + loss + 
-                            ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
-
-                System.out.println(test_count + ") time: " + lastActivitySeconds + 
-                            ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", accuracy: " + accuracy + " and loss: " + loss + 
-                            ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
-
-                test_count++;
-
-                if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
-                    Dl4jParamUtils.saveModel(bestGlobalModel);
-                    control.requestStopFinal();
+            if (TEST_SIZE == -1) {
+                evalBatch = getAllTestRowsFromStoreOnce();
+                if (evalBatch == null || evalBatch.isEmpty()) {
+                    logger.log("TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
                     return;
                 }
-
-                weightsBuffer.clear();
-            } 
-        
-        } else {    // update gBest
-            
-            logger.log("Time: " + lastActivitySeconds + " pBest message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
-
-            if (msg.loss < gBestLoss) {
-                gBestLoss = msg.loss;
-                
-                WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
-
-                logger.log("New gBest from worker " + workerId + " with loss: " +  msg.loss + " and with accuracy: " +  msg.accuracy
-                        + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
-                
-                context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
-
+            } else {
+                evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
+                if (evalBatch == null) {
+                    System.out.println("Test Records run out. Something is wrong");
+                    return;
+                }
+                logConsumerOffsets();   
             }
-        }
+
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
+            accuracy = accLoss[0];
+            loss = accLoss[1];
+            nSamples = (int) accLoss[2];
+            nCorrect = (int) accLoss[3];
+
+            // update bestGlobalModelAccuracy + bestLoss ========================================================
+
+            if(accuracy > bestGlobalModelAccuracy) {    
+                Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
+                bestGlobalModelAccuracy = accuracy;
+                logger.log("New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+            }
+
+            if(loss < bestLoss) {    
+                bestLoss = loss;
+            }
+            
+            logger.log(instanceTag + " thread=" + Thread.currentThread().getName()
+            + test_count + ") time: " + lastActivitySeconds + 
+                        ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples
+                        + ", nCorrect: " + nCorrect + " and loss: " + loss + 
+                        ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+
+            System.out.println(test_count + ") time: " + lastActivitySeconds + 
+                        ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ", accuracy: " + accuracy + " and loss: " + loss + 
+                        ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+
+            test_count++;
+
+            if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
+                Dl4jParamUtils.saveModel(bestGlobalModel);
+                control.requestStopFinal();
+                return;
+            }
+
+            weightsBuffer.clear();
+        } 
     }
 
     // ==================================================================================================================================
@@ -297,7 +267,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private List<DataMessage> readExactlyTestSizeBatch(int testSize) {
         List<DataMessage> evalBatch = new ArrayList<>(testSize);
 
-        // Use leftovers from previous poll
+        // Use leftover test samples from previous poll
         while (evalBatch.size() < testSize && !carry.isEmpty()) {
             evalBatch.add(carry.removeFirst());
         }
@@ -309,10 +279,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 if (resetToBeginningIfAtEnd()) {
                     continue; 
                 }
-
                 continue;
             }
-
 
             for (ConsumerRecord<String, DataMessage> rec : records) {
                 DataMessage dm = rec.value();
@@ -362,7 +330,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 }
             }
         }
-
 
         all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);

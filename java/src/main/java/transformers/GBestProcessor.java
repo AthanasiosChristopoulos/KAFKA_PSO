@@ -1,4 +1,4 @@
-package pso;
+package transformers;
 
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
@@ -7,10 +7,15 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 import message.weights_message.WeightsMessage;
 import utils.CustomLogger;
+import utils.Dl4jParamUtils;
+
+import utils.*;
 
 public class GBestProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
 
     private final CustomLogger logger;
+    private static Config cfg = Config.getInstance();
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private ProcessorContext<String, WeightsMessage> context;
     private KeyValueStore<String, Float> gBestLossStore;
@@ -42,7 +47,7 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
         float newLoss = msg.loss;
 
         final float EPS = 1e-9f;
-        
+
         if (newLoss < (gBestLoss - EPS)) {
             gBestLoss = newLoss;
             gBestLossStore.put("gBestLoss", gBestLoss);
@@ -51,10 +56,8 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
 
             context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
 
-            logger.log("[gBest updated+sent] workerId=" + msg.idWorker
-                + ", msgIndex=" + msg.msgIndex
-                + ", acc=" + msg.accuracy
-                + ", loss=" + msg.loss);
+            logger.log("[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy + ", loss = " + msg.loss
+                        + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
         }
 
         // else: drop, dont write to GLOBAL_WEIGHTS_TOPIC

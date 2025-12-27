@@ -79,7 +79,6 @@ public class Worker implements Runnable {
             // Kafka Streams this that client id as a prefix when naming its threads,
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
-        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
         // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);

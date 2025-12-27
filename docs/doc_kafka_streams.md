@@ -130,7 +130,7 @@ builder.stream(...).transform(() -> new BatchingTransformer(...), "gBestStore") 
     - Machine
         - Instances
             - Threads
-                - Task
+                - Task (smallest unit of compute, spawns only if multiple partitions)
                 
 - Threads run tasks
 - Each task = all processors (your KTable + your KStream + branches) for a given set of input partitions.

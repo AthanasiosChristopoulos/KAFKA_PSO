@@ -7,8 +7,8 @@ public class Stats {
     private float loss = 0;
 
     private float bestAccuracy = 0;
-    private float bestLoss = 1000000;
-
+    private float bestLoss = 100000f;
+                             
     public void addBatch(int nSamples, int nCorrect, float loss) {
         if(nSamples == 0) {
             System.out.println("0 Samples");

@@ -22,6 +22,7 @@ import message.weights_message.*;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -82,6 +83,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private static final long IDLE_MS = 3000; // <-- set what you want (e.g. 3s)
     private static final long CHECK_EVERY_MS = 250; // how often we check
 
+    private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
+    private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
+    private final String instanceTag = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+    private String taskTag = "task=UNKNOWN";
+
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t1) {
@@ -99,7 +105,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
 
-        logger.log("Worker " + workerId + " WorkerTransformer started");
+        logger.log(instanceTag + " thread=" + Thread.currentThread().getName()+ ", Worker " + workerId + " WorkerTransformer started");
 
         if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
@@ -189,12 +195,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(improvement_to_pBest) {    // update self always when improvement 
 
             stats.setBestAccuracy(accuracy);
+            logger.log(instanceTag + " thread = " + Thread.currentThread().getName()+ ", best Loss: " + stats.getBestLoss());
             stats.setBestLoss(loss);
 
             this.pBestWeights = weights;
 
             if(significant_diff_to_gBest) { // send only when significant improvement
-            
+                
                 String msgIndex = java.util.UUID.randomUUID().toString();
 
                 logger.log("Improved loss: " + stats.getBestLoss() + " and accuracy: " + stats.getBestAccuracy() +

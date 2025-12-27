@@ -1,0 +1,80 @@
+package transformers;
+
+import org.apache.kafka.streams.kstream.Transformer;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.state.KeyValueStore;
+
+import message.weights_message.WeightsMessage;
+import utils.CustomLogger;
+import utils.Dl4jParamUtils;
+import utils.Config;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class GBestTransformer implements Transformer<String, WeightsMessage, KeyValue<String, WeightsMessage>> {
+
+    private final CustomLogger logger;
+
+    private static Config cfg = Config.getInstance();
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+
+    private ProcessorContext context;
+    private KeyValueStore<String, Float> gBestLossStore;
+
+    private float gBestLoss = Float.POSITIVE_INFINITY;
+    
+    private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
+    private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
+    private final String instanceTag = "CoordinatorProcessor#" + instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
+
+    private String taskTag = "task=UNKNOWN";
+
+    public GBestTransformer(CustomLogger logger) {
+        this.logger = logger;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void init(ProcessorContext context) {
+        this.context = context;
+        this.gBestLossStore = (KeyValueStore<String, Float>) context.getStateStore("gBestEmitStore");
+
+        Float persisted = gBestLossStore.get("gBestLoss");
+        if (persisted != null) {
+            gBestLoss = persisted;
+        }
+    }
+
+    @Override
+    public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage msg) {
+
+        if (msg == null) return null;
+
+        float newLoss = msg.loss;
+
+        final float EPS = 1e-9f;
+
+        if (newLoss < (gBestLoss - EPS)) {
+
+            gBestLoss = newLoss;
+            gBestLossStore.put("gBestLoss", gBestLoss);
+
+            WeightsMessage gBestMsg =
+                new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
+
+            logger.log(instanceTag + " CONSTRUCT thread=" + Thread.currentThread().getName()
+            + "[gBest updated] workerId = " + msg.idWorker
+                + ", accuracy = " + msg.accuracy
+                + ", loss = " + msg.loss
+                + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
+
+            return new KeyValue<>("gBest", gBestMsg);
+        }
+
+        // else: drop
+        return null;
+    }
+
+    @Override
+    public void close() { }
+}
