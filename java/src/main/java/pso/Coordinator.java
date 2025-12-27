@@ -188,11 +188,11 @@ public class Coordinator implements Runnable {
                             .withKeySerde(Serdes.String())  // 0 interatction with CoordinatorProcessor, this only relays / updates the gBest for the workers
                             .withValueSerde(weightsSerde)   // the dtatestore is used here only, just to remember what the current aggregate is
                             .withCachingDisabled() 
-                )
-                .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
-                    Duration.ofSeconds(1),              // flush every one second
-                    Suppressed.BufferConfig.unbounded()
-                ));
+                );
+                // .suppress(Suppressed.untilTimeLimit(    // just buffers updates and only forwards the latest per key after 1 second.
+                //     Duration.ofSeconds(1),              // flush every one second
+                //     Suppressed.BufferConfig.unbounded()
+                // ));
 
                 gBestTable
                     .toStream()

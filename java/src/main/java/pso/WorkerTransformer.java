@@ -107,6 +107,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         } else {
             stateStoreName = "gBestStore";
             keyName = "gBest";              // the gBest is only one at a time, we only need 1 key (gBest weights get constantly overwritten)
+                                            // gBest is not per worker, its globally for all workers
         }
     }
 
