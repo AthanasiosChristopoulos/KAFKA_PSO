@@ -60,11 +60,12 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
             WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
-            logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-            + "[gBest updated] workerId = " + msg.idWorker
-                + ", accuracy = " + msg.accuracy
-                + ", loss = " + msg.loss
-                + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
+            // logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
+            //     + "[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
+            //     + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
+
+            logger.log("[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
+                + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
             return new KeyValue<>("gBest", gBestMsg);
         }
