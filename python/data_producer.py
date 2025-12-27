@@ -38,7 +38,7 @@ if(DATASET != "iris" and DATASET != "wine" and DATASET != "mnist"):
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "winequality"):
-    NUMBER_OF_DATA_REPEATS = 18
+    NUMBER_OF_DATA_REPEATS = 47
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
@@ -187,7 +187,8 @@ def load_dataset():
                                                                             #   120000
         # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000, skiprows=80000)
         # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=2420000)    # 60000 per partition
-        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=420000)      # 10000 per partition
+
+        data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=420000)      # 400000 / 40 = 10000 per partition
 
         y_all = data[:, 0].astype(int)
         X_all = data[:, 1:].astype(np.float32)
@@ -366,6 +367,7 @@ def load_dataset():
     # pendigits
 
     elif DATASET == "pendigits":
+
         NUMBER_OF_DATA_REPEATS = NUMBER_OF_DATA_REPEATS_TEST = 5
         base_path="../data"
         
@@ -397,7 +399,7 @@ def load_dataset():
 
     elif DATASET == "winequality":
 
-        train_size = 6000
+        train_size = 6000       # 6000 * 19 / 40 == 2850 each
         random_state = 123
         path="../data/winequality.csv"
     
@@ -408,7 +410,6 @@ def load_dataset():
 
         feature_cols = [c for c in df.columns if c != "type"]
 
-        # Drop NaN values
         for c in feature_cols:
             df[c] = pd.to_numeric(df[c], errors="coerce")
         before = len(df)
@@ -449,10 +450,10 @@ def main():
     
     X_train, y_train, X_test, y_test, class_names = load_dataset()
 
-    # load_training_data = True
-    load_training_data = False
-    load_test_data = True
-    # load_test_data = False
+    load_training_data = True
+    # load_training_data = False
+    # load_test_data = True
+    load_test_data = False
 
     index = 0
     data_repeats = 0

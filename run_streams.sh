@@ -12,24 +12,28 @@ fi
 
 # --- Reset section -----------------------------------------------------------
 
-if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
+# if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
 
-    for ((i=0; i<N_WORKERS; i++)); do
-        app="pso-worker-$i"
-        docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-            --application-id "$app" \
-            --input-topics iris-input \
-            --bootstrap-server localhost:9092 \
-            --force
-    done
+#     for ((i=0; i<N_WORKERS; i++)); do
+#         app="pso-worker-$i"
+#         docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
+#             --application-id "$app" \
+#             --input-topics iris-input \
+#             --bootstrap-server localhost:9092 \
+#             --force
+#     done
 
-    # app="pso-coordinator"
-    # docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-    #     --application-id "$app" \
-    #     --input-topics local-weights-topic \
-    #     --bootstrap-server localhost:9092 \
-    #     --force
+#     # app="pso-coordinator"
+#     # docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
+#     #     --application-id "$app" \
+#     #     --input-topics local-weights-topic \
+#     #     --bootstrap-server localhost:9092 \
+#     #     --force
 
+# fi
+
+if [[ -n "$1" ]]; then
+    echo "$1"
 fi
 
 if [[ "$1" != "--debug" ]]; then
@@ -42,12 +46,15 @@ if [[ "$1" != "--debug" ]]; then
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )
-    elif [[ 1 -eq "$delete" ]]; then
+
+    elif [[ "$1" == "--reset" ]]; then
+        
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"
             "$LOCAL_WEIGHTS_TOPIC"
         )
+
     else
         TOPICS=(
             # "$PBEST_WEIGHTS_TOPIC"
@@ -55,6 +62,7 @@ if [[ "$1" != "--debug" ]]; then
             # "$LOCAL_WEIGHTS_TOPIC"
         )
     fi
+
 
     for topic in "${TOPICS[@]}"; do
         docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \

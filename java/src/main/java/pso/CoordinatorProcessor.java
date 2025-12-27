@@ -235,7 +235,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
                 System.out.println(test_count + ") time: " + lastActivitySeconds + 
                             ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                            ", model acc: " + accuracy + " and loss: " + loss + 
+                            ", accuracy: " + accuracy + " and loss: " + loss + 
                             ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
                 test_count++;
@@ -327,6 +327,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //=========================================================================================================================
 
     private List<DataMessage> getAllTestRowsFromStoreOnce() {
+
         if (cachedTestSet != null) return cachedTestSet;
 
         // Wait for the global store to populate (size stabilizes)
@@ -361,7 +362,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);
 
-        logger.log("Loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
+        logger.log("Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
             logger.log("TEST[" + i + "]: " + cachedTestSet.get(i));
         }
