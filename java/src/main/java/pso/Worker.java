@@ -137,14 +137,7 @@ public class Worker implements Runnable {
 
         // =====================================================================================================
 
-        Topology topology;
-        try {
-            topology = builder.build();
-        } catch (Exception e) {
-            System.out.println("[Worker " + workerId + "] Didn't build topology:");
-            e.printStackTrace();
-            return;   
-        }
+        Topology topology = builder.build();
 
         KafkaStreams streams = new KafkaStreams(topology, props);
 

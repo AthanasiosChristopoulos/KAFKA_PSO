@@ -409,21 +409,6 @@ import message.data_message.*;
 import message.weights_message.*; 
 import transformers.*;
 
-/**
- * Coordinator that runs TWO separate KafkaStreams instances:
- *
- *  1) MAIN instance:
- *      - GlobalKTable(TEST_TOPIC) -> TEST_STORE
- *      - LOCAL_WEIGHTS_TOPIC -> CoordinatorProcessor (FedAvg / eval etc)
- *      - PREDICTION_INPUT_TOPIC -> prediction output
- *
- *  2) GBEST-RELAY instance (only if FULLY_INFORMED == false):
- *      - PBEST_WEIGHTS_TOPIC -> GBestTransformer (improvement-only) -> GLOBAL_WEIGHTS_TOPIC
- *      - has its own state store: gBestEmitStore
- *
- * IMPORTANT:
- *  - Each instance MUST have different application.id
- */
 public class Coordinator implements Runnable {
 
     private static final Config cfg = Config.getInstance();
@@ -487,7 +472,7 @@ public class Coordinator implements Runnable {
         Properties mainProps = new Properties();
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
-        mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "3");
+        mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
 
         // GBEST instance props (separate app.id!)
         Properties gbestProps = new Properties();
@@ -497,8 +482,8 @@ public class Coordinator implements Runnable {
 
         // --- Build topologies ---
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
-        Topology gbestTopology = null;
 
+        Topology gbestTopology = null;
         if (!FULLY_INFORMED) {
             gbestTopology = buildGBestRelayTopology(weightsSerde);
         }
