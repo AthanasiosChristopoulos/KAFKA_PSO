@@ -94,6 +94,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private String taskTag = "task=UNKNOWN";
 
     private static final long START_DELAY_NS = Duration.ofSeconds(2).toSeconds();
+    private static final int MIN_TEST_ROWS = 200;
+    private static final long WAIT_SLEEP_MS = 100;
+    private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
+    private boolean testStoreReady = false;
 
     // ================================================================================================================
 
@@ -146,11 +150,18 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         updateTime();
 
-        if (lastActivitySeconds < START_DELAY_NS) {
-            logger.log(lastActivitySeconds + ", I am waiting");
-            return;
-        }
+        // if (lastActivitySeconds < START_DELAY_NS) {
+        //     logger.log(lastActivitySeconds + ", I am waiting");
+        //     return;
+        // }
         logger.log(lastActivitySeconds + ", I passed lastActivitySeconds: " + lastActivitySeconds + ", START_DELAY_NS: " + START_DELAY_NS);
+        
+        // if (!testStoreReady) {
+        //     testStoreReady = ensureTestStoreHasAtLeast(MIN_TEST_ROWS);
+
+        //     // if we got interrupted or timed out, just stop processing this record
+        //     if (!testStoreReady) return;
+        // }
 
         if (control.isStopRequested(-1)) return;
         
@@ -192,7 +203,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             List<DataMessage> evalBatch;
 
             if (TEST_SIZE == -1) {
-                evalBatch = getAllTestRowsFromStoreOnce();
+                evalBatch = loadAndCacheTestSet(MIN_TEST_ROWS);
                 if (evalBatch == null || evalBatch.isEmpty()) {
                     logger.log(taskInstance + ", TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
                     return;
@@ -307,28 +318,76 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     //=========================================================================================================================
 
-    private List<DataMessage> getAllTestRowsFromStoreOnce() {
 
+
+    // private boolean ensureTestStoreHasAtLeast(int minRows) {
+
+    //     int last = -1;
+
+    //     for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
+    //         int sz = approximateStoreSize();
+
+    //         if (sz >= minRows) {
+    //             if (!testStoreReady) {
+    //                 logger.log(taskInstance + " testStore READY (size=" + sz + " >= " + minRows + ")");
+    //             }
+    //             return true;
+    //         }
+
+    //         // optional: log only when size changes so logs don't spam
+    //         if (sz != last) {
+    //             logger.log(taskInstance + " waiting for testStore... size=" + sz + " / " + minRows);
+    //             last = sz;
+    //         }
+
+    //         try {
+    //             Thread.sleep(WAIT_SLEEP_MS);
+    //         } catch (InterruptedException e) {
+    //             Thread.currentThread().interrupt();
+    //             logger.log(taskInstance + " interrupted while waiting for testStore");
+    //             return false;
+    //         }
+    //     }
+
+    //     logger.log(taskInstance + " WARNING: testStore did not reach " + minRows + " rows within timeout. lastSize=" + last);
+    //     return false;
+    // }
+
+    private List<DataMessage> loadAndCacheTestSet(int minRows) {
+
+        // already cached
         if (cachedTestSet != null) return cachedTestSet;
+        logger.log("I am waiting on loadAndCacheTestSet");
+        int last = -1;
 
-        // Wait for the global store to populate (size stabilizes)
-        int lastSize = -1;
-        int stableCount = 0;
-
-        for (int tries = 0; tries < 50; tries++) { // ~50 * 100ms = 5s max
+        // wait until store has enough rows
+        for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
             int sz = approximateStoreSize();
-            if (sz == lastSize && sz > 0) {
-                stableCount++;
-                if (stableCount >= 5) break; // stable for 5 checks
-            } else {
-                stableCount = 0;
-                lastSize = sz;
+
+            if (sz >= minRows) break;
+
+            if (sz != last) {
+                logger.log(taskInstance + " waiting for testStore... size=" + sz + " / " + minRows);
+                last = sz;
             }
 
-            try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+            try {
+                Thread.sleep(WAIT_SLEEP_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.log(taskInstance + " interrupted while waiting for testStore");
+                return null;
+            }
         }
 
-        List<DataMessage> all = new ArrayList<>();
+        // re-check size after waiting
+        int sz = approximateStoreSize();
+        if (sz < minRows) {
+            logger.log(taskInstance + " WARNING: testStore size=" + sz + " < " + minRows + " after timeout; proceeding anyway");
+        }
+
+        // load all rows from store
+        List<DataMessage> all = new ArrayList<>(Math.max(sz, 1024));
         try (var it = testStore.all()) {
             while (it.hasNext()) {
                 var kv = it.next();
@@ -342,10 +401,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);
 
-        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
+        logger.log(taskInstance + ", cached TEST_STORE. Total rows=" + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
             logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }
+
+        logger.log("I am done waiting on loadAndCacheTestSet");
 
         return cachedTestSet;
     }
@@ -361,6 +422,64 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
         return count;
     }
+
+
+    // private List<DataMessage> getAllTestRowsFromStoreOnce() {
+
+    //     if (cachedTestSet != null) return cachedTestSet;
+
+    //     // Wait for the global store to populate (size stabilizes)
+    //     int lastSize = -1;
+    //     int stableCount = 0;
+
+    //     for (int tries = 0; tries < 50; tries++) { // ~50 * 100ms = 5s max
+    //         int sz = approximateStoreSize();
+    //         if (sz == lastSize && sz > 0) {
+    //             stableCount++;
+    //             if (stableCount >= 5) break; // stable for 5 checks
+    //         } else {
+    //             stableCount = 0;
+    //             lastSize = sz;
+    //         }
+
+    //         try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+    //     }
+
+    //     List<DataMessage> all = new ArrayList<>();
+    //     try (var it = testStore.all()) {
+    //         while (it.hasNext()) {
+    //             var kv = it.next();
+    //             ValueAndTimestamp<DataMessage> vat = kv.value;
+    //             if (vat != null && vat.value() != null) {
+    //                 all.add(vat.value());
+    //             }
+    //         }
+    //     }
+
+    //     all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
+    //     cachedTestSet = Collections.unmodifiableList(all);
+
+    //     logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
+    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
+    //         logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
+    //     }
+
+    //     return cachedTestSet;
+    // }
+
+    // private int approximateStoreSize() {
+    //     int count = 0;
+    //     try (var it = testStore.all()) {
+    //         while (it.hasNext()) {
+    //             var kv = it.next();
+    //             var vat = kv.value;
+    //             if (vat != null && vat.value() != null) count++;
+    //         }
+    //     }
+    //     return count;
+    // }
+
+    // ======================================================================================================================
 
     // private List<DataMessage> loadAllTestDataOnce() {
 
