@@ -144,7 +144,7 @@ def run_iris(
     test_size: float = 0.2,
     val_size: float = 0.2,
     random_state: int = 123,
-    epochs: int = 200,
+    epochs: int = 40,
     batch_size: int = 16,
 ):
     # Make an explicit train/val/test split (no validation_split in fit)
@@ -184,6 +184,7 @@ def run_iris(
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
     return model
+
 # ======================================================================
 # SUSY DATASET
 # ======================================================================
