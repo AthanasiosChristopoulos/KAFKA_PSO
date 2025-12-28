@@ -53,6 +53,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
         float newLoss = msg.loss;
 
         logger.log("I am here: newLoss " + newLoss + " and gBestLoss: " + gBestLoss);
+        
         if (newLoss < gBestLoss) {
 
             gBestLoss = newLoss;
