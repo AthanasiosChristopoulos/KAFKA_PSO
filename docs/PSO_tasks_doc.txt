@@ -17,7 +17,13 @@
 					- μονο οταν ενας worker υπερβαινει / κοβει το Α, τοτε μονο αυτος στελνει (no coordinator sync)
 					- indicating that this update will cause a significant difference in the FedAvg / globalAverage
 				- prediction models σημαινει προβλεψη pbest gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
-	
+			
+			- για GM, εκανα το heuristic και δουλευει, απλως full GM ως προτοκολλο εχει νοημα μονο για synchroniztion, που δεν μπορει να το κανει το Kafka Streams:	
+			- το προτοκολλο ειναι fully asynchronous. Δηλαδη δεν μπορω να σταματησω το training και να αρχισω να περιμενω για καινουργιο global μοντελλο
+				- οσο ενας worker περιμενει νεα weights, αναγκαστηκα θα κανει consume νεα δεδομενα με το παλιο μοντελλο (no stop and weight).
+			- το sync στο PSO ενδεχεται να ειναι αντιφατικο, καθως στο PSO περιμενουμε το convergence να ερθει ως αποτελεσμα του swarm να κανει convergence. 
+				Για να γινει αυτο τα particles κανουν maintain το δικο τους position
+		
 	2) Experimentation - Setup:
 		- Different models
 		- Different Loss Functions

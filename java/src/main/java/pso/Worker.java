@@ -41,6 +41,7 @@ public class Worker implements Runnable {
     private final String RUN_ID = cfg.RUN_ID;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
     private String stateStoreName;
     private String keyName;
@@ -49,6 +50,8 @@ public class Worker implements Runnable {
                                                 // the he requestStop on the control and everything closes
     private long t0 = System.nanoTime();
     private final AtomicLong t1  = new AtomicLong(t0);
+
+    private final CustomLogger logger;
 
     public Worker(int workerId) {
 
@@ -63,6 +66,8 @@ public class Worker implements Runnable {
         }
 
         this.control = CoordinatorControl.getInstance();
+
+        this.logger = CustomLogger.getWorkerInstance(workerId);
     }
 
     @Override
@@ -103,6 +108,10 @@ public class Worker implements Runnable {
                     .withKeySerde(Serdes.String())
                     .withValueSerde(weightsSerde)
             );
+            // .peek((key, value) -> {
+            //     logger.log("New pBest with accuracy: " + value.accuracy + ", and loss: " + value.loss 
+            //         + ", and weights: " + Dl4jParamUtils.sampleFlat(value.weights, SAMPLING_CONSTANT));
+            // });
 
         } else {
 

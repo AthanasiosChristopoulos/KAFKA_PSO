@@ -178,8 +178,8 @@ Input input-weights-topic:
  - 1) Add new .env variables
  - 2) Update NUM_FEATURES and NUM_CLASSES in Config.java
  - 3) Define new createModel function in Dl4jModelFactory
- - 4) Create train and test Kafka Topics
- - 5) Append in data_producer.py the load_dataset() function an elif
+ - 4) Append in data_producer.py the load_dataset() function an elif
+ - 5) Create train and test Kafka Topics
 
  - Extra:
     - update in evaluate_model.py, by adding elifs to functions:

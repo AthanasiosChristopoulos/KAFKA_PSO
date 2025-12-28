@@ -249,6 +249,41 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic winequality-test --from-beginning
 
+
+# letter: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic letter-input --partitions 40 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic letter-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic letter-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic letter-input --from-beginning
+  
+# letter-test: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic letter-test --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic letter-test
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic letter-test
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic letter-test --from-beginning
+
 # bank: ======================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \

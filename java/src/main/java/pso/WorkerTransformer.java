@@ -240,7 +240,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 velocity = ws.psoUpdater.updateX(ws.model, null);
 
             } else {
-                logger.log(taskInstance + ", pBest Weights with accuracy: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
+                // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
                 velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
             }
 
@@ -287,6 +287,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log(taskInstance + ", readNeighborPBestList: bestStore is null");
             return neighbors;
         }
+        
+        logger.log(taskInstance + ", pBest Weights: ");
 
         try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                                                 // this is GlobalKTable it will run for all of them
@@ -306,6 +308,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 float[] pBestArr = msg.weights;
 
                 neighbors.add(pBestArr);
+
+                logger.log(Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + ", with accuracy = " + msg.accuracy + ", with loss: " + loss);
             }
 
 

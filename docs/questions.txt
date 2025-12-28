@@ -1,41 +1,31 @@
 
-	Ερωτησεις προς Γιατρακο:
-	
-		- Ειναι το Architecture σωστο ?
-			- η Παραλληλη λειτουργεια αναμεσα fully informed και classic PSO
+Ερωτησεις για Διπλωματικη:
 			
+	- Experimentation:
+		- Are the model I have chosen ok ?
+		- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standarts οτι δουλευει ?
+			- ποσα features ειναι expected to run ?
+			- expected model size / number of weights (ωστε να εχει νοημα το GM) ?
+	
+	- multiple classes case scenario ? Is it necessary to evaluate it ?
+		- multiple classes are not working, because we have no sense of direction other than randomly encountering a better position
+		- On high number of classes => Search space (of possible models weights) / dimensionality of weights explosion
+
+	- model size, how large does the model have to be ? is 100k enough ? More and it slows down significantly
+		- as the model size increases, the weight messages become very costly
+		
+	- should i test any more non-differentiable loss functions ?
+
+	- Για συνταξη της Διπλωματικης:	==========================================================================================
+
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
 			- Comparison with Gradient Descent ?
 			- GUI / .env as User Interface ?
 			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?
 			
-			
-		- Experimentation:
-			- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standarts οτι δουλευει ?
-				- ποσα features ειναι expected to run ?
-				- expected model size / number of weights (ωστε να εχει νοημα το GM) ?
-			
-		- Θα πρεπει να συμφωνησουμε πια papers θα βασιστει η διπλωματικη μου ? Η αυτο σιγα σιγα / το βλεπω απο που παρω insiration ?
-		
-		- για GM, εκανα το heuristic και δουλευει, απλως full GM ως προτοκολλο εχει νοημα μονο για synchroniztion, που δεν μπορει να το κανει το Kafka Streams:	
-			- το προτοκολλο ειναι fully asynchronous. Δηλαδη δεν μπορω να σταματησω το training και να αρχισω να περιμενω για καινουργιο global μοντελλο
-				- οσο ενας worker περιμενει νεα weights, αναγκαστηκα θα κανει consume νεα δεδομενα με το παλιο μοντελλο (no stop and weight).
-			- το sync στο PSO ενδεχεται να ειναι αντιφατικο, καθως στο PSO περιμενουμε το convergence να ερθει ως αποτελεσμα του swarm να κανει convergence. 
-				Για να γινει αυτο τα particles κανουν maintain το δικο τους position
-		
-		- Δεδομενα στα οποια ο καθε worker να ειναι non-IID ? να ειναι διαφορετικα (γιατι μεχρι τωρα τα κανω duplicate σε καθε worker)
-		
-		- Parallelization των δεδομενων ? Μεχρι τωρα βλεπουν τα ιδια δεδομενα
-			- εμεις κανουμε Federated Learning ετσι ? not data parallel learning
-			
-		- Χρησιμοποιω στον κωδικα καποια "κολπα" για να δουλευει το Kafka Streams με τους brokers πειραζει ?
-		
-		- multiple classes case scenario ? Is it necessary to prove its working ? Its really struggling ...	
-		
-		- velocity like simulated annealing ? Make velocity reduce over time so that swarm converges ... 
-		
-		- ειναι data hungry / epoch hungry
-		
-		- just NNs ... no CNNs right ... ?
-	
-		
+		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
+
+	- Implementation Detail ===================================================================================================
+
+	- velocity like simulated annealing ? Make velocity reduce over time so that swarm converges ... 
+	- Χρησιμοποιω στον κωδικα καποια "κολπα" για να δουλευει το Kafka Streams με τους brokers πειραζει ?

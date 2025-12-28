@@ -1096,7 +1096,6 @@ def load_wine_type_data(
     num_classes = 2
     return X_train, X_test, y_train, y_test, num_classes
 
-
 # ============================================================
 # MODEL
 # ============================================================
@@ -1180,8 +1179,10 @@ def evaluate_letter_recognition():
     history = model.fit(X_train, y_train, epochs=20, batch_size=128, validation_split=0.1)
     test_loss, test_acc = model.evaluate(X_test, y_test)
     print("Test Accuracy:", test_acc)
+    save_model_as_flat_txt(model)
 
 def run_letter():
+
     evaluate_letter_recognition()
 
 # ======================================================================

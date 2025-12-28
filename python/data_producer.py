@@ -17,6 +17,7 @@ import random
 import pandas as pd
 import struct
 from array import array
+from sklearn.preprocessing import LabelEncoder
 
 # ========================================================================================
 # Env + Args =============================================================================
@@ -39,6 +40,10 @@ if(DATASET == "iris" or DATASET == "wine"):
 
 if(DATASET == "winequality"):
     NUMBER_OF_DATA_REPEATS = 37
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
+if(DATASET == "letter"):
+    NUMBER_OF_DATA_REPEATS = 20
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
@@ -432,6 +437,18 @@ def load_dataset():
 
         return X_train, y_train, X_test, y_test, None
 
+    elif DATASET == "letter":
+    
+        df = pd.read_csv("../data/letter-recognition.csv")
+        X = df.drop("letter", axis=1).values
+        y = df["letter"].values
+        encoder = LabelEncoder()
+        y_enc = encoder.fit_transform(y)
+        train_size = 19500
+        X_train, X_test, y_train, y_test = train_test_split(X, y_enc, train_size=train_size, random_state=42, stratify=y_enc)
+    
+        return X_train, y_train, X_test, y_test, None
+
     else:
         print("Invalid Dataset selected")
         exit(0)
@@ -452,8 +469,8 @@ def main():
 
     load_training_data = False
     load_test_data = False
-    load_training_data = True
-    # load_test_data = True
+    # load_training_data = True
+    load_test_data = True
 
     index = 0
     data_repeats = 0
@@ -498,7 +515,7 @@ def main():
                 
             data_repeats = 0
             
-            if (X_test != None) or (y_test != None):     
+            if X_test is not None and y_test is not None:     
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     
                     for index in range(len(X_test)):

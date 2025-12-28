@@ -57,6 +57,9 @@ public class Dl4jModelFactory {
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel();
 
+		} else if ("letter".equals(DATASET)) {
+			return createLetterModel();
+
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -571,4 +574,54 @@ public class Dl4jModelFactory {
 	// Hidden Layer 2  => 12*9  + 9  = 117
 	// Output Layer    => 9*1   + 1  = 10
 	// TOTAL           => 156 + 117 + 10 = 283 weights
+
+	// ======================================================================================================================
+	// Letter
+
+	public static MultiLayerNetwork createLetterModel() {
+
+		int NUM_FEATURES = 16;     // input_dim
+		int NEURAL_OUTPUT = 26;    // num_classes (A-Z)
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)
+						.nOut(256)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(256)
+						.nOut(256)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder()
+						.nIn(256)
+						.nOut(NEURAL_OUTPUT)
+						.lossFunction(LossFunctions.LossFunction.MCXENT) // softmax cross-entropy
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// 	Layer 1: 16 → 256
+	// Weights: 16 * 256 = 4096
+	// Biases: 256
+	// Total: 4352
+	// Layer 2: 256 → 256
+	// Weights: 256 * 256 = 65536
+	// Biases: 256
+	// Total: 65792
+	// Output: 256 → 26
+	// Weights: 256 * 26 = 6656
+	// Biases: 26
+	// Total: 6682
+	// Grand total
+	// 4352 + 65792 + 6682 = 76826 parameters
+
 }
