@@ -204,9 +204,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 
                 String msgIndex = java.util.UUID.randomUUID().toString();
 
-                logger.log(taskInstance + ", Improved loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy() +
-                            ", actuall loss: " + loss + ", msgIndex = " + msgIndex +
-                            ", nSamples: " + nSamples + ", nCorrect: " + nCorrect);
+                logger.log(taskInstance + ", Improved loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
+                        + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
 
                 WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
 
@@ -309,7 +308,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 neighbors.add(pBestArr);
 
-                logger.log(Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + ", with accuracy = " + msg.accuracy + ", with loss: " + loss);
+                logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + ", with accuracy = " + msg.accuracy + 
+                        ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
             }
 
 
@@ -388,7 +388,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //             logger.log(taskInstance + " " +
     //                 "[bestStore] key = " + entry.key +
-    //                 ", id_worker = " + msg.idWorker +
+    //                 ", id_worker = " + msg.workerId +
     //                 ", msgIndex = " + msg.msgIndex +
     //                 ", accuracy = " + msg.accuracy +
     //                 ", loss = " + msg.loss +

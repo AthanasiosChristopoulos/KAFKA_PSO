@@ -96,7 +96,7 @@ public class LossFunction {
     // =============================================================================================
 
     public static float compute_loss_CE(float[] probs, int label) {
-
+        
         float eps = 0.0000001f;            
         float p = probs[label];
 

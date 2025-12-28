@@ -182,10 +182,10 @@
 //                     Consumed.with(Serdes.String(), weightsSerde)
 //                 ).peek((k, msg) -> {
 //                     logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-//             + "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
+//             + "[pBest received] workerId: " + msg.workerId + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
 //                         + ", loss: " + msg.loss + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
 //                     );
-//                     // logger.log("[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
+//                     // logger.log("[pBest received] workerId: " + msg.workerId + ", msgIndex: " + msg.msgIndex+ ", acc: " + msg.accuracy
 //                     //     + ", loss: " + msg.loss + ", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
 //                     // );                 
 //                 });
@@ -321,7 +321,7 @@
 //     // )
 //     // .peek((k, msg) -> {
 //     //     logger.log(
-//     //         "[pBest received] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
+//     //         "[pBest received] workerId: " + msg.workerId + ", msgIndex: " + msg.msgIndex + ", acc: " + msg.accuracy +
 //     //         ", loss: " + msg.loss +", weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
 //     //     );
 //     // });
@@ -359,7 +359,7 @@
 //     //     .filter((k, v) -> v != null)
 //     //     .peek((k, msg) -> {
 //     //         logger.log(
-//     //             "[gBest sended] workerId: " + msg.idWorker + ", msgIndex: " + msg.msgIndex + 
+//     //             "[gBest sended] workerId: " + msg.workerId + ", msgIndex: " + msg.msgIndex + 
 //     //             ", acc: " + msg.accuracy + ", loss: " + msg.loss + ", weights: " + 
 //     //             Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT)
 //     //         );
@@ -674,7 +674,7 @@ public class Coordinator implements Runnable {
 
         pBestStream.peek((k, msg) -> {
             updateTime();
-            logger.log(lastActivitySeconds +", [pBest received] workerId = " + msg.idWorker + ", msgindex: " + msg.msgIndex
+            logger.log(lastActivitySeconds +", [pBest received] workerId = " + msg.workerId + ", msgindex: " + msg.msgIndex
                 + ", accuracy: " + msg.accuracy + ", loss: " + msg.loss);
         });
 

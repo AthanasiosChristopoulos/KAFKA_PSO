@@ -1160,10 +1160,23 @@ def load_letter_recognition_data(csv_path="../data/letter-recognition.csv"):
     y_enc = encoder.fit_transform(y)
     return train_test_split(X, y_enc, test_size=0.2, random_state=42)
 
+# def build_letter_recognition_model(input_dim, num_classes):
+#     model = tf.keras.Sequential([
+#         tf.keras.layers.Dense(256, activation='relu', input_shape=(input_dim,)),
+#         tf.keras.layers.Dense(256, activation='relu'),
+#         tf.keras.layers.Dense(num_classes, activation='softmax')
+#     ])
+#     model.compile(
+#         optimizer='adam',
+#         loss='sparse_categorical_crossentropy',
+#         metrics=['accuracy']
+#     )
+#     return model
+
 def build_letter_recognition_model(input_dim, num_classes):
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(256, activation='relu', input_shape=(input_dim,)),
-        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu', input_shape=(input_dim,)),
+        tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.Dense(num_classes, activation='softmax')
     ])
     model.compile(
@@ -1172,6 +1185,7 @@ def build_letter_recognition_model(input_dim, num_classes):
         metrics=['accuracy']
     )
     return model
+
 
 def evaluate_letter_recognition():
     X_train, X_test, y_train, y_test = load_letter_recognition_data()

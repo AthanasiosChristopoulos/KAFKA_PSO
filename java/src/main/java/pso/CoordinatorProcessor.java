@@ -181,7 +181,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
 
-        String workerId = String.valueOf(msg.idWorker);
+        String workerId = String.valueOf(msg.workerId);
         
         
 

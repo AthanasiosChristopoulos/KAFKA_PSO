@@ -15,7 +15,7 @@ public class WeightsMessageSerializer implements Serializer<WeightsMessage> {
             return null;
         }
 
-        int idWorker = data.idWorker;
+        int workerId = data.workerId;
     
         String msgIndex = data.msgIndex;
 
@@ -29,14 +29,14 @@ public class WeightsMessageSerializer implements Serializer<WeightsMessage> {
         int nWeights = w.length;
 
         // total size in bytes (float == 4 Bytes):
-        // int idWorker + int msgLen + msgLen bytes + float accuracy
+        // int workerId + int msgLen + msgLen bytes + float accuracy
         // + float loss + int nWeights + nWeights * float
 
         int size = 4 + 4 + msgLen + 4 + 4 + 4 + nWeights * 4;
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        buffer.putInt(idWorker);
+        buffer.putInt(workerId);
         buffer.putInt(msgLen);
         buffer.put(msgBytes);
         buffer.putFloat(accuracy);

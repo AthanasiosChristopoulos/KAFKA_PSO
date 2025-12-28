@@ -17,7 +17,7 @@ public class WeightsMessageDeserializer implements Deserializer<WeightsMessage> 
 
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
-        int idWorker = buffer.getInt();
+        int workerId = buffer.getInt();
 
         int msgLen = buffer.getInt();
         byte[] msgBytes = new byte[msgLen];
@@ -33,7 +33,7 @@ public class WeightsMessageDeserializer implements Deserializer<WeightsMessage> 
             weights[i] = buffer.getFloat();
         }
 
-        return new WeightsMessage(idWorker, msgIndex, accuracy, loss, weights);
+        return new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
     }
 
     @Override

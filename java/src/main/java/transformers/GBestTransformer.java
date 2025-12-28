@@ -67,13 +67,13 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             gBestLoss = newLoss;
             gBestLossStore.put("gBestLoss", gBestLoss);
 
-            WeightsMessage gBestMsg = new WeightsMessage(msg.idWorker, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
+            WeightsMessage gBestMsg = new WeightsMessage(msg.workerId, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
             // logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-            //     + "[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
+            //     + "[gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
             //     + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
-            logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
+            logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
                 + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
             return new KeyValue<>("gBest", gBestMsg);
