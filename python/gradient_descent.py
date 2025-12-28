@@ -703,13 +703,7 @@ def load_pendigits_data(base_path="../data"):
     X_train = scaler.fit_transform(X_train).astype(np.float32)
     X_test  = scaler.transform(X_test).astype(np.float32)
 
-    print("Train shape:", X_train.shape, "Labels:", y_train.shape,
-          "y range:", (int(y_train.min()), int(y_train.max())),
-          "counts:", np.bincount(y_train, minlength=10))
-    print("Test  shape:", X_test.shape,  "Labels:", y_test.shape,
-          "y range:", (int(y_test.min()), int(y_test.max())),
-          "counts:", np.bincount(y_test, minlength=10))
-    print("Classes:", class_names)
+    evaluate_dataset(X_train, y_train, X_test, y_test, 10)
 
     return X_train, y_train, X_test, y_test, class_names
 
@@ -737,6 +731,97 @@ def build_pendigits_model(input_dim=16, num_classes=10):
 
 def run_pendigits():
     X_train, y_train, X_test, y_test, class_names = load_pendigits_data()
+
+    model = build_pendigits_model(
+        input_dim=X_train.shape[1],
+        num_classes=len(class_names)
+    )
+
+    print("\nTraining...")
+    history = model.fit(
+        X_train,
+        y_train,
+        validation_split=0.1,
+        epochs=15,
+        batch_size=128,
+        verbose=2,
+        shuffle=True
+    )
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+
+# ======================================================================
+# Pen Digits Half
+# ======================================================================
+
+def load_pendigits_half_data(base_path="../data"):
+
+    train_path = os.path.join(base_path, "pendigits.tra")
+    test_path  = os.path.join(base_path, "pendigits.tes")
+
+    print(f"Loading from: {base_path}")
+
+    train = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
+    test  = np.loadtxt(test_path,  delimiter=",", dtype=np.float32)
+
+    # Split features / labels
+    X_train = train[:, :-1].astype(np.float32)
+    y_train = train[:, -1].astype(np.int64)
+
+    X_test  = test[:, :-1].astype(np.float32)
+    y_test  = test[:, -1].astype(np.int64)
+
+    # ----------------------------------------------------
+    # KEEP ONLY DIGITS 0–4
+    # ----------------------------------------------------
+    train_mask = y_train < 5
+    test_mask  = y_test < 5
+
+    X_train = X_train[train_mask]
+    y_train = y_train[train_mask]
+
+    X_test = X_test[test_mask]
+    y_test = y_test[test_mask]
+
+    class_names = [str(i) for i in range(5)]
+
+    # Normalize
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train).astype(np.float32)
+    X_test  = scaler.transform(X_test).astype(np.float32)
+
+    evaluate_dataset(X_train, y_train, X_test, y_test, 5)
+
+    return X_train, y_train, X_test, y_test, class_names
+
+# ===============================================================================
+
+def build_pendigits_half_model(input_dim=16, num_classes=5):
+
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.SGD(learning_rate=0.05, momentum=0.9),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+# ===============================================================================
+
+def run_pendigits_half():
+    X_train, y_train, X_test, y_test, class_names = load_pendigits_half_data()
 
     model = build_pendigits_model(
         input_dim=X_train.shape[1],
@@ -1222,6 +1307,8 @@ def main():
         run_har()  
     elif DATASET == "pendigits":
         run_pendigits()      
+    elif DATASET == "pendigits-half":
+        run_pendigits_half()      
     elif DATASET == "cifar10":
         run_cifar10()
     elif DATASET == "higgs":

@@ -311,7 +311,9 @@ def run_bank():
 ## DATASETS: =========================================================
 
 ### Iris:
-
+    3 Classes
+    150 Samples
+    4 Features
 
 ### Susy:
     2 Classes
@@ -361,7 +363,13 @@ def run_bank():
     16 Features, 10 Classes 
     99% on Gradient Descent, 70% on PSO
     Evenly Distributed
-    1000 samples
+    10490 samples on my modified union of the train and test dataset
+    Handwriting digit recognition. Features arent the whole picture, but 8 points in a specific order:
+        - x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8
+        - normalized to a 0–100-ish range 
+        - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
+        - Essentially the points in order form the pen trajectory
+
 
 ## Non Functional Requirements: =========================================================
 

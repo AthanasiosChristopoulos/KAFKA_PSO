@@ -183,8 +183,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         String workerId = String.valueOf(msg.workerId);
         
-        
-
         // logger.log(taskInstance + ", Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
 
         float[] weights = msg.weights;

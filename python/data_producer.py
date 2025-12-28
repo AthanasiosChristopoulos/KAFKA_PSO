@@ -50,6 +50,10 @@ if(DATASET == "pendigits"):
     NUMBER_OF_DATA_REPEATS = 40
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "pendigits-half"):
+    NUMBER_OF_DATA_REPEATS = 80
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -392,9 +396,45 @@ def load_dataset():
         X, y = shuffle(X, y)
 
         # Split manually
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=10492, random_state=42, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5246, random_state=42, stratify=y)
 
-        class_names = [str(i) for i in range(10)]
+        class_names = [str(i) for i in range(5)]
+
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_test  = scaler.transform(X_test).astype(np.float32)
+
+        evaluate_dataset(X_train, y_train, X_test, y_test)
+
+        return X_train, y_train, X_test, y_test, class_names
+
+
+    # ====================================================================================================
+    # pendigits-half
+
+    elif DATASET == "pendigits-half":
+
+        base_path = "../data"
+        train_path = os.path.join(base_path, "my-pendigits.tra")
+
+        print(f"Loading from: {train_path}")
+
+        data = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
+
+        X = data[:, :-1].astype(np.float32)   # (n, 16)
+        y = data[:, -1].astype(np.int64)      # (n,)
+
+        mask = y < 5
+
+        X = X[mask]
+        y = y[mask]
+        
+        X, y = shuffle(X, y)
+
+        # Split manually
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5246, random_state=42, stratify=y)
+
+        class_names = [str(i) for i in range(5)]
 
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train).astype(np.float32)

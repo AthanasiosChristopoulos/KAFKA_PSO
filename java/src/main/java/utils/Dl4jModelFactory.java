@@ -51,7 +51,7 @@ public class Dl4jModelFactory {
 		} else if ("har".equals(DATASET)) {
 			return createHarModel();
 
-		} else if ("pendigits".equals(DATASET)) {
+		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
 			return createPenDigitsModel();
 
 		} else if ("winequality".equals(DATASET)) {

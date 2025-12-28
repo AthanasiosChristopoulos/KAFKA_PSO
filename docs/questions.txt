@@ -2,18 +2,22 @@
 Ερωτησεις για Διπλωματικη:
 			
 	- Experimentation:
-		- Are the model I have chosen ok ?
+		- Are the Datasets I have chosen ok ?
+			- susy isnt working cleanly i prefer this and this dataset
+			- These datasets have a lower amount of samples ... i have to repeat them multiple times (like 40 times) 
+				so i can split them in partitions
+			- This is like having multiple epochs. Is this fine ? 
 		- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standarts οτι δουλευει ?
 			- ποσα features ειναι expected to run ?
 			- expected model size / number of weights (ωστε να εχει νοημα το GM) ?
-	
+
 	- multiple classes case scenario ? Is it necessary to evaluate it ?
 		- multiple classes are not working, because we have no sense of direction other than randomly encountering a better position
 		- On high number of classes => Search space (of possible models weights) / dimensionality of weights explosion
 
 	- model size, how large does the model have to be ? is 100k enough ? More and it slows down significantly
 		- as the model size increases, the weight messages become very costly
-		
+
 	- should i test any more non-differentiable loss functions ?
 
 	- Για συνταξη της Διπλωματικης:	==========================================================================================

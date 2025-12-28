@@ -92,8 +92,12 @@ public class Config {
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_HAR", "7"));
 
         } else if("pendigits".equals(this.DATASET)) {
-            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "54"));
-            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "7"));
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "16"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "10"));
+
+        } else if("pendigits-half".equals(this.DATASET)) {
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS_HALF", "16"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS_HALF", "5"));
 
         } else if("winequality".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINEQUALITY", "12"));
