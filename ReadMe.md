@@ -9,7 +9,7 @@ git clone https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
 git push https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
 
 git branch
-git branch -d branch_name
+git branch -d branch_name   # Delete a branch
 git branch -D branch_name
 
 git log --oneline
