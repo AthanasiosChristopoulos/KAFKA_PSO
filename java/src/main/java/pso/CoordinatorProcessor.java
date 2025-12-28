@@ -93,7 +93,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
     private String taskTag = "task=UNKNOWN";
 
-    private static final long START_DELAY_NS = Duration.ofSeconds(1).toSeconds();
+    private static final long START_DELAY_NS = Duration.ofSeconds(2).toSeconds();
 
     // ================================================================================================================
 
@@ -147,9 +147,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         updateTime();
 
         if (lastActivitySeconds < START_DELAY_NS) {
-            System.out.println(lastActivitySeconds + ", I am waiting");
+            logger.log(lastActivitySeconds + ", I am waiting");
             return;
         }
+        logger.log(lastActivitySeconds + ", I passed lastActivitySeconds: " + lastActivitySeconds + ", START_DELAY_NS: " + START_DELAY_NS);
 
         if (control.isStopRequested(-1)) return;
         

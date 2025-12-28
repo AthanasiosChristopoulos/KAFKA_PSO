@@ -455,6 +455,9 @@ public class Coordinator implements Runnable {
 
     @Override
     public void run() {
+        
+        this.t0 = System.nanoTime();
+        this.t1 = System.nanoTime();
 
         System.out.println(instanceTag + " started with RUN_ID: " + RUN_ID);
 
