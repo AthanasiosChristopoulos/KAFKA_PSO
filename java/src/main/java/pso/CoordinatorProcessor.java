@@ -154,7 +154,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         //     logger.log(lastActivitySeconds + ", I am waiting");
         //     return;
         // }
-        logger.log(lastActivitySeconds + ", I passed lastActivitySeconds: " + lastActivitySeconds + ", START_DELAY_NS: " + START_DELAY_NS);
+        // logger.log(lastActivitySeconds + ", I passed lastActivitySeconds: " + lastActivitySeconds + ", START_DELAY_NS: " + START_DELAY_NS);
         
         // if (!testStoreReady) {
         //     testStoreReady = ensureTestStoreHasAtLeast(MIN_TEST_ROWS);
@@ -278,7 +278,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private void updateTime() {
         t1 = System.nanoTime();
-        lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 10.0) / 10.0;
+        lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
 
     //=========================================================================================================================
@@ -364,12 +364,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
             int sz = approximateStoreSize();
 
-            if (sz >= minRows) break;
-
-            if (sz != last) {
-                logger.log(taskInstance + " waiting for testStore... size=" + sz + " / " + minRows);
-                last = sz;
-            }
+            if (sz >= minRows) {
+                logger.log("Breaking sleeping, estimated size is: " + sz + ", with minRows: " + minRows);
+                break;
+            };
 
             try {
                 Thread.sleep(WAIT_SLEEP_MS);
@@ -380,14 +378,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             }
         }
 
-        // re-check size after waiting
-        int sz = approximateStoreSize();
-        if (sz < minRows) {
-            logger.log(taskInstance + " WARNING: testStore size=" + sz + " < " + minRows + " after timeout; proceeding anyway");
-        }
-
         // load all rows from store
-        List<DataMessage> all = new ArrayList<>(Math.max(sz, 1024));
+        List<DataMessage> all = new ArrayList<>(1000);
         try (var it = testStore.all()) {
             while (it.hasNext()) {
                 var kv = it.next();
@@ -398,10 +390,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             }
         }
 
-        all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
         cachedTestSet = Collections.unmodifiableList(all);
 
-        logger.log(taskInstance + ", cached TEST_STORE. Total rows=" + cachedTestSet.size());
+        updateTime();
+
+        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", cached TEST_STORE. Total rows=" + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
             logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }

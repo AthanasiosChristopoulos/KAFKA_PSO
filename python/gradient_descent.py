@@ -12,6 +12,7 @@ from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, Optional
+from sklearn.datasets import load_iris as sk_load_iris
 
 from dotenv import load_dotenv
 env_path = os.path.join("..", "java", ".env")
@@ -67,6 +68,122 @@ def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
     print(f"Saved {len(flat)} weights to {path}")
     return flat
 
+
+# ============================================================
+# IRIS DATASET
+# ============================================================
+
+def load_iris_data(
+    test_size: float = 0.2,
+    random_state: int = 123,
+    standardize: bool = True,
+):
+    print("Loading Iris dataset (scikit-learn)...")
+
+    iris = sk_load_iris()
+    X = iris.data.astype(np.float32)          # shape (150, 4)
+    y = iris.target.astype(np.int32)          # labels 0,1,2
+    num_classes = 3
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=y
+    )
+
+    scaler = None
+    if standardize:
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train).astype(np.float32)
+        X_test  = scaler.transform(X_test).astype(np.float32)
+
+    print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+    print("Test  shape:", X_test.shape, "Labels:", y_test.shape)
+    print(X_train)
+    return X_train, X_test, y_train, y_test, num_classes, scaler
+
+
+# ============================================================
+# MODEL (DL4J-equivalent: 4 -> 16 -> 16 -> 3)
+# ============================================================
+
+def build_iris_model(
+    input_dim: int,
+    num_classes: int = 3,
+    seed: int = 123,
+    lr: float = 1e-3,
+):
+    # Match DL4J seed behavior (best-effort for TF/Keras)
+    tf.keras.utils.set_random_seed(seed)
+
+    inputs = keras.Input(shape=(input_dim,), name="features")
+
+    x = layers.Dense(16, activation="relu", name="dense_1")(inputs)
+    x = layers.Dense(16, activation="relu", name="dense_2")(x)
+    outputs = layers.Dense(num_classes, activation="softmax", name="softmax")(x)
+
+    model = keras.Model(inputs=inputs, outputs=outputs, name="iris_mlp")
+
+    # DL4J MCXENT == multiclass cross-entropy
+    # Since y is integer class ids (0/1/2), use SparseCategoricalCrossentropy.
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        loss=keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+        metrics=[keras.metrics.SparseCategoricalAccuracy(name="acc")],
+    )
+
+    model.summary()
+    print("Total params:", model.count_params())
+    return model
+
+# ============================================================
+# RUN PIPELINE
+# ============================================================
+def run_iris(
+    test_size: float = 0.2,
+    val_size: float = 0.2,
+    random_state: int = 123,
+    epochs: int = 200,
+    batch_size: int = 16,
+):
+    # Make an explicit train/val/test split (no validation_split in fit)
+    X_train, X_test, y_train, y_test, num_classes, scaler = load_iris_data(
+        test_size=test_size,
+        random_state=random_state,
+        standardize=True,
+    )
+
+    # Split train -> train/val
+    from sklearn.model_selection import train_test_split
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train, y_train,
+        test_size=val_size,
+        random_state=random_state,
+        stratify=y_train
+    )
+
+    model = build_iris_model(input_dim=X_train.shape[1], num_classes=num_classes, seed=random_state)
+
+    callbacks = [
+        keras.callbacks.TerminateOnNaN(),
+        keras.callbacks.EarlyStopping(monitor="val_loss", patience=20, restore_best_weights=True),
+    ]
+
+    model.fit(
+        X_train, y_train,
+        validation_data=(X_val, y_val),
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=2,
+        shuffle=True,
+        callbacks=callbacks,
+    )
+
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+    return model
 # ======================================================================
 # SUSY DATASET
 # ======================================================================
@@ -1036,7 +1153,9 @@ def run_wine_type():
 def main():
     print("DATASET:", DATASET)
 
-    if DATASET == "susy":
+    if DATASET == "iris":
+        run_iris()
+    elif DATASET == "susy":
         run_susy()
     elif DATASET == "bank":
         run_bank()

@@ -89,6 +89,6 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     // ==============================================================================================
 
     private void updateTime() {
-        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 10.0) / 10.0;
+        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
 }

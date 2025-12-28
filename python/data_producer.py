@@ -28,17 +28,17 @@ print("Dotenv loaded:", loaded)
 DATASET = os.getenv("DATASET")
 
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
-NUMBER_OF_DATA_REPEATS = int(os.getenv("NUMBER_OF_DATA_REPEATS"))
-NUMBER_OF_DATA_REPEATS_TEST = int(os.getenv("NUMBER_OF_DATA_REPEATS_TEST"))
-
 BATCH_FLUSH = int(os.getenv("BATCH_FLUSH"))
 
-if(DATASET != "iris" and DATASET != "wine" and DATASET != "mnist"):
-    NUMBER_OF_DATA_REPEATS = 1
-    NUMBER_OF_DATA_REPEATS_TEST = 1
+NUMBER_OF_DATA_REPEATS = 1
+NUMBER_OF_DATA_REPEATS_TEST = 1
+
+if(DATASET == "iris" or DATASET == "wine"):
+    NUMBER_OF_DATA_REPEATS = 2500
+    NUMBER_OF_DATA_REPEATS_TEST = 2
 
 if(DATASET == "winequality"):
-    NUMBER_OF_DATA_REPEATS = 67
+    NUMBER_OF_DATA_REPEATS = 37
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
@@ -498,7 +498,7 @@ def main():
                 
             data_repeats = 0
             
-            if (X_test.any()) or (y_test.any()):     
+            if (X_test != None) or (y_test != None):     
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     
                     for index in range(len(X_test)):
@@ -510,8 +510,9 @@ def main():
                             "features": features,
                             "label": label
                         }
-
-                        producer.send(TEST_TOPIC, key=str(index).encode("utf-8"), value=msg)
+                        
+                        key = f"{data_repeats}:{index}"
+                        producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
 
                         if index % BATCH_FLUSH == 0:
                             producer.flush()
@@ -520,7 +521,9 @@ def main():
                     data_repeats += 1
                                 
                 print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
-                
+            
+            # ==========================================================================================================
+
             else:   # If there are no explicit training samples then load the training samples in the test topic
                 
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
@@ -535,7 +538,8 @@ def main():
                             "label": label
                         }
 
-                        producer.send(TEST_TOPIC, key=str(index).encode("utf-8"), value=msg)
+                        key = f"{data_repeats}:{index}"
+                        producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
 
                         if index % BATCH_FLUSH == 0:
                             producer.flush()

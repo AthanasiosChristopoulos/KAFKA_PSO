@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.BufferedWriter;
 import java.nio.file.StandardOpenOption;
@@ -15,9 +16,16 @@ public class CustomLogger {
     public static CustomLogger coordinatorInstance;
     private static final Map<Integer, CustomLogger> workerInstances = new HashMap<>();
 
+    private static boolean clearedLogsDir = false;
+
     public CustomLogger(int workerId) {
 
         BufferedWriter w = null;
+
+        if(clearedLogsDir == false) {
+            clearLogsDirectory();
+            clearedLogsDir = true;
+        }
 
         if(workerId != -1) {
 
@@ -71,6 +79,31 @@ public class CustomLogger {
         }
 
         return logger;
+    }
+
+    //=====================================================================================\
+
+    private static void clearLogsDirectory() {
+        try {
+            Path logsDir = Paths.get("logs");
+
+            if (Files.exists(logsDir)) {
+                Files.list(logsDir)
+                    .filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+            } else {
+                Files.createDirectories(logsDir);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //=====================================================================================\

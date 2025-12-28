@@ -194,8 +194,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setBestAccuracy(accuracy);
+            
             // logger.log(taskInstance + " " +taskInstance + " thread = " + Thread.currentThread().getName()+ ", best Loss: " + ws.stats.getBestLoss());
-            logger.log(taskInstance + ", best Loss: " + ws.stats.getBestLoss());
+            // logger.log(taskInstance + ", best Loss: " + ws.stats.getBestLoss());
+
             ws.stats.setBestLoss(loss);
 
             this.pBestWeights = weights;
@@ -272,7 +274,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private void updateTime() {
         long now = System.nanoTime();
         t1.set(now);
-        lastActivitySeconds = Math.round(((now - t0) / 1_000_000_000.0) * 100.0) / 100.0;
+        lastActivitySeconds = Math.round(((now - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
 
     //=========================================================================================================================

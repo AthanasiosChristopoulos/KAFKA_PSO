@@ -74,7 +74,7 @@ done
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic iris-input --partitions 1 --if-not-exists
+  --create --topic iris-input --partitions 40 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --describe --topic iris-input

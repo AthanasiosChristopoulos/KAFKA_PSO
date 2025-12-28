@@ -455,7 +455,7 @@ public class Coordinator implements Runnable {
 
     @Override
     public void run() {
-        
+
         this.t0 = System.nanoTime();
         this.t1 = System.nanoTime();
 
@@ -533,6 +533,7 @@ public class Coordinator implements Runnable {
         }
 
         // Control thread =============================================================
+
         Thread controlThread = new Thread(() -> {
             try {
                 while (!control.isStopRequested(-1)) {
@@ -613,7 +614,8 @@ public class Coordinator implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // Global store for test data
+        // Loads the TEST_TOPIC ===========================================================================================
+
         GlobalKTable<String, DataMessage> testTable = builder.globalTable(
             TEST_TOPIC,
             Consumed.with(Serdes.String(), dataSerde)
@@ -623,7 +625,8 @@ public class Coordinator implements Runnable {
                 .withValueSerde(dataSerde)
         );
 
-        // Task: local weights -> coordinator processor
+        // Federrated Learning Monitoring Pipeline =========================================================================
+
         KStream<String, WeightsMessage> localWeightsStream = builder.stream(
             LOCAL_WEIGHTS_TOPIC,
             Consumed.with(Serdes.String(), weightsSerde)
@@ -631,7 +634,8 @@ public class Coordinator implements Runnable {
 
         localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, TEST_STORE));
 
-        // Task: prediction input -> output
+        // Inference Task ==================================================================================================
+        
         KStream<String, DataMessage> predictionStream = builder.stream(
             PREDICTION_INPUT_TOPIC,
             Consumed.with(Serdes.String(), dataSerde)
@@ -702,6 +706,6 @@ public class Coordinator implements Runnable {
     }
 
     private void updateTime() {
-        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 10.0) / 10.0;
+        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
 }
