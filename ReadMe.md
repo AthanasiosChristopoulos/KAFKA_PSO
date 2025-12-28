@@ -207,12 +207,12 @@ Input input-weights-topic:
  - no CNN (like no image recognition)
  - Have enough rows / samples, somewhere around 10000 and above
  - have a reasonable amount of features (not over 100)
-
  - Also necessary to define those 3 functions, implementing the model on python (tensorflow), with a model that quaranties good accuracy:
         - evaluate_{dataset_name}()
         - load_{dataset_name}_data()
         - build_{dataset_name}_model()
         - run_{dataset_name}() 
+        
  - An example of such functions for the dataset "bank_dataset" is detailed here:
  
 ```python
@@ -292,9 +292,11 @@ def run_bank():
 ## What to look at for training process:
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
- - the ideal result will not be located
- - The swarm converged on bad solution / local maximum
+ - Is a good result located ? Can it be found ?
  - Trade-off between exploration and convergence
+ - The swarm converged on bad solution / local maximum
+ - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
+    - is the velocity being clamped / holded back by a limiter ?
 
 ## Velocity:
 

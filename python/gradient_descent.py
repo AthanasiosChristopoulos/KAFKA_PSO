@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, Optional
 from sklearn.datasets import load_iris as sk_load_iris
+from sklearn.preprocessing import LabelEncoder
 
 from dotenv import load_dotenv
 env_path = os.path.join("..", "java", ".env")
@@ -1147,6 +1148,42 @@ def run_wine_type():
     return model
 
 
+# ============================================================
+# LETTER
+# ============================================================
+
+def load_letter_recognition_data(csv_path="../data/letter-recognition.csv"):
+    df = pd.read_csv(csv_path)
+    X = df.drop("letter", axis=1).values
+    y = df["letter"].values
+    # Encode letters to integers
+    encoder = LabelEncoder()
+    y_enc = encoder.fit_transform(y)
+    return train_test_split(X, y_enc, test_size=0.2, random_state=42)
+
+def build_letter_recognition_model(input_dim, num_classes):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(256, activation='relu', input_shape=(input_dim,)),
+        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
+    ])
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+    return model
+
+def evaluate_letter_recognition():
+    X_train, X_test, y_train, y_test = load_letter_recognition_data()
+    model = build_letter_recognition_model(X_train.shape[1], 26)
+    history = model.fit(X_train, y_train, epochs=20, batch_size=128, validation_split=0.1)
+    test_loss, test_acc = model.evaluate(X_test, y_test)
+    print("Test Accuracy:", test_acc)
+
+def run_letter():
+    evaluate_letter_recognition()
+
 # ======================================================================
 # Main
 # ======================================================================
@@ -1176,6 +1213,8 @@ def main():
         run_higgs()
     elif DATASET == "winequality":
         run_wine_type()
+    elif DATASET == "letter":
+        run_letter()
     else:
         print("DATASET not detected")
         
