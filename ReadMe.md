@@ -188,7 +188,6 @@ Input input-weights-topic:
             - build_keras_model()
             - evaluate_model()
 
-
 ## New Dataset - Specifications:
 
  - Given the specifications i need you to give me a link to where someone showcases his model and the dataset and 
@@ -201,7 +200,7 @@ Input input-weights-topic:
 
  - Needs to come, not from python, but externally in like a .csv
  - The model that is going to be used on it should have a significant number of weights (100000 - 1000000)
- - Needs to have multiple classes, more than 3 (ideally 4 up to 7)
+ - Needs to have multiple classes, more than 3 (ideally 4 up to 7), but not too many ... nothing above 10
         - Also, we need even class distribution among the samples
         - softmax / cross entropy loss should ideally be used here 
  - no CNN (like no image recognition)
@@ -361,7 +360,7 @@ def run_bank():
 
     16 Features, 10 Classes 
     99% on Gradient Descent, 70% on PSO
-    Evenly Distrivuted
+    Evenly Distributed
     1000 samples
 
 ## Non Functional Requirements: =========================================================

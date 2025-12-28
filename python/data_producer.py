@@ -46,6 +46,10 @@ if(DATASET == "letter"):
     NUMBER_OF_DATA_REPEATS = 20
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "pendigits"):
+    NUMBER_OF_DATA_REPEATS = 40
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -54,6 +58,8 @@ parser.add_argument('--streaming', action='store_true')
 parser.add_argument('--all', action='store_true') # make this a flag argument
 parser.add_argument('--pred', action='store_true')
 parser.add_argument('--eval', action='store_true')
+parser.add_argument('--train', action='store_true')
+parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 if args.pred:
@@ -373,21 +379,20 @@ def load_dataset():
 
     elif DATASET == "pendigits":
 
-        NUMBER_OF_DATA_REPEATS = NUMBER_OF_DATA_REPEATS_TEST = 5
-        base_path="../data"
-        
-        train_path = os.path.join(base_path, "pendigits.tra")
-        test_path  = os.path.join(base_path, "pendigits.tes")
+        base_path = "../data"
+        train_path = os.path.join(base_path, "my-pendigits.tra")
 
-        print(f"Loading from: {base_path}")
+        print(f"Loading from: {train_path}")
 
-        train = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
-        test  = np.loadtxt(test_path,  delimiter=",", dtype=np.float32)
+        data = np.loadtxt(train_path, delimiter=",", dtype=np.float32)
 
-        X_train = train[:, :-1].astype(np.float32)     # (n, 16)
-        y_train = train[:, -1].astype(np.int64)        # (n,)
-        X_test  = test[:, :-1].astype(np.float32)
-        y_test  = test[:, -1].astype(np.int64)
+        X = data[:, :-1].astype(np.float32)   # (n, 16)
+        y = data[:, -1].astype(np.int64)      # (n,)
+
+        X, y = shuffle(X, y)
+
+        # Split manually
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=10492, random_state=42, stratify=y)
 
         class_names = [str(i) for i in range(10)]
 
@@ -397,8 +402,8 @@ def load_dataset():
 
         evaluate_dataset(X_train, y_train, X_test, y_test)
 
-        return X_train.tolist(), y_train, X_test.tolist(), y_test, class_names
-
+        return X_train, y_train, X_test, y_test, class_names
+    
     # ====================================================================================================
     # winequality
 
@@ -467,10 +472,14 @@ def main():
     
     X_train, y_train, X_test, y_test, class_names = load_dataset()
 
-    load_training_data = False
-    load_test_data = False
-    # load_training_data = True
+    load_training_data = True
     load_test_data = True
+
+    if(args.train):
+        load_test_data = False
+
+    if(args.test):
+        load_training_data = False
 
     index = 0
     data_repeats = 0

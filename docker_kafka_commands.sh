@@ -424,7 +424,7 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic pendigits-input --partitions 1 --if-not-exists
+  --create --topic pendigits-input --partitions 40 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --describe --topic pendigits-input
