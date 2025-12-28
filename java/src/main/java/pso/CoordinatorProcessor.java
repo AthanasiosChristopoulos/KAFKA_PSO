@@ -71,6 +71,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final KafkaConsumer<String, DataMessage> consumer;
 
     private int count = 0;
+    private int process_count = 0;
 
     private final CoordinatorControl control;
 
@@ -127,8 +128,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         // logger.log(taskInstance + ", TEST_TOPIC: " + TEST_TOPIC);
 
-        logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-            + " TEST_TOPIC=" + TEST_TOPIC + " testStoreName=" + testStoreName);
+        logger.log(taskInstance + " thread = " + Thread.currentThread().getName()
+            + " TEST_TOPIC = " + TEST_TOPIC + " testStoreName = " + testStoreName);
             
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
@@ -138,8 +139,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
         this.context = context;
         this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
-        this.taskTag = "task=" + context.taskId() + " thread=" + Thread.currentThread().getName();
-        logger.log(taskInstance + " INIT " + taskTag + " store=" + testStoreName);
+        this.taskTag = "task = " + context.taskId() + " thread = " + Thread.currentThread().getName();
+        logger.log(taskInstance + " INIT " + taskTag + " store = " + testStoreName);
 
     }
 
@@ -154,7 +155,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         //     logger.log(lastActivitySeconds + ", I am waiting");
         //     return;
         // }
-        // logger.log(lastActivitySeconds + ", I passed lastActivitySeconds: " + lastActivitySeconds + ", START_DELAY_NS: " + START_DELAY_NS);
+
+        // process_count++;
+        // logger.log(taskInstance + " process_count: " + process_count + " " + lastActivitySeconds + ", I passed: " + " thread = " + Thread.currentThread().getName() );
         
         // if (!testStoreReady) {
         //     testStoreReady = ensureTestStoreHasAtLeast(MIN_TEST_ROWS);
@@ -235,11 +238,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 bestLoss = loss;
             }
             
-            logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
-            + test_count + ") time: " + lastActivitySeconds + 
-                        ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples
-                        + ", nCorrect: " + nCorrect + " and loss: " + loss + 
+            // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
+            logger.log(taskInstance + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " and loss: " + loss + 
                         ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
             System.out.println(test_count + ") time: " + lastActivitySeconds + 

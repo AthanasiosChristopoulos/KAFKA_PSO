@@ -101,7 +101,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.ws = WorkerStatic.get(workerId);
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        // logger.log(taskInstance + " " +taskInstance + " thread=" + Thread.currentThread().getName()+ ", Worker " + workerId + " WorkerTransformer started");
         logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
@@ -194,8 +193,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setBestAccuracy(accuracy);
-            
-            // logger.log(taskInstance + " " +taskInstance + " thread = " + Thread.currentThread().getName()+ ", best Loss: " + ws.stats.getBestLoss());
+
             // logger.log(taskInstance + ", best Loss: " + ws.stats.getBestLoss());
 
             ws.stats.setBestLoss(loss);
@@ -260,6 +258,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         updateTime();
+
+        // " thread = " + Thread.currentThread().getName() +
 
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +

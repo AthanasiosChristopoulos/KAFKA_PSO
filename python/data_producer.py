@@ -450,10 +450,10 @@ def main():
     
     X_train, y_train, X_test, y_test, class_names = load_dataset()
 
+    load_training_data = False
+    load_test_data = False
     load_training_data = True
-    # load_training_data = False
-    load_test_data = True
-    # load_test_data = False
+    # load_test_data = True
 
     index = 0
     data_repeats = 0

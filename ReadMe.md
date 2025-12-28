@@ -41,7 +41,6 @@ git push --force origin main (so you dont have to pull first / be up to date)
 git checkout main
 
 Codes:
-
 	username: AthanasiosChristopoulos
 	password: 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
 
