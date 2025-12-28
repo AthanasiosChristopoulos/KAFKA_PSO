@@ -434,6 +434,7 @@ public class Coordinator implements Runnable {
 
     private long t0 = System.nanoTime();
     private long t1 = System.nanoTime();
+    private double lastActivitySeconds = 0.0;
 
     private static final String TEST_STORE = "test-data-store";
 
@@ -480,15 +481,14 @@ public class Coordinator implements Runnable {
         gbestProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-gbest-relay-" + RUN_ID);
         gbestProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
 
-        // --- Build topologies ---
+        // Build topologies =============================================================
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
-
         Topology gbestTopology = null;
         if (!FULLY_INFORMED) {
             gbestTopology = buildGBestRelayTopology(weightsSerde);
         }
 
-        // --- Create streams ---
+        // Create streams Instances =============================================================
         KafkaStreams mainStreams = new KafkaStreams(mainTopology, mainProps);
         KafkaStreams gbestStreams = (!FULLY_INFORMED) ? new KafkaStreams(gbestTopology, gbestProps) : null;
 
@@ -529,7 +529,7 @@ public class Coordinator implements Runnable {
             });
         }
 
-        // --- Control thread (your stop flag) ---
+        // Control thread =============================================================
         Thread controlThread = new Thread(() -> {
             try {
                 while (!control.isStopRequested(-1)) {
@@ -665,11 +665,14 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        pBestStream.peek((k, msg) -> logger.log("[pBest received] workerId = " + msg.idWorker + ", msgindex: " + msg.msgIndex
-                + ", accuracy: " + msg.accuracy + ", loss: " + msg.loss));
+        pBestStream.peek((k, msg) -> {
+            updateTime();
+            logger.log(lastActivitySeconds +", [pBest received] workerId = " + msg.idWorker + ", msgindex: " + msg.msgIndex
+                + ", accuracy: " + msg.accuracy + ", loss: " + msg.loss);
+        });
 
         pBestStream
-            .transform(() -> new GBestTransformer(logger), "gBestEmitStore")
+            .transform(() -> new GBestTransformer(logger, t0), "gBestEmitStore")
             .to(GLOBAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
         return builder.build();
@@ -693,5 +696,9 @@ public class Coordinator implements Runnable {
                 System.out.println("  ACTIVE Task: " + task.taskId() + " partitions=" + task.topicPartitions());
             }
         }
+    }
+
+    private void updateTime() {
+        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 10.0) / 10.0;
     }
 }

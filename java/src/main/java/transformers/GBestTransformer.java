@@ -29,8 +29,14 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     private String taskTag = "task=UNKNOWN";
 
-    public GBestTransformer(CustomLogger logger) {
+    private static final float EPS = 1e-9f;
+
+    private long t0;
+    private double lastActivitySeconds = 0.0;
+
+    public GBestTransformer(CustomLogger logger, long t0) {
         this.logger = logger;
+        this.t0 = t0;
     }
 
     @Override
@@ -47,14 +53,16 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage msg) {
+        
+        updateTime();
 
         if (msg == null) return null;
 
         float newLoss = msg.loss;
 
-        logger.log("I am here: newLoss " + newLoss + " and gBestLoss: " + gBestLoss);
+        // logger.log("I am here: newLoss " + newLoss + " and gBestLoss: " + gBestLoss);
         
-        if (newLoss < gBestLoss) {
+        if (newLoss < (gBestLoss - EPS)) {
 
             gBestLoss = newLoss;
             gBestLossStore.put("gBestLoss", gBestLoss);
@@ -65,7 +73,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             //     + "[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
             //     + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
-            logger.log("[gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
+            logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.idWorker + ", accuracy = " + msg.accuracy
                 + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
             return new KeyValue<>("gBest", gBestMsg);
@@ -77,4 +85,10 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     @Override
     public void close() { }
+
+    // ==============================================================================================
+
+    private void updateTime() {
+        lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 10.0) / 10.0;
+    }
 }

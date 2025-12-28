@@ -147,7 +147,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         updateTime();
 
         if (lastActivitySeconds < START_DELAY_NS) {
-            System.out.println();
+            System.out.println(lastActivitySeconds + ", I am waiting");
             return;
         }
 
