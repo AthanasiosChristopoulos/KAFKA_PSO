@@ -183,6 +183,7 @@ public class PsoUpdater {
     //================================================================================================
 
     private void updateC1Schedule() {
+        
         float t = Math.min(iter, MAX_ITERS);
         float alpha = t / (float) MAX_ITERS;          // 0 -> 1
         c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end

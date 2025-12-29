@@ -6,6 +6,8 @@ import org.deeplearning4j.util.ModelSerializer;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 
+import pso.Simulation;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedWriter;
@@ -19,11 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 
-
 public class Dl4jParamUtils {   
 
     private static Config cfg = Config.getInstance();
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+    public static final float MONITORING_THRESHOLD = cfg.MONITORING_THRESHOLD;
+	public static int POINTS_PER_AXIS = cfg.POINTS_PER_AXIS;
 
     public static float[] modelToFlatList(MultiLayerNetwork model) {
 
@@ -188,6 +191,74 @@ public class Dl4jParamUtils {
 
         return (float) Math.sqrt(sum);
     }
+
+    //=====================================================================================================
+
+    // private static boolean checkIfIntersects(float[] center, double radius) {
+
+    //     int dimensions = center.length; 
+    //     int p = POINTS_PER_AXIS; 
+    //     int skipped_points = 0;
+    //     float[] coords = new float[dimensions];
+        
+    //     double tmpMin = Double.POSITIVE_INFINITY;
+    //     double tmpMax = Double.NEGATIVE_INFINITY;
+
+    //     float[] tmpMaxVector = new float[center.length];
+    //     float[] tmpMinVector = new float[center.length];
+    //     float[] point;
+    //     float[] point_scaled_back;
+    //     double val;
+
+    //     int totalPoints = (int) Math.pow(p, dimensions);
+    //     // logWriter.println("Ball center = " + center + ", radius = " + radius); 
+
+    //     for (int i = 0; i < totalPoints; i++) {
+    //         int Z = i;
+    //         double squaredDist = 0.0;
+
+    //         for (int j = 0; j < dimensions; j++) {
+    //             coords[j] = (center[j] - radius + 2.0 * radius * (Z % p) / (p - 1));
+    //             Z /= p;
+    //             squaredDist += Math.pow(coords[j] - center[j], 2); // Eyclidean distance
+    //         }
+
+    //         // Skip points outside the sphere (turn the square grid into an actual sphere)
+    //         if (squaredDist > radius * radius) {
+    //             skipped_points++;
+    //             continue;
+    //         }
+            
+    //         point = new Vector(coords);
+
+    //         val = Simulation.f(point); 
+
+    //         if (val > tmpMax) {
+    //         	tmpMaxVector = new Vector(point);
+    //         	tmpMax = val;
+    //         }
+            
+    //         if (val < tmpMin) {
+    //         	tmpMinVector = new Vector(point);
+    //         	tmpMin = val;
+    //         }
+    //     }
+
+    //     // logWriter.println("tmpMax = " + tmpMax + ", tmpMaxVector = " + tmpMaxVector);
+    //     // logWriter.println("tmpMin = " + tmpMin + ", tmpMinVector = " + tmpMinVector);
+
+    //     boolean intersectsWithA = false;
+
+    //     if((tmpMax > MONITORING_THRESHOLD && tmpMin < MONITORING_THRESHOLD)) {
+    //         intersectsWithA = true;
+    //     }
+        
+    //     // logWriter.println("Sphere approximation: max = " + tmpMax + ", min = " + tmpMin + ", total_points: " + totalPoints + 
+    //     //     ", skipped_points: " + skipped_points + ", intersectsWithA = " + intersectsWithA);
+
+    //     return intersectsWithA;
+    // }
+
 
     //=====================================================================================================
 

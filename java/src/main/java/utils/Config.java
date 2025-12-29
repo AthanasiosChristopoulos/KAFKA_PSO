@@ -49,7 +49,10 @@ public class Config {
     public final float SIGNIFICANT_LOSS_DIFF;
 
     public final int SAMPLING_CONSTANT;
-    
+
+    public final float MONITORING_THRESHOLD;
+    public final int POINTS_PER_AXIS;
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -163,6 +166,9 @@ public class Config {
         this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
+
+        this.MONITORING_THRESHOLD = Float.parseFloat(getenv(dotenv, "MONITORING_THRESHOLD", "40"));
+        this.POINTS_PER_AXIS = Integer.parseInt(getenv(dotenv, "POINTS_PER_AXIS", "5"));
     }
 
     // ==================================================================================================================================

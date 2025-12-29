@@ -23,6 +23,10 @@
 	- για τιτλο μηπως λειπει οτι χρησιμοποιουμε το PSO για training neural networks ? Η εννοειται ? 	
 		- Σε αλλα papers χρησιμοποιουν PSO γενικα ως τροπο βελτιοστοποιησεις μις συναρτησεις
 
+	- σκεφτηκα για GM οτι μπορω να το χρησιμοποησω μονο για monitoring του Federated Average Model χωρις full synchronization, μονο 
+		partial synchronization of one worker, αλλα θα πρεπει να χρησιμοποιησω το FFT για dimensionality reduction και δεν ξερω αμα αξιζει
+		- this is a crazy amount of work for a Kafka Streams processor (we need to do this per record)
+
 	- Για συνταξη της Διπλωματικης:	==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

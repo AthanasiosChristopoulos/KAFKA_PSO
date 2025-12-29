@@ -111,6 +111,8 @@
 	20) Partitioning of Non IID data if possible (this depends on the dataset):
 		- In datasets that dont provide this possibility just do Round Robin
 		- Otherwise you need to do it with keyed Records (decides to which partition in the kafka topic the Record goes to) and partitions
+
+	21) Use Vector class not float[]
 	
 ========================================================================================================================
 
