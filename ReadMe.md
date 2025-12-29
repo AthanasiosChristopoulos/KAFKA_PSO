@@ -203,6 +203,7 @@ Input input-weights-topic:
  - Needs to have multiple classes, more than 3 (ideally 4 up to 7), but not too many ... nothing above 10
         - Also, we need even class distribution among the samples
         - softmax / cross entropy loss should ideally be used here 
+
  - no CNN (like no image recognition)
  - Have enough rows / samples, somewhere around 10000 and above
  - have a reasonable amount of features (not over 100)
@@ -291,6 +292,8 @@ def run_bank():
 ## What to look at for training process:
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
+    - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
+    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
  - Is a good result located ? Can it be found ?
  - Trade-off between exploration and convergence
  - The swarm converged on bad solution / local maximum

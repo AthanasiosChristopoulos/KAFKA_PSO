@@ -7,12 +7,13 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-WORKERS_LIST = [2, 4, 6]
+WORKERS_LIST = [2, 6]
+# WORKERS_LIST = [2, 4, 6]
 # WORKERS_LIST = [2, 4, 6, 8]
 RUN_SCRIPT = "./run_streams.sh"
 
-ACC_RE = re.compile(
-    r"global\s+bestAccuracy:\s*([0-9]+(?:\.[0-9]+)?)",
+ACCURACY_REGEX = re.compile(    # REGEX == Regular Expression
+    r",\s*bestAccuracy:\s*([0-9]+(?:\.[0-9]+)?)",
     re.IGNORECASE
 )
 
@@ -22,8 +23,8 @@ END_PATTERNS = [
 ]
 
 # NEW: parse times printed by Java
-WORKER_TIME_RE = re.compile(r"\[Worker\s+(\d+)\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
-COORD_TIME_RE  = re.compile(r"\[Coordinator\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
+WORKER_TIME_REGEX = re.compile(r"\[Worker\s+(\d+)\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
+COORD_TIME_REGEX  = re.compile(r"\[Coordinator\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
 
 # ========================================================================================
 
@@ -55,19 +56,19 @@ def run_once(n_workers, logs_dir):
             print(line, end="")
             f.write(line)
 
-            m = ACC_RE.search(line)
+            m = ACCURACY_REGEX.search(line)
             if m:
                 best_acc = float(m.group(1))
 
             # NEW: parse worker wall time
-            wm = WORKER_TIME_RE.search(line)
+            wm = WORKER_TIME_REGEX.search(line)
             if wm:
                 wid = int(wm.group(1))
                 wsec = float(wm.group(2))
                 worker_times[wid] = wsec
 
             # NEW: parse coordinator wall time
-            cm = COORD_TIME_RE.search(line)
+            cm = COORD_TIME_REGEX.search(line)
             if cm:
                 coordinator_time_sec = float(cm.group(1))
 

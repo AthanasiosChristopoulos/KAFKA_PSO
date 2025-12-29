@@ -39,8 +39,8 @@ public final class WorkerStatic {
     // ========================================================
 
     private WorkerStatic(int workerId) {
+        
         this.workerId = workerId;
-
         this.model = Dl4jModelFactory.createModel();
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(model, workerId);
