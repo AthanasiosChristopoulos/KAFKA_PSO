@@ -118,6 +118,8 @@
 	21) Instead of fully informed try out neighboors hoods => you need to look at the theory
 
 	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
+
+	28) Split particles into Neighborhoods
 	
 ========================================================================================================================
 

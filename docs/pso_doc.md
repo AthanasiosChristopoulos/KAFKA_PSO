@@ -1,3 +1,11 @@
+## PSO Theory:
+
+ - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
+    - V = Vertex = Particle, E = Edge = neighborhood relation between particles
+
+
+
+
 ## TensorFlow (Keras) + PySwarms Implementation
 
 TensorFlow gives you easy model definition, provides the “neural forward pass”.

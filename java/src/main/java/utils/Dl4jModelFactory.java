@@ -526,6 +526,13 @@ public class Dl4jModelFactory {
 	// For Output Layer     => 128 * 10 + 10
 	// 19978 weights 
 
+	// or with pendigits-half 
+
+	// For Hidden Layer 1   => 16 * 128 + 128
+	// For Hidden Layer 2   => 128 * 128 + 128
+	// For Output Layer     => 128 * 5 + 5
+	// 19333 weights 
+
 	// ======================================================================================================================
 	// WineQuality Dataset Model Architecture
 

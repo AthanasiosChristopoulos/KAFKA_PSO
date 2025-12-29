@@ -204,7 +204,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 
                 String msgIndex = java.util.UUID.randomUUID().toString();
 
-                logger.log(taskInstance + ", Improved loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
+                logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
                         + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
 
                 WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);

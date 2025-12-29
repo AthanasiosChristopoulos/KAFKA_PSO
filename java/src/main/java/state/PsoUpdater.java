@@ -10,11 +10,18 @@ import utils.*;
 
 public class PsoUpdater {
 
-    private final float W_INERTIA;
-    private final float C;
-    private final float C1;
-    private final float C2;
-    private final int N_WORKERS;
+    private Config cfg = Config.getInstance();
+    private final float W_INERTIA = cfg.W_INERTIA;;
+    private final float C = cfg.C;
+    private final float C1 = cfg.C1;
+    private final float C2 = cfg.C2;
+    private final int N_WORKERS = cfg.N_WORKERS;
+
+    private final float C1_START = cfg.C1; 
+    private final float C1_END = 0.2f;
+    private float c1 = C1_START;  
+    private int iter = 0;
+    private final int MAX_ITERS = 2000;
 
     private final float VMAX;    
     private final float VMAX_FACTOR;
@@ -25,26 +32,19 @@ public class PsoUpdater {
     private float[] inertiaVec;
     private float[] cognitiveVec;
     private float[] socialVec;
+    private float[] diffPBestGBest;
 
     private int clamp_count = 0;
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
-        
-        Config cfg = Config.getInstance();
-
-        this.W_INERTIA = cfg.W_INERTIA;
-        this.C = cfg.C;
-        this.C1 = cfg.C1;
-        this.C2 = cfg.C2;
-
-        this.N_WORKERS = cfg.N_WORKERS;
-
+    
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         x_i_new = new float[x.length];
         velocity = new float[x.length];
         inertiaVec = new float[x.length];
         cognitiveVec = new float[x.length];
         socialVec = new float[x.length];
+        diffPBestGBest = new float[x.length];
 
         this.VMAX_FACTOR = cfg.VMAX_FACTOR;
 
@@ -58,6 +58,8 @@ public class PsoUpdater {
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
+
+        logger.log("Number of weights (dimensionality): " + x.length);
     }
 
     //================================================================================================
@@ -86,7 +88,7 @@ public class PsoUpdater {
         // if (velocity == null || velocity.length != x_i.length) {   // initialization of velocity
         //     velocity = new float[x_i.length];
         // }
-
+        updateC1Schedule();
         Random rnd = new Random();
 
         for (int k = 0; k < x_i.length; k++) {
@@ -95,8 +97,9 @@ public class PsoUpdater {
             float r2 = rnd.nextFloat();  
 
             inertiaVec[k] = W_INERTIA * velocity[k];
-            cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+            cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
             socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
@@ -111,8 +114,8 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + 
-                ", cognitive = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
-                ", number of Clamps: " + clamp_count
+                ", cognitive C1: " + c1 + " = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
+                ", diff = " + Dl4jParamUtils.magnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
         );
 
         return velocity;
@@ -162,7 +165,8 @@ public class PsoUpdater {
             inertiaVec[k] = W_INERTIA * velocity[k];
         }
 
-        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec));
+        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
+                    ", number of Clamps: " + clamp_count);
         
         for (int k = 0; k < x_i.length; k++) {
             velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
@@ -172,6 +176,14 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         return this.velocity;
+    }
+
+    //================================================================================================
+
+    private void updateC1Schedule() {
+        float t = Math.min(iter, MAX_ITERS);
+        float alpha = t / (float) MAX_ITERS;          // 0 -> 1
+        c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
     }
 
     //================================================================================================

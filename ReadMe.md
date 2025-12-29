@@ -109,6 +109,11 @@ The N Kafka Streams workers read from the Data Topic and train on their own loca
 this is how each worker adds to the parallelization of the processing of the training data. Each Worker trains on different partitions,
 i.e. different training data from other workers.
 
+The architecture is build to support two types of PSO:
+    - classical PSO / best-of-neighboorhood 
+    - fully informed PSO (FIPS)
+
+
 
 ## Distributed, data parallel PSO Protocol:
 
@@ -294,7 +299,11 @@ def run_bank():
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
     - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
     - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
+    - cognitive Velocity: Distance to of current position to pBest
+    - social Velocity: Distance to of current position to gBest (or the other pBests)
+
  - Is a good result located ? Can it be found ?
+ - Are pBest and gBest remaining constant ? is exploration even working ?
  - Trade-off between exploration and convergence
  - The swarm converged on bad solution / local maximum
  - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
