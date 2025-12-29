@@ -249,7 +249,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
-                logger.log(taskInstance + ", gBest Weight: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
+                logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
             }
 

@@ -21,7 +21,7 @@ public class PsoUpdater {
     private final float C1_END = 0.2f;
     private float c1 = C1_START;  
     private int iter = 0;
-    private final int MAX_ITERS = 2000;
+    private final int MAX_ITERS = 500;
 
     private final float VMAX;    
     private final float VMAX_FACTOR;
@@ -117,6 +117,8 @@ public class PsoUpdater {
                 ", cognitive C1: " + c1 + " = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
                 ", diff = " + Dl4jParamUtils.magnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
         );
+
+        iter++;
 
         return velocity;
     }
