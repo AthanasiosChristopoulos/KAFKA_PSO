@@ -301,13 +301,15 @@ def run_bank():
     - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
     - cognitive Velocity: Distance to of current position to pBest
     - social Velocity: Distance to of current position to gBest (or the other pBests)
-
  - Is a good result located ? Can it be found ?
  - Are pBest and gBest remaining constant ? is exploration even working ?
  - Trade-off between exploration and convergence
  - The swarm converged on bad solution / local maximum
  - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
     - is the velocity being clamped / holded back by a limiter ?
+ - Increasing N_WORKERS:
+    - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
+    - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
 
 ## Velocity:
 
@@ -373,7 +375,7 @@ def run_bank():
 ### Pendigits:
 
     16 Features, 10 Classes 
-    99% on Gradient Descent, 70% on PSO
+    97% on Gradient Descent, 55% on FIPSO, 50% on GBEST
     Evenly Distributed
     10490 samples on my modified union of the train and test dataset
     Handwriting digit recognition. Features arent the whole picture, but 8 points in a specific order:
@@ -381,6 +383,19 @@ def run_bank():
         - normalized to a 0–100-ish range 
         - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
         - Essentially the points in order form the pen trajectory
+
+### Pendigits-HALF:
+
+    16 Features, 5 Classes 
+    99% on Gradient Descent, 93% on FIPSO, 85% on GBEST
+    Evenly Distributed
+    10490 samples on my modified union of the train and test dataset
+    Handwriting digit recognition. Features arent the whole picture, but 8 points in a specific order:
+        - x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8
+        - normalized to a 0–100-ish range 
+        - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
+        - Essentially the points in order form the pen trajectory
+
 
 
 ## Non Functional Requirements: =========================================================

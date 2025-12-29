@@ -156,7 +156,7 @@ public class PsoUpdater {
             }
 
             for (int k = 0; k < x_i.length; k++) {
-                float p_i_j = rnd.nextFloat();  
+                float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
                 socialVec[k] += p_i_j * (pBest_j[k] - x_i[k]);
             }
         }
