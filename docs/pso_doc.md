@@ -3,7 +3,8 @@
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
 
-
+ - If a new particle ﬂies beyond the boundary [Xmin, Xmax], the new position will be set as Xmin or Xmax
+ - If a new velocity is beyond the boundary [Vmin, Vmax], the new velocity will be set as Vmin or Vmax.
 
 
 ## TensorFlow (Keras) + PySwarms Implementation
@@ -88,8 +89,6 @@ score = model.evaluate(X_test, Y_test)
 2) perform an evaluation of the model on this data using model.evaluate(Xtrain, Ytrain)
 3) Store if pBest (using KTable)
 4) Write pBest value on the iris-output topic
-
-----------------------------------
 
 ----------------------------------
 

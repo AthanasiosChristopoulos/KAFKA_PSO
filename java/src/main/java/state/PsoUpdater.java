@@ -25,6 +25,7 @@ public class PsoUpdater {
 
     private final float VMAX;    
     private final float VMAX_FACTOR;
+    private final float VMAX_NORM;
 
     private CustomLogger logger;
     private float[] velocity; 
@@ -54,6 +55,7 @@ public class PsoUpdater {
         float range = xmax - xmin;  // the xmax - xmin discussed in the paper 
 
         this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
+        this.VMAX_NORM = (float)(Math.sqrt(x.length) * VMAX);
 
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
@@ -81,6 +83,19 @@ public class PsoUpdater {
 
     //================================================================================================
 
+    private void clipVelocityByNorm(float vmaxNorm) {
+        double sumSq = 0.0;
+        for (float v : velocity) sumSq += (double)v * v;
+        double norm = Math.sqrt(sumSq);
+
+        if (norm > vmaxNorm && norm > 0.0) {
+            float scale = (float)(vmaxNorm / norm);
+            for (int i = 0; i < velocity.length; i++) velocity[i] *= scale;
+        }
+    }
+
+    //================================================================================================
+
     public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST, not fully informed
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
@@ -97,17 +112,19 @@ public class PsoUpdater {
             float r2 = rnd.nextFloat();  
 
             inertiaVec[k] = W_INERTIA * velocity[k];
-            cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+            // cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+            cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
             socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
-            float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
+            // float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
+            // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
 
-            // velocity_i_1[k] = inertia + cognitive + social;
-            velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
-            // velocity_i_1[k] = velocity_value;
+            velocity[k] = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
+            clipVelocityByNorm(VMAX_NORM);
+
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
@@ -165,15 +182,18 @@ public class PsoUpdater {
         for (int k = 0; k < socialVec.length; k++) {
             socialVec[k] *= scale;
             inertiaVec[k] = W_INERTIA * velocity[k];
+
+            velocity[k] = inertiaVec[k] + socialVec[k];
+            x_i_new[k] = x_i[k] + velocity[k];
         }
 
         logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
                     ", number of Clamps: " + clamp_count);
         
-        for (int k = 0; k < x_i.length; k++) {
-            velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
-            x_i_new[k] = x_i[k] + velocity[k];
-        }
+        // for (int k = 0; k < x_i.length; k++) {
+        //     velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
+        //     x_i_new[k] = x_i[k] + velocity[k];
+        // }
 
         Dl4jParamUtils.updateModel(model, x_i_new);
 
