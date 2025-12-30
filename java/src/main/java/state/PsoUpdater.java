@@ -105,6 +105,8 @@ public class PsoUpdater {
         // }
         updateC1Schedule();
         Random rnd = new Random();
+        
+        logger.log("x_i.length = " +  x_i.length);
 
         for (int k = 0; k < x_i.length; k++) {
 

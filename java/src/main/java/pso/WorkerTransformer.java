@@ -141,7 +141,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log(taskInstance + ", Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
 
-            logger.log(taskInstance + ", Sample DataMessage: " + value.toString());
+            // logger.log(taskInstance + ", Sample DataMessage: " + value.toString());
+            logger.log(taskInstance + ", Sample DataMessage: " + value.toStringFull());
+            
             seenPartitions.add(context.partition());
         }
         lastOffset = context.offset();

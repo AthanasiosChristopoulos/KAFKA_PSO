@@ -2,8 +2,6 @@ package utils;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import org.nd4j.linalg.activations.Activation;
@@ -13,12 +11,6 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.learning.config.Adam;
 
 import org.deeplearning4j.nn.conf.inputs.InputType;
-
-import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.GlobalPoolingLayer;
-import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
-
-import org.deeplearning4j.nn.conf.layers.PoolingType;
 import org.deeplearning4j.nn.conf.layers.*;
 
 
@@ -30,7 +22,7 @@ public class Dl4jModelFactory {
     public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
-	public static final boolean printModel = false;
+	public static final boolean printModel = true;
 
 	public static MultiLayerNetwork createModel() {
 		// System.out.println("DATASET: " + DATASET);
@@ -72,6 +64,7 @@ public class Dl4jModelFactory {
 			return createLetterModel();
 			// return createLetterModel70K();
 		} else if ("cifar3".equals(DATASET)) {
+
 			return createCifar3Model();
 			// return createLetterModel70K();
 		} else {
@@ -203,8 +196,12 @@ public class Dl4jModelFactory {
 		// 1881444
 		//  940584
 
-    public static MultiLayerNetwork createMnistCnn() {
+	// ======================================================================================================================
 
+    public static MultiLayerNetwork createMnistCnn() {
+		if(printModel) {
+			System.out.println("Using CNN MNIST Model");
+		}
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
                 .weightInit(WeightInit.RELU)
@@ -212,7 +209,7 @@ public class Dl4jModelFactory {
                 .list()
                 // Conv2D(16, 3, padding="same", use_bias=False)
                 .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(16)
+                        .nOut(16)		// Number of filters / feature maps
                         .stride(1, 1)
                         .padding(1, 1)       // "same" for 3x3 with stride 1
                         .hasBias(false)
@@ -244,7 +241,7 @@ public class Dl4jModelFactory {
                         .activation(Activation.RELU)
                         .build())
                 // GlobalAveragePooling2D()
-                .layer(new GlobalPoolingLayer.Builder()
+                .layer(new GlobalPoolingLayer.Builder()		// Outputs 32 one for each channel / feature map
                         .poolingType(PoolingType.AVG)
                         .build())
                 // Dense(num_classes, softmax) + sparse categorical crossentropy
@@ -259,9 +256,14 @@ public class Dl4jModelFactory {
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
-        System.out.println(model.summary());
-        System.out.println("Trainable params: " + model.numParams());
+		// 3×3×1×16 = 144 (Conv1)
+		// 4 × 16 = 64 (Batch Norm) // 4 vectors per channel (feature maps), gamma, beta, mean, log10stdev 
+		// 3×3×16×32 = 4608 (Conv2)
+		// 4 × 32 = 128 (Batch Norm) 
+		// 32 X 10 = 330 
 
+		// Total = 144 + 64 + 4608 + 128 + 330 = 5274
+		
         return model;
     }
 

@@ -92,6 +92,7 @@ CIFAR10_NAMES = ["airplane","automobile","bird","cat","deer","dog","frog","horse
 # ========================================================================================
 # Kafka Producer =========================================================================
 
+# Serializer:
 def serialize_data_message(sample_index: int, features: np.ndarray, label: int) -> bytes:
 
     features = np.asarray(features, dtype=np.float32)
@@ -99,7 +100,6 @@ def serialize_data_message(sample_index: int, features: np.ndarray, label: int) 
 
     header = struct.pack(">iii", int(sample_index), int(label), n)
 
-    # Convert to big-endian float32 without copying when possible
     be = features.astype(">f4", copy=False)
 
     return header + be.tobytes()
@@ -109,6 +109,7 @@ def serialize_data_message(sample_index: int, features: np.ndarray, label: int) 
 #     value_serializer = lambda v: json.dumps(v).encode("utf-8") # convert json int bytes before sending
 # )
 
+# .toBytes():
 producer = KafkaProducer(
     bootstrap_servers="localhost:9092",
     value_serializer=lambda m: serialize_data_message(m["sample_index"], m["features"], m["label"])
@@ -619,7 +620,7 @@ def main():
                 
                 for index in range(len(X_train)):
 
-                    if(DATASET == "cifar3"):
+                    if(DATASET in ("cifar3", "mnist")):
                         features = X_train[index].ravel().astype(np.float32)
                     else:
                         features = X_train[index]
@@ -653,7 +654,12 @@ def main():
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     
                     for index in range(len(X_test)):
-                        features = X_test[index]
+
+                        if(DATASET in ("cifar3", "mnist")):
+                            features = X_test[index].ravel().astype(np.float32)
+                        else:
+                            features = X_test[index]
+                            
                         label = int(y_test[index])
 
                         msg = {
@@ -680,7 +686,12 @@ def main():
                 while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
                     
                     for index in range(len(X_train)):
-                        features = X_train[index]
+
+                        if(DATASET in ("cifar3", "mnist")):
+                            features = X_train[index].ravel().astype(np.float32)
+                        else:
+                            features = X_train[index]
+
                         label = int(y_train[index])
 
                         msg = {

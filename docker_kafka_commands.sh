@@ -146,7 +146,8 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --create --topic mnist-input --partitions 40 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 --describe --topic mnist-input
+  --bootstrap-server localhost:9092 \
+  --describe --topic mnist-input
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \

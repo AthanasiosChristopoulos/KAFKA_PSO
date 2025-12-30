@@ -81,19 +81,19 @@ public class BatchPrediction {
         for (DataMessage msg : batch) {
             if (msg == null) continue;
 
-            float[] feats = msg.features;
-            if (feats == null) {
+            float[] features = msg.features;
+            if (features == null) {
                 logger.log("Null features in DataMessage");
                 continue;
             }
 
-            if (feats.length != NUM_FEATURES) {
-                logger.log("Wrong features length. Got " + feats.length + " but NUM_FEATURES = " + NUM_FEATURES);
-                System.out.println("Wrong features length. Got " + feats.length + " but NUM_FEATURES = " + NUM_FEATURES);
+            if (features.length != NUM_FEATURES) {
+                logger.log("Wrong features length. Got " + features.length + " but NUM_FEATURES = " + NUM_FEATURES);
+                System.out.println("Wrong features length. Got " + features.length + " but NUM_FEATURES = " + NUM_FEATURES);
                 continue; // skip non-conforming record
             }
 
-            featureList.add(feats);
+            featureList.add(features);
             labels.add(msg.label);
         }
 
@@ -103,7 +103,7 @@ public class BatchPrediction {
             return new float[]{-1f, -1f};
         }
 
-        float[][] data = new float[nSamples][NUM_FEATURES];
+        float[][] data = new float[nSamples][NUM_FEATURES];     // matrix of samples and features
         for (int i = 0; i < nSamples; i++) {
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
@@ -126,6 +126,7 @@ public class BatchPrediction {
             X = X4d.permute(0, 3, 1, 2).dup();        // [batch, 3, 32, 32]
 
         } else if("mnist".equals(DATASET)) {
+
             INDArray X2d = Nd4j.create(data);          // [batch, 784]
             X = X2d.reshape(X2d.size(0), 1, 28, 28);
             // INDArray probs = model.output(X4d, false);

@@ -393,6 +393,7 @@ def load_mnist_data():
     print("Test shape:", X_test.shape, "Labels:", y_test.shape)
 
     class_names = [str(i) for i in range(10)]
+    
     return X_train, y_train, X_test, y_test, class_names
 
 # ===============================================================================
@@ -419,6 +420,7 @@ def load_mnist_data():
 
 
 def build_mnist_model(input_shape=(28, 28), num_classes=10):
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),

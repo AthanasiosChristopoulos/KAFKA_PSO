@@ -13,6 +13,8 @@
             this.label = label;
         }
 
+        // ======================================================================
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -31,4 +33,21 @@
             return sb.toString();
         }
 
+        // ======================================================================
+
+        public String toStringFull() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("sampleIndex=").append(sampleIndex);
+            sb.append(", label=").append(label);
+
+            sb.append(", featuresSample=[");
+
+            for (int i = 0; i < features.length; i++) {
+                sb.append(String.format("%.5f", features[i]));
+                if (i < features.length - 1) sb.append(", ");
+            }
+            
+            sb.append(", ...]}");
+            return sb.toString();
+        }
     }

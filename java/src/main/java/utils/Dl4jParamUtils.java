@@ -29,42 +29,56 @@ public class Dl4jParamUtils {
     public static final float MONITORING_THRESHOLD = cfg.MONITORING_THRESHOLD;
 	public static int POINTS_PER_AXIS = cfg.POINTS_PER_AXIS;
 
-    public static float[] modelToFlatList(MultiLayerNetwork model) {
+    // public static float[] modelToFlatList(MultiLayerNetwork model) {
 
-        List<Float> flatList = new ArrayList<>();
+    //     List<Float> flatList = new ArrayList<>();
 
-        for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
-            Layer l = model.getLayer(layerIdx);
-            Map<String, INDArray> params = l.paramTable();
+    //     for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
+    //         Layer l = model.getLayer(layerIdx);
+    //         Map<String, INDArray> params = l.paramTable();
 
-            INDArray W = params.get("W");
-            INDArray b = params.get("b");
+    //         INDArray W = params.get("W");
+    //         INDArray b = params.get("b");
 
-            if (W == null || b == null) {
-                continue;
-            }
+    //         if (W == null || b == null) {
+    //             continue;
+    //         }
 
-            long inSize = W.size(0);
-            long outSize = W.size(1);
+    //         long inSize = W.size(0);
+    //         long outSize = W.size(1);
 
-            // convention W_L(i, j): j = neuron index, i = input index (input weights), L = number of layer
-            for (int j = 0; j < outSize; j++) {
+    //         // convention W_L(i, j): j = neuron index, i = input index (input weights), L = number of layer
+    //         for (int j = 0; j < outSize; j++) {
 
-                for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
-                    flatList.add(W.getFloat(i, j));
-                }
+    //             for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
+    //                 flatList.add(W.getFloat(i, j));
+    //             }
 
-                flatList.add(b.getFloat(j));       // Bias for neuron j
-            }
-        }
+    //             flatList.add(b.getFloat(j));       // Bias for neuron j
+    //         }
+    //     }
 
-        float[] flat = new float[flatList.size()];
-        for (int i = 0; i < flat.length; i++) {
-            flat[i] = flatList.get(i);
-        }
-        return flat;
-    }
+    //     float[] flat = new float[flatList.size()];
+    //     for (int i = 0; i < flat.length; i++) {
+    //         flat[i] = flatList.get(i);
+    //     }
+    //     return flat;
+    // }
     
+    public static float[] modelToFlatList(MultiLayerNetwork model) {
+        return model.params().toFloatVector();  
+    }
+
+    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+        if (flat.length != model.numParams()) {
+            throw new IllegalArgumentException(
+                "Expected " + model.numParams() + " params but got " + flat.length
+            );
+        }
+        model.setParams(Nd4j.createFromArray(flat));
+    }
+
+
     //=====================================================================================================
 
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {
@@ -104,14 +118,14 @@ public class Dl4jParamUtils {
     //     }
     // }
 
-    public static void updateModel(MultiLayerNetwork model, float[] flat) {
-        if (flat.length != model.numParams()) {
-            throw new IllegalArgumentException(
-                "Expected " + model.numParams() + " params but got " + flat.length
-            );
-        }
-        model.setParams(Nd4j.create(flat));
-    }
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    //     if (flat.length != model.numParams()) {
+    //         throw new IllegalArgumentException(
+    //             "Expected " + model.numParams() + " params but got " + flat.length
+    //         );
+    //     }
+    //     model.setParams(Nd4j.create(flat));
+    // }
 
 
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {
