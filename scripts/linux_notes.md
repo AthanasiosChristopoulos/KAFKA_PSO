@@ -1,8 +1,29 @@
-Apps from built in App Store:
+
+# Apps from built in App Store: =============================================================
+
  - telegram
  - vscode
 
+# Apps using dpkg: =========================================================================
+
+ - sudo dpkg -i <file_name>.deb
+ - Chrome
+ 
+# Apps using commands: =====================================================================
+
+ - sudo apt install terminator
+ - sudo update-alternatives --config x-terminal-emulator
+ - sudo apt install vlc
+ - sudo apt install rhythmbox
+ - sudo apt install audacious
+ - sudo apt install gnome-shell-extension-manager
+	- extension: Hide TopBar
+ - sudo apt install mpv
+	- nano ~/.config/mpv/mpv.conf
+	- osd-bar=no
+
 # Vscode: ====================================================================================
+
  - Extensions:
 	- Docker Python Java Github 
  - Settings:
@@ -11,10 +32,6 @@ Apps from built in App Store:
 
 
 
-Apps using dpkg:
- - sudo dpkg -i <file_name>.deb
- - Chrome
- 
 sudo apt install gnome-shell-extension-manager
  - extension: Hide TopBar
 
@@ -75,21 +92,22 @@ pip install matplotlib --break-system-packages
 
  - docker desktop:
 	- https://www.youtube.com/watch?v=FWWq83IGUgw
+
  - command line:
 
-```bash
-sudo apt update
-sudo apt install -y docker.io docker-compose-plugin
-sudo systemctl enable --now docker
-sudo usermod -aG docker $USER
-newgrp docker
-# logout and login
-groups 		# verify that you are in the docker group
-docker ps
-docker run --rm hello-world
-docker compose up
-```
- - sudo apt install docker.io
- - sudo systemctl enable docker
- - sudo systemctl status docker
- 
+	```bash
+	sudo apt update
+	sudo apt install -y docker.io docker-compose-plugin
+	sudo systemctl enable --now docker
+	sudo usermod -aG docker $USER
+	newgrp docker
+	# logout and login
+	groups 		# verify that you are in the docker group
+	docker ps
+	docker run --rm hello-world
+	docker compose up
+	```
+	- sudo apt install docker.io
+	- sudo systemctl enable docker
+	- sudo systemctl status docker
+	

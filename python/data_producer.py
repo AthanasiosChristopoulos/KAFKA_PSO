@@ -10,6 +10,7 @@ from sklearn.datasets import load_wine
 from tensorflow.keras.datasets import mnist
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import tf
 from kafka import KafkaProducer
 import argparse
 import numpy as np
@@ -75,6 +76,8 @@ else:
     TEST_TOPIC = DATASET + "-test"
 
 print(f"Running this on input topic: {INPUT_TOPIC}")
+
+CIFAR10_NAMES = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
 
 # ========================================================================================
 # Kafka Producer =========================================================================
@@ -482,6 +485,9 @@ def load_dataset():
 
         return X_train, y_train, X_test, y_test, None
 
+    # ==================================================================================================
+    # letter
+
     elif DATASET == "letter":
     
         df = pd.read_csv("../data/letter-recognition.csv")
@@ -493,6 +499,51 @@ def load_dataset():
         X_train, X_test, y_train, y_test = train_test_split(X, y_enc, train_size=train_size, random_state=42, stratify=y_enc)
     
         return X_train, y_train, X_test, y_test, None
+
+    # ==================================================================================================
+    # cifar3
+
+    elif DATASET == "cifar3":
+
+        classes = (0,1,2)
+
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+        y_train = y_train.squeeze().astype(np.int64)  # (N,)
+        y_test  = y_test.squeeze().astype(np.int64)
+
+        classes = np.array(classes, dtype=np.int64)
+
+        train_mask = np.isin(y_train, classes)
+        test_mask  = np.isin(y_test, classes)
+
+        X_train = x_train[train_mask].astype(np.float32) / 255.0
+        y_train = y_train[train_mask]
+        X_test  = x_test[test_mask].astype(np.float32) / 255.0
+        y_test  = y_test[test_mask]
+
+        # Remap labels to 0..(K-1)
+        remap = {int(c): i for i, c in enumerate(classes.tolist())}
+        y_train = np.vectorize(remap.get)(y_train).astype(np.int64)
+        y_test  = np.vectorize(remap.get)(y_test).astype(np.int64)
+
+        rng = np.random.default_rng(123)
+        idx = rng.permutation(len(X_train))
+        X_train, y_train = X_train[idx], y_train[idx]
+
+        idx = rng.permutation(len(X_test))
+        X_test, y_test = X_test[idx], y_test[idx]
+
+        class_names = [CIFAR10_NAMES[int(c)] for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"X_test : {X_test.shape},  y_test : {y_test.shape}")
+
+        # If you have this function, you can uncomment:
+        # evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+
+        return X_train, y_train, X_test, y_test, class_names
 
     else:
         print("Invalid Dataset selected")

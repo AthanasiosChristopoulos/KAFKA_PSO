@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.keras import layers, models
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, Optional
@@ -38,7 +38,7 @@ def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes):
 
 # ======================================================================
 # Save model weights in flat format
-# ======================================================================
+# ============= =========================================================
 
 def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
     flat = []
@@ -848,184 +848,435 @@ def run_pendigits_half():
 # CIFAR-10 DATASET
 # ======================================================================
 
-def load_cifar10_data(normalize=True, one_hot=False):
+# def load_cifar10_data(normalize=True, one_hot=False):
+
+#     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+
+#     y_train = y_train.squeeze().astype(np.int64)
+#     y_test  = y_test.squeeze().astype(np.int64)
+
+#     X_train = X_train.astype(np.float32)
+#     X_test  = X_test.astype(np.float32)
+
+#     if normalize:
+#         X_train /= 255.0
+#         X_test  /= 255.0
+
+#     if one_hot:
+#         y_train = keras.utils.to_categorical(y_train, 10).astype(np.float32)
+#         y_test  = keras.utils.to_categorical(y_test, 10).astype(np.float32)
+
+#     class_names = [
+#         "airplane","automobile","bird","cat","deer",
+#         "dog","frog","horse","ship","truck"
+#     ]
+
+#     print("[CIFAR-10] Train shape:", X_train.shape, "Labels:", y_train.shape)
+#     print("[CIFAR-10] Test  shape:", X_test.shape,  "Labels:", y_test.shape)
+#     print("[CIFAR-10] Classes:", class_names)
+
+#     return X_train, y_train, X_test, y_test, class_names
+
+# # =======================================================================================================
+
+# def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, weight_decay=1e-4):
+
+#     def conv_bn_relu(x, filters, kernel_size=3, strides=1):
+#         x = layers.Conv2D(
+#             filters, kernel_size, strides=strides, padding="same",
+#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+#         )(x)
+#         x = layers.BatchNormalization()(x)
+#         x = layers.Activation("relu")(x)
+#         return x
+
+#     def residual_block(x, filters, downsample=False):
+#         strides = 2 if downsample else 1
+#         shortcut = x
+
+#         # First conv
+#         y = layers.Conv2D(
+#             filters, 3, strides=strides, padding="same",
+#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+#         )(x)
+#         y = layers.BatchNormalization()(y)
+#         y = layers.Activation("relu")(y)
+
+#         # Second conv
+#         y = layers.Conv2D(
+#             filters, 3, strides=1, padding="same",
+#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+#         )(y)
+#         y = layers.BatchNormalization()(y)
+
+#         # Match shortcut shape if needed
+#         if downsample or shortcut.shape[-1] != filters:
+#             shortcut = layers.Conv2D(
+#                 filters, 1, strides=strides, padding="same",
+#                 use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
+#             )(shortcut)
+#             shortcut = layers.BatchNormalization()(shortcut)
+
+#         out = layers.Add()([shortcut, y])
+#         out = layers.Activation("relu")(out)
+#         return out
+
+#     inp = keras.Input(shape=input_shape)
+
+#     # Stem
+#     x = conv_bn_relu(inp, 16, 3, 1)
+
+#     # Stage 1: 16 filters, 3 blocks
+#     for _ in range(3):
+#         x = residual_block(x, 16, downsample=False)
+
+#     # Stage 2: 32 filters, 3 blocks (first downsample)
+#     x = residual_block(x, 32, downsample=True)
+#     for _ in range(2):
+#         x = residual_block(x, 32, downsample=False)
+
+#     # Stage 3: 64 filters, 3 blocks (first downsample)
+#     x = residual_block(x, 64, downsample=True)
+#     for _ in range(2):
+#         x = residual_block(x, 64, downsample=False)
+
+#     # Head
+#     x = layers.GlobalAveragePooling2D()(x)
+#     x = layers.Dense(
+#         128, activation="relu",
+#         kernel_regularizer=keras.regularizers.l2(weight_decay)
+#     )(x)
+#     x = layers.Dropout(0.25)(x)
+#     out = layers.Dense(num_classes, activation="softmax")(x)
+
+#     model = keras.Model(inp, out)
+
+#     # Optimizer: Adam is fine; SGD+momentum often edges higher for CIFAR.
+#     # We'll use SGD+Nesterov for a classic reliable CIFAR setup.
+#     opt = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=True)
+
+#     model.compile(
+#         optimizer=opt,
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     return model
+
+# # =======================================================================================================
+
+# def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
+#     X_train, y_train, X_test, y_test, class_names = load_cifar10_data(
+#         normalize=True,
+#         one_hot=False
+#     )
+
+#     model = build_cifar10_model(input_shape=X_train.shape[1:], num_classes=10)
+
+#     # Data augmentation (standard CIFAR-ish): pad+random crop + flip
+#     if use_augmentation:
+#         aug = keras.Sequential([
+#             layers.RandomFlip("horizontal"),
+#             layers.ZeroPadding2D(padding=4),
+#             layers.RandomCrop(32, 32),
+#         ])
+#         train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+#         train_ds = train_ds.shuffle(50000).batch(batch_size).map(
+#             lambda x, y: (aug(x, training=True), y),
+#             num_parallel_calls=tf.data.AUTOTUNE
+#         ).prefetch(tf.data.AUTOTUNE)
+#     else:
+#         train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+#         train_ds = train_ds.shuffle(50000).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+#     test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+#     # Learning-rate schedule (simple step-down)
+#     def lr_schedule(epoch, lr):
+#         # classic CIFAR schedule: drop at 50% and 75% of training
+#         if epoch == int(epochs * 0.5) or epoch == int(epochs * 0.75):
+#             return lr * 0.1
+#         return lr
+
+#     callbacks = [
+#         keras.callbacks.LearningRateScheduler(lr_schedule, verbose=1),
+#         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True),
+#     ]
+
+#     print("\n[CIFAR-10] Training...")
+#     history = model.fit(
+#         train_ds,
+#         validation_data=test_ds,
+#         epochs=epochs,
+#         verbose=2,
+#         callbacks=callbacks
+#     )
+
+#     print("\n[CIFAR-10] Evaluating on test set...")
+#     test_loss, test_acc = model.evaluate(test_ds, verbose=0)
+#     print(f"[CIFAR-10] Test loss: {test_loss:.4f}")
+#     print(f"[CIFAR-10] Test accuracy: {test_acc:.4f}")
+
+#     return model, history, class_names
+
+def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
     """
-    Returns:
-      X_train: (50000, 32, 32, 3) float32
-      y_train: (50000,) int64   OR (50000,10) if one_hot=True
-      X_test : (10000, 32, 32, 3) float32
-      y_test : (10000,) int64   OR (10000,10) if one_hot=True
-      class_names: list[str] length 10
+    Loads CIFAR-10, normalizes to [0,1], and returns (train_ds, test_ds).
+    train_ds is shuffled, batched, and prefetched.
+    test_ds is batched and prefetched.
     """
-    (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+    x_train = x_train.astype("float32") / 255.0
+    x_test = x_test.astype("float32") / 255.0
 
-    y_train = y_train.squeeze().astype(np.int64)
-    y_test  = y_test.squeeze().astype(np.int64)
+    print(f"x_train shape: {x_train.shape}")    # (50000, 32, 32, 3) => 3 comes from RGB => 15000 ON 3 CLASSES
+    print(f"x_test shape: {x_test.shape}")      # (10000, 32, 32, 3)
 
-    X_train = X_train.astype(np.float32)
-    X_test  = X_test.astype(np.float32)
+    train_ds = (
+        tf.data.Dataset.from_tensor_slices((x_train, y_train))
+        .shuffle(buffer_size)
+        .batch(batch_size)
+        .prefetch(tf.data.AUTOTUNE)
+    )
+    test_ds = (
+        tf.data.Dataset.from_tensor_slices((x_test, y_test))
+        .batch(batch_size)
+        .prefetch(tf.data.AUTOTUNE)
+    )
+    return train_ds, test_ds
 
-    if normalize:
-        X_train /= 255.0
-        X_test  /= 255.0
 
-    if one_hot:
-        y_train = keras.utils.to_categorical(y_train, 10).astype(np.float32)
-        y_test  = keras.utils.to_categorical(y_test, 10).astype(np.float32)
+def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
+    """
+    Builds a lightweight CNN for CIFAR-10 with small augmentation + BN.
+    Returns a compiled tf.keras.Model.
+    """
+    augment = tf.keras.Sequential(
+        [
+            layers.RandomFlip("horizontal"),
+            layers.RandomTranslation(0.1, 0.1),
+            layers.RandomRotation(0.05),
+        ],
+        name="augment",
+    )
 
-    class_names = [
-        "airplane","automobile","bird","cat","deer",
-        "dog","frog","horse","ship","truck"
-    ]
-
-    print("[CIFAR-10] Train shape:", X_train.shape, "Labels:", y_train.shape)
-    print("[CIFAR-10] Test  shape:", X_test.shape,  "Labels:", y_test.shape)
-    print("[CIFAR-10] Classes:", class_names)
-
-    return X_train, y_train, X_test, y_test, class_names
-
-# =======================================================================================================
-
-def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, weight_decay=1e-4):
-
-    def conv_bn_relu(x, filters, kernel_size=3, strides=1):
-        x = layers.Conv2D(
-            filters, kernel_size, strides=strides, padding="same",
-            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-        )(x)
+    def conv_block(x, filters: int):
+        x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation("relu")(x)
+
+        x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Activation("relu")(x)
+
+        x = layers.MaxPooling2D()(x)
         return x
 
-    def residual_block(x, filters, downsample=False):
-        strides = 2 if downsample else 1
-        shortcut = x
+    inputs = layers.Input(shape=input_shape)
+    x = augment(inputs)
 
-        # First conv
-        y = layers.Conv2D(
-            filters, 3, strides=strides, padding="same",
-            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-        )(x)
-        y = layers.BatchNormalization()(y)
-        y = layers.Activation("relu")(y)
+    x = conv_block(x, 32)
+    x = conv_block(x, 64)
+    x = conv_block(x, 128)
 
-        # Second conv
-        y = layers.Conv2D(
-            filters, 3, strides=1, padding="same",
-            use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-        )(y)
-        y = layers.BatchNormalization()(y)
-
-        # Match shortcut shape if needed
-        if downsample or shortcut.shape[-1] != filters:
-            shortcut = layers.Conv2D(
-                filters, 1, strides=strides, padding="same",
-                use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-            )(shortcut)
-            shortcut = layers.BatchNormalization()(shortcut)
-
-        out = layers.Add()([shortcut, y])
-        out = layers.Activation("relu")(out)
-        return out
-
-    inp = keras.Input(shape=input_shape)
-
-    # Stem
-    x = conv_bn_relu(inp, 16, 3, 1)
-
-    # Stage 1: 16 filters, 3 blocks
-    for _ in range(3):
-        x = residual_block(x, 16, downsample=False)
-
-    # Stage 2: 32 filters, 3 blocks (first downsample)
-    x = residual_block(x, 32, downsample=True)
-    for _ in range(2):
-        x = residual_block(x, 32, downsample=False)
-
-    # Stage 3: 64 filters, 3 blocks (first downsample)
-    x = residual_block(x, 64, downsample=True)
-    for _ in range(2):
-        x = residual_block(x, 64, downsample=False)
-
-    # Head
     x = layers.GlobalAveragePooling2D()(x)
-    x = layers.Dense(
-        128, activation="relu",
-        kernel_regularizer=keras.regularizers.l2(weight_decay)
-    )(x)
-    x = layers.Dropout(0.25)(x)
-    out = layers.Dense(num_classes, activation="softmax")(x)
+    x = layers.Dropout(0.3)(x)
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
 
-    model = keras.Model(inp, out)
-
-    # Optimizer: Adam is fine; SGD+momentum often edges higher for CIFAR.
-    # We'll use SGD+Nesterov for a classic reliable CIFAR setup.
-    opt = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=True)
+    model = models.Model(inputs, outputs)
 
     model.compile(
-        optimizer=opt,
+        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+
+def run_cifar10(
+    batch_size: int = 128,
+    epochs: int = 50,
+    verbose: int = 1,
+):
+    """
+    End-to-end runner:
+      - loads data
+      - builds model
+      - trains with callbacks (early stop + reduce LR)
+      - evaluates on test set
+    Returns: (model, history, test_metrics_dict)
+    """
+    train_ds, test_ds = load_cifar10_data(batch_size=batch_size)
+    model = build_cifar10_model()
+    print("Trainable params:", model.count_params())
+
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_accuracy", patience=8, restore_best_weights=True
+        ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5
+        ),
+    ]
+
+    history = model.fit(
+        train_ds,
+        validation_data=test_ds,
+        epochs=epochs,
+        callbacks=callbacks,
+        verbose=verbose,
+    )
+
+    results = model.evaluate(test_ds, verbose=0)
+    test_metrics = dict(zip(model.metrics_names, results))
+    print("Test metrics:", test_metrics)
+
+    return model, history, test_metrics
+
+# =======================================================================================================
+# CIFAR3
+# =======================================================================================================
+
+
+def load_cifar3_data(
+    classes=(0, 1, 2),
+    batch_size: int = 128,
+    buffer_size: int = 50_000,
+):
+    """
+    Loads CIFAR-10 and filters it down to CIFAR-3 by keeping only `classes`.
+    Returns (train_ds, test_ds, class_names).
+
+    classes: tuple/list of CIFAR-10 class indices to keep.
+             CIFAR-10 labels are:
+             0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer,
+             5 dog, 6 frog, 7 horse, 8 ship, 9 truck
+    """
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+    # Flatten labels from shape (N,1) -> (N,)
+    y_train = y_train.squeeze().astype(np.int64)
+    y_test = y_test.squeeze().astype(np.int64)
+
+    # Filter to selected classes
+    classes = np.array(classes, dtype=np.int64)
+
+    train_mask = np.isin(y_train, classes)
+    test_mask = np.isin(y_test, classes)
+
+    x_train = x_train[train_mask].astype("float32") / 255.0
+    y_train = y_train[train_mask]
+    x_test = x_test[test_mask].astype("float32") / 255.0
+    y_test = y_test[test_mask]
+
+    # Remap labels to 0..(K-1) so sparse_categorical_crossentropy works cleanly
+    remap = {int(c): i for i, c in enumerate(classes.tolist())}
+    y_train = np.vectorize(remap.get)(y_train).astype(np.int64)
+    y_test = np.vectorize(remap.get)(y_test).astype(np.int64)
+
+    cifar10_names = ["airplane", "automobile", "bird", "cat", "deer",
+                     "dog", "frog", "horse", "ship", "truck"]
+    class_names = [cifar10_names[int(c)] for c in classes]
+
+    print(f"Selected CIFAR-3 classes: {classes.tolist()} -> {class_names}")
+    print(f"x_train: {x_train.shape}, y_train: {y_train.shape}")
+    print(f"x_test : {x_test.shape},  y_test : {y_test.shape}")
+
+    # Build tf.data pipelines
+    train_ds = (
+        tf.data.Dataset.from_tensor_slices((x_train, y_train))
+        .shuffle(min(buffer_size, len(x_train)))
+        .batch(batch_size)
+        .cache()
+        .prefetch(tf.data.AUTOTUNE)
+    )
+    test_ds = (
+        tf.data.Dataset.from_tensor_slices((x_test, y_test))
+        .batch(batch_size)
+        .cache()
+        .prefetch(tf.data.AUTOTUNE)
+    )
+
+    return train_ds, test_ds, class_names
+
+
+def build_cifar3_model(input_shape=(32, 32, 3), num_classes: int = 3):
+    """
+    Very small CNN designed to keep parameter count low (PSO-friendly):
+      Conv(8) -> MaxPool
+      Conv(16) -> MaxPool
+      GlobalAvgPool -> Dense(num_classes)
+    """
+    inputs = layers.Input(shape=input_shape)
+
+    x = layers.Conv2D(8, 3, padding="same", activation="relu")(inputs)
+    x = layers.MaxPooling2D()(x)
+
+    x = layers.Conv2D(16, 3, padding="same", activation="relu")(x)
+    x = layers.MaxPooling2D()(x)
+
+    x = layers.GlobalAveragePooling2D()(x)
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
+
+    model = models.Model(inputs, outputs)
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
 
     model.summary()
+    print("Trainable params:", model.count_params())
     return model
 
-# =======================================================================================================
 
-def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
-    X_train, y_train, X_test, y_test, class_names = load_cifar10_data(
-        normalize=True,
-        one_hot=False
+def run_cifar3(
+    classes=(0, 1, 2),
+    batch_size: int = 256,
+    epochs: int = 30,
+    verbose: int = 1,
+):
+    """
+    End-to-end runner:
+      - loads CIFAR-3 subset
+      - builds tiny CNN
+      - trains + evaluates
+    Returns: (model, history, test_metrics_dict, class_names)
+    """
+    print("GPUs:", tf.config.list_physical_devices("GPU"))
+
+    train_ds, test_ds, class_names = load_cifar3_data(
+        classes=classes,
+        batch_size=batch_size,
     )
 
-    model = build_cifar10_model(input_shape=X_train.shape[1:], num_classes=10)
-
-    # Data augmentation (standard CIFAR-ish): pad+random crop + flip
-    if use_augmentation:
-        aug = keras.Sequential([
-            layers.RandomFlip("horizontal"),
-            layers.ZeroPadding2D(padding=4),
-            layers.RandomCrop(32, 32),
-        ])
-        train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-        train_ds = train_ds.shuffle(50000).batch(batch_size).map(
-            lambda x, y: (aug(x, training=True), y),
-            num_parallel_calls=tf.data.AUTOTUNE
-        ).prefetch(tf.data.AUTOTUNE)
-    else:
-        train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-        train_ds = train_ds.shuffle(50000).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-    test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-    # Learning-rate schedule (simple step-down)
-    def lr_schedule(epoch, lr):
-        # classic CIFAR schedule: drop at 50% and 75% of training
-        if epoch == int(epochs * 0.5) or epoch == int(epochs * 0.75):
-            return lr * 0.1
-        return lr
+    model = build_cifar3_model(num_classes=len(class_names))
 
     callbacks = [
-        keras.callbacks.LearningRateScheduler(lr_schedule, verbose=1),
-        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True),
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_accuracy", patience=6, restore_best_weights=True
+        ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5
+        ),
     ]
 
-    print("\n[CIFAR-10] Training...")
     history = model.fit(
         train_ds,
         validation_data=test_ds,
         epochs=epochs,
-        verbose=2,
-        callbacks=callbacks
+        callbacks=callbacks,
+        verbose=verbose,
     )
 
-    print("\n[CIFAR-10] Evaluating on test set...")
-    test_loss, test_acc = model.evaluate(test_ds, verbose=0)
-    print(f"[CIFAR-10] Test loss: {test_loss:.4f}")
-    print(f"[CIFAR-10] Test accuracy: {test_acc:.4f}")
+    results = model.evaluate(test_ds, verbose=0)
+    test_metrics = dict(zip(model.metrics_names, results))
+    print("Test metrics:", test_metrics)
 
-    return model, history, class_names
+    return model, history, test_metrics, class_names
+
 
 # =======================================================================================================
 # HIGGS
@@ -1311,6 +1562,8 @@ def main():
         run_pendigits_half()      
     elif DATASET == "cifar10":
         run_cifar10()
+    elif DATASET == "cifar3":
+        run_cifar3()
     elif DATASET == "higgs":
         run_higgs()
     elif DATASET == "winequality":

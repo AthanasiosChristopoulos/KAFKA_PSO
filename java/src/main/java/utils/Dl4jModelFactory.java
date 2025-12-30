@@ -12,6 +12,15 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.learning.config.Adam;
 
+import org.deeplearning4j.nn.conf.inputs.InputType;
+
+import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
+import org.deeplearning4j.nn.conf.layers.GlobalPoolingLayer;
+import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
+
+import org.deeplearning4j.nn.conf.layers.PoolingType;
+
+
 public class Dl4jModelFactory {
         
 	private static final Config cfg = Config.getInstance();
@@ -59,6 +68,9 @@ public class Dl4jModelFactory {
 
 		} else if ("letter".equals(DATASET)) {
 			return createLetterModel();
+			// return createLetterModel70K();
+		} else if ("cifar3".equals(DATASET)) {
+			return createCifar3Model();
 			// return createLetterModel70K();
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
@@ -627,6 +639,8 @@ public class Dl4jModelFactory {
 	// Grand total
 	// 4352 + 65792 + 6682 = 76826 parameters
 
+	// ======================================================================================================================
+	// Letter 70k (bigger)
 
 	public static MultiLayerNetwork createLetterModel70K() {
 
@@ -655,5 +669,67 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
+
+	// ======================================================================================================================
+	// CIFAR3
+
+    public static MultiLayerNetwork createCifar3Model(int numClasses) {
+
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(123)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(1e-3))
+                .list()
+
+                // Conv(8, 3x3, same) + ReLU
+                .layer(0, new ConvolutionLayer.Builder(3, 3)
+                        .nIn(3)               // RGB channels
+                        .nOut(8)
+                        .stride(1, 1)
+                        .padding(1, 1)        // "same" padding for 3x3 stride1
+                        .activation(Activation.RELU)
+                        .build())
+
+                // MaxPool(2x2)
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+
+                // Conv(16, 3x3, same) + ReLU
+                .layer(2, new ConvolutionLayer.Builder(3, 3)
+                        .nIn(8)
+                        .nOut(16)
+                        .stride(1, 1)
+                        .padding(1, 1)
+                        .activation(Activation.RELU)
+                        .build())
+
+                // MaxPool(2x2)
+                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+
+                // GlobalAveragePooling
+                .layer(4, new GlobalPoolingLayer.Builder()
+                        .poolingType(PoolingType.AVG)
+                        .build())
+
+                // Dense(numClasses) + Softmax (MCXENT)
+                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+                        .nIn(16)              // after global avg pooling: one value per channel
+                        .nOut(numClasses)      // 3 for CIFAR-3
+                        .activation(Activation.SOFTMAX)
+                        .build())
+
+                // Tell DL4J the input shape (height, width, channels) - These are images not separate featuresd
+                .setInputType(InputType.convolutional(32, 32, 3))
+                .build();
+
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model.init();
+        return model;
+    }
 
 }

@@ -298,7 +298,9 @@ def run_bank():
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
     - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
-    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
+    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1\
+        - Early iterations: exploration-heavy
+        - Late phase: stabilization / convergence
     - cognitive Velocity: Distance to of current position to pBest
     - social Velocity: Distance to of current position to gBest (or the other pBests)
  - Is a good result located ? Can it be found ?

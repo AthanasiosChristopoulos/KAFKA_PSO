@@ -112,8 +112,8 @@ public class PsoUpdater {
             float r2 = rnd.nextFloat();  
 
             inertiaVec[k] = W_INERTIA * velocity[k];
-            // cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
-            cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+            cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+            // cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
             socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
@@ -123,8 +123,13 @@ public class PsoUpdater {
             // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
 
             velocity[k] = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
-            clipVelocityByNorm(VMAX_NORM);
 
+            // x_i_new[k] = x_i[k] + velocity[k];
+        }
+
+        clipVelocityByNorm(VMAX_NORM);
+
+        for (int k = 0; k < x_i.length; k++) {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
@@ -202,11 +207,20 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    private void updateC1Schedule() {
+    // private void updateC1Schedule() {
         
-        float t = Math.min(iter, MAX_ITERS);
-        float alpha = t / (float) MAX_ITERS;          // 0 -> 1
-        c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
+    //     float t = Math.min(iter, MAX_ITERS);
+    //     float alpha = t / (float) MAX_ITERS;          // 0 -> 1
+    //     c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
+    // }
+
+    private void updateC1Schedule() {
+
+        float t = Math.min(iter, MAX_ITERS) / (float) MAX_ITERS;  // [0,1]
+        float k = 9.0f;   
+        float sigmoid = (float)(1.0 / (1.0 + Math.exp(k * (t - 0.5))));
+
+        c1 = C1_END + (C1_START - C1_END) * sigmoid;
     }
 
     //================================================================================================
