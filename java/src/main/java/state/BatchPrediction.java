@@ -39,6 +39,7 @@ public class BatchPrediction {
     private final CustomLogger logger;
     private final boolean isCoordinator;
 
+    private static boolean checked = false;
     // for Worker =======================================================================================================
 
     public BatchPrediction(MultiLayerNetwork model, CustomLogger logger) {
@@ -107,7 +108,32 @@ public class BatchPrediction {
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
 
-        INDArray X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        INDArray X;
+        
+        if("cifar3".equals(DATASET)) {
+            // data is float[nSamples][3072] (flattened NHWC from Python)
+            INDArray X2d = Nd4j.create(data);                  // [batch, 3072]
+            INDArray X4d = X2d.reshape(nSamples, 32, 32, 3);     // [batch, 32, 32, 3]  (NHWC)
+
+            if(checked == false) {
+                float r = X4d.getFloat(0, 0, 0, 0);
+                float g = X4d.getFloat(0, 0, 0, 1);
+                float b = X4d.getFloat(0, 0, 0, 2);
+                System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
+                checked = true;
+            }
+
+            X = X4d.permute(0, 3, 1, 2).dup();        // [batch, 3, 32, 32]
+
+        } else if("mnist".equals(DATASET)) {
+            INDArray X2d = Nd4j.create(data);          // [batch, 784]
+            X = X2d.reshape(X2d.size(0), 1, 28, 28);
+            // INDArray probs = model.output(X4d, false);
+
+        } else {
+            X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        }
+
         INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
 
         

@@ -19,6 +19,7 @@ import org.deeplearning4j.nn.conf.layers.GlobalPoolingLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 
 import org.deeplearning4j.nn.conf.layers.PoolingType;
+import org.deeplearning4j.nn.conf.layers.*;
 
 
 public class Dl4jModelFactory {
@@ -41,7 +42,8 @@ public class Dl4jModelFactory {
 			return createWineModel();
 
 		} else if ("mnist".equals(DATASET)) {
-			return createMNISTModel();
+			// return createMNISTModel();
+			return createMnistCnn();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -200,7 +202,69 @@ public class Dl4jModelFactory {
 		// 1048576
 		// 1881444
 		//  940584
-	
+
+    public static MultiLayerNetwork createMnistCnn() {
+
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(123)
+                .weightInit(WeightInit.RELU)
+                .updater(new Adam(1e-3))
+                .list()
+                // Conv2D(16, 3, padding="same", use_bias=False)
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nOut(16)
+                        .stride(1, 1)
+                        .padding(1, 1)       // "same" for 3x3 with stride 1
+                        .hasBias(false)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                // BatchNorm
+                .layer(new BatchNormalization.Builder().build())
+                // ReLU
+                .layer(new ActivationLayer.Builder()
+                        .activation(Activation.RELU)
+                        .build())
+                // MaxPooling2D()
+                .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2, 2)
+                        .stride(2, 2)
+                        .build())
+                // Conv2D(32, 3, padding="same", use_bias=False)
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nOut(32)
+                        .stride(1, 1)
+                        .padding(1, 1)
+                        .hasBias(false)
+                        .activation(Activation.IDENTITY)
+                        .build())
+                // BatchNorm
+                .layer(new BatchNormalization.Builder().build())
+                // ReLU
+                .layer(new ActivationLayer.Builder()
+                        .activation(Activation.RELU)
+                        .build())
+                // GlobalAveragePooling2D()
+                .layer(new GlobalPoolingLayer.Builder()
+                        .poolingType(PoolingType.AVG)
+                        .build())
+                // Dense(num_classes, softmax) + sparse categorical crossentropy
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+                        .nOut(NUM_CLASSES)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                // This is the key replacement for Keras Reshape((28,28,1))
+                .setInputType(InputType.convolutional(28, 28, 1)) // h,w,c
+                .build();
+
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model.init();
+
+        System.out.println(model.summary());
+        System.out.println("Trainable params: " + model.numParams());
+
+        return model;
+    }
+
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 
@@ -673,7 +737,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// CIFAR3
 
-    public static MultiLayerNetwork createCifar3Model(int numClasses) {
+    public static MultiLayerNetwork createCifar3Model() {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
@@ -719,7 +783,7 @@ public class Dl4jModelFactory {
                 // Dense(numClasses) + Softmax (MCXENT)
                 .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
                         .nIn(16)              // after global avg pooling: one value per channel
-                        .nOut(numClasses)      // 3 for CIFAR-3
+                        .nOut(NUM_CLASSES)      // 3 for CIFAR-3
                         .activation(Activation.SOFTMAX)
                         .build())
 

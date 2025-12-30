@@ -5,6 +5,7 @@ import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.util.ModelSerializer;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import pso.Simulation;
 
@@ -66,41 +67,73 @@ public class Dl4jParamUtils {
     
     //=====================================================================================================
 
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    //     int idx = 0;
+
+    //     for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
+
+    //         Layer l = model.getLayer(layerIdx);
+    //         Map<String, INDArray> params = l.paramTable();
+
+    //         INDArray W = params.get("W");
+    //         INDArray b = params.get("b");
+
+    //         if (W == null || b == null) {
+    //             continue;
+    //         }
+
+    //         long inSize = W.size(0);
+    //         long outSize = W.size(1);
+
+    //         for (int j = 0; j < outSize; j++) {
+    //             for (int i = 0; i < inSize; i++) {
+    //                 W.putScalar(i, j, flat[idx++]);
+    //             }
+    //             b.putScalar(j, flat[idx++]);
+    //         }
+
+    //         // Push updated arrays back into the layer
+    //         l.setParam("W", W);
+    //         l.setParam("b", b);
+    //     }
+
+    //     if (idx != flat.length) {
+    //         throw new IllegalArgumentException(
+    //                 "Flat vector length mismatch, consumed " + idx + " of " + flat.length
+    //         );
+    //     }
+    // }
+
     public static void updateModel(MultiLayerNetwork model, float[] flat) {
-        int idx = 0;
-
-        for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
-            Layer l = model.getLayer(layerIdx);
-            Map<String, INDArray> params = l.paramTable();
-
-            INDArray W = params.get("W");
-            INDArray b = params.get("b");
-
-            if (W == null || b == null) {
-                continue;
-            }
-
-            long inSize = W.size(0);
-            long outSize = W.size(1);
-
-            for (int j = 0; j < outSize; j++) {
-                for (int i = 0; i < inSize; i++) {
-                    W.putScalar(i, j, flat[idx++]);
-                }
-                b.putScalar(j, flat[idx++]);
-            }
-
-            // Push updated arrays back into the layer
-            l.setParam("W", W);
-            l.setParam("b", b);
-        }
-
-        if (idx != flat.length) {
+        if (flat.length != model.numParams()) {
             throw new IllegalArgumentException(
-                    "Flat vector length mismatch, consumed " + idx + " of " + flat.length
+                "Expected " + model.numParams() + " params but got " + flat.length
             );
         }
+        model.setParams(Nd4j.create(flat));
     }
+
+
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+
+    //     long expected = model.numParams();
+    //     if (flat.length != expected) {
+    //         throw new IllegalArgumentException(
+    //                 "Flat vector length mismatch. Got " + flat.length + " but model.numParams() = " + expected
+    //         );
+    //     }
+
+    //     // Get the model's 1D parameter vector view
+    //     INDArray p = model.params(); // rank-1 view
+
+    //     // Fill it (1D indexing is always valid)
+    //     for (int i = 0; i < flat.length; i++) {
+    //         p.putScalar(i, flat[i]);  // <-- NOTE: 1D putScalar(index, value)
+    //     }
+
+    //     // Push back into the model
+    //     model.setParams(p);
+    // }
 
     //=====================================================================================================
 

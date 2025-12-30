@@ -141,6 +141,7 @@ def build_iris_model(
 # ============================================================
 # RUN PIPELINE
 # ============================================================
+
 def run_iris(
     test_size: float = 0.2,
     val_size: float = 0.2,
@@ -381,6 +382,7 @@ def run_bank():
 # ======================================================================
 
 def load_mnist_data():
+
     print("Loading from tf.keras.datasets.mnist")
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
 
@@ -394,15 +396,44 @@ def load_mnist_data():
     return X_train, y_train, X_test, y_test, class_names
 
 # ===============================================================================
+# about 784 × 256 = 200,704 weights 
 
-def build_mnist_model(input_shape=(28, 28)):
+# def build_mnist_model(input_shape=(28, 28)):
     
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Flatten(),
+#         layers.Dense(256, activation="relu"),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dense(10, activation="softmax"),
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(1e-3),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     return model
+
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
-        layers.Flatten(),
-        layers.Dense(256, activation="relu"),
-        layers.Dense(128, activation="relu"),
-        layers.Dense(10, activation="softmax"),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(16, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.MaxPooling2D(),
+
+        layers.Conv2D(32, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(num_classes, activation="softmax"),
     ])
 
     model.compile(
@@ -410,8 +441,8 @@ def build_mnist_model(input_shape=(28, 28)):
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
-
     model.summary()
+    print("Trainable params:", model.count_params())
     return model
 
 # ===============================================================================
@@ -429,7 +460,7 @@ def run_mnist():
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
-    save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
+    # save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
 # ======================================================================
 # Adult income DATASET

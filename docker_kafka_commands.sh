@@ -143,7 +143,7 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
-  --create --topic mnist-input --partitions 1 --if-not-exists
+  --create --topic mnist-input --partitions 40 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --describe --topic mnist-input
@@ -487,6 +487,41 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic pendigits-half-test --from-beginning
+
+# cifar3: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic cifar3-input --partitions 40 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic cifar3-input
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic cifar3-input
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic cifar3-input --from-beginning
+  
+# cifar3-test: ======================================================
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create --topic cifar3-test --partitions 1 --if-not-exists
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 --describe --topic cifar3-test
+
+docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --delete --topic cifar3-test
+
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic cifar3-test --from-beginning
+
 
 # ========================================================================
 # ========================================================================

@@ -7,10 +7,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_wine
+import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras.datasets import mnist
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-import tf
 from kafka import KafkaProducer
 import argparse
 import numpy as np
@@ -55,6 +56,14 @@ if(DATASET == "pendigits-half"):
     NUMBER_OF_DATA_REPEATS = 80
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "cifar3"):
+    NUMBER_OF_DATA_REPEATS = 27
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
+if(DATASET == "mnist"):
+    NUMBER_OF_DATA_REPEATS = 7
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+    
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -77,6 +86,7 @@ else:
 
 print(f"Running this on input topic: {INPUT_TOPIC}")
 
+MAX_TEST_SAMPLES = 500
 CIFAR10_NAMES = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
 
 # ========================================================================================
@@ -174,6 +184,7 @@ def load_dataset():
     # ==================================================================================================
 
     elif DATASET == "wine":  
+
         wine = load_wine()
         X, y = shuffle(wine.data, wine.target)
         # X = wine.data              # shape (178, 13)
@@ -188,10 +199,23 @@ def load_dataset():
     # ==================================================================================================
 
     elif DATASET == "mnist":
-        (X_train, y_train), _ = mnist.load_data()
-        X = X_train[:150].reshape(-1, 28 * 28).astype("float32")  # [60000, 784], by default mnist has 60000 samples
-        y = y_train
-        class_names = [str(i) for i in range(10)]           # "0".."9" each is one different number
+        
+        print("Loading from tf.keras.datasets.mnist")
+        (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+        X_train = X_train.astype("float32") / 255.0
+        X_test  = X_test.astype("float32") / 255.0
+
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+        print("Test shape:", X_test.shape, "Labels:", y_test.shape)
+
+        class_names = [str(i) for i in range(10)]
+
+        return X_train, y_train, X_test, y_test, class_names
+
 
     # ==================================================================================================
 
@@ -512,6 +536,7 @@ def load_dataset():
         y_train = y_train.squeeze().astype(np.int64)  # (N,)
         y_test  = y_test.squeeze().astype(np.int64)
 
+
         classes = np.array(classes, dtype=np.int64)
 
         train_mask = np.isin(y_train, classes)
@@ -533,6 +558,10 @@ def load_dataset():
 
         idx = rng.permutation(len(X_test))
         X_test, y_test = X_test[idx], y_test[idx]
+
+        # limit both the test features and the test samples
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
 
         class_names = [CIFAR10_NAMES[int(c)] for c in classes]
 
@@ -589,7 +618,12 @@ def main():
             while data_repeats < NUMBER_OF_DATA_REPEATS:
                 
                 for index in range(len(X_train)):
-                    features = X_train[index]
+
+                    if(DATASET == "cifar3"):
+                        features = X_train[index].ravel().astype(np.float32)
+                    else:
+                        features = X_train[index]
+
                     label = int(y_train[index])
     
                     msg = {
