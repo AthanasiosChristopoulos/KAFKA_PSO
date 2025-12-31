@@ -34,10 +34,14 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     private long t0;
     private double lastActivitySeconds = 0.0;
 
+    // =====================================================================================================================
+
     public GBestTransformer(CustomLogger logger, long t0) {
         this.logger = logger;
         this.t0 = t0;
     }
+
+    // =====================================================================================================================
 
     @Override
     @SuppressWarnings("unchecked")
@@ -50,6 +54,8 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             gBestLoss = persisted;
         }
     }
+
+    // =====================================================================================================================
 
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage msg) {
@@ -83,8 +89,12 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
         return null;
     }
 
+    // =====================================================================================================================
+
     @Override
-    public void close() { }
+    public void close() { 
+
+    }
 
     // ==============================================================================================
 

@@ -70,7 +70,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final KafkaConsumer<String, DataMessage> consumer;
 
-    private int count = 0;
     private int process_count = 0;
 
     private final CoordinatorControl control;
@@ -80,10 +79,14 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private long t0;
     private long t1;
     private double lastActivitySeconds = 0.0;
+    private long start = System.nanoTime();
+    private long end = System.nanoTime();
+    private long sumElapsedNs = 0;
+    private int test_count = 0;
+    private float forwardPassNs = 0;
+    private int countForwardPass = 0;
 
     private final Deque<DataMessage> carry = new ArrayDeque<>();
-
-    private int test_count = 0;
 
     private final String testStoreName;
     private KeyValueStore<String, ValueAndTimestamp<DataMessage>> testStore;
@@ -149,6 +152,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     @Override
     public void process(Record<String, WeightsMessage> record) {
 
+        start = System.nanoTime();
         updateTime();
 
         // if (lastActivitySeconds < START_DELAY_NS) {
@@ -168,13 +172,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         if (control.isStopRequested(-1)) return;
         
-        if(count == 0) {
+        if(test_count == 0) {
             context.recordMetadata().ifPresent(meta -> 
                 logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
             );
         }
-
-        count = count + 1;
 
         WeightsMessage msg = record.value();
         if (msg == null) {
@@ -205,24 +207,26 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             if (TEST_SIZE == -1) {
                 evalBatch = loadAndCacheTestSet(MIN_TEST_ROWS);
-                if (evalBatch == null || evalBatch.isEmpty()) {
-                    logger.log(taskInstance + ", TEST_SIZE=-1 but cached test set is null/empty. Cannot evaluate.");
-                    return;
-                }
+
             } else {
+
                 evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
-                if (evalBatch == null) {
-                    System.out.println("Test Records run out. Something is wrong");
-                    return;
-                }
                 logConsumerOffsets();   
             }
 
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);
+            if (evalBatch == null || evalBatch.isEmpty()) {
+                logger.log(taskInstance + ", Cannot evaluate, Test set is null/empty.");
+                return;
+            }
+
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);  // inference / evaluate every time all workers current models arrive
+                                                                                // monitor how training is going
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
             nCorrect = (int) accLoss[3];
+            forwardPassNs += accLoss[4];
+            countForwardPass += 1;
 
             // update bestGlobalModelAccuracy + bestLoss ========================================================
 
@@ -248,31 +252,18 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         ", accuracy: " + accuracy + " and loss: " + loss + 
                         ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
 
-            test_count++;
-
             if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
                 Dl4jParamUtils.saveModel(bestGlobalModel);
                 control.requestStopFinal();
                 return;
             }
 
+            end = System.nanoTime();
+            sumElapsedNs += (end - start);
+            test_count++;            
+
             weightsBuffer.clear();
         } 
-    }
-
-    // ==================================================================================================================================
-
-    @Override
-    public void close() {
-        try {
-            consumer.wakeup();                // breaks poll safely
-        } catch (Exception ignored) {}
-
-        try {
-            consumer.close(Duration.ofSeconds(5));
-        } catch (Exception ignored) {
-
-        }
     }
 
     //=========================================================================================================================
@@ -405,18 +396,21 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         return cachedTestSet;
     }
 
+    // ===============================================================================================
+
     private int approximateStoreSize() {
-        int count = 0;
+        int countLocal = 0;
         try (var it = testStore.all()) {
             while (it.hasNext()) {
                 var kv = it.next();
                 var vat = kv.value;
-                if (vat != null && vat.value() != null) count++;
+                if (vat != null && vat.value() != null) countLocal++;
             }
         }
-        return count;
+        return countLocal;
     }
 
+    // ===============================================================================================
 
     // private List<DataMessage> getAllTestRowsFromStoreOnce() {
 
@@ -624,11 +618,35 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
         return avg;
     }
+    
+    //========================================================================================================================
 
     public static class DesiredAccuracyReachedException extends RuntimeException {
         public DesiredAccuracyReachedException(String message) {
             super(message);
         }
+    }
+    
+    // ==================================================================================================================================
+
+    @Override
+    public void close() {
+        try {
+            consumer.wakeup();                // breaks poll safely
+        } catch (Exception ignored) {}
+
+        try {
+            consumer.close(Duration.ofSeconds(5));
+        } catch (Exception ignored) {
+
+        }
+
+        double avgMs = (sumElapsedNs / 1_000_000.0) / test_count;
+        double avgForwardPassMs = forwardPassNs / countForwardPass;
+
+        logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
+                + " over " + test_count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
+
     }
 
 }

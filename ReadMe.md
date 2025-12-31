@@ -375,8 +375,12 @@ def run_bank():
             Class_6: 2.74%
 
 ### MNIST:
-    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
+
     - Grayscale images, very simple image dataset
+        - When flattend there are only 784 features
+        
+    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
+
 ### Pendigits:
 
     16 Features, 10 Classes 

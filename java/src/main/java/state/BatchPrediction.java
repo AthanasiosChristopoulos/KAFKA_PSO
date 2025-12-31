@@ -40,6 +40,10 @@ public class BatchPrediction {
     private final boolean isCoordinator;
 
     private static boolean checked = false;
+
+    private long start = System.nanoTime();
+    private long end = System.nanoTime();
+
     // for Worker =======================================================================================================
 
     public BatchPrediction(MultiLayerNetwork model, CustomLogger logger) {
@@ -108,6 +112,10 @@ public class BatchPrediction {
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
 
+
+        // Start Forward Pass ===============================================================================
+        start = System.nanoTime();
+
         INDArray X;
         
         if("cifar3".equals(DATASET)) {
@@ -137,7 +145,9 @@ public class BatchPrediction {
 
         INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
 
-        
+        end = System.nanoTime();
+        // End Forward Pass ===============================================================================
+
         if (probs == null || probs.size(0) == 0) {
             logger.log("Empty probs batch");
             return new float[]{-1f, -1f};
@@ -213,7 +223,10 @@ public class BatchPrediction {
         //     logger.log("BatchPrediction weights sample: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT)
         //         + ", accuracy: " + accuracy + ", with nSamples: " + nSamples + ", nCorrect: " + nCorrect );
         // }
-        return new float[]{accuracy, loss, nSamples, nCorrect};
+
+        float fwdMs = (end - start) / 1_000_000f;
+
+        return new float[]{accuracy, loss, nSamples, nCorrect, fwdMs};
     }
 
         

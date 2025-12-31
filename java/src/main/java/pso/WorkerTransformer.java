@@ -77,6 +77,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long t0;
     private final AtomicLong t1;
     private double lastActivitySeconds = 0.0;
+    
+    private long start = System.nanoTime();
+    private long end = System.nanoTime();
+    private long sumElapsedNs = 0;
+    private int count = 0;
+    private float forwardPassNs = 0;
+    private int countForwardPass = 0;
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
@@ -89,6 +96,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
     private String taskTag = "task=UNKNOWN";
     private static boolean ONCE = false;
+
+
 
     // ====================================================================================================================
     
@@ -115,6 +124,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
     }
 
+    //=========================================================================================================================
+
     @Override
     @SuppressWarnings("unchecked")
     public void init(ProcessorContext context) {
@@ -135,6 +146,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, DataMessage value) {
+
+        start = System.nanoTime();
 
         if (!printedOffset) {
             printedOffset = true;
@@ -165,6 +178,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         loss = accLoss[1];
         nSamples = (int) accLoss[2];
         nCorrect = (int) accLoss[3];
+        forwardPassNs += accLoss[4];
+        countForwardPass += 1;
+
         // logger.log(taskInstance + ", accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
 
         buffer.clear();
@@ -270,6 +286,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
                 ", with accuracy: " + accuracy);
+                
+        end = System.nanoTime();
+        sumElapsedNs += (end - start);
+        count++;
 
         return null;
     }
@@ -297,12 +317,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                                                 // this is GlobalKTable it will run for all of them
-            // int count = 0;
             while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
                                     // They have names: "pBest" + workerId
 
-                // logger.log(taskInstance + ", Runnig: " + count);
-                // count = count + 1;  
 
                 KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
                 WeightsMessage msg = entry.value.value(); 
@@ -424,5 +441,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
+        double avgMs = (sumElapsedNs / 1_000_000.0) / count;
+        double avgForwardPassMs = forwardPassNs / countForwardPass;
+
+        logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
+                + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
     }
 }

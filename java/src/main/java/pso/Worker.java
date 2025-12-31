@@ -53,6 +53,8 @@ public class Worker implements Runnable {
 
     private final CustomLogger logger;
 
+    // =====================================================================================================
+
     public Worker(int workerId) {
 
         this.workerId = workerId;
@@ -69,6 +71,8 @@ public class Worker implements Runnable {
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
     }
+
+    // =====================================================================================================
 
     @Override
     public void run() {

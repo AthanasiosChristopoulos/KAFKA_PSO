@@ -35,7 +35,7 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModel();
-			return createMnistCnn();
+			return createMNISTCnn();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -55,7 +55,7 @@ public class Dl4jModelFactory {
 			return createHarModel();
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			return createPenDigitsModel();
+			return createPendigitsModel();
 
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel();
@@ -198,7 +198,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-    public static MultiLayerNetwork createMnistCnn() {
+    public static MultiLayerNetwork createMNISTCnn() {
 		if(printModel) {
 			System.out.println("Using CNN MNIST Model");
 		}
@@ -256,14 +256,23 @@ public class Dl4jModelFactory {
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
-		// 3×3×1×16 = 144 (Conv1)
+		// 3 × 3 × 1 × 16 = 144 (Conv1)
 		// 4 × 16 = 64 (Batch Norm) // 4 vectors per channel (feature maps), gamma, beta, mean, log10stdev 
-		// 3×3×16×32 = 4608 (Conv2)
+		// 3 × 3 × 16 × 32 = 4608 (Conv2)
 		// 4 × 32 = 128 (Batch Norm) 
-		// 32 X 10 = 330 
+		// 32 × 10 = 330 
 
 		// Total = 144 + 64 + 4608 + 128 + 330 = 5274
 		
+		// Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a forward pass to a CNN 
+		// Rather than a Dense NN. MAC = Multiply–Accumulate (a sum)
+			// weights are reused multiple times in forward pass we are convoluting.
+			// In an MLP, 784 features connect directly to neurons once.
+			// In a CNN, those 784 pixels are processed repeatedly via sliding kernels.
+			// Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
+			// Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more )
+
+	
         return model;
     }
 
@@ -567,7 +576,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
 
-	public static MultiLayerNetwork createPenDigitsModel() {
+	public static MultiLayerNetwork createPendigitsModel() {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}
