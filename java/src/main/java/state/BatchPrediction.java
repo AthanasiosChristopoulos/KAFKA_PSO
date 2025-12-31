@@ -133,7 +133,7 @@ public class BatchPrediction {
 
             X = X4d.permute(0, 3, 1, 2).dup();        // [batch, 3, 32, 32]
 
-        } else if("mnist".equals(DATASET)) {
+        } else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
             INDArray X2d = Nd4j.create(data);          // [batch, 784]
             X = X2d.reshape(X2d.size(0), 1, 28, 28);

@@ -288,7 +288,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", with accuracy: " + accuracy);
                 
         end = System.nanoTime();
-        sumElapsedNs += (end - start);
+        sumElapsedNs += (end - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
+                                        // Doesnt trigger when we are collecting a batch
         count++;
 
         return null;

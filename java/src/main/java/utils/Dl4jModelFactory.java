@@ -351,12 +351,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-
-		if (printModel) {
-			System.out.println(model.summary());
-			System.out.println("Trainable params: " + model.numParams());
-		}
-
+		
 		return model;
 	}
 
