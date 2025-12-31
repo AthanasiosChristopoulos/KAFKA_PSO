@@ -184,6 +184,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] weights = Dl4jParamUtils.modelToFlatList(ws.model);
 
+        // =================================================================================================
         // Send pBest or current weights ===================================================================
 
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getBestLoss(); 
@@ -215,7 +216,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
         }
 
-        if (batchesRead >= N_BATCHES) {    // send current position after N_BATCHES. For FedAvg
+        // =========================================================================================================
+        // Send current position after N_BATCHES. For FedAvg + Swarm Monitoring
+
+        if (batchesRead >= N_BATCHES) {   
 
             logger.log(taskInstance + ", Sending current weights ...");
 
@@ -229,8 +233,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] velocity = new float[this.pBestWeights.length];
 
-
-        // Update to next position, Get the State Store ===================================================================
+        // =========================================================================================================
+        // Update to next position, Using the State Store ===================================================================
 
         if (FULLY_INFORMED == true) {
 

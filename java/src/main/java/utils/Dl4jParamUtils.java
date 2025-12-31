@@ -29,6 +29,27 @@ public class Dl4jParamUtils {
     public static final float MONITORING_THRESHOLD = cfg.MONITORING_THRESHOLD;
 	public static int POINTS_PER_AXIS = cfg.POINTS_PER_AXIS;
 
+    //=====================================================================================================
+    // Decode / Encode Model Number 1:
+
+    public static float[] modelToFlatList(MultiLayerNetwork model) {
+        
+        return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
+                                                    // specific order chosen by DL4J
+    }
+
+    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+        if (flat.length != model.numParams()) {
+            throw new IllegalArgumentException(
+                "Expected " + model.numParams() + " params but got " + flat.length
+            );
+        }
+        model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
+    }                                                   // DL4J provides the serialization convention
+
+    //=====================================================================================================
+    // Decode / Encode Model Number 2:
+
     // public static float[] modelToFlatList(MultiLayerNetwork model) {
 
     //     List<Float> flatList = new ArrayList<>();
@@ -65,22 +86,6 @@ public class Dl4jParamUtils {
     //     return flat;
     // }
     
-    public static float[] modelToFlatList(MultiLayerNetwork model) {
-        return model.params().toFloatVector();  
-    }
-
-    public static void updateModel(MultiLayerNetwork model, float[] flat) {
-        if (flat.length != model.numParams()) {
-            throw new IllegalArgumentException(
-                "Expected " + model.numParams() + " params but got " + flat.length
-            );
-        }
-        model.setParams(Nd4j.createFromArray(flat));
-    }
-
-
-    //=====================================================================================================
-
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {
     //     int idx = 0;
 
@@ -118,6 +123,8 @@ public class Dl4jParamUtils {
     //     }
     // }
 
+    //==============================================================================================
+
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {
     //     if (flat.length != model.numParams()) {
     //         throw new IllegalArgumentException(
@@ -126,6 +133,8 @@ public class Dl4jParamUtils {
     //     }
     //     model.setParams(Nd4j.create(flat));
     // }
+
+    //==============================================================================================
 
 
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {
