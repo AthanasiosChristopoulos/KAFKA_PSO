@@ -180,7 +180,7 @@ Input input-weights-topic:
 
 ## Input new Dataset - Model:
 
- - 1) Add new .env variables
+ - 1) Add new .env variables for DATASET, NUM_FEATURES_{DATASET}, NUM_CLASSES_{DATASET}
  - 2) Update NUM_FEATURES and NUM_CLASSES in Config.java
  - 3) Define new createModel function in Dl4jModelFactory
  - 4) Append in data_producer.py the load_dataset() function an elif
@@ -353,6 +353,7 @@ def run_bank():
     If the income is over 50k or not
 
 ### Covertype:
+
     7 Classes
     85% on Gradient Descent, 80% on PSO
     Uneven distribution:

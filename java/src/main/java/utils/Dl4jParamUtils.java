@@ -32,96 +32,96 @@ public class Dl4jParamUtils {
     //=====================================================================================================
     // Decode / Encode Model Number 1:
 
-    // public static float[] modelToFlatList(MultiLayerNetwork model) {
+    public static float[] modelToFlatList(MultiLayerNetwork model) {
         
-    //     return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
-    //                                                 // specific order chosen by DL4J
-    // }
+        return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
+                                                    // specific order chosen by DL4J
+    }
 
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
-    //     if (flat.length != model.numParams()) {
-    //         throw new IllegalArgumentException(
-    //             "Expected " + model.numParams() + " params but got " + flat.length
-    //         );
-    //     }
-    //     model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
-    // }                                                   // DL4J provides the serialization convention
+    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+        if (flat.length != model.numParams()) {
+            throw new IllegalArgumentException(
+                "Expected " + model.numParams() + " params but got " + flat.length
+            );
+        }
+        model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
+    }                                                   // DL4J provides the serialization convention
 
     //=====================================================================================================
     // Decode / Encode Model Number 2:
 
-    public static float[] modelToFlatList(MultiLayerNetwork model) {
+    // public static float[] modelToFlatList(MultiLayerNetwork model) {
 
-        List<Float> flatList = new ArrayList<>();
+    //     List<Float> flatList = new ArrayList<>();
 
-        for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
-            Layer l = model.getLayer(layerIdx);
-            Map<String, INDArray> params = l.paramTable();
+    //     for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
+    //         Layer l = model.getLayer(layerIdx);
+    //         Map<String, INDArray> params = l.paramTable();
 
-            INDArray W = params.get("W");
-            INDArray b = params.get("b");
+    //         INDArray W = params.get("W");
+    //         INDArray b = params.get("b");
 
-            if (W == null || b == null) {
-                continue;
-            }
+    //         if (W == null || b == null) {
+    //             continue;
+    //         }
 
-            long inSize = W.size(0);
-            long outSize = W.size(1);
+    //         long inSize = W.size(0);
+    //         long outSize = W.size(1);
 
-            // convention W_L(i, j): j = neuron index, i = input index (input weights), L = number of layer
-            for (int j = 0; j < outSize; j++) {
+    //         // convention W_L(i, j): j = neuron index, i = input index (input weights), L = number of layer
+    //         for (int j = 0; j < outSize; j++) {
 
-                for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
-                    flatList.add(W.getFloat(i, j));
-                }
+    //             for (int i = 0; i < inSize; i++) {  // All inputs to neuron j
+    //                 flatList.add(W.getFloat(i, j));
+    //             }
 
-                flatList.add(b.getFloat(j));       // Bias for neuron j
-            }
-        }
+    //             flatList.add(b.getFloat(j));       // Bias for neuron j
+    //         }
+    //     }
 
-        float[] flat = new float[flatList.size()];
-        for (int i = 0; i < flat.length; i++) {
-            flat[i] = flatList.get(i);
-        }
-        return flat;
-    }
+    //     float[] flat = new float[flatList.size()];
+    //     for (int i = 0; i < flat.length; i++) {
+    //         flat[i] = flatList.get(i);
+    //     }
+    //     return flat;
+    // }
     
-    public static void updateModel(MultiLayerNetwork model, float[] flat) {
-        int idx = 0;
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    //     int idx = 0;
 
-        for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
+    //     for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
 
-            Layer l = model.getLayer(layerIdx);
-            Map<String, INDArray> params = l.paramTable();
+    //         Layer l = model.getLayer(layerIdx);
+    //         Map<String, INDArray> params = l.paramTable();
 
-            INDArray W = params.get("W");
-            INDArray b = params.get("b");
+    //         INDArray W = params.get("W");
+    //         INDArray b = params.get("b");
 
-            if (W == null || b == null) {
-                continue;
-            }
+    //         if (W == null || b == null) {
+    //             continue;
+    //         }
 
-            long inSize = W.size(0);
-            long outSize = W.size(1);
+    //         long inSize = W.size(0);
+    //         long outSize = W.size(1);
 
-            for (int j = 0; j < outSize; j++) {
-                for (int i = 0; i < inSize; i++) {
-                    W.putScalar(i, j, flat[idx++]);
-                }
-                b.putScalar(j, flat[idx++]);
-            }
+    //         for (int j = 0; j < outSize; j++) {
+    //             for (int i = 0; i < inSize; i++) {
+    //                 W.putScalar(i, j, flat[idx++]);
+    //             }
+    //             b.putScalar(j, flat[idx++]);
+    //         }
 
-            // Push updated arrays back into the layer
-            l.setParam("W", W);
-            l.setParam("b", b);
-        }
+    //         // Push updated arrays back into the layer
+    //         l.setParam("W", W);
+    //         l.setParam("b", b);
+    //     }
 
-        if (idx != flat.length) {
-            throw new IllegalArgumentException(
-                    "Flat vector length mismatch, consumed " + idx + " of " + flat.length
-            );
-        }
-    }
+    //     if (idx != flat.length) {
+    //         throw new IllegalArgumentException(
+    //                 "Flat vector length mismatch, consumed " + idx + " of " + flat.length
+    //         );
+    //     }
+    // }
 
     //==============================================================================================
 

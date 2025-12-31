@@ -514,6 +514,102 @@ def load_adult_data():
     return X_train, y_train, X_test, y_test, class_names
 
 # ======================================================================
+# MNIST4 DATASET (use only classes 0..3, drop the others)
+# ======================================================================
+
+def load_mnist4_data(remap_labels=True):
+
+    print("Loading from tf.keras.datasets.mnist")
+    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+    # Filter to digits 0..3
+    train_mask = (y_train >= 0) & (y_train <= 3)
+    test_mask  = (y_test  >= 0) & (y_test  <= 3)
+
+    X_train, y_train = X_train[train_mask], y_train[train_mask]
+    X_test,  y_test  = X_test[test_mask],  y_test[test_mask]
+
+    # Normalize
+    X_train = X_train.astype("float32") / 255.0
+    X_test  = X_test.astype("float32") / 255.0
+
+    if remap_labels:
+        # For 0..3 this is already correct, but kept for clarity / future changes
+        y_train = y_train.astype("int32")
+        y_test  = y_test.astype("int32")
+
+    print("MNIST4 Train shape:", X_train.shape, "Labels:", y_train.shape, "classes:", np.unique(y_train))
+    print("MNIST4 Test shape:",  X_test.shape,  "Labels:", y_test.shape,  "classes:", np.unique(y_test))
+
+    class_names = [str(i) for i in range(4)]
+    return X_train, y_train, X_test, y_test, class_names
+
+
+# ======================================================================
+# SIMPLER / FASTER CNN for MNIST4
+# ======================================================================
+
+def build_mnist4_model(input_shape=(28, 28), num_classes=4):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Conv block 1 (smaller than before)
+        layers.Conv2D(8, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.MaxPooling2D(),  # 28x28 -> 14x14
+
+        # Conv block 2 (smaller than before)
+        layers.Conv2D(16, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        # Global pooling + classifier
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+
+# ======================================================================
+# Run MNIST4
+# ======================================================================
+
+def run_mnist4(epochs=5, batch_size=128, max_train=None, max_test=None):
+    
+    X_train, y_train, X_test, y_test, class_names = load_mnist4_data(
+        max_train=max_train, max_test=max_test
+    )
+
+    model = build_mnist4_model(input_shape=X_train.shape[1:], num_classes=4)
+
+    print("\nTraining...")
+    history = model.fit(
+        X_train, y_train,
+        validation_split=0.1,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=2
+    )
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+    return model, history
+
+# ======================================================================
 
 def build_adult_model(input_dim):
 
@@ -1583,6 +1679,8 @@ def main():
         run_bank()
     elif DATASET == "mnist":
         run_mnist()
+    elif DATASET == "mnist4":
+        run_mnist4()
     elif DATASET == "adult":
         run_adult()
     elif DATASET == "covertype":

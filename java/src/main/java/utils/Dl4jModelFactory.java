@@ -37,6 +37,10 @@ public class Dl4jModelFactory {
 			// return createMNISTModel();
 			return createMNISTCnn();
 				
+		} else if ("mnist4".equals(DATASET)) {
+			// return createMNISTModel();
+			return createMNIST4Cnn();
+				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
 			return createSUSYModel();
@@ -275,6 +279,101 @@ public class Dl4jModelFactory {
 	
         return model;
     }
+
+	// ======================================================================================================================
+	// MNIST4CNN
+
+	public static MultiLayerNetwork createMNIST4Cnn() {
+		if (printModel) {
+			System.out.println("Using CNN MNIST4 Model (8/16 filters)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.RELU)
+				.updater(new Adam(1e-3))
+				.list()
+
+				// Conv2D(8, 3, padding="same", use_bias=False)
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(8)                 // 8 filters / feature maps
+						.stride(1, 1)
+						.padding(1, 1)           // "same" for 3x3 stride 1
+						.hasBias(false)
+						.activation(Activation.IDENTITY)
+						.build())
+
+				// BatchNorm
+				.layer(new BatchNormalization.Builder().build())
+
+				// ReLU
+				.layer(new ActivationLayer.Builder()
+						.activation(Activation.RELU)
+						.build())
+
+				// MaxPooling2D()
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+
+				// Conv2D(16, 3, padding="same", use_bias=False)
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(16)                // 16 filters / feature maps
+						.stride(1, 1)
+						.padding(1, 1)
+						.hasBias(false)
+						.activation(Activation.IDENTITY)
+						.build())
+
+				// BatchNorm
+				.layer(new BatchNormalization.Builder().build())
+
+				// ReLU
+				.layer(new ActivationLayer.Builder()
+						.activation(Activation.RELU)
+						.build())
+
+				// GlobalAveragePooling2D()
+				.layer(new GlobalPoolingLayer.Builder()
+						.poolingType(PoolingType.AVG)
+						.build())
+
+				// Dense(num_classes, softmax) + sparse categorical crossentropy
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)                 // for MNIST4 => 4
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				// Input: (H,W,C) = (28,28,1)
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+
+		if (printModel) {
+			System.out.println(model.summary());
+			System.out.println("Trainable params: " + model.numParams());
+		}
+
+		return model;
+	}
+
+	// Parameter count (for sanity)
+
+	// Conv1: 3×3×1×8 = 72
+
+	// BN1: 4×8 = 32
+
+	// Conv2: 3×3×8×16 = 1,152
+
+	// BN2: 4×16 = 64
+
+	// Output: 16×4 + 4 = 68
+	// Total = 72 + 32 + 1152 + 64 + 68 = 1,388 params
+
+	// So PSO dimension should be 1388 for this model.
 
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 

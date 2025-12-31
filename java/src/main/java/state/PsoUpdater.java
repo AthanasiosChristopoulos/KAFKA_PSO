@@ -138,7 +138,8 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + 
-                ", cognitive C1: " + c1 + " = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
+                ", cognitive = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", with C1: " + c1 +
+                ", social = " + Dl4jParamUtils.magnitude(socialVec) +
                 ", diff = " + Dl4jParamUtils.magnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
         );
 

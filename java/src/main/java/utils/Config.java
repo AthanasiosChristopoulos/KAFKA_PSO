@@ -74,6 +74,10 @@ public class Config {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
 
+        } else if("mnist4".equals(this.DATASET)) {
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST4", "784"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST4", "4"));
+
         } else if("susy".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
