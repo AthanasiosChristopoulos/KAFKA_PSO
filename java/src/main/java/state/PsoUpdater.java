@@ -22,6 +22,9 @@ public class PsoUpdater {
     private float c1 = C1_START;  
     private int iter = 0;
     private final int MAX_ITERS = 500;
+    private final int C1_MID_UPDATE = 600;   // sigmoid midpoint (where it drops fastest)
+    private final int C1_MAX_UPDATES = 40 * 10000 / N_WORKERS; // expected max updates (for clamping)
+    private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly drops between 600±100” → around 500–700
 
     private final float VMAX;    
     private final float VMAX_FACTOR;
@@ -36,6 +39,8 @@ public class PsoUpdater {
     private float[] diffPBestGBest;
 
     private int clamp_count = 0;
+
+    private int count_updates = 0;
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
     
@@ -98,15 +103,17 @@ public class PsoUpdater {
 
     public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST, not fully informed
 
+        count_updates++;
+
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
         // if (velocity == null || velocity.length != x_i.length) {   // initialization of velocity
         //     velocity = new float[x_i.length];
         // }
-        updateC1Schedule();
+        updateC1Schedule();         // we are updating c1 only for the neighborhood case
         Random rnd = new Random();
         
-        logger.log("x_i.length = " +  x_i.length);
+        logger.log("x_i.length = " +  x_i.length + ", count_updates: " + count_updates);
 
         for (int k = 0; k < x_i.length; k++) {
 
@@ -151,12 +158,16 @@ public class PsoUpdater {
     //================================================================================================
 
     public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {      // for FULLY INFORMED
-        
+
+        count_updates++;
+
         Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
+
+        logger.log("x_i.length = " +  x_i.length + ", count_updates: " + count_updates);
 
         // neighborPBestList empty case (initialization) ===================================================
 
@@ -217,14 +228,24 @@ public class PsoUpdater {
     //     c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
     // }
 
+    // private void updateC1Schedule() {
+
+    //     float t = Math.min(iter, MAX_ITERS) / (float) MAX_ITERS;  // [0,1]
+    //     float k = 9.0f;   
+    //     float sigmoid = (float)(1.0 / (1.0 + Math.exp(k * (t - 0.5))));
+
+    //     c1 = C1_END + (C1_START - C1_END) * sigmoid;
+    // }
+
     private void updateC1Schedule() {
 
-        float t = Math.min(iter, MAX_ITERS) / (float) MAX_ITERS;  // [0,1]
-        float k = 9.0f;   
-        float sigmoid = (float)(1.0 / (1.0 + Math.exp(k * (t - 0.5))));
+        float u = Math.min(count_updates, C1_MAX_UPDATES);
+        float k = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
+        float s = (float)(1.0 / (1.0 + Math.exp(k * (u - C1_MID_UPDATE))));
 
-        c1 = C1_END + (C1_START - C1_END) * sigmoid;
+        c1 = C1_END + (C1_START - C1_END) * s;
     }
+
 
     //================================================================================================
 

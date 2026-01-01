@@ -32,10 +32,6 @@ public final class WorkerStatic {
 
     public int batchesRead = 0;
     
-
-    // optional: guard updates if multiple stream threads exist
-    public final Object lock = new Object();
-
     // ========================================================
 
     private WorkerStatic(int workerId) {
