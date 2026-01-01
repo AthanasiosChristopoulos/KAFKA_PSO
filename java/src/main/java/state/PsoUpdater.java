@@ -22,8 +22,8 @@ public class PsoUpdater {
     private float c1 = C1_START;  
     private int iter = 0;
     private final int MAX_ITERS = 500;
-    private final int C1_MID_UPDATE = 600;   // sigmoid midpoint (where it drops fastest)
     private final int C1_MAX_UPDATES = 40 * 10000 / N_WORKERS; // expected max updates (for clamping)
+    private final int C1_MID_UPDATE = (int) C1_MAX_UPDATES / 1.6;   // sigmoid midpoint (where it drops fastest)
     private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly drops between 600±100” → around 500–700
 
     private final float VMAX;    
