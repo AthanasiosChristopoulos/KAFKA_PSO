@@ -16,14 +16,15 @@ public class PsoUpdater {
     private final float C1 = cfg.C1;
     private final float C2 = cfg.C2;
     private final int N_WORKERS = cfg.N_WORKERS;
+    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
 
     private final float C1_START = cfg.C1; 
     private final float C1_END = 0.2f;
     private float c1 = C1_START;  
     private int iter = 0;
     private final int MAX_ITERS = 500;
-    private final int C1_MAX_UPDATES = 40 * 10000 / N_WORKERS; // expected max updates (for clamping)
-    private final int C1_MID_UPDATE = (int) C1_MAX_UPDATES / 1.6;   // sigmoid midpoint (where it drops fastest)
+    private final int C1_MAX_UPDATES = (40 * 10000) / (N_WORKERS * TRAIN_SIZE); // expected max updates (for clamping)
+    private final int C1_MID_UPDATE = (int) Math.round(C1_MAX_UPDATES / 1.6);
     private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly drops between 600±100” → around 500–700
 
     private final float VMAX;    
@@ -66,7 +67,8 @@ public class PsoUpdater {
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        logger.log("Number of weights (dimensionality): " + x.length);
+        logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", C1_MAX_UPDATES: " + C1_MAX_UPDATES + 
+                ", C1_MID_UPDATE: " + C1_MID_UPDATE);
     }
 
     //================================================================================================
@@ -89,6 +91,7 @@ public class PsoUpdater {
     //================================================================================================
 
     private void clipVelocityByNorm(float vmaxNorm) {
+
         double sumSq = 0.0;
         for (float v : velocity) sumSq += (double)v * v;
         double norm = Math.sqrt(sumSq);
