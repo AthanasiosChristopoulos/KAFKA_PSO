@@ -22,6 +22,8 @@
 	- nano ~/.config/mpv/mpv.conf
 	- osd-bar=no
 
+ - sudo apt install mesa-utils
+
 # Vscode: ====================================================================================
 
  - Extensions:
@@ -111,3 +113,41 @@ pip install matplotlib --break-system-packages
 	- sudo systemctl enable docker
 	- sudo systemctl status docker
 	
+
+## Helper Notes ==========================================================================================
+
+ - Disks:
+ 	- lsblk
+
+	- rsync -av --delete /home/ds123f15/Documents/vvv/ /media/ds123f15/4AC86F1FC86F0891/projects/vvv/
+
+	- sudo mkdir -p /mnt/OUT
+	- sudo mount -a
+	- ls /mnt/OUT
+	- sudo umount /mnt/OUT
+
+	- sudo mkdir -p /mnt/win_test
+	  sudo mount -o ro /dev/nvme0n1p3 /mnt/win_test
+
+## GPU ==========================================================================================
+
+```bash
+
+# disable / delete gpu drivers
+sudo systemctl disable nvidia-persistenced
+sudo apt purge 'nvidia*'
+sudo update-initramfs -u
+sudo reboot
+
+# blacklist => disable automatic installs if this driver
+echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+sudo update-initramfs -u
+sudo reboot
+
+lsmod | grep nouveau	# should return nothing after blacklisting
+
+glxinfo -B | grep "renderer"	# glxinfo is a tool that reports information about OpenGL, your graphics driver, and GPU setup.
+								# This tells you which GPU is actually being used for rendering (the CPU or the GPU).
+
+
+```
