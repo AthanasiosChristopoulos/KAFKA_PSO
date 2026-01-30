@@ -2,6 +2,10 @@
 ## Run ============================================================================================================
 
 ```bash
+
+./run_streams.sh
+
+# or manually from:
 mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
 mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
@@ -390,6 +394,7 @@ def run_bank():
         - train size = 10492, test size = 500
             - Number of Kafka Records: 419680
         - Train shape: (10492, 16) classes / y (labels): (0, 9) with counts: [1091 1091 1092 1007 1092 1007 1008 1090 1007 1007]
+        
     16 Features, 10 Classes 
     97% on Gradient Descent, 55% on FIPSO, 50% on GBEST
     Evenly Distributed
