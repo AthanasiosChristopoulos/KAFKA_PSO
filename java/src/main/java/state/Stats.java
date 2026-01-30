@@ -8,7 +8,8 @@ public class Stats {
 
     private float bestAccuracy = 0;
     private float bestLoss = 100000f;
-                             
+    private float lastSentPBestLoss = 100000f;
+
     public void addBatch(int nSamples, int nCorrect, float loss) {
         if(nSamples == 0) {
             System.out.println("0 Samples");
@@ -29,7 +30,7 @@ public class Stats {
 
     // Accuracy ==========================================================================
 
-    public float getAccuracy() {
+    public float getPAccuracy() {
         
         float acc = (float) nCorrect / nSamples;
 
@@ -53,7 +54,7 @@ public class Stats {
         return Math.round(bestAccuracy * 1000f) / 1000f;
     }
     
-    public void setBestAccuracy(float newBestAccuracy) {
+    public void setPBestAccuracy(float newBestAccuracy) {
         this.bestAccuracy = newBestAccuracy;
     }
 
@@ -63,12 +64,20 @@ public class Stats {
         return Math.round(loss * 1000f) / 1000f; 
     }
     
-    public float getBestLoss() {
+    public float getPBestLoss() {
         return Math.round(bestLoss * 1000f) / 1000f; 
     }
     
-    public void setBestLoss(float bestLoss) {
+    public void setPBestLoss(float bestLoss) {
         this.bestLoss = bestLoss;
+    }
+
+    public float getLastSentPBestLoss() {
+        return Math.round(lastSentPBestLoss * 1000f) / 1000f; 
+    }
+    
+    public void setLastSentPBestLoss(float lastSentPBestLoss) {
+        this.lastSentPBestLoss = lastSentPBestLoss;
     }
 
     // ================================================================================

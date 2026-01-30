@@ -3,7 +3,17 @@
 
 	- Showcase: ==========================================================================================
 
-		- Test between any more non-differentiable loss functions ?
+		- Running in Ubuntu enviroment
+
+		- Serialized from JSON messages to bytes
+		- Partitioning - Data Parallelism: χωριζω τα δεδομενα ανα worker (N workers) αλλα αυξανω συνολικα τα δεδομενα κατα Ν
+
+		- Test Graphs on (changed protocol to be training first to do the graphs - training time. Is training first correct ?):
+			- between Fully Informed vs Neighborhood best 
+			- Limitation / Filter or no limitation in the communication
+			- between differentiable and non-differentiable loss functions 
+
+		- New Dataset
 
 	- Experimentation: ==========================================================================================
 

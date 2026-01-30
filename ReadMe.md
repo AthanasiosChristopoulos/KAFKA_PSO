@@ -146,7 +146,8 @@ The architecture is build to support two types of PSO:
                    does training conclude.
                 => The execution doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
           
-                
+
+## =================================================================================================================================
 ## Kafka Message Documentation:
 
 Input pBest-weights-topic:
@@ -179,6 +180,10 @@ Input input-weights-topic:
     loss              | float
     weights           | float[]
 
+
+## =================================================================================================================================
+## =================================================================================================================================
+## Datasets: =======================================================================================================================
 
 ## Input new Dataset - Model:
 
@@ -425,11 +430,27 @@ def run_bank():
         - Essentially the points in order form the pen trajectory
 
 
+## =================================================================================================================================
+
+## Functional Requirements: =========================================================
+
+### Filtering / Communication prevention:
+
+    - This is an asynchronous protocol. We dont have the ability to stop pipeline / incoming data from Kafka topics
+    - But we have the ability for workers / coordinator to choose not to send messages, when it is predicted to be unnecessary 
+
+    - Given the Kafka Topology, we can influence only the communication pipelines 2_1, 2_2 and 6:
+        - 2_2 is the federated learning pipeline. It is used to extract the average model, but this doesnt actively partiticipate in PSO.
+            - This should be selected as the users preference, since through this form of communication the progression of the algorithm is reported (CLI)
+
+        - 2_1 and 6 are directly used for PSO (pBest / gBest weight messages). 
+            - We can choose not to send them if the loss of the new model wasnt significantly improved 
 
 ## Non Functional Requirements: =========================================================
 
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
 
+## =================================================================================================================================
 ## Experimentation: =========================================================
 
  - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)

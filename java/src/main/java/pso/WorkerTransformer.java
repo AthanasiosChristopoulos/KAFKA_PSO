@@ -203,27 +203,42 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // =================================================================================================
         // Send pBest or current weights ===================================================================
 
-        boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getBestLoss(); 
+        boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getPBestLoss(); 
                 // boolean has pBest improved or not ?
 
-        boolean significant_diff_to_gBest = Math.abs(loss - ws.local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
+        // boolean significant_diff_to_gBest = Math.abs(loss - ws.local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
                 // is the loss significant enough to be reported ?
+
+        double eps = 1e-12;
+        boolean significant_diff_to_gBest = true;
+
+        if(FULLY_INFORMED == true) {
+            significant_diff_to_gBest = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
+                // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
+        } else {
+            significant_diff_to_gBest = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+                // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
+                // this is a much more damaging filter, because the global affects all workers as the only sense of direction
+                // thats why 0.3 
+        }
 
         if(improvement_to_pBest) {    // update self always when improvement 
 
-            ws.stats.setBestAccuracy(accuracy);
+            ws.stats.setPBestAccuracy(accuracy);
 
-            // logger.log(taskInstance + ", best Loss: " + ws.stats.getBestLoss());
+            // logger.log(taskInstance + ", best Loss: " + ws.stats.getPBestLoss());
 
-            ws.stats.setBestLoss(loss);
+            ws.stats.setPBestLoss(loss);
 
             this.pBestWeights = weights;
 
             if(significant_diff_to_gBest) { // send only when significant improvement
-                
+
+                ws.stats.setLastSentPBestLoss(loss);
+
                 String msgIndex = java.util.UUID.randomUUID().toString();
 
-                logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
+                logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
                         + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
 
                 WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);

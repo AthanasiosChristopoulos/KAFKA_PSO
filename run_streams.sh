@@ -8,7 +8,8 @@ set -a           # auto-export all variables
 source .env
 set +a
 
-if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then
+if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there is an command line argument to the script run_streams, 
+                                                                    # and it isnt debug or reset, then its N_WORKERS. Override this variable from .env with the argument  
     export N_WORKERS="$1"
 fi
 
