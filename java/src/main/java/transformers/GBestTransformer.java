@@ -22,7 +22,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     private ProcessorContext context;
     private KeyValueStore<String, Float> gBestLossStore;
 
-    private float gBestLoss = Float.POSITIVE_INFINITY;
+    private float gBestLoss = 100000f;
 
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
@@ -32,7 +32,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     private static final float EPS = 1e-9f;
 
-    private float lastSentGBestLoss = Float.POSITIVE_INFINITY;
+    private float lastSentGBestLoss = 100000f;
 
     private long t0;
     private double lastActivitySeconds = 0.0;
@@ -82,9 +82,9 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
             boolean significant_improvement = Math.abs((lastSentGBestLoss - newLoss)) / (Math.abs(lastSentGBestLoss) + EPS) > 0.3 * SIGNIFICANT_LOSS_DIFF;
 
-            // if (!significant_improvement) {
-            //     return null;
-            // }
+            if (!significant_improvement) {
+                return null;
+            }
 
             return new KeyValue<>("gBest", gBestMsg);
         }

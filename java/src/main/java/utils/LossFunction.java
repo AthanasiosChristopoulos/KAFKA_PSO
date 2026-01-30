@@ -115,8 +115,6 @@ public class LossFunction {
 
         float s = 0f;
         for (float v : sampleLosses) {
-            // optionally ignore bad sentinel values
-            if (Float.isNaN(v) || Float.isInfinite(v)) return Float.POSITIVE_INFINITY;
             s += v;
         }
         return s;

@@ -20,7 +20,7 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
     private ProcessorContext<String, WeightsMessage> context;
     private KeyValueStore<String, Float> gBestLossStore;
 
-    private float gBestLoss = Float.POSITIVE_INFINITY;
+    private float gBestLoss = 100000f;
 
     public GBestProcessor(CustomLogger logger) {
         this.logger = logger;
