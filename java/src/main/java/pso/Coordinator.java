@@ -176,6 +176,7 @@ public class Coordinator implements Runnable {
         // Control thread =============================================================
 
         Thread controlThread = new Thread(() -> {
+            
             try {
                 while (!control.isStopRequested(-1)) {
                     Thread.sleep(100);

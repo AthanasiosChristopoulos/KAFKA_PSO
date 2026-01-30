@@ -89,8 +89,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
 
-    private static final long IDLE_MS = 3000; // <-- set what you want (e.g. 3s)
-    private static final long CHECK_EVERY_MS = 250; // how often we check
+    private static final long IDLE_MS = 300; 
+    private static final long CHECK_EVERY_MS = 100; // how often we check
+    private static final long IDLE_GRACE_MS = 5000;
 
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
@@ -134,6 +135,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>>) context.getStateStore(stateStoreName);
 
         context.schedule(Duration.ofMillis(CHECK_EVERY_MS), PunctuationType.WALL_CLOCK_TIME, timestamp -> {
+
+            long sinceStartNs = System.nanoTime() - t0;
+            if (sinceStartNs < TimeUnit.MILLISECONDS.toNanos(IDLE_GRACE_MS)) {
+                return; // don't check yet
+            }
+
             long idleNs = System.nanoTime() - t1.get();
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
                 logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
@@ -295,10 +302,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights);
         }
 
-        updateTime();
-
-        // " thread = " + Thread.currentThread().getName() +
-
+        updateTime();   // is updated  every time a new buffer has been processed
+        
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 

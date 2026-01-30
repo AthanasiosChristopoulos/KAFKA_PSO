@@ -22,6 +22,11 @@ END_PATTERNS = [
     re.compile(r"\s*Training is over\s*", re.IGNORECASE),
 ]
 
+TRAINING_TIME_REGEX = re.compile(
+    r"Training\s+is\s+over,\s*ElapsedTime:\s*([0-9]*\.?[0-9]+)",
+    re.IGNORECASE
+)
+
 # NEW: parse times printed by Java
 WORKER_TIME_REGEX = re.compile(
     r"\[Worker\s+(\d+)\s*\]\s+(?:Wall time|Elapsed time):\s*([0-9]*\.?[0-9]+)\s*seconds",
@@ -43,7 +48,6 @@ def run_once(n_workers, log_path):
 
     cmd = [RUN_STREAMS_SCRIPT, str(n_workers)]
 
-    start = time.time()
     p = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -80,7 +84,9 @@ def run_once(n_workers, log_path):
             if cm:
                 coordinator_time_sec = float(cm.group(1))
 
-            if any(r.search(line) for r in END_PATTERNS):
+            tm = TRAINING_TIME_REGEX.search(line)
+            if tm:
+                elapsed = float(tm.group(1))
                 finished = True
                 break
 
@@ -94,8 +100,6 @@ def run_once(n_workers, log_path):
         p.wait(timeout=5)
     except subprocess.TimeoutExpired:
         p.kill()
-
-    elapsed = time.time() - start   # Measures time by itself as well 
 
     last_worker_time_sec = max(worker_times.values()) if worker_times else None     # for worker elapsed time, only consider last worker elapsed time
 

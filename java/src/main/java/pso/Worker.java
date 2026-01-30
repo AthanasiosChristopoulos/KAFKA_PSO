@@ -195,7 +195,7 @@ public class Worker implements Runnable {
             System.out.println("[Worker " + workerId + " ] stopping");
             streams.close();
 
-            double seconds = (t1.get() - t0) / 1_000_000_000.0;
+            double seconds = (t1.get() - t0) / 1_000_000_000.0;     // t1 is updated at WorkerTransformer every time a new buffer has been processed
             System.out.printf("[Worker %d] Elapsed time: %.3f seconds%n", workerId, seconds);
 
 

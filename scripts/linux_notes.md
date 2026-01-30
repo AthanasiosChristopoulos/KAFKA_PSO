@@ -166,3 +166,40 @@ prime-select query
 
 ```
 
+# Performance stuff:
+
+Create a systemd service
+
+```bash
+sudo nano /etc/systemd/system/cpu-performance.service
+
+# Inside paste:
+
+[Unit]
+Description=Set CPU governor to performance
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/cpupower frequency-set -g performance
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
+# Enable it:
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable cpu-performance.service
+sudo systemctl start cpu-performance.service
+
+# Verify:
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+
+# Output:
+performance
+
+# Disable turbo:
+echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+cat /sys/devices/system/cpu/intel_pstate/no_turbo	# This needs to output 1
+```
