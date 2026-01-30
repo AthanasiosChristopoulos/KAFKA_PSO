@@ -12,11 +12,9 @@ public class Simulation {
 
     public static void main(String[] args) throws Exception {
         
-        var mainStateDir = java.nio.file.Path.of("/tmp/kstreams/main*");
-        var gbestStateDir = java.nio.file.Path.of("/tmp/kstreams/gbest*");
-
-        deleteDir(mainStateDir);
-        deleteDir(gbestStateDir);
+        var baseStateDir = java.nio.file.Path.of("/tmp/kstreams/");
+        deleteDir(baseStateDir);
+        java.nio.file.Files.createDirectories(baseStateDir);
 
         Config cfg = Config.getInstance();
         int numWorkers = cfg.N_WORKERS;

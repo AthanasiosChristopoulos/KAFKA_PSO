@@ -17,6 +17,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     private static Config cfg = Config.getInstance();
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+    private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
 
     private ProcessorContext context;
     private KeyValueStore<String, Float> gBestLossStore;
@@ -79,10 +80,15 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
                 + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
+            boolean significant_improvement = Math.abs((lastSentGBestLoss - newLoss)) / (Math.abs(lastSentGBestLoss) + EPS) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+
+            // if (!significant_improvement) {
+            //     return null;
+            // }
+
             return new KeyValue<>("gBest", gBestMsg);
         }
 
-        // else: drop
         return null;
     }
 
