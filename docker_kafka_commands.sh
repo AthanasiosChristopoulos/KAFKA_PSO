@@ -23,6 +23,16 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic prediction-output --partitions 1 --if-not-exists
 
+# Verity retention policy: 
+docker exec -it broker bash -lc "grep -E 'log.retention|retention.bytes' -n /etc/kafka/server.properties /opt/kafka/config/server.properties 2>/dev/null || true"
+
+# Check that there is no in topic override
+docker exec -it broker bash -lc '
+/opt/kafka/bin/kafka-configs.sh --bootstrap-server localhost:9092 \
+  --entity-type topics --entity-name pendigits-half-input --describe
+'
+
+
 # ==============================================================
 # Evaluate position:
 

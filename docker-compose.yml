@@ -24,6 +24,9 @@ services:
       KAFKA_NUM_PARTITIONS: 1   # Default number of partitions in a topic
       KAFKA_DELETE_TOPIC_ENABLE: true
 
+      KAFKA_LOG_RETENTION_MS: -1
+      KAFKA_LOG_RETENTION_BYTES: -1
+      
     volumes: # so that the data on the topics isnt lost in between each run
       - kafka_data:/var/lib/kafka/data
 

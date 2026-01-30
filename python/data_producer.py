@@ -162,13 +162,13 @@ def shuffle(X, y):
 def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=7):
     print(
         "Train shape:", X_train.shape,
-        "y range:", (int(y_train.min()), int(y_train.max())),
-        "counts:", np.bincount(y_train, minlength=n_classes)
+        "classes / y (labels):", (int(y_train.min()), int(y_train.max())),
+        "with counts:", np.bincount(y_train, minlength=n_classes)
     )
     print(
-        "Test  shape:", X_test.shape,
-        "y range:", (int(y_test.min()), int(y_test.max())),
-        "counts:", np.bincount(y_test, minlength=n_classes)
+        "Test shape:", X_test.shape,
+        "classes / y (labels):", (int(y_test.min()), int(y_test.max())),
+        "with counts:", np.bincount(y_test, minlength=n_classes)
     )
 
 # ========================================================================================
@@ -458,7 +458,7 @@ def load_dataset():
         X, y = shuffle(X, y)
 
         # Split manually
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5246, random_state=42, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=10492, random_state=42, stratify=y)
 
         class_names = [str(i) for i in range(5)]
 

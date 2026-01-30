@@ -1,4 +1,36 @@
+## =====================================================================================================================
+## Run ============================================================================================================
 
+```bash
+mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
+mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
+mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
+```
+
+## Run Docker: ==============================================================================================================
+
+```bash
+docker compose up
+docker compose stop
+
+docker compose down     # CAREFUL deletes topics ??? 
+```
+## Formulas for PSO / velocity update:
+
+ - Neighbor best (classical PSO):
+    - v_i(t + 1) = c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X) + w * v_i(t)
+
+ - Fully informed:
+    - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
+
+
+```bash
+
+chmod 777 run_streams.sh
+dos2unix run_streams.sh
+./run_streams.sh --reset
+
+```
 
 ## =====================================================================================================================
 ## Git: ================================================================================================================
@@ -50,40 +82,6 @@ git rm -r --cached target
 ```
 
 ## =====================================================================================================================
-## Run ============================================================================================================
-
-```bash
-mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
-```
-
-## Run Docker:
-
-```bash
-docker compose up
-docker compose stop
-
-docker compose down     # CAREFUL deletes topics ??? 
-```
-## Formulas for PSO / velocity update:
-
- - Neighbor best (classical PSO):
-    - v_i(t + 1) = c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X) + w * v_i(t)
-
- - Fully informed:
-    - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
-
-
-```bash
-
-chmod 777 run_streams.sh
-dos2unix run_streams.sh
-./run_streams.sh --reset
-
-```
-
-## =====================================================================================================================
 ## Partitioning: =======================================================================================================
 
 N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
@@ -115,7 +113,7 @@ The architecture is build to support two types of PSO:
 
 
 
-## Distributed, data parallel PSO Protocol:
+## Distributed, data parallel PSO Protocol: =====================================================================================================================
 
 1) Initialization of particles, randomize their initial positions + velocities
     => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
@@ -221,6 +219,7 @@ Input input-weights-topic:
  - An example of such functions for the dataset "bank_dataset" is detailed here:
  
 ```python
+
 # ======================================================================
 # BANK DATASET
 # ======================================================================
@@ -285,7 +284,7 @@ def run_bank():
     save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 ```
 
-## Improve congvergence:
+## Improve congvergence: =========================================================
 
  - change model
  - change constants => velocity, inertia, C1, C2
@@ -294,7 +293,7 @@ def run_bank():
     - velocity show always start big and then becose smaller
  -  Fully Informed seems to be slower, but converging more surely (its always improving)
 
-## What to look at for training process:
+## What to look at for training process: =========================================
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
     - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
@@ -313,7 +312,7 @@ def run_bank():
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
 
-## Velocity:
+## Velocity:  =========================================================
 
  - Is initialized to have a significant amplitude at the start
  - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
@@ -347,6 +346,7 @@ def run_bank():
         - class_1: no → the client did not subscribe
 
 ### Adult Income:
+
     2 Classes
     1/3 vs 2/3 Split between classes
     85% on Gradient Descent, 75% on PSO
@@ -382,19 +382,32 @@ def run_bank():
         
     - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
 
-### Pendigits:
-
+### Pendigits:  =========================================================
+    
+    - Load into Kafka with:
+        - from file my-pendigits.tra (my modified union of the train and test dataset) with 10992 samples
+        - NUMBER_OF_DATA_REPEATS: 40
+        - train size = 10492, test size = 500
+            - Number of Kafka Records: 419680
+        - Train shape: (10492, 16) classes / y (labels): (0, 9) with counts: [1091 1091 1092 1007 1092 1007 1008 1090 1007 1007]
     16 Features, 10 Classes 
     97% on Gradient Descent, 55% on FIPSO, 50% on GBEST
     Evenly Distributed
-    10490 samples on my modified union of the train and test dataset
-    Handwriting digit recognition. Features arent the whole picture, but 8 points in a specific order:
+    Handwriting digit recognition. Features arent the whole picture, but only 8 coordinates in the picture grid in a specific order:
         - x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8
-        - normalized to a 0–100-ish range 
         - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
+        - normalized to a 0–100-ish range 
         - Essentially the points in order form the pen trajectory
 
-### Pendigits-HALF:
+
+### Pendigits-HALF: =========================================================
+
+    - Load into Kafka with:
+        - from file my-pendigits.tra, which after being class filtered, get 10992 samples
+        - NUMBER_OF_DATA_REPEATS: 80
+        - train size = 5246, test size = 383
+            - Number of Kafka Records: 419680
+        - Train shape: (5246, 16) classes / y (labels): (0, 4) with counts: [1065 1066 1066  983 1066    0    0]
 
     16 Features, 5 Classes 
     99% on Gradient Descent, 93% on FIPSO, 85% on GBEST
@@ -413,6 +426,9 @@ def run_bank():
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
 
 ## Experimentation: =========================================================
+
+ - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)
+    - divide this by 40 partitions => each partition gets 10000 samples
 
  - Need to measure:
     - Diagramm 1: y-axis: Accuracy - N_Workers

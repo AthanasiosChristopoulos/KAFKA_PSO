@@ -156,6 +156,13 @@ lsmod | grep nouveau	# should return nothing after blacklisting
 glxinfo -B | grep "renderer"	# glxinfo is a tool that reports information about OpenGL, your graphics driver, and GPU setup.
 								# This tells you which GPU is actually being used for rendering (the CPU or the GPU).
 
+sudo prime-select intel
+reboot
+
+sudo prime-select nvidia
+reboot
+
+prime-select query
 
 ```
 
