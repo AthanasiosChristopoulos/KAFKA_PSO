@@ -221,7 +221,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 // this is a much more damaging filter, because the global affects all workers as the only sense of direction
                 // thats why 0.3 
         }
-        logger.log("ddfdfd: " + significant_diff);
+        
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setPBestAccuracy(accuracy);

@@ -257,7 +257,7 @@
 //                 t1 = System.nanoTime();
 //                 final double seconds = (t1 - t0) / 1_000_000_000.0;
 
-//                 System.out.printf("[Coordinator] Wall time: %.3f seconds%n", seconds);
+//                 System.out.printf("[Coordinator] Elasped time: %.3f seconds%n", seconds);
 
 //             } catch (InterruptedException ie) {
 //                 Thread.currentThread().interrupt();
@@ -553,7 +553,7 @@ public class Coordinator implements Runnable {
 
                 t1 = System.nanoTime();
                 final double seconds = (t1 - t0) / 1_000_000_000.0;
-                System.out.printf("[Coordinator] Wall time: %.3f seconds%n", seconds);
+                System.out.printf("[Coordinator] Elapsed time: %.3f seconds%n", seconds);
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();

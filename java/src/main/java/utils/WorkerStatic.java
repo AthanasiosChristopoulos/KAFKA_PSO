@@ -27,7 +27,7 @@ public final class WorkerStatic {
     public final PsoUpdater psoUpdater;
     public final BatchPrediction predictor;
 
-    public float local_gBestLoss = Float.POSITIVE_INFINITY;
+    public float local_gBestLoss = 100000f;
     public float local_gBestAccuracy = -1f;
 
     public int batchesRead = 0;

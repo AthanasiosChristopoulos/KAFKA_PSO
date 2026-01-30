@@ -196,7 +196,7 @@ public class Worker implements Runnable {
             streams.close();
 
             double seconds = (t1.get() - t0) / 1_000_000_000.0;
-            System.out.printf("[Worker %d] Wall time: %.3f seconds%n", workerId, seconds);
+            System.out.printf("[Worker %d] Elapsed time: %.3f seconds%n", workerId, seconds);
 
 
         } catch (Throwable e) {
