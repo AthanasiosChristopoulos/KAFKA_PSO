@@ -47,6 +47,7 @@ public class Config {
 
     public final float VMAX_FACTOR;
     public final float SIGNIFICANT_LOSS_DIFF;
+    public final boolean FILTER_ENABLED;
 
     public final int SAMPLING_CONSTANT;
 
@@ -139,7 +140,6 @@ public class Config {
 
         this.TRAIN_SIZE = Integer.parseInt(getenv(dotenv, "TRAIN_SIZE", "30"));
         this.TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
-        this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
 
@@ -171,7 +171,14 @@ public class Config {
 
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
 
-        this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "3.1"));
+        this.FILTER_ENABLED = Boolean.parseBoolean(getenv(dotenv, "FILTER_ENABLED", "false"));
+        if(FILTER_ENABLED == false) {
+            this.SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
+            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
+        } else {
+            this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
+            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 3;
+        }
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
 

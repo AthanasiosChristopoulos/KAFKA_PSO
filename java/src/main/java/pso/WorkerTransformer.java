@@ -38,6 +38,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
+    private final boolean FILTER_ENABLED = cfg.FILTER_ENABLED;
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
@@ -206,20 +207,21 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getPBestLoss(); 
                 // boolean has pBest improved or not ?
 
-        // boolean significant_diff = Math.abs(loss - ws.local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
-                // is the loss significant enough to be reported ?
-
+        // Filtering: is the loss significant enough to be reported ?
         double eps = 1e-12;
         boolean significant_diff = true;
 
-        if(FULLY_INFORMED == true) {
-            significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
-                // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
-        } else {
-            significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
-                // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
-                // this is a much more damaging filter, because the global affects all workers as the only sense of direction
-                // thats why 0.3 
+        if(FILTER_ENABLED == true) {
+            if(FULLY_INFORMED == true) {
+                significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
+                    // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
+            } else {
+                significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+                    // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
+                    // this is a much more damaging filter, because the global affects all workers as the only sense of direction
+                    // thats why 0.3 
+            }
+            logger.log("Filtering takes place: " + significant_diff);
         }
         
         if(improvement_to_pBest) {    // update self always when improvement 
@@ -248,7 +250,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         // =========================================================================================================
-        // Send current position after N_BATCHES. For FedAvg + Swarm Monitoring
+        // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset batchesRead
 
         if (batchesRead >= N_BATCHES) {   
 
