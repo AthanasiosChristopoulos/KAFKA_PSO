@@ -19,13 +19,18 @@ ACCURACY_REGEX = re.compile(    # REGEX == Regular Expression
 )
 
 END_PATTERNS = [
-    re.compile(r"Training is over\.", re.IGNORECASE),
-    re.compile(r"Test Records run out\.", re.IGNORECASE),
+    re.compile(r"\s*Training is over\s*", re.IGNORECASE),
 ]
 
 # NEW: parse times printed by Java
-WORKER_TIME_REGEX = re.compile(r"\[Worker\s+(\d+)\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
-COORD_TIME_REGEX  = re.compile(r"\[Coordinator\]\s+Wall time:\s*([0-9]*\.?[0-9]+)\s*seconds", re.IGNORECASE)
+WORKER_TIME_REGEX = re.compile(
+    r"\[Worker\s+(\d+)\s*\]\s+(?:Wall time|Elapsed time):\s*([0-9]*\.?[0-9]+)\s*seconds",
+    re.IGNORECASE
+)
+COORD_TIME_REGEX = re.compile(
+    r"\[Coordinator\]\s+(?:Wall time|Elapsed time):\s*([0-9]*\.?[0-9]+)\s*seconds",
+    re.IGNORECASE
+)
 
 # ========================================================================================
 
@@ -87,11 +92,10 @@ def run_once(n_workers, log_path):
 
     try:
         p.wait(timeout=5)
-
     except subprocess.TimeoutExpired:
         p.kill()
 
-    elapsed = time.time() - start
+    elapsed = time.time() - start   # Measures time by itself as well 
 
     last_worker_time_sec = max(worker_times.values()) if worker_times else None     # for worker elapsed time, only consider last worker elapsed time
 

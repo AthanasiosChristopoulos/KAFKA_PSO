@@ -71,14 +71,14 @@ public class CoordinatorControl {
         if (workerStopRequested[workerId].compareAndSet(false, true)) {
             count = count - 1;
             if (count <= 0) {
-                stopRequestedFinal.set(true);
+                stopRequestedFinal.set(true);   // Set after every worker requests stop. N
             }
         }
     }
 
     // =================================================================================================
 
-    public void requestStopFinal() {
+    public void requestStopFinal() {    // Is set after every worker requests stop. Not used by coordinator, because DESIRED_ACCURACY = 100%
         stopRequestedFinal.set(true);
     }
 

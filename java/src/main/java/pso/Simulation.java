@@ -16,6 +16,8 @@ public class Simulation {
         deleteDir(baseStateDir);
         java.nio.file.Files.createDirectories(baseStateDir);
 
+        long start = System.nanoTime();
+
         Config cfg = Config.getInstance();
         int numWorkers = cfg.N_WORKERS;
 
@@ -42,16 +44,18 @@ public class Simulation {
 
         coordinatorThread.join(); // if finished every worker waits on the coordinator
 
-        System.out.println("============== Simulation stop ==============");
-        // System.exit(0);
+        double elapsedTime = (System.nanoTime() - start) / 1_000_000_000.0;; 
+        System.out.printf("============== Training is over, ElapsedTime: %.3f ==============%n", elapsedTime);
     }
 
+    // ===================================================================================================
+    
     private static void deleteDir(java.nio.file.Path path) throws java.io.IOException {
-    if (!java.nio.file.Files.exists(path)) return;
-    java.nio.file.Files.walk(path)
-        .sorted(java.util.Comparator.reverseOrder())
-        .forEach(p -> {
-            try { java.nio.file.Files.delete(p); } catch (Exception ignored) {}
-        });
-}
+        if (!java.nio.file.Files.exists(path)) return;
+        java.nio.file.Files.walk(path)
+            .sorted(java.util.Comparator.reverseOrder())
+            .forEach(p -> {
+                try { java.nio.file.Files.delete(p); } catch (Exception ignored) {}
+            });
+    }
 }
