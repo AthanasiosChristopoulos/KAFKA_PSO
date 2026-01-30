@@ -206,22 +206,22 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getPBestLoss(); 
                 // boolean has pBest improved or not ?
 
-        // boolean significant_diff_to_gBest = Math.abs(loss - ws.local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
+        // boolean significant_diff = Math.abs(loss - ws.local_gBestLoss) > SIGNIFICANT_LOSS_DIFF;
                 // is the loss significant enough to be reported ?
 
         double eps = 1e-12;
-        boolean significant_diff_to_gBest = true;
+        boolean significant_diff = true;
 
         if(FULLY_INFORMED == true) {
-            significant_diff_to_gBest = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
+            significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
                 // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
         } else {
-            significant_diff_to_gBest = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+            significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
                 // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
                 // this is a much more damaging filter, because the global affects all workers as the only sense of direction
                 // thats why 0.3 
         }
-
+        logger.log("ddfdfd: " + significant_diff);
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setPBestAccuracy(accuracy);
@@ -232,7 +232,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             this.pBestWeights = weights;
 
-            if(significant_diff_to_gBest) { // send only when significant improvement
+            if(significant_diff) { // send only when significant improvement
 
                 ws.stats.setLastSentPBestLoss(loss);
 
