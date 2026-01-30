@@ -443,6 +443,7 @@ public class Coordinator implements Runnable {
     private final String instanceTag = "Coordinator@" + instanceNo + "#" + Integer.toHexString(System.identityHashCode(this));
 
     public Coordinator() {
+
         this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.globalModel = Dl4jModelFactory.createModel();
@@ -452,6 +453,8 @@ public class Coordinator implements Runnable {
         System.out.println("Running on Dataset: " + DATASET + ", TEST_TOPIC: " + TEST_TOPIC);
         System.out.println("Coordinator topics: PRED_IN=" + PREDICTION_INPUT_TOPIC + ", PRED_OUT=" + PREDICTION_OUTPUT_TOPIC);
     }
+
+    //====================================================================================================================================
 
     @Override
     public void run() {
@@ -477,12 +480,14 @@ public class Coordinator implements Runnable {
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
         mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
+        mainProps.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams/main-" + RUN_ID);
 
         // GBEST instance props (separate app.id!)
         Properties gbestProps = new Properties();
         gbestProps.putAll(baseProps);
         gbestProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-gbest-relay-" + RUN_ID);
         gbestProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
+        gbestProps.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams/gbest-" + RUN_ID);
 
         // Build topologies =============================================================
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
@@ -660,7 +665,7 @@ public class Coordinator implements Runnable {
         // State store ONLY for this instance
         StoreBuilder<KeyValueStore<String, Float>> gBestEmitStore =
             Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore("gBestEmitStore"),
+                Stores.inMemoryKeyValueStore("gBestEmitStore"),     // Stores.persistentKeyValueStore("gBestEmitStore"), KeyValueStore is an interface
                 Serdes.String(),
                 Serdes.Float()
             );

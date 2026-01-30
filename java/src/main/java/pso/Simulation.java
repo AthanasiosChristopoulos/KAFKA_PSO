@@ -12,6 +12,12 @@ public class Simulation {
 
     public static void main(String[] args) throws Exception {
         
+        var mainStateDir = java.nio.file.Path.of("/tmp/kstreams/main*");
+        var gbestStateDir = java.nio.file.Path.of("/tmp/kstreams/gbest*");
+
+        deleteDir(mainStateDir);
+        deleteDir(gbestStateDir);
+
         Config cfg = Config.getInstance();
         int numWorkers = cfg.N_WORKERS;
 
@@ -41,4 +47,13 @@ public class Simulation {
         System.out.println("============== Simulation stop ==============");
         // System.exit(0);
     }
+
+    private static void deleteDir(java.nio.file.Path path) throws java.io.IOException {
+    if (!java.nio.file.Files.exists(path)) return;
+    java.nio.file.Files.walk(path)
+        .sorted(java.util.Comparator.reverseOrder())
+        .forEach(p -> {
+            try { java.nio.file.Files.delete(p); } catch (Exception ignored) {}
+        });
+}
 }

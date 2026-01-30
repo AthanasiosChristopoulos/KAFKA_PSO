@@ -31,11 +31,6 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
     public void init(ProcessorContext<String, WeightsMessage> context) {
         this.context = context;
         this.gBestLossStore = (KeyValueStore<String, Float>) context.getStateStore("gBestEmitStore");
-
-        Float persisted = gBestLossStore.get("gBestLoss");
-        if (persisted != null) {
-            gBestLoss = persisted;
-        }
     }
 
     @Override

@@ -269,6 +269,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //=========================================================================================================================
 
     private void updateTime() {
+        
         t1 = System.nanoTime();
         lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }

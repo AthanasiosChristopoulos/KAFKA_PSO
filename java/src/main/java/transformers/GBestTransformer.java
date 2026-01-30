@@ -31,6 +31,8 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
     private static final float EPS = 1e-9f;
 
+    private float lastSentGBestLoss = Float.POSITIVE_INFINITY;
+
     private long t0;
     private double lastActivitySeconds = 0.0;
 
@@ -48,11 +50,6 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     public void init(ProcessorContext context) {
         this.context = context;
         this.gBestLossStore = (KeyValueStore<String, Float>) context.getStateStore("gBestEmitStore");
-
-        Float persisted = gBestLossStore.get("gBestLoss");
-        if (persisted != null) {
-            gBestLoss = persisted;
-        }
     }
 
     // =====================================================================================================================

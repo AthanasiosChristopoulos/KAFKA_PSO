@@ -108,7 +108,7 @@ public class Worker implements Runnable {
             GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), weightsSerde),
-                Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
                     .withKeySerde(Serdes.String())
                     .withValueSerde(weightsSerde)
             );
@@ -122,7 +122,7 @@ public class Worker implements Runnable {
             GlobalKTable<String, WeightsMessage> gBestTable = builder.globalTable(
                 GLOBAL_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), weightsSerde),
-                Materialized.<String, WeightsMessage, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
+                Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
                     .withKeySerde(Serdes.String())
                     .withValueSerde(weightsSerde)
             );
