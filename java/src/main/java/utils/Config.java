@@ -175,9 +175,10 @@ public class Config {
         if(FILTER_ENABLED == false) {
             this.SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
+            // this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 5;
         } else {
             this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
-            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 5;
+            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 4;
         }
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));

@@ -89,7 +89,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
 
-    private static final long IDLE_MS = 300; 
+    private static final long IDLE_MS = 3000; 
     private static final long CHECK_EVERY_MS = 100; // how often we check
     private static final long IDLE_GRACE_MS = 5000;
 

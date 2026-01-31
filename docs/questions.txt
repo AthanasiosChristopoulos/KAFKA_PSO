@@ -26,7 +26,7 @@
 
 		- Fully Informed is outperforming Neighborhood best.
 
-		- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standarts οτι δουλευει ?
+		- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standards οτι δουλευει ?
 			- ποσα features ειναι expected to run ?
 			- expected model size / number of weights (ωστε να εχει νοημα το GM) ?
 

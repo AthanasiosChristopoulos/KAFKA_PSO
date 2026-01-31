@@ -399,26 +399,6 @@ def load_mnist_data():
 # ===============================================================================
 # about 784 × 256 = 200,704 weights 
 
-# def build_mnist_model(input_shape=(28, 28)):
-    
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Flatten(),
-#         layers.Dense(256, activation="relu"),
-#         layers.Dense(128, activation="relu"),
-#         layers.Dense(10, activation="softmax"),
-#     ])
-
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(1e-3),
-#         loss="sparse_categorical_crossentropy",
-#         metrics=["accuracy"],
-#     )
-
-#     model.summary()
-#     return model
-
-
 def build_mnist_model(input_shape=(28, 28), num_classes=10):
 
     model = keras.Sequential([
@@ -450,6 +430,7 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10):
 # ===============================================================================
 
 def run_mnist():
+
     X_train, y_train, X_test, y_test, class_names = load_mnist_data()
 
     model = build_mnist_model(input_shape=X_train.shape[1:])
@@ -463,6 +444,100 @@ def run_mnist():
     print(f"Test accuracy: {test_acc:.4f}")
 
     # save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
+
+# ======================================================================
+# MNIST4 DATASET (use only classes 0..3 => classes in total, drop the others)
+# ======================================================================
+
+def load_mnist4_data(remap_labels=True):
+
+    print("Loading from tf.keras.datasets.mnist")
+    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+    # Filter to digits 0..3
+    train_mask = (y_train >= 0) & (y_train <= 3)
+    test_mask  = (y_test  >= 0) & (y_test  <= 3)
+
+    X_train, y_train = X_train[train_mask], y_train[train_mask]
+    X_test,  y_test  = X_test[test_mask],  y_test[test_mask]
+
+    # Normalize
+    X_train = X_train.astype("float32") / 255.0
+    X_test  = X_test.astype("float32") / 255.0
+
+    if remap_labels:
+        # For 0..3 this is already correct, but kept for clarity / future changes
+        y_train = y_train.astype("int32")
+        y_test  = y_test.astype("int32")
+
+    print("MNIST4 Train shape:", X_train.shape, "Labels:", y_train.shape, "classes:", np.unique(y_train))
+    print("MNIST4 Test shape:",  X_test.shape,  "Labels:", y_test.shape,  "classes:", np.unique(y_test))
+
+    class_names = [str(i) for i in range(4)]
+
+    return X_train, y_train, X_test, y_test, class_names
+
+# ======================================================================
+# SIMPLER / FASTER CNN for MNIST4
+
+def build_mnist4_model(input_shape=(28, 28), num_classes=4):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Conv block 1 (smaller than before)
+        layers.Conv2D(8, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.MaxPooling2D(),  # 28x28 -> 14x14
+
+        # Conv block 2 (smaller than before)
+        layers.Conv2D(16, 3, padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        # Global pooling + classifier
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+
+# ======================================================================
+# Run MNIST4
+# ======================================================================
+
+def run_mnist4(epochs=5, batch_size=128, max_train=None, max_test=None):
+    
+    X_train, y_train, X_test, y_test, class_names = load_mnist4_data()
+
+    model = build_mnist4_model(input_shape=X_train.shape[1:], num_classes=4)
+
+    print("\nTraining...")
+    history = model.fit(
+        X_train, y_train,
+        validation_split=0.1,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=2
+    )
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+    print(f"Test loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+    return model, history
+
 
 # ======================================================================
 # Adult income DATASET
@@ -512,102 +587,6 @@ def load_adult_data():
     print("Class names:", class_names)
 
     return X_train, y_train, X_test, y_test, class_names
-
-# ======================================================================
-# MNIST4 DATASET (use only classes 0..3, drop the others)
-# ======================================================================
-
-def load_mnist4_data(remap_labels=True):
-
-    print("Loading from tf.keras.datasets.mnist")
-    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
-
-    # Filter to digits 0..3
-    train_mask = (y_train >= 0) & (y_train <= 3)
-    test_mask  = (y_test  >= 0) & (y_test  <= 3)
-
-    X_train, y_train = X_train[train_mask], y_train[train_mask]
-    X_test,  y_test  = X_test[test_mask],  y_test[test_mask]
-
-    # Normalize
-    X_train = X_train.astype("float32") / 255.0
-    X_test  = X_test.astype("float32") / 255.0
-
-    if remap_labels:
-        # For 0..3 this is already correct, but kept for clarity / future changes
-        y_train = y_train.astype("int32")
-        y_test  = y_test.astype("int32")
-
-    print("MNIST4 Train shape:", X_train.shape, "Labels:", y_train.shape, "classes:", np.unique(y_train))
-    print("MNIST4 Test shape:",  X_test.shape,  "Labels:", y_test.shape,  "classes:", np.unique(y_test))
-
-    class_names = [str(i) for i in range(4)]
-    return X_train, y_train, X_test, y_test, class_names
-
-
-# ======================================================================
-# SIMPLER / FASTER CNN for MNIST4
-# ======================================================================
-
-def build_mnist4_model(input_shape=(28, 28), num_classes=4):
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Reshape((28, 28, 1)),
-
-        # Conv block 1 (smaller than before)
-        layers.Conv2D(8, 3, padding="same", use_bias=False),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
-        layers.MaxPooling2D(),  # 28x28 -> 14x14
-
-        # Conv block 2 (smaller than before)
-        layers.Conv2D(16, 3, padding="same", use_bias=False),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
-
-        # Global pooling + classifier
-        layers.GlobalAveragePooling2D(),
-        layers.Dense(num_classes, activation="softmax"),
-    ])
-
-    model.compile(
-        optimizer=keras.optimizers.Adam(1e-3),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
-
-    model.summary()
-    print("Trainable params:", model.count_params())
-    return model
-
-
-# ======================================================================
-# Run MNIST4
-# ======================================================================
-
-def run_mnist4(epochs=5, batch_size=128, max_train=None, max_test=None):
-    
-    X_train, y_train, X_test, y_test, class_names = load_mnist4_data(
-        max_train=max_train, max_test=max_test
-    )
-
-    model = build_mnist4_model(input_shape=X_train.shape[1:], num_classes=4)
-
-    print("\nTraining...")
-    history = model.fit(
-        X_train, y_train,
-        validation_split=0.1,
-        epochs=epochs,
-        batch_size=batch_size,
-        verbose=2
-    )
-
-    print("\nEvaluating on test set...")
-    test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"Test loss: {test_loss:.4f}")
-    print(f"Test accuracy: {test_acc:.4f}")
-
-    return model, history
 
 # ======================================================================
 
@@ -977,178 +956,6 @@ def run_pendigits_half():
 # CIFAR-10 DATASET
 # ======================================================================
 
-# def load_cifar10_data(normalize=True, one_hot=False):
-
-#     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
-
-#     y_train = y_train.squeeze().astype(np.int64)
-#     y_test  = y_test.squeeze().astype(np.int64)
-
-#     X_train = X_train.astype(np.float32)
-#     X_test  = X_test.astype(np.float32)
-
-#     if normalize:
-#         X_train /= 255.0
-#         X_test  /= 255.0
-
-#     if one_hot:
-#         y_train = keras.utils.to_categorical(y_train, 10).astype(np.float32)
-#         y_test  = keras.utils.to_categorical(y_test, 10).astype(np.float32)
-
-#     class_names = [
-#         "airplane","automobile","bird","cat","deer",
-#         "dog","frog","horse","ship","truck"
-#     ]
-
-#     print("[CIFAR-10] Train shape:", X_train.shape, "Labels:", y_train.shape)
-#     print("[CIFAR-10] Test  shape:", X_test.shape,  "Labels:", y_test.shape)
-#     print("[CIFAR-10] Classes:", class_names)
-
-#     return X_train, y_train, X_test, y_test, class_names
-
-# # =======================================================================================================
-
-# def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, weight_decay=1e-4):
-
-#     def conv_bn_relu(x, filters, kernel_size=3, strides=1):
-#         x = layers.Conv2D(
-#             filters, kernel_size, strides=strides, padding="same",
-#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-#         )(x)
-#         x = layers.BatchNormalization()(x)
-#         x = layers.Activation("relu")(x)
-#         return x
-
-#     def residual_block(x, filters, downsample=False):
-#         strides = 2 if downsample else 1
-#         shortcut = x
-
-#         # First conv
-#         y = layers.Conv2D(
-#             filters, 3, strides=strides, padding="same",
-#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-#         )(x)
-#         y = layers.BatchNormalization()(y)
-#         y = layers.Activation("relu")(y)
-
-#         # Second conv
-#         y = layers.Conv2D(
-#             filters, 3, strides=1, padding="same",
-#             use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-#         )(y)
-#         y = layers.BatchNormalization()(y)
-
-#         # Match shortcut shape if needed
-#         if downsample or shortcut.shape[-1] != filters:
-#             shortcut = layers.Conv2D(
-#                 filters, 1, strides=strides, padding="same",
-#                 use_bias=False, kernel_regularizer=keras.regularizers.l2(weight_decay)
-#             )(shortcut)
-#             shortcut = layers.BatchNormalization()(shortcut)
-
-#         out = layers.Add()([shortcut, y])
-#         out = layers.Activation("relu")(out)
-#         return out
-
-#     inp = keras.Input(shape=input_shape)
-
-#     # Stem
-#     x = conv_bn_relu(inp, 16, 3, 1)
-
-#     # Stage 1: 16 filters, 3 blocks
-#     for _ in range(3):
-#         x = residual_block(x, 16, downsample=False)
-
-#     # Stage 2: 32 filters, 3 blocks (first downsample)
-#     x = residual_block(x, 32, downsample=True)
-#     for _ in range(2):
-#         x = residual_block(x, 32, downsample=False)
-
-#     # Stage 3: 64 filters, 3 blocks (first downsample)
-#     x = residual_block(x, 64, downsample=True)
-#     for _ in range(2):
-#         x = residual_block(x, 64, downsample=False)
-
-#     # Head
-#     x = layers.GlobalAveragePooling2D()(x)
-#     x = layers.Dense(
-#         128, activation="relu",
-#         kernel_regularizer=keras.regularizers.l2(weight_decay)
-#     )(x)
-#     x = layers.Dropout(0.25)(x)
-#     out = layers.Dense(num_classes, activation="softmax")(x)
-
-#     model = keras.Model(inp, out)
-
-#     # Optimizer: Adam is fine; SGD+momentum often edges higher for CIFAR.
-#     # We'll use SGD+Nesterov for a classic reliable CIFAR setup.
-#     opt = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=True)
-
-#     model.compile(
-#         optimizer=opt,
-#         loss="sparse_categorical_crossentropy",
-#         metrics=["accuracy"],
-#     )
-
-#     model.summary()
-#     return model
-
-# # =======================================================================================================
-
-# def run_cifar10(epochs=50, batch_size=128, use_augmentation=True):
-#     X_train, y_train, X_test, y_test, class_names = load_cifar10_data(
-#         normalize=True,
-#         one_hot=False
-#     )
-
-#     model = build_cifar10_model(input_shape=X_train.shape[1:], num_classes=10)
-
-#     # Data augmentation (standard CIFAR-ish): pad+random crop + flip
-#     if use_augmentation:
-#         aug = keras.Sequential([
-#             layers.RandomFlip("horizontal"),
-#             layers.ZeroPadding2D(padding=4),
-#             layers.RandomCrop(32, 32),
-#         ])
-#         train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-#         train_ds = train_ds.shuffle(50000).batch(batch_size).map(
-#             lambda x, y: (aug(x, training=True), y),
-#             num_parallel_calls=tf.data.AUTOTUNE
-#         ).prefetch(tf.data.AUTOTUNE)
-#     else:
-#         train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-#         train_ds = train_ds.shuffle(50000).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-#     test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-#     # Learning-rate schedule (simple step-down)
-#     def lr_schedule(epoch, lr):
-#         # classic CIFAR schedule: drop at 50% and 75% of training
-#         if epoch == int(epochs * 0.5) or epoch == int(epochs * 0.75):
-#             return lr * 0.1
-#         return lr
-
-#     callbacks = [
-#         keras.callbacks.LearningRateScheduler(lr_schedule, verbose=1),
-#         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True),
-#     ]
-
-#     print("\n[CIFAR-10] Training...")
-#     history = model.fit(
-#         train_ds,
-#         validation_data=test_ds,
-#         epochs=epochs,
-#         verbose=2,
-#         callbacks=callbacks
-#     )
-
-#     print("\n[CIFAR-10] Evaluating on test set...")
-#     test_loss, test_acc = model.evaluate(test_ds, verbose=0)
-#     print(f"[CIFAR-10] Test loss: {test_loss:.4f}")
-#     print(f"[CIFAR-10] Test accuracy: {test_acc:.4f}")
-
-#     return model, history, class_names
-
 def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
     """
     Loads CIFAR-10, normalizes to [0,1], and returns (train_ds, test_ds).
@@ -1175,6 +982,7 @@ def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
     )
     return train_ds, test_ds
 
+# ======================================================================
 
 def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
     """
@@ -1203,7 +1011,13 @@ def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
         return x
 
     inputs = layers.Input(shape=input_shape)
-    x = augment(inputs)
+
+    # x = augment(inputs)
+    # Augmentation: 
+        # forward pass becomes: inputs → random transform → conv layers → output
+        # So each batch, the model sees a slightly randomized version of your images.
+
+    x = inputs
 
     x = conv_block(x, 32)
     x = conv_block(x, 64)
@@ -1222,20 +1036,14 @@ def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
     )
     return model
 
+# ======================================================================
 
 def run_cifar10(
     batch_size: int = 128,
     epochs: int = 50,
     verbose: int = 1,
 ):
-    """
-    End-to-end runner:
-      - loads data
-      - builds model
-      - trains with callbacks (early stop + reduce LR)
-      - evaluates on test set
-    Returns: (model, history, test_metrics_dict)
-    """
+
     train_ds, test_ds = load_cifar10_data(batch_size=batch_size)
     model = build_cifar10_model()
     print("Trainable params:", model.count_params())
@@ -1267,21 +1075,13 @@ def run_cifar10(
 # CIFAR3
 # =======================================================================================================
 
-
 def load_cifar3_data(
     classes=(0, 1, 2),
     batch_size: int = 128,
     buffer_size: int = 50_000,
 ):
-    """
-    Loads CIFAR-10 and filters it down to CIFAR-3 by keeping only `classes`.
-    Returns (train_ds, test_ds, class_names).
-
-    classes: tuple/list of CIFAR-10 class indices to keep.
-             CIFAR-10 labels are:
-             0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer,
-             5 dog, 6 frog, 7 horse, 8 ship, 9 truck
-    """
+    # CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
+    
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 
     # Flatten labels from shape (N,1) -> (N,)
@@ -1329,14 +1129,10 @@ def load_cifar3_data(
 
     return train_ds, test_ds, class_names
 
+# =======================================================================================================
 
 def build_cifar3_model(input_shape=(32, 32, 3), num_classes: int = 3):
-    """
-    Very small CNN designed to keep parameter count low (PSO-friendly):
-      Conv(8) -> MaxPool
-      Conv(16) -> MaxPool
-      GlobalAvgPool -> Dense(num_classes)
-    """
+
     inputs = layers.Input(shape=input_shape)
 
     x = layers.Conv2D(8, 3, padding="same", activation="relu")(inputs)
@@ -1358,8 +1154,10 @@ def build_cifar3_model(input_shape=(32, 32, 3), num_classes: int = 3):
 
     model.summary()
     print("Trainable params:", model.count_params())
+
     return model
 
+# =======================================================================================================
 
 def run_cifar3(
     classes=(0, 1, 2),
@@ -1367,13 +1165,7 @@ def run_cifar3(
     epochs: int = 30,
     verbose: int = 1,
 ):
-    """
-    End-to-end runner:
-      - loads CIFAR-3 subset
-      - builds tiny CNN
-      - trains + evaluates
-    Returns: (model, history, test_metrics_dict, class_names)
-    """
+
     print("GPUs:", tf.config.list_physical_devices("GPU"))
 
     train_ds, test_ds, class_names = load_cifar3_data(

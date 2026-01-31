@@ -384,9 +384,9 @@ def run_bank():
             Class_5: 2.68%
             Class_6: 2.74%
 
-### MNIST:
+### MNIST: =========================================================
 
-    - Grayscale images, very simple image dataset
+    - Grayscale images, very simple image dataset (means (28×28×1).)
         - When flattend there are only 784 features
         
     - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
@@ -428,6 +428,23 @@ def run_bank():
         - normalized to a 0–100-ish range 
         - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
         - Essentially the points in order form the pen trajectory
+
+### CIRAR10:
+
+    - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
+    - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
+
+## CNNs - Image Datasets: ===================================================================================================
+
+    - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a forward pass to a CNN, rather than a Dense NN: 
+        - weights are reused multiple times in forward pass we are convoluting.
+        - In an MLP (Multi-Layer Perceptron), 784 features connect directly to neurons once.
+            - MACs == model parameters since we pass them only one time.
+        - In a CNN, those 784 pixels are processed repeatedly via sliding kernels.
+        
+        MAC = Multiply–Accumulate (a sum) => in CNNs MACs are much bigger than model parameters:
+        - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
+        - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
 
 ## =================================================================================================================================

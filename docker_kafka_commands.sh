@@ -221,9 +221,9 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
 
 # susy: ======================================================
 
-docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
-  --create --topic susy-input --partitions 1 --if-not-exists
+# docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
+#   --bootstrap-server localhost:9092 \
+#   --create --topic susy-input --partitions 1 --if-not-exists
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \

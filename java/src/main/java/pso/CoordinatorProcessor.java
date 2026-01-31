@@ -152,8 +152,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         updateTime();
 
         if (control.isStopRequested(-1)) {
-            control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
-            control.setBestTrainingAccuracy(bestTrainingAccuracy);
+            // control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
+            // control.setBestTrainingAccuracy(bestTrainingAccuracy);
             return;
         }
 

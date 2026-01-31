@@ -91,6 +91,7 @@ else:
 print(f"Running this on input topic: {INPUT_TOPIC}")
 
 MAX_TEST_SAMPLES = 500
+
 CIFAR10_NAMES = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
 
 # ========================================================================================
@@ -752,24 +753,7 @@ def main():
         while True:
             index = random.randrange(len(X_train))      # we need random samples (if in order, they would belong to the same class)
             features = X_train[index]
-            label = int(y_train[index])
-
-            # if class_names:
-            #     label_name = class_names[label]
-
-            #     msg = { 
-            #         "sample_index" : index,
-            #         "features": features,
-            #         "label": label,
-            #         "label_name": label_name
-            #     }
-
-            # else:
-            #     msg = { 
-            #         "sample_index" : index,
-            #         "features": features,
-            #         "label": label,
-            #     }          
+            label = int(y_train[index])   
 
             msg = { 
                 "sample_index" : index,
@@ -777,8 +761,8 @@ def main():
                 "label": label,
             } 
 
-            producer.send(INPUT_TOPIC, value=msg) # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
-            producer.flush()                # This sends everything that been buffered
+            producer.send(INPUT_TOPIC, value=msg)       # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
+            producer.flush()                            # This sends everything that been buffered
 
             print(f"sent: {msg}")
             index = index + 1
