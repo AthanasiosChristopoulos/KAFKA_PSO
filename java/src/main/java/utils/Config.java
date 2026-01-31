@@ -177,7 +177,7 @@ public class Config {
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         } else {
             this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
-            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 3;
+            this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 5;
         }
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));

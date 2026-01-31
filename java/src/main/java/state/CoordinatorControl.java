@@ -1,40 +1,3 @@
-// package state;
-
-// import java.util.concurrent.atomic.AtomicBoolean;
-
-// import utils.*;
-
-// public class CoordinatorControl {
-
-//     private static Config cfg = Config.getInstance();
-
-//     private final AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
-//     private static final CoordinatorControl instance = new CoordinatorControl();
-
-//     private static int count = cfg.N_WORKERS;
-
-//     public void requestStop(int workerId) {
-//         stopRequestedWorker(workerId) = true;
-//         count = count - 1;
-//         if(count == 0) {
-//             stopRequestedFinal.set(true);
-//         }
-//     }
-
-//     public boolean isStopRequested(int workerId) {
-//         if(workerId == -1) {    // coordinator called
-//             stopRequestedFinal.get();
-//         } else {
-
-//         }
-//         return stopRequestedWorker(workerId);
-//     }
-
-//     public static CoordinatorControl getInstance() {
-//         return instance;
-//     }
-// }
-
 
 package state;
 
@@ -47,6 +10,8 @@ public class CoordinatorControl {
     private static final Config cfg = Config.getInstance();
     private static final int N_WORKERS = cfg.N_WORKERS;
     private static int count = N_WORKERS;
+    private static float bestGlobalModelAccuracy = -1f;
+    private static float bestTrainingAccuracy = -1f;
 
     private static final CoordinatorControl instance = new CoordinatorControl();
 
@@ -96,4 +61,23 @@ public class CoordinatorControl {
     public static CoordinatorControl getInstance() {
         return instance;
     }
+
+    public static float getBestGlobalModelAccuracy() {
+        return bestGlobalModelAccuracy;
+    }
+
+    public static void setBestGlobalModelAccuracy(float bestGlobalModelAccuracy) {
+        CoordinatorControl.bestGlobalModelAccuracy = bestGlobalModelAccuracy;
+    }
+
+    public static float getBestTrainingAccuracy() {
+        return bestTrainingAccuracy;
+    }
+
+    public static void setBestTrainingAccuracy(float bestTrainingAccuracy) {
+        CoordinatorControl.bestTrainingAccuracy = bestTrainingAccuracy;
+    }
+
+    // =================================================================================================
+
 }

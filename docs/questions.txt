@@ -47,6 +47,8 @@
 		- αυτην την στιγμη το communication cost ειναι μικροτερο απο οτι θα ειναι στην πραγματικοτητα ? Δηλαδη σε ενα πραγματικο Federated Enviroment,
 			με remote communication protocol, to communication θα ειναι πιο costly ? Γιατι αυτην την στιγμη το processing of data + forward pass ειναι 
 			το bottleneck.
+		
+		- Is testStore ok ? only 500 samples, and cycle this every time ... before it was a Kafka Consumer ...
 
 	- Για συνταξη της Διπλωματικης:	==========================================================================================
 

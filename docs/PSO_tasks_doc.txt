@@ -116,6 +116,8 @@
 		- Otherwise you need to do it with keyed Records (decides to which partition in the kafka topic the Record goes to) and partitions
 
 	21) Use Vector class not float[]
+
+	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
 ========================================================================================================================
 

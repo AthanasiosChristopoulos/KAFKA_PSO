@@ -113,6 +113,7 @@ public class PsoUpdater {
         // if (velocity == null || velocity.length != x_i.length) {   // initialization of velocity
         //     velocity = new float[x_i.length];
         // }
+        
         updateC1Schedule();         // we are updating c1 only for the neighborhood case
         Random rnd = new Random();
         

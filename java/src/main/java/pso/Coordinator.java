@@ -190,6 +190,10 @@ public class Coordinator implements Runnable {
 
                 t1 = System.nanoTime();
                 final double seconds = (t1 - t0) / 1_000_000_000.0;
+
+                System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()
+                     + ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
+
                 System.out.printf("[Coordinator] Elapsed time: %.3f seconds%n", seconds);
 
             } catch (InterruptedException ie) {

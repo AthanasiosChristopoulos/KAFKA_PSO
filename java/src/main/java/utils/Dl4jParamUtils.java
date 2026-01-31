@@ -32,19 +32,20 @@ public class Dl4jParamUtils {
     //=====================================================================================================
     // Decode / Encode Model Number 1:
 
-    public static float[] modelToFlatList(MultiLayerNetwork model) {
+    public static float[] modelToFlatList(MultiLayerNetwork model) {    // Serializa model into float[]
         
         return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
                                                     // specific order chosen by DL4J
     }
 
-    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    public static void updateModel(MultiLayerNetwork model, float[] flat) { // Deserialize model, from a float[] to a MultiLayerNetwork model object
         if (flat.length != model.numParams()) {
             throw new IllegalArgumentException(
                 "Expected " + model.numParams() + " params but got " + flat.length
             );
         }
         model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
+                                                        // updateModel(...) mutates the existing MultiLayerNetwork object in place.
     }                                                   // DL4J provides the serialization convention
 
     //=====================================================================================================

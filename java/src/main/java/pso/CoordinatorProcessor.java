@@ -45,18 +45,18 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private ProcessorContext<String, WeightsMessage> context;
 
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
-    
-    private float gBestAccuracy = 0f;
-    private float gBestLoss = 10000f;
 
     private final MultiLayerNetwork globalModel; // x_g , current model
     private final MultiLayerNetwork bestGlobalModel; 
-    private float accuracy = -1f;
+    private float accuracy = -1f;    
     private float loss = 10000f;
     private int nSamples = 0;
     private int nCorrect = 0;
+
     private float bestGlobalModelAccuracy = -1f;
     private float bestLoss = 10000f;
+
+    private float bestTrainingAccuracy = -1f;
 
     private final BatchPrediction globalPredictor;
 
@@ -69,8 +69,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
 
     private final KafkaConsumer<String, DataMessage> consumer;
-
-    private int process_count = 0;
 
     private final CoordinatorControl control;
 
@@ -97,11 +95,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
     private String taskTag = "task=UNKNOWN";
 
-    private static final long START_DELAY_NS = Duration.ofSeconds(2).toSeconds();
     private static final int MIN_TEST_ROWS = 200;
     private static final long WAIT_SLEEP_MS = 100;
     private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
-    private boolean testStoreReady = false;
 
     // ================================================================================================================
 
@@ -155,23 +151,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         start = System.nanoTime();
         updateTime();
 
-        // if (lastActivitySeconds < START_DELAY_NS) {
-        //     logger.log(lastActivitySeconds + ", I am waiting");
-        //     return;
-        // }
+        if (control.isStopRequested(-1)) {
+            control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
+            control.setBestTrainingAccuracy(bestTrainingAccuracy);
+            return;
+        }
 
-        // process_count++;
-        // logger.log(taskInstance + " process_count: " + process_count + " " + lastActivitySeconds + ", I passed: " + " thread = " + Thread.currentThread().getName() );
-        
-        // if (!testStoreReady) {
-        //     testStoreReady = ensureTestStoreHasAtLeast(MIN_TEST_ROWS);
-
-        //     // if we got interrupted or timed out, just stop processing this record
-        //     if (!testStoreReady) return;
-        // }
-
-        if (control.isStopRequested(-1)) return;
-        
         if(test_count == 0) {
             context.recordMetadata().ifPresent(meta -> 
                 logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
@@ -191,7 +176,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         if (weights == null) {
             return;
         }
-    
+        
+        if(bestTrainingAccuracy < msg.accuracy) {
+            bestTrainingAccuracy = msg.accuracy;
+        }
+
         weightsBuffer.put(workerId, weights);
 
         // Run only if all workers have reported their position 
@@ -206,11 +195,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             List<DataMessage> evalBatch;
 
             if (TEST_SIZE == -1) {
-                evalBatch = loadAndCacheTestSet(MIN_TEST_ROWS);
+                evalBatch = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
 
             } else {
 
-                evalBatch = readExactlyTestSizeBatch(TEST_SIZE);
+                evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
                 logConsumerOffsets();   
             }
 
@@ -244,13 +233,16 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             logger.log(taskInstance + 
                         ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
-                        ", nCorrect: " + nCorrect + " and loss: " + loss + 
-                        ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+                        ", nCorrect: " + nCorrect + " loss: " + loss + 
+                        ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+                        ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
-            System.out.println(test_count + ") time: " + lastActivitySeconds + 
-                        ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
-                        ", accuracy: " + accuracy + " and loss: " + loss + 
-                        ", and weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT));
+            System.out.println(test_count + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " loss: " + loss + 
+                        ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+                        ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
             if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
                 Dl4jParamUtils.saveModel(bestGlobalModel);
@@ -260,7 +252,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             end = System.nanoTime();
             sumElapsedNs += (end - start);
-            test_count++;            
+            test_count++;   
+            
+            control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
+            control.setBestTrainingAccuracy(bestTrainingAccuracy);
 
             weightsBuffer.clear();
         } 
@@ -311,49 +306,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     //=========================================================================================================================
 
-
-
-    // private boolean ensureTestStoreHasAtLeast(int minRows) {
-
-    //     int last = -1;
-
-    //     for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
-    //         int sz = approximateStoreSize();
-
-    //         if (sz >= minRows) {
-    //             if (!testStoreReady) {
-    //                 logger.log(taskInstance + " testStore READY (size=" + sz + " >= " + minRows + ")");
-    //             }
-    //             return true;
-    //         }
-
-    //         // optional: log only when size changes so logs don't spam
-    //         if (sz != last) {
-    //             logger.log(taskInstance + " waiting for testStore... size=" + sz + " / " + minRows);
-    //             last = sz;
-    //         }
-
-    //         try {
-    //             Thread.sleep(WAIT_SLEEP_MS);
-    //         } catch (InterruptedException e) {
-    //             Thread.currentThread().interrupt();
-    //             logger.log(taskInstance + " interrupted while waiting for testStore");
-    //             return false;
-    //         }
-    //     }
-
-    //     logger.log(taskInstance + " WARNING: testStore did not reach " + minRows + " rows within timeout. lastSize=" + last);
-    //     return false;
-    // }
-
     private List<DataMessage> loadAndCacheTestSet(int minRows) {
 
         // already cached
         if (cachedTestSet != null) return cachedTestSet;
         logger.log("I am waiting on loadAndCacheTestSet");
-        int last = -1;
 
-        // wait until store has enough rows
+        // wait until State Store has enough rows
         for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
             int sz = approximateStoreSize();
 
@@ -373,7 +332,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         // load all rows from store
         List<DataMessage> all = new ArrayList<>(1000);
-        try (var it = testStore.all()) {
+        try (var it = testStore.all()) {    // the testStore
             while (it.hasNext()) {
                 var kv = it.next();
                 ValueAndTimestamp<DataMessage> vat = kv.value;
