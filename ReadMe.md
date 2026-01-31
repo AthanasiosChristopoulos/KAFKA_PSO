@@ -86,16 +86,7 @@ git rm -r --cached target
 ```
 
 ## =====================================================================================================================
-## Partitioning: =======================================================================================================
-
-N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
-    5 workers ⇒ each gets ~8 partitions (if 40 partitions)
-    10 workers ⇒ each gets ~4 partitions
-    20 workers ⇒ each gets ~2 partitions
-
-If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
-
-## Project Architecture Description:
+## Project Architecture Description: ===================================================================================
 
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
@@ -115,6 +106,14 @@ The architecture is build to support two types of PSO:
     - classical PSO / best-of-neighboorhood 
     - fully informed PSO (FIPS)
 
+## Partitioning: =======================================================================================================
+
+N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
+    5 workers ⇒ each gets ~8 partitions (if 40 partitions)
+    10 workers ⇒ each gets ~4 partitions
+    20 workers ⇒ each gets ~2 partitions
+
+If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
 
 
 ## Distributed, data parallel PSO Protocol: =====================================================================================================================
@@ -300,13 +299,15 @@ def run_bank():
  - increase the number of children
  - look how velocity amplitude behaves
     - velocity show always start big and then becose smaller
- -  Fully Informed seems to be slower, but converging more surely (its always improving)
+ - Fully Informed seems to be slower, but converging more surely (its always improving)
+ - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
+    - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
 
 ## What to look at for training process: =========================================
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it)
     - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
-    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1\
+    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
         - Early iterations: exploration-heavy
         - Late phase: stabilization / convergence
     - cognitive Velocity: Distance to of current position to pBest
@@ -441,7 +442,7 @@ def run_bank():
         - In an MLP (Multi-Layer Perceptron), 784 features connect directly to neurons once.
             - MACs == model parameters since we pass them only one time.
         - In a CNN, those 784 pixels are processed repeatedly via sliding kernels.
-        
+
         MAC = Multiply–Accumulate (a sum) => in CNNs MACs are much bigger than model parameters:
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)

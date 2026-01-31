@@ -957,11 +957,7 @@ def run_pendigits_half():
 # ======================================================================
 
 def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
-    """
-    Loads CIFAR-10, normalizes to [0,1], and returns (train_ds, test_ds).
-    train_ds is shuffled, batched, and prefetched.
-    test_ds is batched and prefetched.
-    """
+
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
     x_train = x_train.astype("float32") / 255.0
     x_test = x_test.astype("float32") / 255.0
@@ -985,10 +981,7 @@ def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
 # ======================================================================
 
 def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
-    """
-    Builds a lightweight CNN for CIFAR-10 with small augmentation + BN.
-    Returns a compiled tf.keras.Model.
-    """
+
     augment = tf.keras.Sequential(
         [
             layers.RandomFlip("horizontal"),

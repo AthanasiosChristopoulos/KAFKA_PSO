@@ -18,10 +18,10 @@
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("sampleIndex=").append(sampleIndex);
-            sb.append(", label=").append(label);
+            sb.append("sampleIndex = ").append(sampleIndex);
+            sb.append(", label = ").append(label);
 
-            sb.append(", featuresSample=[");
+            sb.append(", featuresSample = [");
 
             int n = Math.min(5, features.length);
             for (int i = 0; i < n; i++) {

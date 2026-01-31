@@ -80,7 +80,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private long start = System.nanoTime();
     private long end = System.nanoTime();
     private long sumElapsedNs = 0;
-    private int test_count = 0;
+    private int evaluation_count = 0;
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
 
@@ -157,7 +157,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
 
-        if(test_count == 0) {
+        if(evaluation_count == 0) {
             context.recordMetadata().ifPresent(meta -> 
                 logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
             );
@@ -237,7 +237,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
                         ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
-            System.out.println(test_count + 
+            System.out.println(evaluation_count + 
                         ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
@@ -252,7 +252,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             end = System.nanoTime();
             sumElapsedNs += (end - start);
-            test_count++;   
+            evaluation_count++;   
             
             control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
             control.setBestTrainingAccuracy(bestTrainingAccuracy);
@@ -308,9 +308,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private List<DataMessage> loadAndCacheTestSet(int minRows) {
 
-        // already cached
-        if (cachedTestSet != null) return cachedTestSet;
-        logger.log("I am waiting on loadAndCacheTestSet");
+        if (cachedTestSet != null) return cachedTestSet;    // if already cached, just return the cache
+
+        logger.log("Waiting on loadAndCacheTestSet");
 
         // wait until State Store has enough rows
         for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
@@ -351,7 +351,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }
 
-        logger.log("I am done waiting on loadAndCacheTestSet");
+        logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
 
         return cachedTestSet;
     }
@@ -601,11 +601,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         }
 
-        double avgMs = (sumElapsedNs / 1_000_000.0) / test_count;
+        double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 
         logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
-                + " over " + test_count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
+                + " over " + evaluation_count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
 
     }
 
