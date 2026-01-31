@@ -83,8 +83,11 @@
 		- Evaluate multiple workers scenario (x_g performance gets worse ?)
 		- Accuracy - N workers (αυξουσα σχεση)
 		- Training Time - N workers	(φθινουσα σχεση)
+		- Communication is more costly as the size of the model increases
 
 	26) CNNs - Evaluate multiple classes scenario
+
+	27) Make normal batch processing + forward pass as efficient as possible to make the communication the primary cost
 		
 ========================================================================================================================
 
