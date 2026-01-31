@@ -29,7 +29,6 @@ public class LossFunction {
 
     public static float compute_loss(float probs, int label) {
         return compute_loss_binary_CE(probs, label);
-
     }
 
     // =============================================================================================
@@ -108,7 +107,15 @@ public class LossFunction {
     }
     
     // =============================================================================================
+
+    public static float compute_loss_residual(float[] probs, int label) {
+        
+    }
+
+    // =============================================================================================
+    // =============================================================================================
     // Combination Functions:
+    // =============================================================================================
 
     public static float sum(float[] sampleLosses) {
         if (sampleLosses == null || sampleLosses.length == 0) return 0f;
@@ -140,44 +147,14 @@ public class LossFunction {
         int k_edited = Math.min(TOP_K_VALUE, n);
 
         float[] tmp = Arrays.copyOf(sampleLosses, n);
-        Arrays.sort(tmp);
+        Arrays.sort(tmp);   // sorts in ascending order (min → max).
 
         float sum = 0f;
-        for (int i = n - k_edited; i < n; i++) {
+        for (int i = n - k_edited; i < n; i++) {    // we pick only the largest values (highest index)
             sum += tmp[i];
         }
 
         return sum / k_edited;
     }
     
-
-    // public static float compute_loss_top_k(float[] probs, int label) {
-
-    //     int n = probs.length;
-    //     if (n == 0) return 0f;
-
-    //     int k_value = Math.min(k, n);
-        
-    //     float[] target = new float[n];
-    //     target[label] = 1f;
-
-    //     float[] absResiduals = new float[n];
-    //     for (int i = 0; i < n; i++) {   // calculate all the residuals (k independent)
-    //         absResiduals[i] = Math.abs(probs[i] - target[i]);   // the magnitudes
-    //     }
-
-    //     Arrays.sort(absResiduals);  // sort ascending order
-
-    //     if(sampled == false) {
-    //         System.out.println("Sample Sorted: " + Arrays.toString(absResiduals));
-    //         sampled = true;
-    //     }
-
-    //     float sumTopK = 0f;
-    //     for (int i = n - k_value; i < n; i++) {
-    //         sumTopK += absResiduals[i];
-    //     }
-
-    //     return sumTopK / k_value;
-    // }
 }

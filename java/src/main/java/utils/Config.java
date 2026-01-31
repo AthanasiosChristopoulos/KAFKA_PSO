@@ -42,7 +42,7 @@ public class Config {
     public final boolean LOG_TASK_INSTANCES;
 
     public final String LOSS_FUNCTION;
-    public final String LOSS_COMBINE;
+    public final String COMBINE_LOSS;
     public final int TOP_K_VALUE;
 
     public final float VMAX_FACTOR;
@@ -166,7 +166,7 @@ public class Config {
         this.LOG_TASK_INSTANCES = Boolean.parseBoolean(getenv(dotenv, "LOG_TASK_INSTANCES", "false"));
 
         this.LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
-        this.LOSS_COMBINE = getenv(dotenv, "LOSS_COMBINE", "L2");
+        this.COMBINE_LOSS = getenv(dotenv, "COMBINE_LOSS", "L2");
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));

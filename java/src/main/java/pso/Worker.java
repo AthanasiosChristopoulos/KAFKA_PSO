@@ -190,7 +190,7 @@ public class Worker implements Runnable {
             }
 
             while (!control.isStopRequested(workerId)) {
-                Thread.sleep(100); // poll every 500ms
+                Thread.sleep(50);  
             }
             System.out.println("[Worker " + workerId + " ] stopping");
             streams.close();

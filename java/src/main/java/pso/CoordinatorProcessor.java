@@ -431,7 +431,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     //             lastSize = sz;
     //         }
 
-    //         try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+    //         try { Thread.sleep(50);  } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
     //     }
 
     //     List<DataMessage> all = new ArrayList<>();

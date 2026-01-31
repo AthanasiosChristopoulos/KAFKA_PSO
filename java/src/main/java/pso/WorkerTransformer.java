@@ -228,7 +228,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     // this is a much more damaging filter, because the global affects all workers as the only sense of direction
                     // thats why 0.3 
             }
-            logger.log("Filtering takes place: " + significant_diff);
+            logger.log("Filtering takes place: " + (significant_diff == false) + ", since significance is: " + significant_diff);
         }
         
         if(improvement_to_pBest) {    // update self always when improvement 

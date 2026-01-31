@@ -176,10 +176,10 @@ public class Coordinator implements Runnable {
         // Control thread =============================================================
 
         Thread controlThread = new Thread(() -> {
-            
+
             try {
                 while (!control.isStopRequested(-1)) {
-                    Thread.sleep(100);
+                    Thread.sleep(50); 
                 }
                 System.out.println("[Coordinator] Stop requested, closing streams");
 

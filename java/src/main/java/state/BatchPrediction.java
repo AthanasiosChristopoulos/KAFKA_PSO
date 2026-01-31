@@ -26,7 +26,7 @@ public class BatchPrediction {
 
     public final String DATASET = cfg.DATASET;
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
-    private static final String LOSS_COMBINE = cfg.LOSS_COMBINE;
+    private static final String COMBINE_LOSS = cfg.COMBINE_LOSS;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -196,19 +196,21 @@ public class BatchPrediction {
 
         // Combine Losses from Multiple Samples =======================================================
 
-        if ("TOP_K".equals(LOSS_COMBINE)) {
+        if ("TOP_K".equals(COMBINE_LOSS)) {
             loss = LossFunction.topKAverage(sampleLosses);
 
-        } else if ("SUM".equals(LOSS_COMBINE)) {
+        } else if ("SUM".equals(COMBINE_LOSS)) {
             loss = LossFunction.sum(sampleLosses);
 
-        } else if ("AVG".equals(LOSS_COMBINE)) {
+        } else if ("AVG".equals(COMBINE_LOSS)) {
             loss = LossFunction.average(sampleLosses);
 
         } else {
             loss = LossFunction.average(sampleLosses);
         }
 
+        // ===========================================================================================
+        
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {
             logger.log("loss is NaN/Inf, X length: " + X.length());
             return new float[]{-1f, -1f};
