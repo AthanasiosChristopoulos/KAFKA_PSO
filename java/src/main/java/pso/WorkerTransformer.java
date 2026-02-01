@@ -167,6 +167,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             
             seenPartitions.add(context.partition());
         }
+
         lastOffset = context.offset();
 
         if (value == null) {
@@ -220,9 +221,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(FILTER_ENABLED == true) {
             if(FULLY_INFORMED == true) {
+
                 significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
                     // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
+            
             } else {
+
                 significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
                     // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
                     // this is a much more damaging filter, because the global affects all workers as the only sense of direction
@@ -234,9 +238,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(improvement_to_pBest) {    // update self always when improvement 
 
             ws.stats.setPBestAccuracy(accuracy);
-
-            // logger.log(taskInstance + ", best Loss: " + ws.stats.getPBestLoss());
-
             ws.stats.setPBestLoss(loss);
 
             this.pBestWeights = weights;
@@ -280,13 +281,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             List<float[]> neighborPBestList = readNeighborPBestList();
 
-            if (neighborPBestList == null || neighborPBestList.isEmpty()) {
+            if (neighborPBestList == null || neighborPBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
                 velocity = ws.psoUpdater.updateX(ws.model, null);
 
             } else {
                 // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
-                velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
+                // velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
+                velocity = ws.psoUpdater.updateXAdaptive(ws.model, neighborPBestList, accuracy);
+                
             }
 
         } else {

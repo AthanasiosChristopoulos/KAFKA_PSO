@@ -462,7 +462,7 @@ def load_dataset():
         # Split manually
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=10492, random_state=42, stratify=y)
 
-        class_names = [str(i) for i in range(5)]
+        class_names = [str(i) for i in range(10)]
 
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train).astype(np.float32)

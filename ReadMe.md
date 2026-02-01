@@ -145,6 +145,15 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
                    does training conclude.
                 => The execution doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
           
+## PSO Logic: ======================================================================================================================
+
+ - callPredictionsBatch(List<DataMessage> batch)                        // evaluate PSO position
+    - Loss Function (some of them Non - Differentiable)
+ - updateX(MultiLayerNetwork model, List<float[]> neighborPBestList)    // update PSO position
+ - Serialize / Deserialize Topic:
+    - modelToFlatList(MultiLayerNetwork model) 
+    - updateModel(MultiLayerNetwork model, float[] flat)
+ - Exchange pBest / gBest Weight Messages through Kafka Topics
 
 ## =================================================================================================================================
 ## Kafka Message Documentation:

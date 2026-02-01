@@ -43,6 +43,20 @@ public class PsoUpdater {
 
     private int count_updates = 0;
 
+    // Add these config params somewhere sensible:
+    private static final float W_MIN = 0.35f;     // exploitation
+    private static final float W_MAX = 0.95f;     // exploration
+    private static final float ACC_LOW  = 0.20f;  // below this: explore hard
+    private static final float ACC_HIGH = 0.80f;  // above this: exploit
+    private static final float EMA_ALPHA = 0.10f; // smoothing for noisy batch acc
+
+    private float accEma = -1f;
+
+    // Optional: adaptive clamp (recommended)
+    private static final float VMAX_MIN = 0.005f;
+    private static final float VMAX_MAX = 0.10f;
+
+    
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
     
         float[] x = Dl4jParamUtils.modelToFlatList(model);
@@ -114,7 +128,7 @@ public class PsoUpdater {
         updateC1Schedule();         // we are updating c1 only for the neighborhood case
         Random rnd = new Random();
         
-        logger.log("Count_updates: " + count_updates + ", x_i.length / Weight Dimensinality = " +  x_i.length);
+        logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
 
         for (int k = 0; k < x_i.length; k++) {
 
@@ -168,7 +182,7 @@ public class PsoUpdater {
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
 
-        logger.log("Count_updates: " + count_updates + ", x_i.length / Weight Dimensinality = " +  x_i.length);
+        logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
 
         // neighborPBestList empty case (initialization) ===================================================
 
@@ -198,7 +212,8 @@ public class PsoUpdater {
             }
         }
 
-        float scale = C / (float) N_WORKERS;
+        float scale = C / (float) neighborPBestList.size();
+
         for (int k = 0; k < socialVec.length; k++) {
             socialVec[k] *= scale;
             inertiaVec[k] = W_INERTIA * velocity[k];
@@ -207,7 +222,7 @@ public class PsoUpdater {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
+        logger.log("PSO magnitudes: inertia acc = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {
@@ -219,6 +234,124 @@ public class PsoUpdater {
 
         return this.velocity;
     }
+
+    private float clampVelocity(float v, float vmax) {
+        if (v > vmax) return vmax;
+        if (v < -vmax) return -vmax;
+        return v;
+    }
+
+    private float lerp(float a, float b, float t) {
+        return a + (b - a) * t;
+    }
+
+    private float clamp01(float x) {
+        return Math.max(0f, Math.min(1f, x));
+    }
+
+    /**
+     * Maps accuracy -> inertia:
+     *   acc <= ACC_LOW  => W_MAX
+     *   acc >= ACC_HIGH => W_MIN
+     * linear in between
+     */
+    private float adaptiveInertia(float acc) {
+        // normalize acc into [0..1] within [ACC_LOW..ACC_HIGH]
+        float t = (acc - ACC_LOW) / (ACC_HIGH - ACC_LOW);
+        t = clamp01(t);
+
+        // t=0 => low acc => W_MAX
+        // t=1 => high acc => W_MIN
+        return lerp(W_MAX, W_MIN, t);
+    }
+
+    /**
+     * Optional: map accuracy -> vmax
+     * low acc => bigger vmax (explore), high acc => smaller vmax (fine-tune)
+     */
+    private float adaptiveVmax(float acc) {
+        float t = (acc - ACC_LOW) / (ACC_HIGH - ACC_LOW);
+        t = clamp01(t);
+        return lerp(VMAX_MAX, VMAX_MIN, t);
+    }
+
+
+    /**
+     * Fully informed PSO update with adaptive inertia based on accuracy.
+     */
+    public float[] updateXAdaptive(
+            MultiLayerNetwork model,
+            List<float[]> neighborPBestList,
+            float batchAccuracy
+    ) {
+        count_updates++;
+
+        Arrays.fill(socialVec, 0f);
+        clamp_count = 0;
+
+        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
+
+        // Smooth accuracy (important because batch accuracy is noisy)
+        if (accEma < 0f) accEma = batchAccuracy;
+        accEma = (1f - EMA_ALPHA) * accEma + EMA_ALPHA * batchAccuracy;
+
+        // Compute adaptive parameters
+        float w = adaptiveInertia(accEma);
+        float vmax = adaptiveVmax(accEma); // optional clamp
+
+        Random rnd = new Random();
+
+        logger.log("Count_updates=" + count_updates
+                + " acc=" + batchAccuracy
+                + " accEma=" + accEma
+                + " w=" + w
+                + " vmax=" + vmax
+                + " dim=" + x_i.length);
+
+        // Initialization case (no neighbors yet)
+        if (neighborPBestList == null || neighborPBestList.isEmpty()) {
+            for (int k = 0; k < x_i.length; k++) {
+                velocity[k] = clampVelocity(w * velocity[k], vmax);
+                x_i_new[k] = x_i[k] + velocity[k];
+            }
+            Dl4jParamUtils.updateModel(model, x_i_new);
+            return this.velocity;
+        }
+
+        // Social term accumulation
+        for (float[] pBest_j : neighborPBestList) {
+            if (pBest_j.length != x_i.length) {
+                throw new IllegalArgumentException("pBest size mismatch");
+            }
+            for (int k = 0; k < x_i.length; k++) {
+                float r = rnd.nextFloat();
+                socialVec[k] += r * (pBest_j[k] - x_i[k]);
+            }
+        }
+
+        float scale = C / (float) neighborPBestList.size();
+
+        for (int k = 0; k < x_i.length; k++) {
+            socialVec[k] *= scale;
+            inertiaVec[k] = w * velocity[k];
+
+            float vNew = inertiaVec[k] + socialVec[k];
+
+            // IMPORTANT: clamp (you had it commented out — I'd turn it on here)
+            vNew = clampVelocity(vNew, vmax);
+
+            velocity[k] = vNew;
+            x_i_new[k] = x_i[k] + vNew;
+        }
+
+        logger.log("magnitudes: inertia=" + Dl4jParamUtils.magnitude(inertiaVec)
+                + " social=" + Dl4jParamUtils.magnitude(socialVec)
+                + " clamps=" + clamp_count);
+
+        Dl4jParamUtils.updateModel(model, x_i_new);
+        return this.velocity;
+    }
+
 
     //================================================================================================
 
