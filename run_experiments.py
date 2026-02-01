@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 # WORKERS_LIST = [3, 5, 8]
 WORKERS_LIST = [2, 4, 6]
+# WORKERS_LIST = [2, 3, 4, 5, 6]
 # WORKERS_LIST = [2, 4, 6, 8]
 
 RUN_STREAMS_SCRIPT = "./run_streams.sh"

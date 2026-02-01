@@ -17,6 +17,7 @@ public class PsoUpdater {
     private final float C2 = cfg.C2;
     private final int N_WORKERS = cfg.N_WORKERS;
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
+    public final boolean SIMULATED_ANNEALING = cfg.SIMULATED_ANNEALING;
 
     private final float C1_START = cfg.C1; 
     private final float C1_END = 0.2f;
@@ -43,7 +44,8 @@ public class PsoUpdater {
 
     private int count_updates = 0;
 
-    // Add these config params somewhere sensible:
+
+    // Extra clamp parameters:
     private static final float W_MIN = 0.35f;     // exploitation
     private static final float W_MAX = 0.95f;     // exploration
     private static final float ACC_LOW  = 0.20f;  // below this: explore hard
@@ -52,10 +54,11 @@ public class PsoUpdater {
 
     private float accEma = -1f;
 
-    // Optional: adaptive clamp (recommended)
+    // Adaptive clamp
     private static final float VMAX_MIN = 0.005f;
     private static final float VMAX_MAX = 0.10f;
 
+    //================================================================================================
 
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
     
@@ -87,7 +90,7 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    private float clampVelocity(float v) {
+    private float clampVelocity(float v) {      // this limits each coordinate independently
 
         if (v > VMAX) {
             clamp_count++;
@@ -104,7 +107,8 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    private void clipVelocityByNorm(float vmaxNorm) {
+    private void clipVelocityByNorm(float vmaxNorm) {   // this is limiting overall length / magnitude of velocity
+                                                        // the goal is to not limit individual dimensionalities, because this would change direction
 
         double sumSq = 0.0;
         for (float v : velocity) sumSq += (double)v * v;
@@ -117,6 +121,7 @@ public class PsoUpdater {
     }
 
     //================================================================================================
+    // update for Neighborhood Best: 
 
     public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST, not fully informed
 
@@ -136,8 +141,13 @@ public class PsoUpdater {
             float r2 = rnd.nextFloat();  
 
             inertiaVec[k] = W_INERTIA * velocity[k];
-            cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
-            // cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+
+            if(SIMULATED_ANNEALING == false) {
+                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+            } else {
+                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+            }
+            
             socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
@@ -170,7 +180,8 @@ public class PsoUpdater {
         return velocity;
     }
 
-    //================================================================================================
+    // ================================================================================================
+    // update for Fully Informed: 
 
     public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {      // for FULLY INFORMED
 
