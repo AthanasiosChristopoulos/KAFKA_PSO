@@ -143,13 +143,17 @@ public class PsoUpdater {
             inertiaVec[k] = W_INERTIA * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
-                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+                // cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = C1 * (pbest[k] - x_i[k]);
             } else {
-                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+                // cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = c1 * (pbest[k] - x_i[k]);
             }
             
-            socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
-            diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
+            // socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            socialVec[k] = C2 * (gbest[k] - x_i[k]);
+
+            diffPBestGBest[k] = C2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
@@ -316,7 +320,8 @@ public class PsoUpdater {
             }
             for (int k = 0; k < x_i.length; k++) {
                 float r = rnd.nextFloat();
-                socialVec[k] += r * (pBest_j[k] - x_i[k]);
+                // socialVec[k] += r * (pBest_j[k] - x_i[k]);
+                socialVec[k] += (pBest_j[k] - x_i[k]);
             }
         }
 

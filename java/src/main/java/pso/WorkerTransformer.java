@@ -221,7 +221,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Send pBest or current weights ===================================================================
 
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getPBestLoss(); 
-                // boolean has pBest improved or not ?
+                // boolean has pBest changed (improved) or not ?
 
         // Filtering: is the loss significant enough to be reported ?
         double eps = 1e-12;
