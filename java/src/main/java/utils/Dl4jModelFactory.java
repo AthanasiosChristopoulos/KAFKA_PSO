@@ -845,7 +845,7 @@ public class Dl4jModelFactory {
 				.list()
 				// Hidden Layer 1: nIn=inputDim, nOut=12, relu
 				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)     // 12 in your case
+						.nIn(NUM_FEATURES)     // 12 in this case
 						.nOut(12)
 						.activation(Activation.RELU)
 						.build())

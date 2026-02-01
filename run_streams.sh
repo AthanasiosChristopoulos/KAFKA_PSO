@@ -59,6 +59,7 @@ if [[ "$1" != "--debug" ]]; then
         )
 
     else
+        echo "Neighborhood Best run"
         TOPICS=(
             # "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"

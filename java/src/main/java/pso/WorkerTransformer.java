@@ -287,8 +287,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             } else {
                 // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
-                // velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
-                velocity = ws.psoUpdater.updateXAdaptive(ws.model, neighborPBestList, accuracy);
+                velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
+                // velocity = ws.psoUpdater.updateXAdaptive(ws.model, neighborPBestList, accuracy);
                 
             }
 

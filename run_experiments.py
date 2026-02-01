@@ -7,8 +7,8 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-WORKERS_LIST = [3, 5, 8]
-# WORKERS_LIST = [2, 4, 6]
+# WORKERS_LIST = [3, 5, 8]
+WORKERS_LIST = [2, 4, 6]
 # WORKERS_LIST = [2, 4, 6, 8]
 
 RUN_STREAMS_SCRIPT = "./run_streams.sh"

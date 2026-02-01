@@ -56,7 +56,7 @@ public class PsoUpdater {
     private static final float VMAX_MIN = 0.005f;
     private static final float VMAX_MAX = 0.10f;
 
-    
+
     public PsoUpdater(MultiLayerNetwork model, int workerId) {
     
         float[] x = Dl4jParamUtils.modelToFlatList(model);
@@ -235,17 +235,11 @@ public class PsoUpdater {
         return this.velocity;
     }
 
-    private float clampVelocity(float v, float vmax) {
-        if (v > vmax) return vmax;
-        if (v < -vmax) return -vmax;
-        return v;
-    }
-
     private float lerp(float a, float b, float t) {
         return a + (b - a) * t;
     }
 
-    private float clamp01(float x) {
+    private float clamp01(float x) {    // be between 0 and 1
         return Math.max(0f, Math.min(1f, x));
     }
 
@@ -264,17 +258,6 @@ public class PsoUpdater {
         // t=1 => high acc => W_MIN
         return lerp(W_MAX, W_MIN, t);
     }
-
-    /**
-     * Optional: map accuracy -> vmax
-     * low acc => bigger vmax (explore), high acc => smaller vmax (fine-tune)
-     */
-    private float adaptiveVmax(float acc) {
-        float t = (acc - ACC_LOW) / (ACC_HIGH - ACC_LOW);
-        t = clamp01(t);
-        return lerp(VMAX_MAX, VMAX_MIN, t);
-    }
-
 
     /**
      * Fully informed PSO update with adaptive inertia based on accuracy.
@@ -297,7 +280,6 @@ public class PsoUpdater {
 
         // Compute adaptive parameters
         float w = adaptiveInertia(accEma);
-        float vmax = adaptiveVmax(accEma); // optional clamp
 
         Random rnd = new Random();
 
@@ -305,20 +287,18 @@ public class PsoUpdater {
                 + " acc=" + batchAccuracy
                 + " accEma=" + accEma
                 + " w=" + w
-                + " vmax=" + vmax
                 + " dim=" + x_i.length);
 
         // Initialization case (no neighbors yet)
         if (neighborPBestList == null || neighborPBestList.isEmpty()) {
             for (int k = 0; k < x_i.length; k++) {
-                velocity[k] = clampVelocity(w * velocity[k], vmax);
-                x_i_new[k] = x_i[k] + velocity[k];
+                x_i_new[k] = x_i[k] + w * velocity[k];
             }
             Dl4jParamUtils.updateModel(model, x_i_new);
             return this.velocity;
         }
 
-        // Social term accumulation
+        // Social term
         for (float[] pBest_j : neighborPBestList) {
             if (pBest_j.length != x_i.length) {
                 throw new IllegalArgumentException("pBest size mismatch");
@@ -335,13 +315,8 @@ public class PsoUpdater {
             socialVec[k] *= scale;
             inertiaVec[k] = w * velocity[k];
 
-            float vNew = inertiaVec[k] + socialVec[k];
-
-            // IMPORTANT: clamp (you had it commented out — I'd turn it on here)
-            vNew = clampVelocity(vNew, vmax);
-
-            velocity[k] = vNew;
-            x_i_new[k] = x_i[k] + vNew;
+            velocity[k] = inertiaVec[k] + socialVec[k];
+            x_i_new[k] = x_i[k] + velocity[k];
         }
 
         logger.log("magnitudes: inertia=" + Dl4jParamUtils.magnitude(inertiaVec)

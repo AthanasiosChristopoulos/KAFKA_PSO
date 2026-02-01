@@ -12,6 +12,8 @@
 			- between Fully Informed vs Neighborhood best 
 			- Limitation / Filter or no limitation in the communication
 			- between differentiable and non-differentiable loss functions 
+			- δεν μπορω να αυξησω τον παραλλελισμο παραπανω, αφου το pc μου εχει limited number of cores / true parallelism:
+				- N_WORKERS => [2, 4, 6] or [3, 5, 8]
 
 		- New Dataset
 

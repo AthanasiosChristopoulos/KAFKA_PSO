@@ -394,12 +394,11 @@ def run_bank():
             Class_5: 2.68%
             Class_6: 2.74%
 
-### MNIST: =========================================================
+### Winequality: ========================================================
 
-    - Grayscale images, very simple image dataset (means (28×28×1).)
-        - When flattend there are only 784 features
-        
-    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
+    - NUM_FEATURES_WINEQUALITY = 12, NUM_CLASSES_WINEQUALITY = 2 (red or white wine)
+    - 6500 Samples => 6000 Training Samples repeated 37 times (37 epochs) + 500 test samples 
+    - 95% accuracy (Fully Informed), 90% accuracy (Neighborhood Best)
 
 ### Pendigits:  =========================================================
     
@@ -439,7 +438,14 @@ def run_bank():
         - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
         - Essentially the points in order form the pen trajectory
 
-### CIRAR10:
+### MNIST: =========================================================
+
+    - Grayscale images, very simple image dataset (means (28×28×1).)
+        - When flattend there are only 784 features
+        
+    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
+
+### CIRAR10: ===================================================================================================
 
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)

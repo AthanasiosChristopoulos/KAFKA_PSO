@@ -41,7 +41,7 @@ if(DATASET == "iris" or DATASET == "wine"):
     NUMBER_OF_DATA_REPEATS_TEST = 2
 
 if(DATASET == "winequality"):
-    NUMBER_OF_DATA_REPEATS = 37
+    NUMBER_OF_DATA_REPEATS = 37     
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "letter"):
@@ -513,7 +513,7 @@ def load_dataset():
 
     elif DATASET == "winequality":
 
-        train_size = 6000       # 6000 * 19 / 40 == 2850 each
+        train_size = 6000       # 6000 * 37 / 40 == 5500 each. 
         random_state = 123
         path="../data/winequality.csv"
     
@@ -539,10 +539,12 @@ def load_dataset():
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=train_size, random_state=random_state, stratify=y)
 
-        # Standardize
+        # Standardize  ==============================================================
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train).astype(np.float32)
         X_test = scaler.transform(X_test).astype(np.float32)
+
+        evaluate_dataset(X_train, y_train, X_test, y_test)
 
         return X_train, y_train, X_test, y_test, None
 
