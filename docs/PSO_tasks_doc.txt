@@ -89,6 +89,8 @@
 
 	27) Make normal batch processing + forward pass as efficient as possible to make the communication the primary cost
 		
+	30) Ευρεση καλυτερων Datasets (πιο δυσκολα)
+
 ========================================================================================================================
 
 	Backlog Tasks:
@@ -99,11 +101,9 @@
 		- inference
 		- Finding a third party library GUI for defining a neural model architecture ?
 	
-	21) Instead of fully informed try out neighboors hoods => you need to look at the theory
+	21) Instead of fully connected graph try neighbourhood topologies => you need to look at the theory
 
 	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
-
-	28) Split particles into Neighborhoods
 
 	11) Add buffer as a statestore (on worker who is accumulating samples)
 
@@ -115,7 +115,7 @@
 		- In datasets that dont provide this possibility just do Round Robin
 		- Otherwise you need to do it with keyed Records (decides to which partition in the kafka topic the Record goes to) and partitions
 
-	21) Use Vector class not float[]
+	21) Use Vector class not float[] => important for calculations
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
