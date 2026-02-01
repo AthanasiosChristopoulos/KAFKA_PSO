@@ -226,9 +226,9 @@ public class BatchPrediction {
         //         + ", accuracy: " + accuracy + ", with nSamples: " + nSamples + ", nCorrect: " + nCorrect );
         // }
 
-        float fwdMs = (end - start) / 1_000_000f;
+        float forwardMs = (end - start) / 1_000_000f;
 
-        return new float[]{accuracy, loss, nSamples, nCorrect, fwdMs};
+        return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
     }
 
         

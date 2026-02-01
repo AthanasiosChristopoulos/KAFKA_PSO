@@ -110,14 +110,11 @@ public class PsoUpdater {
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
-        // if (velocity == null || velocity.length != x_i.length) {   // initialization of velocity
-        //     velocity = new float[x_i.length];
-        // }
-        
+
         updateC1Schedule();         // we are updating c1 only for the neighborhood case
         Random rnd = new Random();
         
-        logger.log("x_i.length = " +  x_i.length + ", count_updates: " + count_updates);
+        logger.log("Count_updates: " + count_updates + ", x_i.length / Weight Dimensinality = " +  x_i.length);
 
         for (int k = 0; k < x_i.length; k++) {
 
@@ -171,7 +168,7 @@ public class PsoUpdater {
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
 
-        logger.log("x_i.length = " +  x_i.length + ", count_updates: " + count_updates);
+        logger.log("Count_updates: " + count_updates + ", x_i.length / Weight Dimensinality = " +  x_i.length);
 
         // neighborPBestList empty case (initialization) ===================================================
 

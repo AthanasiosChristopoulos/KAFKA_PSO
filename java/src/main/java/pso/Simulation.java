@@ -51,7 +51,7 @@ public class Simulation {
         }
 
         double elapsedTime = (System.nanoTime() - start) / 1_000_000_000.0;; 
-        System.out.printf("Training is over, ElapsedTime: %.3f %n", elapsedTime);
+        System.out.printf("============= Training is over, ElapsedTime: %.3f =============%n", elapsedTime);
 
         coordinatorThread.join(); // if finished every worker waits on the coordinator
         System.out.println("============== Coordinator stopped, stopping simulation ==============");

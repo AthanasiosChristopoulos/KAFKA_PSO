@@ -442,12 +442,17 @@ def run_bank():
         - In an MLP (Multi-Layer Perceptron), 784 features connect directly to neurons once.
             - MACs == model parameters since we pass them only one time.
         - In a CNN, those 784 pixels are processed repeatedly via sliding kernels.
-
+        
+        - Measurements / Experimentation:
+            - CNN Forward Pass: 73.49591064453125ms, and overall training time: 58.079 sec
+            - DNN Forward Pass: 6.707677841186523ms, and overall training time: 18.501 sec
+            - 12x as much
+            
         MAC = Multiply–Accumulate (a sum) => in CNNs MACs are much bigger than model parameters:
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
-
+    - 
 ## =================================================================================================================================
 
 ## Functional Requirements: =========================================================

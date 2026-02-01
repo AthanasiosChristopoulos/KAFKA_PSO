@@ -346,12 +346,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         updateTime();
 
-        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", cached TEST_STORE. Total rows=" + cachedTestSet.size());
+        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
             logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }
 
         logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
+        System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
 
         return cachedTestSet;
     }
