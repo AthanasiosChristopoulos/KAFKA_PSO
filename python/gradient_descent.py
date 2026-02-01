@@ -478,25 +478,22 @@ def load_mnist4_data(remap_labels=True):
     return X_train, y_train, X_test, y_test, class_names
 
 # ======================================================================
-# SIMPLER / FASTER CNN for MNIST4
+# SIMPLER (smaller than before) / FASTER CNN for MNIST4
 
 def build_mnist4_model(input_shape=(28, 28), num_classes=4):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Conv block 1 (smaller than before)
         layers.Conv2D(8, 3, padding="same", use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
         layers.MaxPooling2D(),  # 28x28 -> 14x14
 
-        # Conv block 2 (smaller than before)
         layers.Conv2D(16, 3, padding="same", use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
 
-        # Global pooling + classifier
         layers.GlobalAveragePooling2D(),
         layers.Dense(num_classes, activation="softmax"),
     ])

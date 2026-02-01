@@ -40,7 +40,7 @@ public class Dl4jModelFactory {
 		} else if ("mnist4".equals(DATASET)) {
 			// return createMNISTModel();
 			return createMNIST4Cnn();
-			// return createMNIST4Cnn_UltraSimple_PSO();
+			// return createMNIST4Cnn_Simple();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -101,7 +101,7 @@ public class Dl4jModelFactory {
 				.layer(new OutputLayer.Builder() // Output Layer 
 						.nIn(16)
 						.nOut(NEURAL_OUTPUT)
-						.lossFunction(LossFunctions.LossFunction.MCXENT)  // is used only for model.fit(...). Ignore it
+						.lossFunction(LossFunctions.LossFunction.MCXENT)  // is used only for model.fit(...). Ignore it, we arent doing backpropagation
 						.activation(Activation.SOFTMAX)
 						.build())
 				.build();
@@ -154,7 +154,7 @@ public class Dl4jModelFactory {
         // For Hidden Layer 1   => 13 * 32 + 32 
         // For Hidden Layer 2   => 32 * 16 + 16
         // For Output Layer     => 16  * 3 + 3
-        // 1027 weights all in all
+        // 1027 weights 
 
 	// ======================================================================================================================
 	// MNIST Dataset Model Architecture 
@@ -207,6 +207,7 @@ public class Dl4jModelFactory {
 		if(printModel) {
 			System.out.println("Using CNN MNIST Model");
 		}
+
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123)
                 .weightInit(WeightInit.RELU)
@@ -214,48 +215,37 @@ public class Dl4jModelFactory {
                 .list()
                 // Conv2D(16, 3, padding="same", use_bias=False)
                 .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(16)		// Number of filters / feature maps
+                        .nOut(16)		// Number of filters / feature maps == 16, output channels
                         .stride(1, 1)
                         .padding(1, 1)       // "same" for 3x3 with stride 1
                         .hasBias(false)
                         .activation(Activation.IDENTITY)
                         .build())
-                // BatchNorm
-                .layer(new BatchNormalization.Builder().build())
-                // ReLU
-                .layer(new ActivationLayer.Builder()
+                .layer(new ActivationLayer.Builder() 	// ReLU
                         .activation(Activation.RELU)
                         .build())
-                // MaxPooling2D()
-                .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// MaxPooling2D()
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-                // Conv2D(32, 3, padding="same", use_bias=False)
-                .layer(new ConvolutionLayer.Builder(3, 3)
+                .layer(new ConvolutionLayer.Builder(3, 3)			// 3x3x32
                         .nOut(32)
                         .stride(1, 1)
                         .padding(1, 1)
                         .hasBias(false)
                         .activation(Activation.IDENTITY)
                         .build())
-                // BatchNorm
-                .layer(new BatchNormalization.Builder().build())
-                // ReLU
-                .layer(new ActivationLayer.Builder()
+                .layer(new ActivationLayer.Builder()		// ReLU
                         .activation(Activation.RELU)
                         .build())
-                // GlobalAveragePooling2D()
-                .layer(new GlobalPoolingLayer.Builder()		// Outputs 32 one for each channel / feature map
+                .layer(new GlobalPoolingLayer.Builder()		// GlobalAveragePooling2D() => Outputs 32 one for each channel / feature map
                         .poolingType(PoolingType.AVG)
                         .build())
-                // Dense(num_classes, softmax) + sparse categorical crossentropy
-                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	// (num_classes, softmax)
                         .nOut(NUM_CLASSES)
                         .activation(Activation.SOFTMAX)
                         .build())
-                // This is the key replacement for Keras Reshape((28,28,1))
-                .setInputType(InputType.convolutional(28, 28, 1)) // h,w,c
+                .setInputType(InputType.convolutional(28, 28, 1)) // this is the input shape: h,w,c => (28,28,1)
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
@@ -280,6 +270,7 @@ public class Dl4jModelFactory {
 			// In a CNN, those 784 pixels are processed repeatedly via sliding kernels.
 			// Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
 			// Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more )
+
         return model;
     }
 
@@ -296,26 +287,20 @@ public class Dl4jModelFactory {
 					.seed(123)
 					.weightInit(WeightInit.RELU)
 					.list()
-
 					.layer(new ConvolutionLayer.Builder(3, 3)	// 3 × 3 × 1 (because GrayScale) × 8 + 8 (Biases) = 80
 							.nOut(8)
-							.stride(1, 1)
-							.padding(1, 1)
+							.stride(1, 1)	// this is the convolutional step 
+							.padding(1, 1)	// this is a padding of the input image so that output image gets same size
 							.hasBias(true)           
 							.activation(Activation.IDENTITY)  
 							.build())
-
 					.layer(new ActivationLayer.Builder()
 							.activation(Activation.LEAKYRELU)	// An activation layer doesnt have parameters
 							.build())
-
-					// MaxPooling2D(2x2)
-					.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)		// Sampling Layer => doesnt have parameters
+					.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)		// MaxPooling2D(2x2) => Sampling Layer => doesnt have parameters
 							.kernelSize(2, 2)
 							.stride(2, 2)
 							.build())
-
-					// Conv2D(16, 3x3, same padding)
 					.layer(new ConvolutionLayer.Builder(3, 3)			//  3 * 3 * 8 * 16 + 16 (Biases) = 1168
 							.nOut(16)
 							.stride(1, 1)
@@ -323,23 +308,16 @@ public class Dl4jModelFactory {
 							.hasBias(true)
 							.activation(Activation.IDENTITY)
 							.build())
-
-					// LeakyReLU
 					.layer(new ActivationLayer.Builder()
 							.activation(Activation.LEAKYRELU)
 							.build())
-
-					// GlobalAveragePooling2D()
-					.layer(new GlobalPoolingLayer.Builder()
+					.layer(new GlobalPoolingLayer.Builder()		// GlobalAveragePooling2D()
 							.poolingType(PoolingType.AVG)
 							.build())
-
-					// Output layer: sparse multiclass cross entropy
-					.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-							.nOut(NUM_CLASSES)                   // MNIST4 => 4 Classes 	16 × 4 + 4 = 68
+					.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	// since not using model.fit(...), this loss function will never be used
+							.nOut(NUM_CLASSES)                   // MNIST4 => 4 Classes 	16 × 4 + 4 = 68, // this project only uses model.output(...)
 							.activation(Activation.SOFTMAX)
 							.build())
-
 					.setInputType(InputType.convolutional(28, 28, 1))
 					.build();
 
@@ -352,18 +330,15 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_UltraSimple_PSO() {
+	public static MultiLayerNetwork createMNIST4Cnn_Simple() {
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN ULTRA-SIMPLE (PSO): Conv4 -> LeakyReLU -> Pool -> GAP -> Softmax");
+			System.out.println("Using MNIST4 CNN SIMPLE");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
-				.weightInit(WeightInit.RELU)   // good for ReLU-family
-				// Pure PSO: no updater needed unless you call fit()
+				.weightInit(WeightInit.RELU)  
 				.list()
-
-				// Conv: 4 filters only (very small)
 				.layer(new ConvolutionLayer.Builder(3, 3)
 						.nOut(4)
 						.stride(1, 1)
@@ -371,30 +346,21 @@ public class Dl4jModelFactory {
 						.hasBias(true)
 						.activation(Activation.IDENTITY)
 						.build())
-
-				// LeakyReLU (avoids dead ReLUs)
 				.layer(new ActivationLayer.Builder()
 						.activation(Activation.LEAKYRELU)
 						.build())
-
-				// MaxPool 2x2
 				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 						.kernelSize(2, 2)
 						.stride(2, 2)
 						.build())
-
-				// Global Avg Pool
 				.layer(new GlobalPoolingLayer.Builder()
 						.poolingType(PoolingType.AVG)
 						.build())
-
-				// Output: after GAP, nIn == number of channels == 4
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(4)
-						.nOut(NUM_CLASSES)            // MNIST4 => 4
+						.nOut(NUM_CLASSES)     
 						.activation(Activation.SOFTMAX)
 						.build())
-
 				.setInputType(InputType.convolutional(28, 28, 1))
 				.build();
 
@@ -402,94 +368,6 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
-
-
-	// public static MultiLayerNetwork createMNIST4Cnn() {
-	// 	if (printModel) {
-	// 		System.out.println("Using CNN MNIST4 Model (8/16 filters)");
-	// 	}
-
-	// 	MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-	// 			.seed(123)
-	// 			.weightInit(WeightInit.RELU)
-	// 			.updater(new Adam(1e-3))
-	// 			.list()
-
-	// 			// Conv2D(8, 3, padding="same", use_bias=False)
-	// 			.layer(new ConvolutionLayer.Builder(3, 3)
-	// 					.nOut(8)                 // 8 filters / feature maps
-	// 					.stride(1, 1)
-	// 					.padding(1, 1)           // "same" for 3x3 stride 1
-	// 					.hasBias(false)
-	// 					.activation(Activation.IDENTITY)
-	// 					.build())
-
-	// 			// BatchNorm
-	// 			.layer(new BatchNormalization.Builder().build())
-
-	// 			// ReLU
-	// 			.layer(new ActivationLayer.Builder()
-	// 					.activation(Activation.RELU)
-	// 					.build())
-
-	// 			// MaxPooling2D()
-	// 			.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-	// 					.kernelSize(2, 2)
-	// 					.stride(2, 2)
-	// 					.build())
-
-	// 			// Conv2D(16, 3, padding="same", use_bias=False)
-	// 			.layer(new ConvolutionLayer.Builder(3, 3)
-	// 					.nOut(16)                // 16 filters / feature maps
-	// 					.stride(1, 1)
-	// 					.padding(1, 1)
-	// 					.hasBias(false)
-	// 					.activation(Activation.IDENTITY)
-	// 					.build())
-
-	// 			// BatchNorm
-	// 			.layer(new BatchNormalization.Builder().build())
-
-	// 			// ReLU
-	// 			.layer(new ActivationLayer.Builder()
-	// 					.activation(Activation.RELU)
-	// 					.build())
-
-	// 			// GlobalAveragePooling2D()
-	// 			.layer(new GlobalPoolingLayer.Builder()
-	// 					.poolingType(PoolingType.AVG)
-	// 					.build())
-
-	// 			// Dense(num_classes, softmax) + sparse categorical crossentropy
-	// 			.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-	// 					.nOut(NUM_CLASSES)                 // for MNIST4 => 4
-	// 					.activation(Activation.SOFTMAX)
-	// 					.build())
-
-	// 			// Input: (H,W,C) = (28,28,1)
-	// 			.setInputType(InputType.convolutional(28, 28, 1))
-	// 			.build();
-
-	// 	MultiLayerNetwork model = new MultiLayerNetwork(conf);
-	// 	model.init();
-		
-	// 	return model;
-	// }
-
-	// Parameter count (for sanity)
-
-	// Conv1: 3×3×1×8 = 72
-
-	// BN1: 4×8 = 32
-
-	// Conv2: 3×3×8×16 = 1,152
-
-	// BN2: 4×16 = 64
-
-	// Output: 16×4 + 4 = 68
-	// Total = 72 + 32 + 1152 + 64 + 68 = 1,388 params
-
-	// So PSO dimension should be 1388 for this model.
 
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
@@ -735,7 +613,7 @@ public class Dl4jModelFactory {
 	// Total weights        => (54*128+128) + (128*128+128) + (128*7+7)
 	//                      => (6912+128) + (16384+128) + (896+7)
 	//                      => 7040 + 16512 + 903
-	//                      => 24455 weights all in all
+	//                      => 24455 weights 
 	// this is comparable to NN40K
 
 	// ======================================================================================================================
@@ -784,9 +662,8 @@ public class Dl4jModelFactory {
 	// Output : 32*6   = 192,   +6 biases   = 198
 	// Total  : 17984 + 1056 + 198 = 19038  <-- wait, check below
 	//
-	// NOTE: Correct total is:
+	// Total is:
 	// 17984 + 1056 + 198 = 19238
-	// (So the correct "all in all" number is 19238 parameters.)
 
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
@@ -843,19 +720,19 @@ public class Dl4jModelFactory {
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
 				.list()
-				// Hidden Layer 1: nIn=inputDim, nOut=12, relu
+				// Hidden Layer 1: nIn = inputDim, nOut = 12, relu
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)     // 12 in this case
 						.nOut(12)
 						.activation(Activation.RELU)
 						.build())
-				// Hidden Layer 2: nIn=12, nOut=9, relu
+				// Hidden Layer 2: nIn = 12, nOut = 9, relu
 				.layer(new DenseLayer.Builder()
 						.nIn(12)
 						.nOut(9)
 						.activation(Activation.RELU)
 						.build())
-				// Output Layer: nIn=9, nOut=1, sigmoid, binary cross-entropy
+				// Output Layer: nIn = 9, nOut = 1, sigmoid, binary cross-entropy
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT)
 						.nIn(9)
 						.nOut(NEURAL_OUTPUT)
@@ -869,9 +746,7 @@ public class Dl4jModelFactory {
 	}
 
 
-	// ======================================================================================================================
-	// Number of weights in the network calculation (same style as your PenDigits comment):
-	//
+	// Number of weights in the network calculation:
 	// Hidden Layer 1  => inputDim * 12 + 12
 	// Hidden Layer 2  => 12 * 9 + 9
 	// Output Layer    => 9 * 1 + 1
@@ -882,7 +757,7 @@ public class Dl4jModelFactory {
 	// Hidden Layer 1  => 12*12 + 12 = 156
 	// Hidden Layer 2  => 12*9  + 9  = 117
 	// Output Layer    => 9*1   + 1  = 10
-	// TOTAL           => 156 + 117 + 10 = 283 weights
+	// total           => 156 + 117 + 10 = 283 weights
 
 	// ======================================================================================================================
 	// Letter
@@ -914,7 +789,7 @@ public class Dl4jModelFactory {
 		return model;
 	}
 
-	// 	Layer 1: 16 → 256
+	// Layer 1: 16 → 256
 	// Weights: 16 * 256 = 4096
 	// Biases: 256
 	// Total: 4352
@@ -970,23 +845,17 @@ public class Dl4jModelFactory {
                 .weightInit(WeightInit.XAVIER)
                 .updater(new Adam(1e-3))
                 .list()
-
-                // Conv(8, 3x3, same) + ReLU
-                .layer(0, new ConvolutionLayer.Builder(3, 3)
-                        .nIn(3)               // RGB channels
+                .layer(0, new ConvolutionLayer.Builder(3, 3)	// Conv(8, 3x3, same) + ReLU
+                        .nIn(3)               // RGB input channels => thats why 3
                         .nOut(8)
                         .stride(1, 1)
-                        .padding(1, 1)        // "same" padding for 3x3 stride1
+                        .padding(1, 1)        
                         .activation(Activation.RELU)
                         .build())
-
-                // MaxPool(2x2)
                 .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-
-                // Conv(16, 3x3, same) + ReLU
                 .layer(2, new ConvolutionLayer.Builder(3, 3)
                         .nIn(8)
                         .nOut(16)
@@ -994,26 +863,18 @@ public class Dl4jModelFactory {
                         .padding(1, 1)
                         .activation(Activation.RELU)
                         .build())
-
-                // MaxPool(2x2)
                 .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-
-                // GlobalAveragePooling
                 .layer(4, new GlobalPoolingLayer.Builder()
                         .poolingType(PoolingType.AVG)
                         .build())
-
-                // Dense(numClasses) + Softmax (MCXENT)
                 .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-                        .nIn(16)              // after global avg pooling: one value per channel
-                        .nOut(NUM_CLASSES)      // 3 for CIFAR-3
+                        .nIn(16)           
+                        .nOut(NUM_CLASSES)      	// 3 for CIFAR-3
                         .activation(Activation.SOFTMAX)
                         .build())
-
-                // Tell DL4J the input shape (height, width, channels) - These are images not separate featuresd
                 .setInputType(InputType.convolutional(32, 32, 3))
                 .build();
 
@@ -1033,10 +894,7 @@ public class Dl4jModelFactory {
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
 				.weightInit(WeightInit.RELU)
-				// Pure PSO: no updater needed unless you call fit()
 				.list()
-
-				// Conv(8, 3x3, same)
 				.layer(new ConvolutionLayer.Builder(3, 3)
 						.nIn(3)                    // RGB
 						.nOut(8)
@@ -1045,30 +903,21 @@ public class Dl4jModelFactory {
 						.hasBias(true)
 						.activation(Activation.IDENTITY)
 						.build())
-
-				// LeakyReLU
 				.layer(new ActivationLayer.Builder()
 						.activation(Activation.LEAKYRELU)
 						.build())
-
-				// MaxPool(2x2): 32->16
 				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 						.kernelSize(2, 2)
 						.stride(2, 2)
 						.build())
-
-				// GlobalAvgPool
 				.layer(new GlobalPoolingLayer.Builder()
 						.poolingType(PoolingType.AVG)
 						.build())
-
-				// Output: nIn == channels == 8
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
 						.nIn(8)
-						.nOut(NUM_CLASSES)          // 3
+						.nOut(NUM_CLASSES) 
 						.activation(Activation.SOFTMAX)
 						.build())
-
 				.setInputType(InputType.convolutional(32, 32, 3))
 				.build();
 
