@@ -39,8 +39,10 @@ public class Dl4jModelFactory {
 				
 		} else if ("mnist4".equals(DATASET)) {
 			// return createMNISTModel();
-			return createMNIST4Cnn();
-			// return createMNIST4Cnn_Simple();
+			// return createMNIST4Cnn();
+			return createMNIST4Cnn_Simple();
+			// return createMNIST4MLP();
+			// return createMNIST4MLP_Reduced();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -200,6 +202,75 @@ public class Dl4jModelFactory {
 		// 1048576
 		// 1881444
 		//  940584
+
+	// ======================================================================================================================
+
+    public static MultiLayerNetwork createMNIST4MLP() {
+
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(123)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(1e-3))
+                .list()
+                .layer(new DenseLayer.Builder()
+                        .nIn(NUM_FEATURES)
+                        .nOut(128)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nIn(128)
+                        .nOut(64)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+                        .nIn(64)
+                        .nOut(NEURAL_OUTPUT)
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .build();
+
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model.init();
+        return model;
+    }
+	// Weight Calculation: 
+	// 784×128 + 128 = 100,480
+	// 128×64 + 64 = 8,256
+	// 64×4 + 4 = 260
+	// total = 100,480 + 8,256 + 260 = 108,996 weights
+
+	public static MultiLayerNetwork createMNIST4MLP_Reduced() {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)   // 784
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(32)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(32)
+						.nOut(NEURAL_OUTPUT)  // 4
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// 784→64: 784×64 + 64 = 50,176 + 64 = 50,240
+	// 64→32: 64×32 + 32 = 2,048 + 32 = 2,080
+	// 32→4: 32×4 + 4 = 128 + 4 = 132
+	// Total = 50,240 + 2,080 + 132 = 52,452 parameters
 
 	// ======================================================================================================================
 

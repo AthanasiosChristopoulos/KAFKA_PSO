@@ -515,7 +515,8 @@ def run_bank():
     - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem
 
  - Kill Zombie Java processes:
-    ```bash
-    ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
-    sudo pkill -2 java
-    ```
+```bash
+ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
+sudo pkill -2 java
+sudo pkill -9 -f java
+```

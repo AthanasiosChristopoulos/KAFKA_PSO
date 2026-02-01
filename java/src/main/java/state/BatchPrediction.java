@@ -17,6 +17,11 @@ import utils.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
+import org.deeplearning4j.nn.conf.layers.Layer;
+import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
+import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
+import org.deeplearning4j.nn.conf.layers.BatchNormalization;
+
 public class BatchPrediction {
 
     private static final Config cfg = Config.getInstance();
@@ -44,10 +49,13 @@ public class BatchPrediction {
     private long start = System.nanoTime();
     private long end = System.nanoTime();
 
+    private final boolean MODEL_IS_CNN;
+
     // for Worker =======================================================================================================
 
     public BatchPrediction(MultiLayerNetwork model, CustomLogger logger) {
         this.model = model;
+        this.MODEL_IS_CNN = isCnnByFirstLayer(model);
         this.bestModel = null;
         this.logger = logger;
         this.isCoordinator = false;
@@ -57,6 +65,7 @@ public class BatchPrediction {
 
     public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
         this.model = model;
+        this.MODEL_IS_CNN = isCnnByFirstLayer(model);
         this.bestModel = bestModel;
         this.logger = logger;
         this.isCoordinator = true;
@@ -72,11 +81,18 @@ public class BatchPrediction {
 
     // ===========================================================================
 
+    public static boolean isCnnByFirstLayer(MultiLayerNetwork model) {
+        Layer l0 = model.getLayerWiseConfigurations().getConf(0).getLayer();
+        return (l0 instanceof ConvolutionLayer); 
+    }
+
+    // ===========================================================================
+
     public float[] callPredictionsBatch(List<DataMessage> batch) {
 
         if (batch == null || batch.isEmpty()) {
-            logger.log("batch is empty");
-            return new float[]{-1f, -1f};
+            logger.log("Batch is empty");
+            return null;
         }
 
         List<float[]> featureList = new ArrayList<>();
@@ -104,7 +120,7 @@ public class BatchPrediction {
         int nSamples = featureList.size();
         if (nSamples == 0) {
             logger.log("No samples after parsing batch");
-            return new float[]{-1f, -1f};
+            return null;
         }
 
         float[][] data = new float[nSamples][NUM_FEATURES];     // matrix of samples and features
@@ -118,39 +134,45 @@ public class BatchPrediction {
 
         INDArray X;
         
-        if("cifar3".equals(DATASET)) {
-            // data is float[nSamples][3072] (flattened NHWC from Python)
-            INDArray X2d = Nd4j.create(data);                  // [batch, 3072]
-            INDArray X4d = X2d.reshape(nSamples, 32, 32, 3);     // [batch, 32, 32, 3]  (NHWC)
+        // The feature data is always serialized into a float[], it has no dimensionality. In case of image datasets, when using a CNN,
+        // we need to reshape() that float[] to the proper dimensionality (i.e. 28x28). Otherwise (else) this will remain a float[].
+        // each dataset has different image dimensionalities
 
-            if(checked == false) {
-                float r = X4d.getFloat(0, 0, 0, 0);
-                float g = X4d.getFloat(0, 0, 0, 1);
-                float b = X4d.getFloat(0, 0, 0, 2);
-                System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
-                checked = true;
+        if(MODEL_IS_CNN) {
+            if("cifar3".equals(DATASET)) {
+
+                INDArray X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
+                INDArray X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
+
+                // if(checked == false) {
+                //     float r = X4d.getFloat(0, 0, 0, 0);
+                //     float g = X4d.getFloat(0, 0, 0, 1);
+                //     float b = X4d.getFloat(0, 0, 0, 2);
+                //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
+                //     checked = true;
+                // }
+
+                X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
+
+            } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
+
+                INDArray X2d = Nd4j.create(data);          // [batch, 784]
+                X = X2d.reshape(X2d.size(0), 1, 28, 28);
             }
 
-            X = X4d.permute(0, 3, 1, 2).dup();        // [batch, 3, 32, 32]
-
-        } else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
-
-            INDArray X2d = Nd4j.create(data);          // [batch, 784]
-            X = X2d.reshape(X2d.size(0), 1, 28, 28);
-            // INDArray probs = model.output(X4d, false);
-
-        } else {
+        } else {    // Normal dataset (no image) + no CNN used 
             X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
         }
 
         INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
 
         end = System.nanoTime();
+
         // End Forward Pass ===============================================================================
 
         if (probs == null || probs.size(0) == 0) {
             logger.log("Empty probs batch");
-            return new float[]{-1f, -1f};
+            return null;
         }
 
         int nCorrect = 0;
@@ -213,7 +235,7 @@ public class BatchPrediction {
         
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {
             logger.log("loss is NaN/Inf, X length: " + X.length());
-            return new float[]{-1f, -1f};
+            return null;
         }
 
         if (nCorrect == 0) {

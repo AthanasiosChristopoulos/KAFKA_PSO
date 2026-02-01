@@ -169,10 +169,10 @@ public class PsoUpdater {
 
         Dl4jParamUtils.updateModel(model, x_i_new);
 
-        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.magnitude(inertiaVec) + 
-                ", cognitive = " + Dl4jParamUtils.magnitude(cognitiveVec) + ", with C1: " + c1 +
-                ", social = " + Dl4jParamUtils.magnitude(socialVec) +
-                ", diff = " + Dl4jParamUtils.magnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
+        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
+                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + ", with C1: " + c1 +
+                ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
+                ", diff = " + Dl4jParamUtils.averageMagnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
         );
 
         iter++;
@@ -233,7 +233,7 @@ public class PsoUpdater {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        logger.log("PSO magnitudes: inertia acc = " + Dl4jParamUtils.magnitude(inertiaVec) + ", social = " + Dl4jParamUtils.magnitude(socialVec) +
+        logger.log("PSO magnitudes: inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {
@@ -330,8 +330,8 @@ public class PsoUpdater {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        logger.log("magnitudes: inertia=" + Dl4jParamUtils.magnitude(inertiaVec)
-                + " social=" + Dl4jParamUtils.magnitude(socialVec)
+        logger.log("magnitudes: inertia=" + Dl4jParamUtils.averageMagnitude(inertiaVec)
+                + " social=" + Dl4jParamUtils.averageMagnitude(socialVec)
                 + " clamps=" + clamp_count);
 
         Dl4jParamUtils.updateModel(model, x_i_new);

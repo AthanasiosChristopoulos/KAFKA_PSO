@@ -155,8 +155,10 @@ public class Worker implements Runnable {
         KafkaStreams streams = new KafkaStreams(topology, props);
 
         streams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
-            System.out.println("[Worker " + workerId + "] Uncaught exception in thread " + t.getName());
-            e.printStackTrace();
+            System.out.println("[Worker " + workerId + "] exception in Thread " + t.getName() + "requesting final stop.");
+            // e.printStackTrace();
+            CoordinatorControl.getInstance().requestStopFinal();
+            streams.close();
         });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

@@ -148,7 +148,7 @@ public class Coordinator implements Runnable {
             }
 
             System.out.println("[Coordinator] Uncaught exception in thread " + t.getName());
-            cause.printStackTrace();
+            // cause.printStackTrace();
 
             try {
                 safeClose(mainStreams);
@@ -161,7 +161,7 @@ public class Coordinator implements Runnable {
         if (gbestStreams != null) {
             gbestStreams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
                 System.out.println("[GBestRelay] Uncaught exception in thread " + t.getName());
-                e.printStackTrace();
+                // e.printStackTrace();
 
                 try {
                     safeClose(gbestStreams);

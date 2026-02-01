@@ -249,6 +249,18 @@ public class Dl4jParamUtils {
         return (float) Math.sqrt(sum);
     }
 
+    public static float averageMagnitude(float[] flat) {
+        float sum = 0f;
+        int count = 0;
+
+        for (float v : flat) {
+            sum += v * v; 
+            count += 1;
+        }
+
+        return (float) Math.sqrt(sum / count);
+    }
+
     //=====================================================================================================
 
     // private static boolean checkIfIntersects(float[] center, double radius) {

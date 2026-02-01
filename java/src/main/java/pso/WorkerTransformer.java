@@ -99,6 +99,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private String taskTag = "task=UNKNOWN";
     private static boolean ONCE = false;
 
+    private final CoordinatorControl control; 
+
 
 
     // ====================================================================================================================
@@ -124,6 +126,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             keyName = "gBest";              // the gBest is only one at a time, we only need 1 key (gBest weights get constantly overwritten)
                                             // gBest is not per worker, its globally for all workers
         }
+
+        this.control = CoordinatorControl.getInstance();
     }
 
     //=========================================================================================================================
@@ -183,6 +187,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         ws.stats.reset();
 
         float[] accLoss = ws.predictor.callPredictionsBatch(buffer);
+        if(accLoss == null) {
+            control.requestStopFinal(); // a serious error has happend
+            return null;
+        }
         accuracy = accLoss[0];
         loss = accLoss[1];
         nSamples = (int) accLoss[2];
@@ -307,10 +315,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         updateTime();   // is updated  every time a new buffer has been processed
         
-        logger.log(taskInstance + ", Time: " + lastActivitySeconds + 
+        logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.averageMagnitude(velocity) + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
-                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.magnitude(velocity) + 
-                ", with accuracy: " + accuracy);
+                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
+        );
                 
         end = System.nanoTime();
         sumElapsedNs += (end - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
