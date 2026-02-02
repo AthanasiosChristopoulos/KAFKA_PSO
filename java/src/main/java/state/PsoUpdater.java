@@ -143,17 +143,13 @@ public class PsoUpdater {
             inertiaVec[k] = W_INERTIA * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
-                // cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
-                cognitiveVec[k] = C1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
             } else {
-                // cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
-                cognitiveVec[k] = c1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
             }
             
-            // socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
-            socialVec[k] = C2 * (gbest[k] - x_i[k]);
-
-            diffPBestGBest[k] = C2 * (pbest[k] - gbest[k]);
+            socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
@@ -250,6 +246,9 @@ public class PsoUpdater {
         return this.velocity;
     }
 
+    // ===============================================================================================================
+    // ===============================================================================================================
+
     private float lerp(float a, float b, float t) {
         return a + (b - a) * t;
     }
@@ -274,74 +273,70 @@ public class PsoUpdater {
         return lerp(W_MAX, W_MIN, t);
     }
 
-    /**
-     * Fully informed PSO update with adaptive inertia based on accuracy.
-     */
-    public float[] updateXAdaptive(
-            MultiLayerNetwork model,
-            List<float[]> neighborPBestList,
-            float batchAccuracy
-    ) {
-        count_updates++;
+    // public float[] updateXAdaptive(
+    //         MultiLayerNetwork model,
+    //         List<float[]> neighborPBestList,
+    //         float batchAccuracy
+    // ) {
+    //     count_updates++;
 
-        Arrays.fill(socialVec, 0f);
-        clamp_count = 0;
+    //     Arrays.fill(socialVec, 0f);
+    //     clamp_count = 0;
 
-        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
+    //     float[] x_i = Dl4jParamUtils.modelToFlatList(model);
 
-        // Smooth accuracy (important because batch accuracy is noisy)
-        if (accEma < 0f) accEma = batchAccuracy;
-        accEma = (1f - EMA_ALPHA) * accEma + EMA_ALPHA * batchAccuracy;
+    //     // Smooth accuracy (important because batch accuracy is noisy)
+    //     if (accEma < 0f) accEma = batchAccuracy;
+    //     accEma = (1f - EMA_ALPHA) * accEma + EMA_ALPHA * batchAccuracy;
 
-        // Compute adaptive parameters
-        float w = adaptiveInertia(accEma);
+    //     // Compute adaptive parameters
+    //     float w = adaptiveInertia(accEma);
 
-        Random rnd = new Random();
+    //     Random rnd = new Random();
 
-        logger.log("Count_updates=" + count_updates
-                + " acc=" + batchAccuracy
-                + " accEma=" + accEma
-                + " w=" + w
-                + " dim=" + x_i.length);
+    //     logger.log("Count_updates=" + count_updates
+    //             + " acc=" + batchAccuracy
+    //             + " accEma=" + accEma
+    //             + " w=" + w
+    //             + " dim=" + x_i.length);
 
-        // Initialization case (no neighbors yet)
-        if (neighborPBestList == null || neighborPBestList.isEmpty()) {
-            for (int k = 0; k < x_i.length; k++) {
-                x_i_new[k] = x_i[k] + w * velocity[k];
-            }
-            Dl4jParamUtils.updateModel(model, x_i_new);
-            return this.velocity;
-        }
+    //     // Initialization case (no neighbors yet)
+    //     if (neighborPBestList == null || neighborPBestList.isEmpty()) {
+    //         for (int k = 0; k < x_i.length; k++) {
+    //             x_i_new[k] = x_i[k] + w * velocity[k];
+    //         }
+    //         Dl4jParamUtils.updateModel(model, x_i_new);
+    //         return this.velocity;
+    //     }
 
-        // Social term
-        for (float[] pBest_j : neighborPBestList) {
-            if (pBest_j.length != x_i.length) {
-                throw new IllegalArgumentException("pBest size mismatch");
-            }
-            for (int k = 0; k < x_i.length; k++) {
-                float r = rnd.nextFloat();
-                // socialVec[k] += r * (pBest_j[k] - x_i[k]);
-                socialVec[k] += (pBest_j[k] - x_i[k]);
-            }
-        }
+    //     // Social term
+    //     for (float[] pBest_j : neighborPBestList) {
+    //         if (pBest_j.length != x_i.length) {
+    //             throw new IllegalArgumentException("pBest size mismatch");
+    //         }
+    //         for (int k = 0; k < x_i.length; k++) {
+    //             float r = rnd.nextFloat();
+    //             socialVec[k] += r * (pBest_j[k] - x_i[k]);
+    //         }
+    //     }
 
-        float scale = C / (float) neighborPBestList.size();
+    //     float scale = C / (float) neighborPBestList.size();
 
-        for (int k = 0; k < x_i.length; k++) {
-            socialVec[k] *= scale;
-            inertiaVec[k] = w * velocity[k];
+    //     for (int k = 0; k < x_i.length; k++) {
+    //         socialVec[k] *= scale;
+    //         inertiaVec[k] = w * velocity[k];
 
-            velocity[k] = inertiaVec[k] + socialVec[k];
-            x_i_new[k] = x_i[k] + velocity[k];
-        }
+    //         velocity[k] = inertiaVec[k] + socialVec[k];
+    //         x_i_new[k] = x_i[k] + velocity[k];
+    //     }
 
-        logger.log("magnitudes: inertia=" + Dl4jParamUtils.averageMagnitude(inertiaVec)
-                + " social=" + Dl4jParamUtils.averageMagnitude(socialVec)
-                + " clamps=" + clamp_count);
+    //     logger.log("magnitudes: inertia=" + Dl4jParamUtils.averageMagnitude(inertiaVec)
+    //             + " social=" + Dl4jParamUtils.averageMagnitude(socialVec)
+    //             + " clamps=" + clamp_count);
 
-        Dl4jParamUtils.updateModel(model, x_i_new);
-        return this.velocity;
-    }
+    //     Dl4jParamUtils.updateModel(model, x_i_new);
+    //     return this.velocity;
+    // }
 
 
     //================================================================================================
