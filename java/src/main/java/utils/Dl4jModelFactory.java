@@ -39,10 +39,10 @@ public class Dl4jModelFactory {
 				
 		} else if ("mnist4".equals(DATASET)) {
 			// return createMNISTModel();
-			// return createMNIST4Cnn();
-			// return createMNIST4Cnn_Simple();
+			return createMNIST4Cnn();	// 70ms forward pass
+			// return createMNIST4Cnn_Simple();	// 25ms forward pass on average
 			// return createMNIST4MLP();
-			return createMNIST4MLP_Reduced();
+			// return createMNIST4MLP_Reduced();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();

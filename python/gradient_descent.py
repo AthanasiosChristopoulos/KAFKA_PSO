@@ -423,6 +423,7 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10):
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
+    
     model.summary()
     print("Trainable params:", model.count_params())
     return model

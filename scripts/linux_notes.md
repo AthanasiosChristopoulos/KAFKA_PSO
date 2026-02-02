@@ -140,16 +140,16 @@ pip install matplotlib --break-system-packages
 
 ```bash
 
-# disable / delete gpu drivers
+# disable / delete gpu drivers ========================================
 sudo systemctl disable nvidia-persistenced
 sudo apt purge 'nvidia*'
 sudo update-initramfs -u
 sudo reboot
 
-# blacklist => disable automatic installs if this driver
-echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
-sudo update-initramfs -u
-sudo reboot
+# # blacklist => disable automatic installs if this driver
+# echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+# sudo update-initramfs -u
+# sudo reboot
 
 lsmod | grep nouveau	# should return nothing after blacklisting
 
