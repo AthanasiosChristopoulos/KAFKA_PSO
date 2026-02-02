@@ -575,7 +575,6 @@ def load_dataset():
         y_train = y_train.squeeze().astype(np.int64)  # (N,)
         y_test  = y_test.squeeze().astype(np.int64)
 
-
         classes = np.array(classes, dtype=np.int64)
 
         train_mask = np.isin(y_train, classes)
@@ -586,7 +585,6 @@ def load_dataset():
         X_test  = x_test[test_mask].astype(np.float32) / 255.0
         y_test  = y_test[test_mask]
 
-        # Remap labels to 0..(K-1)
         remap = {int(c): i for i, c in enumerate(classes.tolist())}
         y_train = np.vectorize(remap.get)(y_train).astype(np.int64)
         y_test  = np.vectorize(remap.get)(y_test).astype(np.int64)
@@ -598,7 +596,6 @@ def load_dataset():
         idx = rng.permutation(len(X_test))
         X_test, y_test = X_test[idx], y_test[idx]
 
-        # limit both the test features and the test samples
         X_test = X_test[:MAX_TEST_SAMPLES]
         y_test = y_test[:MAX_TEST_SAMPLES]
 
@@ -608,12 +605,15 @@ def load_dataset():
         print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
         print(f"X_test : {X_test.shape},  y_test : {y_test.shape}")
 
-        # If you have this function, you can uncomment:
-        # evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+        evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
 
         return X_train, y_train, X_test, y_test, class_names
 
+    # ==================================================================================================
+    # No datasets chosen / enviromental variable is wrong
+
     else:
+
         print("Invalid Dataset selected")
         exit(0)
         

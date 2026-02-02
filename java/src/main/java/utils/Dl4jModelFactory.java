@@ -39,10 +39,11 @@ public class Dl4jModelFactory {
 				
 		} else if ("mnist4".equals(DATASET)) {
 			// return createMNISTModel();
-			return createMNIST4Cnn();	// 70ms forward pass
+			// return createMNIST4Cnn();	// 70ms forward pass
 			// return createMNIST4Cnn_Simple();	// 25ms forward pass on average
 			// return createMNIST4MLP();
 			// return createMNIST4MLP_Reduced();
+			return createMNIST4Cnn_New();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -71,9 +72,10 @@ public class Dl4jModelFactory {
 			return createLetterModel();
 			// return createLetterModel70K();
 		} else if ("cifar3".equals(DATASET)) {
-			return createCifar3Model_PSO_Simple();
+			// return createCifar3Model_PSO_Simple();
 			// return createCifar3Model();
 			// return createLetterModel70K();
+			return createCifar3Model_New();
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -439,6 +441,77 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNIST4Cnn_New() {
+
+		if (printModel) {
+			System.out.println("Using MNIST4 CNN (Keras-style: 32/64/64 + Flatten + Dense)");
+		}
+
+		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER) 
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nIn(1)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(0, 0)        
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(64)
+						.stride(1, 1)
+						.padding(0, 0)           
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(64)
+						.stride(1, 1)
+						.padding(0, 0)        
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nOut(64)              
+						.activation(Activation.RELU)
+						.build())
+
+				// Dense(numClasses) + softmax
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(numClasses)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				// MNIST input: [batch, 1, 28, 28]
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// Params => k * k = 3 * 3 = 9, conv = nOut*(k*k*nIn + bias)
+	// conv1: 32*(9*1+1)=320	// nIn = 1 because 1 channel because grayscale
+	// conv2: 64*(9*32+1)=18496
+	// conv3: 64*(9*64+1)=36928
+
+	// Flatten means flattening the feature maps => 64 (number of channels) * 3 * 3 (dimensionality of the feature maps) = 576
+	// dense: 576 * 64 + 64 = 36928
+	// total 320 + 18496 + 36928 + 36928 = 92932 params
+	// Reported Dimensionality: 92932
 
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
@@ -996,5 +1069,68 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
+
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createCifar3Model_New() {
+
+		if (printModel) {
+			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+
+				.layer(new ConvolutionLayer.Builder(3, 3) // 3 * 3 * 3 * 32 = 864
+						.nIn(3)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(0, 0)	// no padding this means input (32x32) => output (30x30)
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (30x30) =>  output (15x15)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 32 * 64 = 18432
+						.nOut(64)										// input  (15x15) =>  output (13x13)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 64 * 64 = 36864 
+						.nOut(64)										// input  (6x6) =>  output (4x4)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()		// Flatten implicit (no need to explicitly define a Flatten Layer)
+						.nOut(64)				// 4 * 4 * 64 = 1024 (flattend input), 1024 * 64 + 64 = 65600
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(32, 32, 3))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+	// 896+18,496+36,928+65,600+195=122,115​
+	// Recorded Dimensionality of the output is: 122115. 45% accuracy
 
 }

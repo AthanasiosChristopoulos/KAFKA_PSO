@@ -180,13 +180,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         buffer.add(value);
 
-        if (buffer.size() < TRAIN_SIZE) {
+        if (buffer.size() < TRAIN_SIZE) {   // if not completed the batch, just return
             return null;
         }
 
         ws.stats.reset();
 
-        float[] accLoss = ws.predictor.callPredictionsBatch(buffer);
+        float[] accLoss = ws.predictor.callPredictionsBatch(buffer);    // this is a forward pass
         if(accLoss == null) {
             control.requestStopFinal(); // a serious error has happend
             return null;
@@ -196,7 +196,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         nSamples = (int) accLoss[2];
         nCorrect = (int) accLoss[3];
         forwardPassNs += accLoss[4];
-        countForwardPass += 1;
+        countForwardPass += 1;                  // forward pass completed
 
         // logger.log(taskInstance + ", accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
 
@@ -476,8 +476,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
-        double avgMs = (sumElapsedNs / 1_000_000.0) / count;
-        double avgForwardPassMs = forwardPassNs / countForwardPass;
+        double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
+        double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
+                        // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
 
         logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
                 + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);

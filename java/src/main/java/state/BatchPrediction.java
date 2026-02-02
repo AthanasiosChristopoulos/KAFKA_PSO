@@ -164,7 +164,8 @@ public class BatchPrediction {
             X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
         }
 
-        INDArray probs = model.output(X, false);     // [batch, NUM_CLASSES] or [batch,1] if sigmoid
+        INDArray probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
+                                                            // this is one forward pass per batch (has multiple samples)
 
         end = System.nanoTime();
 
