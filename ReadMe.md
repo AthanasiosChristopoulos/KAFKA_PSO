@@ -517,11 +517,17 @@ def run_bank():
         The GPU is capable of executing CNN forward pass faster than the CPU. 
         GPU is only used for DL4J stuff (wherever we are handling DL4J):
             - INDArray probs = model.output(X, false);      # Primary use of the GPU, forward passes => convolutions, matrix multiplications
-            [CPU parsing + copying]
-            [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
-            [GPU forward pass]
-            [GPU → CPU sync]     (Pull data back to CPU, synchronizing on every batch)                  
-            [CPU loss + accuracy loops]  
+            1) [CPU parsing + copying]
+            2) [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
+                => Memory copy overhead
+            3) [GPU forward pass]
+            4) [GPU → CPU sync]     (Pull data back to CPU, synchronizing on every batch => get results when they are needed)
+                => normally .output() would be async but in this case we need the results immidiatly to calculate loss
+                => Sync means => CPU is blocked until the results from the GPU have arrived                  
+            5) [CPU loss + accuracy loops]  
+        (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time.
+        The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
+            => On a simple NN, cpu is preferable
 
         But GPU is limited, it will only help in neural net compute.
             - No contribution for serialization / Kafka messages

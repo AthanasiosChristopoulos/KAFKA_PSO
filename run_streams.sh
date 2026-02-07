@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ./java
-mvn -q -DskipTests clean
+# mvn -q -DskipTests clean  => deletes target
 
 delete=2
 set -a           # auto-export all variables
@@ -95,9 +95,6 @@ export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 # mvn -q -DskipTests package                 
 # java -jar target/iris-streams-1.0.0.jar    
 
-mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE clean compile exec:java  # this ND4J_PROFILE .env variables select pom.xml P = profile
+# mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE clean compile exec:java  # this ND4J_PROFILE .env variables select pom.xml P = profile
 
-
-
-
-
+mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
