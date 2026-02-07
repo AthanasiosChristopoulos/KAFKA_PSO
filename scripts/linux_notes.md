@@ -24,15 +24,17 @@
 
  - sudo apt install mesa-utils
 
-# Vscode: ====================================================================================
+# Misc Commands: ======================================================================================
+
+ - gsettings set org.gnome.desktop.notifications show-banners false		# disable all notifications
+
+# Vscode: =============================================================================================
 
  - Extensions:
 	- Docker Python Java Github 
  - Settings:
 	- Ctrl + Shift + P / Preferences: Open Keyboard Shortcuts:
 		- go back: Alt + Left
-
-
 
 sudo apt install gnome-shell-extension-manager
  - extension: Hide TopBar

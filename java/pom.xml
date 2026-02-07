@@ -10,8 +10,38 @@
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+    <dl4j.version>1.0.0-M2.1</dl4j.version>
+    <nd4j.backend>nd4j-native-platform</nd4j.backend> 
   </properties>
 
+
+  <profiles>
+
+      <!-- CPU -->
+      <profile>
+          <id>cpu</id>
+          <properties>
+              <nd4j.backend>nd4j-native-platform</nd4j.backend>
+          </properties>
+      </profile>
+
+      <!-- GPU -->
+      <profile>
+          <id>gpu</id>
+          <properties>
+              <nd4j.backend>nd4j-cuda-11.6-platform</nd4j.backend>
+          </properties>
+          <dependencies>
+              <dependency>
+                  <groupId>org.bytedeco</groupId>
+                  <artifactId>cuda-platform-redist</artifactId>
+                  <version>11.6-8.3-1.5.7</version>
+              </dependency>
+          </dependencies>
+      </profile>
+
+  </profiles>
+  
   <dependencies>
     <!-- Kafka Streams -->
     <dependency>
@@ -32,24 +62,37 @@
       <version>1.0.0-M2.1</version>
     </dependency>
 
+    <!-- CPU =================================================================-->
+
     <!-- <dependency>
       <groupId>org.nd4j</groupId>   
       <artifactId>nd4j-native-platform</artifactId>
       <version>1.0.0-M2.1</version>
     </dependency> -->
 
-  <dependency>
-    <groupId>org.bytedeco</groupId>
-    <artifactId>cuda-platform-redist</artifactId>
-    <version>11.6-8.3-1.5.7</version>
-  </dependency>
+    <!-- GPU =================================================================-->
+    
+    <!-- <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>cuda-platform-redist</artifactId>
+      <version>11.6-8.3-1.5.7</version>
+    </dependency>
 
     <dependency>
       <groupId>org.nd4j</groupId>
       <artifactId>nd4j-cuda-11.6-platform</artifactId>
       <version>1.0.0-M2.1</version>
+    </dependency> -->
+
+    <!-- =================================================================-->
+
+    <dependency>
+        <groupId>org.nd4j</groupId>
+        <artifactId>${nd4j.backend}</artifactId>
+        <version>${dl4j.version}</version>
     </dependency>
 
+    <!-- =================================================================-->
 
     <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>

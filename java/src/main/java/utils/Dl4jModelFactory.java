@@ -22,7 +22,7 @@ public class Dl4jModelFactory {
     public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
-	public static final boolean printModel = true;
+	public static final boolean printModel = false;
 
 	public static MultiLayerNetwork createModel() {
 		// System.out.println("DATASET: " + DATASET);
@@ -37,7 +37,7 @@ public class Dl4jModelFactory {
 			// return createMNISTModel();
 			return createMNISTCnn();
 				
-		} else if ("mnist4".equals(DATASET)) {
+		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModel();
 			// return createMNIST4Cnn();	// 70ms forward pass
 			// return createMNIST4Cnn_Simple();	// 25ms forward pass on average
@@ -64,7 +64,7 @@ public class Dl4jModelFactory {
 			return createHarModel();
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			return createPendigitsModel();
+			return createPendigitsModel();	// forward pass cost: CPU = 10ms / GPU = 3ms
 
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel();
@@ -448,7 +448,7 @@ public class Dl4jModelFactory {
 	public static MultiLayerNetwork createMNIST4Cnn_New() {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN (Keras-style: 32/64/64 + Flatten + Dense)");
+			System.out.println("Using MNIST4 CNN");
 		}
 
 		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
@@ -517,7 +517,7 @@ public class Dl4jModelFactory {
 	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler() {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN (Keras-style: 32/64/64 + Flatten + Dense)");
+			System.out.println("Using MNIST4 CNN");
 		}
 
 		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10

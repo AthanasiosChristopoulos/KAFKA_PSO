@@ -88,13 +88,14 @@ fi
 export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
 # mvn -q -DskipTests clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
+# mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
 
 # mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
 
 # mvn -q -DskipTests package                 
 # java -jar target/iris-streams-1.0.0.jar    
 
+mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE clean compile exec:java
 
 
 

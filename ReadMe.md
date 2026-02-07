@@ -157,6 +157,7 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
  - Exchange pBest / gBest Weight Messages through Kafka Topics
 
 ## =================================================================================================================================
+## =================================================================================================================================
 ## Kafka Message Documentation:
 
 Input pBest-weights-topic:
@@ -419,7 +420,7 @@ def run_bank():
         - Essentially the points in order form the pen trajectory
 
 
-### Pendigits-HALF: =========================================================
+### Pendigits-HALF: ===============================================================================================
 
     - Load into Kafka with:
         - from file my-pendigits.tra, which after being class filtered, get 10992 samples
@@ -438,12 +439,16 @@ def run_bank():
         - If you plotted those points and connected them in order, you’d get a rough sketch of the digit as written.
         - Essentially the points in order form the pen trajectory
 
-### MNIST: =========================================================
+    - // forward pass cost: CPU = 10ms / GPU = 3ms
+
+### MNIST: ==========================================================================================================================
 
     - Grayscale images, very simple image dataset (means (28×28×1).)
         - When flattend there are only 784 features
         
     - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
+
+    - Forward pass cost: CPU => 200ms / GPU => 30ms  
 
 ### CIRAR10: ===================================================================================================
 
@@ -507,7 +512,23 @@ def run_bank():
             - number of physical cores: Core(s) per socket: 6
             - number of threads on its core: Thread(s) per core: 2
 
-    - GPU:
+    - ## GPU: ================================================================================
+
+        The GPU is capable of executing CNN forward pass faster than the CPU. 
+        GPU is only used for DL4J stuff (wherever we are handling DL4J):
+            - INDArray probs = model.output(X, false);      # Primary use of the GPU, forward passes => convolutions, matrix multiplications
+            [CPU parsing + copying]
+            [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
+            [GPU forward pass]
+            [GPU → CPU sync]     (Pull data back to CPU, synchronizing on every batch)                  
+            [CPU loss + accuracy loops]  
+
+        But GPU is limited, it will only help in neural net compute.
+            - No contribution for serialization / Kafka messages
+            - This means me may be able to afford bigger models or batches, but the primary bottleneck will still be Kafka / CPU Scheduling
+            - CUDA just does faster tensor math, convolutions, matrix multiplications
+        GPU gets more benefit from increased batch size
+        
         - nvidia-smi -l 1
         - <code>nvidia-smi -q</code>  // see gpu specs
         
@@ -525,3 +546,4 @@ ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
 sudo pkill -2 java
 sudo pkill -9 -f java
 ```
+
