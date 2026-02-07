@@ -11,7 +11,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <dl4j.version>1.0.0-M2.1</dl4j.version>
-    <nd4j.backend>nd4j-native-platform</nd4j.backend> 
+    <nd4j.backend>nd4j-native-platform</nd4j.backend>   <!-- By default use CPU -->
   </properties>
 
 
@@ -41,7 +41,7 @@
       </profile>
 
   </profiles>
-  
+
   <dependencies>
     <!-- Kafka Streams -->
     <dependency>
