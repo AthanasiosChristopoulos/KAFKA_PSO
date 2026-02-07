@@ -548,17 +548,13 @@ public class Dl4jModelFactory {
 						.stride(2, 2)
 						.build())
 				.layer(new DenseLayer.Builder()
-						.nOut(64)           	// .nOut(32)    
+						.nOut(64)           	  
 						.activation(Activation.RELU)
 						.build())
-
-				// Dense(numClasses) + softmax
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nOut(numClasses)
 						.activation(Activation.SOFTMAX)
 						.build())
-
-				// MNIST input: [batch, 1, 28, 28]
 				.setInputType(InputType.convolutional(28, 28, 1))
 				.build();
 

@@ -164,9 +164,18 @@ reboot
 
 prime-select query
 
+## Reinstall Driver: ===============================================
+
+sudo apt update
+sudo apt install nvidia-driver-535 nvidia-utils-535
+sudo reboot
+
+# htop Alternatives for GPU:
+nvidia-smi	# Confirm if it was successfully installed
+
 ```
 
-# Performance stuff:
+# Performance stuff: =====================================================================================
 
 Create a systemd service
 

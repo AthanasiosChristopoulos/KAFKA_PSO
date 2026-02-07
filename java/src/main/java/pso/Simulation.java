@@ -8,6 +8,8 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import utils.*; 
 
+import org.nd4j.linalg.factory.Nd4j;
+
 public class Simulation {
 
     public static void main(String[] args) throws Exception {
@@ -23,7 +25,10 @@ public class Simulation {
 
         System.out.println("============== Simulation Start ======================");
         System.out.println("Starting Coordinator ...");
-        System.out.println("ND4J backend = " + Nd4j.getBackend());  // says the hardware this is running on
+        // System.out.println("ND4J backend = " + Nd4j.getBackend());  // says the hardware this is running on
+
+        System.out.println("ND4J backend: " + Nd4j.getBackend().getClass().getName());
+        System.out.println("ND4J ops: " + Nd4j.getExecutioner().getClass().getName());
 
         Coordinator coordinator = new Coordinator();
         Thread coordinatorThread = new Thread(coordinator, "coordinator");  // the coordinator starts first and then the workers

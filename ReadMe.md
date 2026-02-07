@@ -507,8 +507,14 @@ def run_bank():
             - number of physical cores: Core(s) per socket: 6
             - number of threads on its core: Thread(s) per core: 2
 
-    - nvidia-smi -l 1
-    - <code>nvidia-smi -q</code>  // see gpu specs
+    - GPU:
+        - nvidia-smi -l 1
+        - <code>nvidia-smi -q</code>  // see gpu specs
+        
+        # htop Alternatives for GPU: ==========================================================
+        - nvidia-smi	# Confirm if it was successfully installed
+        - watch -n 0.5 nvidia-smi
+
  - Performance Theory:
     - True parallelism comes from CPU cores
     - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem

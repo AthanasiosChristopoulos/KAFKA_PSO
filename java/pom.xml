@@ -27,16 +27,29 @@
     </dependency>
 
     <dependency>
-      <groupId>org.deeplearning4j</groupId>  <!-- neural network library, defines NN architecture, Network configuration, layers, ... -->
+      <groupId>org.deeplearning4j</groupId> 
       <artifactId>deeplearning4j-core</artifactId>
       <version>1.0.0-M2.1</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.nd4j</groupId>   <!-- the tensor / math engine, like NumPy for Java, ND4J array -->
+    <!-- <dependency>
+      <groupId>org.nd4j</groupId>   
       <artifactId>nd4j-native-platform</artifactId>
       <version>1.0.0-M2.1</version>
+    </dependency> -->
+
+  <dependency>
+    <groupId>org.bytedeco</groupId>
+    <artifactId>cuda-platform-redist</artifactId>
+    <version>11.6-8.3-1.5.7</version>
+  </dependency>
+
+    <dependency>
+      <groupId>org.nd4j</groupId>
+      <artifactId>nd4j-cuda-11.6-platform</artifactId>
+      <version>1.0.0-M2.1</version>
     </dependency>
+
 
     <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
