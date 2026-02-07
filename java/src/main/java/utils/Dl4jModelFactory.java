@@ -43,7 +43,8 @@ public class Dl4jModelFactory {
 			// return createMNIST4Cnn_Simple();	// 25ms forward pass on average
 			// return createMNIST4MLP();
 			// return createMNIST4MLP_Reduced();
-			return createMNIST4Cnn_New();
+			// return createMNIST4Cnn_New();
+			return createMNIST4Cnn_New_Simpler();
 				
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX();
@@ -512,6 +513,59 @@ public class Dl4jModelFactory {
 	// dense: 576 * 64 + 64 = 36928
 	// total 320 + 18496 + 36928 + 36928 = 92932 params
 	// Reported Dimensionality: 92932
+
+	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler() {
+
+		if (printModel) {
+			System.out.println("Using MNIST4 CNN (Keras-style: 32/64/64 + Flatten + Dense)");
+		}
+
+		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER) 
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nIn(1)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(0, 0)        
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(64)
+						.stride(1, 1)
+						.padding(0, 0)           
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nOut(64)           	// .nOut(32)    
+						.activation(Activation.RELU)
+						.build())
+
+				// Dense(numClasses) + softmax
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(numClasses)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				// MNIST input: [batch, 1, 28, 28]
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 

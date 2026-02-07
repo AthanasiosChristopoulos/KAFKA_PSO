@@ -88,6 +88,8 @@ git rm -r --cached target
 ## =====================================================================================================================
 ## Project Architecture Description: ===================================================================================
 
+This is my project for PSO, for my thesis
+
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
     DATA_TOPIC
@@ -114,7 +116,6 @@ N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
     20 workers ⇒ each gets ~2 partitions
 
 If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
-
 
 ## Distributed, data parallel PSO Protocol: =====================================================================================================================
 
@@ -189,7 +190,6 @@ Input input-weights-topic:
     weights           | float[]
 
 
-## =================================================================================================================================
 ## =================================================================================================================================
 ## Datasets: =======================================================================================================================
 
@@ -469,7 +469,6 @@ def run_bank():
 
     - 
 ## =================================================================================================================================
-
 ## Functional Requirements: =========================================================
 
 ### Filtering / Communication prevention:
