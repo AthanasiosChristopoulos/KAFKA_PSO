@@ -26,7 +26,11 @@
 
 # Misc Commands: ======================================================================================
 
- - gsettings set org.gnome.desktop.notifications show-banners false		# disable all notifications
+ - Disable low battery notifications:
+	- gsettings set org.gnome.desktop.notifications show-banners false		# disable all notifications
+	- systemctl --user mask org.gnome.SettingsDaemon.Power.service
+	- systemctl --user stop org.gnome.SettingsDaemon.Power.service
+
 
 # Vscode: =============================================================================================
 
