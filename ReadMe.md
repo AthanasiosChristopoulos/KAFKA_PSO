@@ -372,11 +372,11 @@ def run_bank():
     85% on Gradient Descent, 75% on PSO
     If the income is over 50k or not
 
-### Covertype:
+### Covertype:  ========================================================
 
     7 Classes
     85% on Gradient Descent, 80% on PSO
-    Uneven distribution:
+    ## Uneven distribution:
         Counts:
             Class_0: 14978
             Class_1: 40106

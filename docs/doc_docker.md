@@ -17,14 +17,25 @@ docker version
 docker ps       # ps = process status, print all running containers (with their status)
                 # docker ps -a , means show "all" containers even stopped ones 
 
-docker compose up       # runs docker from docker-compose.yml, builds the containers and runs them 
+docker compose up     
+	# If containers do NOT exist:
+		# Docker creates new containers from scratch (from the docker-compose.yml	).
+	# If containers already exist => Docker reuses them.
+	
 docker compose up -d    # -d => means detached mode 
-docker compose down
+docker compose down   		  
+	# Docker will:
+		# Stop all containers in that compose project
+		# Delete those containers
+		# Delete the default network
 
-# reset:
+# reset / stop → delete → recreate:
 docker compose down -v # delete the volumes as well
 rm -rf ./data
 docker compose up
+
+# restart (dont delete the containers):
+docker compose restart
 
 # these run stuff kafka from inside docker (docker sends relays the commands to kafka)
 
@@ -84,3 +95,21 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --delete --topic iris-output
+
+# ===================================================================================================================
+# Volume stuff - Where is Kafka Logging Writing:
+docker volume ls  # Find all docker volumes
+docker volume inspect kafka_pso_4_kafka_data  # Inspect volume size => too small kafka is writing somewhere else
+
+# Find Kafka Log Dirs:
+docker exec -it broker bash -lc 'echo "LOG_DIRS="; grep -E "^\s*log\.dirs\s*=" -n /opt/kafka/config/server.properties /etc/kafka/server.properties 2>/dev/null || true; echo; ps aux | grep -E "kafka\.Kafka|log\.dirs" | grep -v grep || true'
+
+# We see that docker writes inside /tmp/kafka-logs, which is inside the container not the host. Docker keeps the container filesystem, doesnt delete it.
+docker exec -it broker sh -lc       # runs it as a shell inside the docker container   
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs'
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
+
+# Volumes / bind mounts
+# These are stored outside the container lifecycle and are meant for persistence (independent from what the container does).
+  # - Volumes => data survives container deletion and recreation
+  # Without a volume, data survives a restart, but not a container shutdown with docker compose down, docker rm broker

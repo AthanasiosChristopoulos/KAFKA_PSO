@@ -28,7 +28,7 @@ services:
       KAFKA_LOG_RETENTION_BYTES: -1
       
     volumes: # so that the data on the topics isnt lost in between each run
-      - kafka_data:/var/lib/kafka/data
+      - kafka_data:/var/lib/kafka/data    # kafka_pso_4_kafka_data (Docker Compose prefixes volumes with the project name).
 
 
 volumes:
