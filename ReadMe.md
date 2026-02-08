@@ -117,7 +117,8 @@ N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
 
 If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
 
-## Distributed, data parallel PSO Protocol: =====================================================================================================================
+## =====================================================================================================================
+## Distributed, data parallel PSO Protocol: 
 
 1) Initialization of particles, randomize their initial positions + velocities
     => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
@@ -156,7 +157,6 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
     - updateModel(MultiLayerNetwork model, float[] flat)
  - Exchange pBest / gBest Weight Messages through Kafka Topics
 
-## =================================================================================================================================
 ## =================================================================================================================================
 ## Kafka Message Documentation:
 
@@ -441,6 +441,16 @@ def run_bank():
 
     - // forward pass cost: CPU = 10ms / GPU = 3ms
 
+### HIGGS: ===============================================================================================
+
+The HIGGS dataset comes from high-energy physics
+The task is to distinguish Higgs boson events (class 1) from background events (class 0)
+    - Binary classification, NUM_CLASSES = 2
+
+Dataset size => 11,000,000 samples, with 28 features
+
+On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, it is noisy and the classes overlap a lot.)
+
 ### MNIST: ==========================================================================================================================
 
     - Grayscale images, very simple image dataset (means (28×28×1).)
@@ -472,7 +482,7 @@ def run_bank():
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
-    - 
+
 ## =================================================================================================================================
 ## Functional Requirements: =========================================================
 

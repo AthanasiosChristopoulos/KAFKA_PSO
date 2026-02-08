@@ -1275,7 +1275,7 @@ public class Dl4jModelFactory {
 				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
 						.kernelSize(2, 2)
 						.stride(2, 2)
-						.build())
+						.build()) 	
 				// Big dense block (good for PSO search space)
 				.layer(new DenseLayer.Builder()
 						.nOut(32)

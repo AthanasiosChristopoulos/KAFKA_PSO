@@ -1233,7 +1233,6 @@ def load_higgs_data(
     test_size: float = 0.15,
     val_size: float = 0.15,
     random_state: int = 123,
-    standardize: bool = True,
 ):
     print(f"Loading HIGGS from: {path}")
 
@@ -1260,13 +1259,10 @@ def load_higgs_data(
         stratify=y_trainval
     )
 
-    if standardize:
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_val   = scaler.transform(X_val)
-        X_test  = scaler.transform(X_test)
-    else:
-        scaler = None
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_val   = scaler.transform(X_val)
+    X_test  = scaler.transform(X_test)
 
     print("Train:", X_train.shape, y_train.shape)
     print("Val:  ", X_val.shape, y_val.shape)
@@ -1310,7 +1306,7 @@ def build_higgs_model(
 
 def run_higgs():
 
-    X_train, y_train, X_val, y_val, X_test, y_test, scaler = load_higgs_data()
+    X_train, y_train, X_val, y_val, X_test, y_test = load_higgs_data()
 
     model = build_higgs_model(input_dim=X_train.shape[1])
 

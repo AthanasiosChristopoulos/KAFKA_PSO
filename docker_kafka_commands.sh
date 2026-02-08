@@ -35,7 +35,6 @@ docker exec -it broker bash -lc '
 /opt/kafka/bin/kafka-configs.sh --bootstrap-server localhost:9092 \
   --entity-type topics --entity-name pendigits-half-input --describe
 '
-
 # ==============================================================
 # Evaluate position:
 
