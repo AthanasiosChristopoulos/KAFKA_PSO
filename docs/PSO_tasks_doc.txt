@@ -134,6 +134,7 @@
 		
 		- Implementation:
 			- Architecture (Kafka Topology, Project Class Hierarchy)
+			- Protocol (Differences between normal PSO protocol and distributed / Federated learning / Kafka PSO protocol)
 			- Functional and Non Functional Requirements
 			
 		- Experimental Evaluation:

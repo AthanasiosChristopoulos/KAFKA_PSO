@@ -93,9 +93,7 @@ Standard PSO works this way:
 5) Change the velocity and position of the particle according to the equations (for the id_th partitle):
     Vid = Vid + c * rand() * (pBest_id - x_id) + c2* Rand() * (gBest - x_id)
     xid= xid + Vid 
-6) Loop to step 2) until a criterion is met, usually a
-sufficiently good fitness or a maximum number of
-iterations (generations).
+6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
 ## =====================================================================================================================
 ## Project Architecture Description: ===================================================================================
