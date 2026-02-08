@@ -24,7 +24,7 @@ public class Simulation {
         int numWorkers = cfg.N_WORKERS;
 
         System.out.println("============== Simulation Start ======================");
-        System.out.println("Starting Coordinator ...");
+        System.out.println("Starting Coordinator 1 ...");
         // System.out.println("ND4J backend = " + Nd4j.getBackend());  // says the hardware this is running on
 
         System.out.println("ND4J backend: " + Nd4j.getBackend().getClass().getName());

@@ -78,8 +78,8 @@ public class Dl4jModelFactory {
 			// return createLetterModel70K();
 			// return createCifar3Model_New();
 			// return createCifar3Model_New_Simpler();
-			// return createCifar3Model_New_Simpler_2();
-			return createCifar3Model_New_Simpler_3();
+			return createCifar3Model_New_Simpler_2();
+			// return createCifar3Model_New_Simpler_3();
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -1266,10 +1266,19 @@ public class Dl4jModelFactory {
 						.kernelSize(2, 2)
 						.stride(2, 2)                  // 32x32 -> 16x16
 						.build())
-
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 32 * 64 = 18432
+						.nOut(64)										// input  (15x15) =>  output (13x13)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
 				// Big dense block (good for PSO search space)
 				.layer(new DenseLayer.Builder()
-						.nOut(64)
+						.nOut(32)
 						.activation(Activation.RELU)
 						.build())
 

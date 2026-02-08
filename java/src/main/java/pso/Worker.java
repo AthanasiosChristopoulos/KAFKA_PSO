@@ -51,8 +51,6 @@ public class Worker implements Runnable {
     private long t0 = System.nanoTime();
     private final AtomicLong t1  = new AtomicLong(t0);
 
-    private final CustomLogger logger;
-
     // =====================================================================================================
 
     public Worker(int workerId) {
@@ -68,8 +66,6 @@ public class Worker implements Runnable {
         }
 
         this.control = CoordinatorControl.getInstance();
-
-        this.logger = CustomLogger.getWorkerInstance(workerId);
     }
 
     // =====================================================================================================
