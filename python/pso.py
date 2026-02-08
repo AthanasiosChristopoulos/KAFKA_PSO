@@ -36,6 +36,7 @@ from pyswarms.single.global_best import GlobalBestPSO
 warnings.filterwarnings("ignore")
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
+REPEATS = 40
 
 # =============================================================================
 # Utilities
@@ -71,19 +72,16 @@ def evaluate_dataset(
 # =============================================================================
 
 def get_shapes(model: keras.Model) -> List[Tuple[int, ...]]:
-    """Return per-weight-array shapes from model.get_weights()."""
     return [w.shape for w in model.get_weights()]
 
 # =============================================================================
 
 def flatten_weights(weights: List[np.ndarray]) -> np.ndarray:
-    """Flatten list of weight arrays into 1D vector."""
     return np.concatenate([w.ravel() for w in weights], axis=0).astype(np.float32)
 
 # =============================================================================
 
 def unflatten_weights(flat: np.ndarray, shapes: List[Tuple[int, ...]]) -> List[np.ndarray]:
-    """Convert a flat 1D vector back into list of arrays matching `shapes`."""
     new_weights: List[np.ndarray] = []
     idx = 0
     for shp in shapes:
@@ -175,6 +173,7 @@ class PSOConfig:
     pso_batch_size: int = 4096
     seed: int = 123
 
+# =============================================================================
 
 def train_with_pso(
     X_train: np.ndarray,
@@ -242,6 +241,30 @@ def train_with_pso(
             results[i] = 1.0 - float(acc.numpy())  # minimize error
         return results
 
+    # def fitness(W: np.ndarray) -> np.ndarray:
+    #     # returns array of shape (n_particles,)
+    #     results = np.empty((W.shape[0],), dtype=np.float32)
+
+    #     # Convert eval data once to tensors (outside particle loop)
+    #     x_t = tf.convert_to_tensor(X_fit, dtype=tf.float32)
+    #     y_t = tf.convert_to_tensor(y_fit, dtype=tf.int64)
+
+    #     for i in range(W.shape[0]):
+    #         # set weights for particle i
+    #         model.set_weights(unflatten_weights(W[i], shapes))
+
+    #         acc_sum = 0.0
+    #         for _ in range(REPEATS):
+    #             probs = _predict_batch(x_t)
+    #             preds = tf.argmax(probs, axis=1, output_type=tf.int64)
+    #             acc = tf.reduce_mean(tf.cast(tf.equal(preds, y_t), tf.float32))
+    #             acc_sum += float(acc.numpy())
+
+    #         avg_acc = acc_sum / REPEATS
+    #         results[i] = 1.0 - avg_acc  # minimize error
+
+    #     return results
+
     start = time.time()
     best_cost, best_pos = optimizer.optimize(fitness, iters=cfg.iters, verbose=True)
     elapsed = time.time() - start
@@ -259,18 +282,26 @@ def train_with_pso(
 
 
 # =============================================================================
-# Main
-# =============================================================================
 
 def main():
     X_train, y_train, X_test, y_test, class_names = load_pendigits_data(base_path="../data")
 
+    # cfg = PSOConfig(
+    #     n_particles=30,
+    #     iters=40,
+    #     w=0.6,
+    #     c1=0.4,
+    #     c2=0.6,
+    #     bound_abs=1.0,
+    #     pso_batch_size=4096,  # raise this if you want more reliable fitness, lower for speed
+    #     seed=123,
+    # )
     cfg = PSOConfig(
         n_particles=30,
         iters=40,
         w=0.6,
-        c1=0.4,
-        c2=0.6,
+        c1=2.0,
+        c2=2.0,
         bound_abs=1.0,
         pso_batch_size=4096,  # raise this if you want more reliable fitness, lower for speed
         seed=123,
