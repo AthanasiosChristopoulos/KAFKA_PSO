@@ -1122,17 +1122,50 @@ def load_cifar3_data(
 
 # =======================================================================================================
 
+# def build_cifar3_model(input_shape=(32, 32, 3), num_classes: int = 3):
+
+#     inputs = layers.Input(shape=input_shape)
+
+#     x = layers.Conv2D(8, 3, padding="same", activation="relu")(inputs)
+#     x = layers.MaxPooling2D()(x)
+
+#     x = layers.Conv2D(16, 3, padding="same", activation="relu")(x)
+#     x = layers.MaxPooling2D()(x)
+
+#     x = layers.GlobalAveragePooling2D()(x)
+#     outputs = layers.Dense(num_classes, activation="softmax")(x)
+
+#     model = models.Model(inputs, outputs)
+
+#     model.compile(
+#         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+
+#     return model
+
+
 def build_cifar3_model(input_shape=(32, 32, 3), num_classes: int = 3):
 
     inputs = layers.Input(shape=input_shape)
 
-    x = layers.Conv2D(8, 3, padding="same", activation="relu")(inputs)
-    x = layers.MaxPooling2D()(x)
+    # DL4J: padding(0,0) => "valid" in Keras (no padding)
+    x = layers.Conv2D(32, (3, 3), strides=(1, 1), padding="valid", activation="relu")(inputs)
+    x = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(x)
 
-    x = layers.Conv2D(16, 3, padding="same", activation="relu")(x)
-    x = layers.MaxPooling2D()(x)
+    x = layers.Conv2D(64, (3, 3), strides=(1, 1), padding="valid", activation="relu")(x)
+    x = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(x)
 
-    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Conv2D(64, (3, 3), strides=(1, 1), padding="valid", activation="relu")(x)
+
+    # DL4J DenseLayer implicitly flattens conv output
+    x = layers.Flatten()(x)
+    x = layers.Dense(64, activation="relu")(x)
+
     outputs = layers.Dense(num_classes, activation="softmax")(x)
 
     model = models.Model(inputs, outputs)

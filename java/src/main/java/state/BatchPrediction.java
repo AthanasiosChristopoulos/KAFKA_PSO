@@ -129,7 +129,7 @@ public class BatchPrediction {
         }
 
 
-        // Start Forward Pass ===============================================================================
+        // Forward Pass Start ===============================================================================
         start = System.nanoTime();
 
         INDArray X;
@@ -169,7 +169,7 @@ public class BatchPrediction {
 
         end = System.nanoTime();
 
-        // End Forward Pass ===============================================================================
+        // Forward Pass End ===============================================================================
 
         if (probs == null || probs.size(0) == 0) {
             logger.log("Empty probs batch");
