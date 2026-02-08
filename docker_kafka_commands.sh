@@ -15,6 +15,10 @@ docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists
 
+docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic global-weights-topic --from-beginning
+
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
   --create --topic prediction-input --partitions 1 --if-not-exists
@@ -31,7 +35,6 @@ docker exec -it broker bash -lc '
 /opt/kafka/bin/kafka-configs.sh --bootstrap-server localhost:9092 \
   --entity-type topics --entity-name pendigits-half-input --describe
 '
-
 
 # ==============================================================
 # Evaluate position:
