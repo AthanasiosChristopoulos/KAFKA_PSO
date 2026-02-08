@@ -571,6 +571,7 @@ def load_dataset():
         classes = (0,1,2)
 
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+            # X_train: (15000, 32, 32, 3), y_train: (15000,). This means 15000 * 27 = 40 * 10^4
 
         y_train = y_train.squeeze().astype(np.int64)  # (N,)
         y_test  = y_test.squeeze().astype(np.int64)

@@ -77,7 +77,9 @@ public class Dl4jModelFactory {
 			// return createCifar3Model();
 			// return createLetterModel70K();
 			// return createCifar3Model_New();
-			return createCifar3Model_New_Simpler();
+			// return createCifar3Model_New_Simpler();
+			// return createCifar3Model_New_Simpler_2();
+			return createCifar3Model_New_Simpler_3();
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -1238,5 +1240,106 @@ public class Dl4jModelFactory {
 	}
 	// 896+18,496+36,928+65,600+195=122,115​
 	// Recorded Dimensionality of the output is: 122115. 45% accuracy
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createCifar3Model_New_Simpler_2() {
+
+		if (printModel) {
+			System.out.println("Using CIFAR3 SIMPLE A: Conv(32) -> MaxPool -> Dense(64 relu) -> Softmax(3)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nIn(3)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(1, 1)                 // SAME padding keeps 32x32
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)                  // 32x32 -> 16x16
+						.build())
+
+				// Big dense block (good for PSO search space)
+				.layer(new DenseLayer.Builder()
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nOut(NUM_CLASSES)             // = 3
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				.setInputType(InputType.convolutional(32, 32, 3))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createCifar3Model_New_Simpler_3() {
+
+		if (printModel) {
+			System.out.println("Using CIFAR3 SIMPLE B: Conv(16)->Pool->Conv(32)->Pool->Dense(64)->Softmax(3)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nIn(3)
+						.nOut(16)
+						.stride(1, 1)
+						.padding(1, 1)                 // SAME: 32x32
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)                  // 32->16
+						.build())
+
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(1, 1)                 // SAME: 16x16
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)                  // 16->8
+						.build())
+
+				.layer(new DenseLayer.Builder()
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				.setInputType(InputType.convolutional(32, 32, 3))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 
 }
