@@ -1377,17 +1377,23 @@ def load_wine_type_data(
 # MODEL
 # ============================================================
 
-def build_wine_type_model(input_dim: int):
-    
-    model = keras.Sequential()
-    model.add(layers.Dense(12, activation='relu', input_dim=12))
-    model.add(layers.Dense(9, activation='relu'))
-    model.add(layers.Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+def build_winequality_model(input_dim=12):
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(12, activation='relu'),
+        layers.Dense(9, activation='relu'),
+        layers.Dense(1, activation='sigmoid'),
+    ])
+
+    model.compile(
+        loss='binary_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+
     model.summary()
     print("Total params:", model.count_params())
     return model
-
 
 # ============================================================
 # RUN PIPELINE
@@ -1401,7 +1407,7 @@ def run_wine_type():
 
     evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=2)
     
-    model = build_wine_type_model(input_dim=X_train.shape[1])
+    model = build_winequality_model(input_dim=X_train.shape[1])
 
     print("\nTraining...")
     model.fit(

@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
-"""
-PSO training (PySwarms) vs Gradient Descent baseline on the PenDigits dataset.
-
-- Loads PenDigits from:
-    ../data/pendigits.tra
-    ../data/pendigits.tes
-
-- Model (exactly as you specified):
-    Dense(128, relu) -> Dense(128, relu) -> Dense(10, softmax)
-
-- Two runs:
-  1) Gradient Descent (SGD + momentum) baseline
-  2) PSO (GlobalBestPSO) optimizing weights to minimize (1 - accuracy)
-
-Notes:
-- PSO is expensive because every particle evaluation runs a forward pass over the chosen data.
-- By default, this script evaluates fitness on a subset (pso_batch_size) for speed/stability.
-"""
+# You need toinstall pip install pyswarms for this to work
 
 import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
 import time
+import logging
+logger = logging.getLogger("pyswarms")
+logger.setLevel(logging.INFO)
+
+# Remove existing handlers (so you don't get duplicate outputs)
+logger.handlers.clear()
+logger.propagate = False
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s"))
+logger.addHandler(handler)
 import warnings
 from dataclasses import dataclass
 from typing import List, Tuple
-
+import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -96,10 +92,8 @@ def unflatten_weights(flat: np.ndarray, shapes: List[Tuple[int, ...]]) -> List[n
 def count_params_from_shapes(shapes: List[Tuple[int, ...]]) -> int:
     return int(sum(np.prod(s) for s in shapes))
 
-
 # =============================================================================
 # PenDigits: data + model (as you specified)
-# =============================================================================
 
 def load_pendigits_data(base_path: str = "../data"):
     train_path = os.path.join(base_path, "pendigits.tra")
@@ -134,6 +128,44 @@ def load_pendigits_data(base_path: str = "../data"):
 
 # =============================================================================
 
+def load_wine_type_data(
+    path="../data/winequality.csv",
+    test_size: float = 0.2,
+    random_state: int = 123,
+):
+    print(f"Loading from: {path}")
+    df = pd.read_csv(path, sep=",")
+
+    df["type"] = df["type"].map({"white": 0, "red": 1})    # Map label: white=0, red=1
+
+    feature_cols = [c for c in df.columns if c != "type"]
+
+    # Drop NaN values
+    for c in feature_cols:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    before = len(df)
+    df = df.dropna(subset=feature_cols + ["type"]).copy()
+    after = len(df)
+    print(f"Dropped rows with NaNs: {before - after}")
+
+    # y and X
+    y = df["type"].astype(np.int32).values
+    X = df[feature_cols].astype(np.float32).values
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state, stratify=y
+    )
+
+    # Standardize
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train).astype(np.float32)
+    X_test = scaler.transform(X_test).astype(np.float32)
+
+    num_classes = 2
+    return X_train, y_train, X_test, y_test, num_classes
+
+# =============================================================================
+
 def build_pendigits_model(input_dim: int = 16, num_classes: int = 10) -> keras.Model:
     model = keras.Sequential(
         [
@@ -155,6 +187,25 @@ def build_pendigits_model(input_dim: int = 16, num_classes: int = 10) -> keras.M
     print("Trainable params:", model.count_params())
     return model
 
+# =============================================================================
+
+def build_winequality_model(input_dim=12):
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(12, activation='relu'),
+        layers.Dense(9, activation='relu'),
+        layers.Dense(1, activation='sigmoid'),
+    ])
+
+    model.compile(
+        loss='binary_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+
+    model.summary()
+    print("Total params:", model.count_params())
+    return model
 
 # =============================================================================
 # PSO training (PySwarms)
@@ -186,8 +237,10 @@ def train_with_pso(
     print("PSO training (PySwarms GlobalBestPSO)")
     print("=" * 80)
 
-    set_seed(cfg.seed)
+    # set_seed(cfg.seed)
+
     model = build_pendigits_model(input_dim=X_train.shape[1], num_classes=10)
+    # model = build_winequality_model()
 
     shapes = get_shapes(model)
     dims = count_params_from_shapes(shapes)
@@ -199,6 +252,7 @@ def train_with_pso(
     bounds = (x_min, x_max)
 
     options = {"c1": cfg.c1, "c2": cfg.c2, "w": cfg.w}
+
     optimizer = GlobalBestPSO(
         n_particles=cfg.n_particles,
         dimensions=dims,
@@ -206,6 +260,7 @@ def train_with_pso(
         bounds=bounds,
     )
 
+    # =============================================================================
     # Prebuild an evaluation subset for stable/fast fitness
     if cfg.pso_batch_size >= len(X_train):
         X_fit = X_train
@@ -217,56 +272,91 @@ def train_with_pso(
         X_fit = X_train[idx]
         y_fit = y_train[idx]
         print(f"Fitness evaluation subset: {len(X_fit)} samples")
+    
+    # =============================================================================
 
+    batch_size = 100
+    epochs = 40
+    N = len(X_train)
+    steps_per_epoch = int(np.ceil(N / batch_size))
+    total_iters = epochs * steps_per_epoch
+    print(f"PSO minibatch schedule: {epochs} epochs × {steps_per_epoch} steps = {total_iters} iters")
+
+    # iteration counter living in closure
+    iter_counter = {"t": 0}
+    rng = np.random.default_rng(cfg.seed)
+
+    # precompute shuffled indices for each epoch (deterministic)
+    epoch_perms = [rng.permutation(N) for _ in range(epochs)]
+
+    # =============================================================================
     # We use a vectorized fitness function: W has shape (n_particles, dims)
     @tf.function(reduce_retracing=True)
     def _predict_batch(x: tf.Tensor) -> tf.Tensor:
         # model(x, training=False) returns probs
-        return model(x, training=False)
+        return model(x, training = False)
 
-    def fitness(W: np.ndarray) -> np.ndarray:
-        # returns array of shape (n_particles,)
-        results = np.empty((W.shape[0],), dtype=np.float32)
-
-        # Convert eval data once to tensors
-        x_t = tf.convert_to_tensor(X_fit, dtype=tf.float32)
-        y_t = tf.convert_to_tensor(y_fit, dtype=tf.int64)
-
-        for i in range(W.shape[0]):
-            # set weights for particle i
-            model.set_weights(unflatten_weights(W[i], shapes))
-            probs = _predict_batch(x_t)
-            preds = tf.argmax(probs, axis=1, output_type=tf.int64)
-            acc = tf.reduce_mean(tf.cast(tf.equal(preds, y_t), tf.float32))
-            results[i] = 1.0 - float(acc.numpy())  # minimize error
-        return results
+    # =============================================================================
 
     # def fitness(W: np.ndarray) -> np.ndarray:
     #     # returns array of shape (n_particles,)
     #     results = np.empty((W.shape[0],), dtype=np.float32)
 
-    #     # Convert eval data once to tensors (outside particle loop)
+    #     # Convert eval data once to tensors
     #     x_t = tf.convert_to_tensor(X_fit, dtype=tf.float32)
     #     y_t = tf.convert_to_tensor(y_fit, dtype=tf.int64)
 
     #     for i in range(W.shape[0]):
     #         # set weights for particle i
     #         model.set_weights(unflatten_weights(W[i], shapes))
+            
+    #         # Single Class =============================================================================
+    #         # probs = _predict_batch(x_t)                           # (N, 1)
+    #         # y_f = tf.cast(y_t, tf.float32)
+    #         # probs_1d = tf.squeeze(probs, axis=1)          # (N,)
+    #         # loss = tf.reduce_mean(tf.keras.losses.binary_crossentropy(y_f, probs_1d))
+    #         # results[i] = float(loss.numpy())
 
-    #         acc_sum = 0.0
-    #         for _ in range(REPEATS):
-    #             probs = _predict_batch(x_t)
-    #             preds = tf.argmax(probs, axis=1, output_type=tf.int64)
-    #             acc = tf.reduce_mean(tf.cast(tf.equal(preds, y_t), tf.float32))
-    #             acc_sum += float(acc.numpy())
-
-    #         avg_acc = acc_sum / REPEATS
-    #         results[i] = 1.0 - avg_acc  # minimize error
+    #         # Multiclass =============================================================================
+    #         probs = _predict_batch(x_t)  # (N, 10)
+    #         loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y_t, probs))
+    #         results[i] = float(loss.numpy())
 
     #     return results
+    def fitness(W: np.ndarray) -> np.ndarray:
+        results = np.empty((W.shape[0],), dtype=np.float32)
+
+        t = iter_counter["t"]
+        epoch = t // steps_per_epoch
+        step = t % steps_per_epoch
+
+        # if optimizer somehow calls beyond planned iters, wrap around
+        epoch = epoch % epochs
+
+        perm = epoch_perms[epoch]
+        start = step * batch_size
+        end = min(start + batch_size, N)
+        batch_idx = perm[start:end]
+
+        x_t = tf.convert_to_tensor(X_train[batch_idx], dtype=tf.float32)
+        y_t = tf.convert_to_tensor(y_train[batch_idx], dtype=tf.int64)
+
+        for i in range(W.shape[0]):
+            model.set_weights(unflatten_weights(W[i], shapes))
+            probs = model(x_t, training=False)
+
+            # multiclass loss (PenDigits)
+            loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y_t, probs))
+            results[i] = float(loss.numpy())
+
+        iter_counter["t"] += 1
+        return results
+
+    # =============================================================================
 
     start = time.time()
-    best_cost, best_pos = optimizer.optimize(fitness, iters=cfg.iters, verbose=True)
+    # best_cost, best_pos = optimizer.optimize(fitness, iters=cfg.iters, verbose=True)
+    best_cost, best_pos = optimizer.optimize(fitness, total_iters, verbose=True)
     elapsed = time.time() - start
 
     print("\nPSO finished.")
@@ -280,34 +370,26 @@ def train_with_pso(
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
-
 # =============================================================================
 
 def main():
     X_train, y_train, X_test, y_test, class_names = load_pendigits_data(base_path="../data")
+    # X_train, y_train, X_test, y_test, class_names = load_wine_type_data()
 
-    # cfg = PSOConfig(
-    #     n_particles=30,
-    #     iters=40,
-    #     w=0.6,
-    #     c1=0.4,
-    #     c2=0.6,
-    #     bound_abs=1.0,
-    #     pso_batch_size=4096,  # raise this if you want more reliable fitness, lower for speed
-    #     seed=123,
-    # )
     cfg = PSOConfig(
-        n_particles=30,
-        iters=40,
+        n_particles=10,
+        iters=10,
         w=0.6,
-        c1=2.0,
-        c2=2.0,
+        c1=0.4,
+        c2=0.6,
         bound_abs=1.0,
-        pso_batch_size=4096,  # raise this if you want more reliable fitness, lower for speed
+        pso_batch_size=100,  # raise this if you want more reliable fitness, lower for speed
         seed=123,
     )
+
     train_with_pso(X_train, y_train, X_test, y_test, cfg)
 
+# =============================================================================
 
 if __name__ == "__main__":
     main()
