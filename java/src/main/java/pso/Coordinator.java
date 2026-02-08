@@ -217,7 +217,7 @@ public class Coordinator implements Runnable {
             mainStreams.start();
             if (gbestStreams != null) gbestStreams.start();
 
-            System.out.println("[Coordinator] started. FULLY_INFORMED=" + FULLY_INFORMED);
+            System.out.println("[Coordinator] started. FULLY_INFORMED = " + FULLY_INFORMED);
 
             if (DEBUG_KAFKA) {
                 System.out.println("\n[MAIN Topology]\n" + mainTopology.describe());

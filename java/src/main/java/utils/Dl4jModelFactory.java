@@ -492,15 +492,11 @@ public class Dl4jModelFactory {
 						.nOut(64)              
 						.activation(Activation.RELU)
 						.build())
-
-				// Dense(numClasses) + softmax
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nOut(numClasses)
 						.activation(Activation.SOFTMAX)
 						.build())
-
-				// MNIST input: [batch, 1, 28, 28]
-				.setInputType(InputType.convolutional(28, 28, 1))
+				.setInputType(InputType.convolutional(28, 28, 1))	// MNIST input: [batch, 1, 28, 28]
 				.build();
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);

@@ -316,10 +316,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         updateTime();   // is updated  every time a new buffer has been processed
         
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
-                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.averageMagnitude(velocity) + 
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.averageMagnitude(velocity) * 100 + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
-        );
+        );  // * 100 is for the user, just scale it upwards 
                 
         end = System.nanoTime();
         sumElapsedNs += (end - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 

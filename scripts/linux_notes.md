@@ -92,9 +92,14 @@ pip install tensorflow --break-system-packages
 pip install kafka-python --break-system-packages
 pip install python-dotenv --break-system-packages
 pip install matplotlib --break-system-packages
-
+PYTHONHTTPSVERIFY=1 python3 -m pip install pyswarms --user --default-timeout=120 --break-system-packages
 ```
-
+or 
+Ubuntu uses python as system package. You dont want to break them "break-system-packages" with your own stuff.
+```bash
+python3 -m venv ~/.venvs/dev
+source ~/.venvs/dev/bin/activate	# do this for every project
+```
  - python3 --version
    pip3 --version
 
