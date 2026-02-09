@@ -130,32 +130,33 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
 ## =====================================================================================================================
 ## Distributed, data parallel PSO Protocol: 
 
-1) Initialization of particles, randomize their initial positions + velocities
+- (1) Initialization of particles, randomize their initial positions + velocities
     => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
-    => assign each worker (N WORKERS, working in parallel) 1 particle (this number could vary, worker could be assigned 1...M particles)
+    => assign each WORKER (N WORKERS, working in parallel) 1 particle (this number could vary, WORKER could be assigned 1...M particles)
     => distribute training data to each particle 
 
     While True loop (break condition inside this logic):
-        2) Each worker does:
+        - (2) Each WORKER does:
                 
-            Repeat this for N_TRAIN_SIZE:
+            Repeat this for N_BATCHES:
                 => evaluate the current position using a batch of data (TRAIN_SIZE) and a loss function (non differentiable):
                 => if this is a personal best loss, update pBest (personal best weights - model).
-                    => communicate also the pBest to PBEST_WEIGHTS_TOPIC, where everyone will read it
+                    => communicate also the pBest to PBEST_WEIGHTS_TOPIC, where the coordinator (gBest) or everyone will read it (fully informed)
 
-                => Receive pBests of all particles (or gBest) from Coordinator
-                => update velocity (potentially using new pBests) and calculate next position x_i_1 using new velocity value
+                => Receive pBests (Fully Informed) or gBest (Neighborhood Best)
+                => update velocity and calculate next position x_i_1 using new velocity value
                     => <code> v_i_new = w * v_i + (c / M) * sum(j, random * (pBest_j - x_i) </code>
                     => <code> x_i_1 = x_i + v_i_1 </code>
                 
-            => sends the current position x_i (for FedAvg) and then return to original loop
+            => sends the current position x_i (for FedAvg) and then return to original loop until data runs out
 
-        3) The coordinator does:
-            => Coordinator receives pBest and updates them (either updates whole pBest list or just gBest), informing the workers
+        - (3) The COORDINATOR does:
+            => Coordinator receives pBest and updates gBest, informing the workers
             => Averages x_i of all particles into x_g and use that to evaluate overall performance of the model
-                => Only if this x_g has a high enough accuracy (higher than DESIRED_ACCURACY) or if the DATA_TOPIC / TEST_TOPIC data has been exhausted,
+                => Only if this x_g has a high enough accuracy (higher than DESIRED_ACCURACY) or if the DATA_TOPIC has been exhausted,
                    does training conclude.
-                => The execution doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
+            
+    => After training (if we are not in a streaming envirment), the execution of the COORDINATOR doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
           
 ## PSO Logic: ======================================================================================================================
 
@@ -312,46 +313,6 @@ def run_bank():
     save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 ```
 
-## Improve congvergence: =========================================================
-
- - change model
- - change constants => velocity, inertia, C1, C2
- - increase the number of children
- - look how velocity amplitude behaves
-    - velocity show always start big and then becose smaller
- - Fully Informed seems to be slower, but converging more surely (its always improving)
- - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
-    - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
-
-## What to look at for training process: =========================================
-
- - convergence (the ideal result is located, but the swarm doesnt converge on it)
-    - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
-    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
-        - Early iterations: exploration-heavy
-        - Late phase: stabilization / convergence
-    - cognitive Velocity: Distance to of current position to pBest
-    - social Velocity: Distance to of current position to gBest (or the other pBests)
- - Is a good result located ? Can it be found ?
- - Are pBest and gBest remaining constant ? is exploration even working ?
- - Trade-off between exploration and convergence
- - The swarm converged on bad solution / local maximum
- - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
-    - is the velocity being clamped / holded back by a limiter ?
- - Increasing N_WORKERS:
-    - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
-    - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
-
-## Velocity:  =========================================================
-
- - Is initialized to have a significant amplitude at the start
- - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
- 		- velocity like simulated annealing ? Make it reduce over time
- - **W_INERTIA_FULLY > W_INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
-    ```java
-    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
-    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]
-    ```
 
 ## DATASETS: =========================================================
 
@@ -492,6 +453,64 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
+## ===================================================================================
+## Theory / PSO Paramaters ===========================================================
+
+## Improve congvergence: =========================================================
+
+ - change model
+ - change constants => velocity, inertia, C1, C2
+ - increase the number of children
+ - look how velocity amplitude behaves
+    - velocity show always start big and then becose smaller
+ - Fully Informed seems to be slower, but converging more surely (its always improving)
+ - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
+    - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
+
+## What to look at for training process: =========================================
+
+ - convergence (the ideal result is located, but the swarm doesnt converge on it)
+    - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
+    - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
+        - Early iterations: exploration-heavy
+        - Late phase: stabilization / convergence
+    - cognitive Velocity: Distance to of current position to pBest
+    - social Velocity: Distance to of current position to gBest (or the other pBests)
+ - Is a good result located ? Can it be found ?
+ - Are pBest and gBest remaining constant ? is exploration even working ?
+ - Trade-off between exploration and convergence
+ - The swarm converged on bad solution / local maximum
+ - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
+    - is the velocity being clamped / holded back by a limiter ?
+ - Increasing N_WORKERS:
+    - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
+    - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
+
+## Velocity:  =========================================================
+
+ - Is initialized to have a significant amplitude at the start
+ - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
+ 		- velocity like simulated annealing ? Make it reduce over time
+ - **W_INERTIA_FULLY > W_INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
+    ```java
+    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
+    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]
+    ```
+ - ## Clamping Velocity:
+        - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. 
+        If the sum of accelerations would
+cause the velocity on that dimension to exceed Vmax, which
+is a parameter specified by the user, then the velocity on that
+dimension is limited to Vmax.
+Vmax is therefore an important parameter. It determines
+the resolution, or fineness, with which regions between the
+present position and the target (best so far) position are
+searched. If Vmax is too high, particles might fly past good
+solutions. If Vmax is too small, on the other hand, particles
+may not explore sufficiently beyond locally good regions.
+In fact, they could become trapped in local optima, unable to
+move far enough to reach a better position in the problem
+space.
 
 ## =================================================================================================================================
 ## Functional Requirements: =========================================================

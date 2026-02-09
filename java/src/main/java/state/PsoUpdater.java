@@ -11,6 +11,7 @@ import utils.*;
 public class PsoUpdater {
 
     private Config cfg = Config.getInstance();
+
     private final float W_INERTIA = cfg.W_INERTIA;;
     private final float C = cfg.C;
     private final float C1 = cfg.C1;
@@ -31,6 +32,7 @@ public class PsoUpdater {
     private final float VMAX;    
     private final float VMAX_FACTOR;
     private final float VMAX_NORM;
+    public final String VMAX_CLAMPING_TYPE = cfg.VMAX_CLAMPING_TYPE;
 
     private CustomLogger logger;
     private float[] velocity; 
@@ -90,7 +92,7 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    private float clampVelocity(float v) {      // this limits each coordinate independently
+    private float clampVelocitySingle(float v) {      // this limits each coordinate Velocity independently
 
         if (v > VMAX) {
             clamp_count++;
@@ -107,9 +109,18 @@ public class PsoUpdater {
 
     //================================================================================================
 
+    private void clampVelocityByDim() {
+        for (int i = 0; i < velocity.length; i++) {
+            float v = velocity[i];
+            if (v > VMAX) { velocity[i] = VMAX; clamp_count++; }
+            else if (v < -VMAX) { velocity[i] = -VMAX; clamp_count++; }
+        }
+    }
+
+    //================================================================================================
+
     private void clipVelocityByNorm(float vmaxNorm) {   // this is limiting overall length / magnitude of velocity
                                                         // the goal is to not limit individual dimensionalities, because this would change direction
-
         double sumSq = 0.0;
         for (float v : velocity) sumSq += (double)v * v;
         double norm = Math.sqrt(sumSq);
@@ -161,7 +172,11 @@ public class PsoUpdater {
             // x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        clipVelocityByNorm(VMAX_NORM);
+        if (VMAX_CLAMPING_TYPE.equals("DIM")) {
+            clampVelocityByDim();     
+        } else {
+            clipVelocityByNorm(VMAX_NORM);
+        }
 
         for (int k = 0; k < x_i.length; k++) {
             x_i_new[k] = x_i[k] + velocity[k];

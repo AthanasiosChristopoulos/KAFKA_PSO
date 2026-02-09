@@ -46,6 +46,8 @@ public class Config {
     public final int TOP_K_VALUE;
 
     public final float VMAX_FACTOR;
+    public final String VMAX_CLAMPING_TYPE;
+
     public final float SIGNIFICANT_LOSS_DIFF;
     public final boolean FILTER_ENABLED;
     public final boolean SIMULATED_ANNEALING;
@@ -171,6 +173,7 @@ public class Config {
         this.TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
 
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
+        this.VMAX_CLAMPING_TYPE = getenv(dotenv, "VMAX_CLAMPING_TYPE", "DIM");
 
         this.FILTER_ENABLED = Boolean.parseBoolean(getenv(dotenv, "FILTER_ENABLED", "false"));
         if(FILTER_ENABLED == false) {

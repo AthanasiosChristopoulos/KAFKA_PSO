@@ -3,62 +3,10 @@
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
 
- - If a new particle ﬂies beyond the boundary [Xmin, Xmax], the new position will be set as Xmin or Xmax
- - If a new velocity is beyond the boundary [Vmin, Vmax], the new velocity will be set as Vmin or Vmax.
-
-
 ## TensorFlow (Keras) + PySwarms Implementation
 
 TensorFlow gives you easy model definition, provides the “neural forward pass”.
-PySwarms gives you a way to train models without gradients, using PSO => provides the outer optimization loop
-
-## This is a PySwarm, non distributed example:
-
-```python
-
-def get_shape(model):   # take the model, records the shape of the weights => like this [(4,4), (4,), (4,3), (3,)]
-                        # this is important because internally (during taining) PSO knows only flat vectors (operates on flat numeric arrays)
-    weights_layer = model.get_weights() # this adds biases as well
-    shapes = []
-    for weights in weights_layer:
-        shapes.append(weights.shape)
-    return shapes   # and return them as is. This is a conversion between model (particle) => weights
-    # if our model has a shape like this: [(4,4), (4,), (4,3), (3,)] → shapes is a list with a total of 35 scalars.
-
-def set_shape(weights, shapes): # this takes a flat vector and reshapes it back to the tensors / model weight shape
-    new_weights = []
-    index = 0
-    for shape in shapes:
-        if len(shape) > 1:
-            n_nodes = np.prod(shape) + index
-        else:
-            n_nodes = shape[0] + index
-        tmp = np.array(weights[index:n_nodes]).reshape(shape)
-        new_weights.append(tmp)
-        index = n_nodes
-    return new_weights
-
-options = {'c1': 0.4, 'c2': 0.8, 'w': 0.4}  # straight from the formula, v = w * v + c1 * r1 * (pbest − x) + c2 * r2 * (gbest − x)
-optimizer = GlobalBestPSO(n_particles=25, dimensions=35, options=options, bounds=bounds) # these are bounds for the weights
-    # options = come from the formula. dimensios = of the flattend weight vectors (particles)
-    # Position: x(t+1) ← x(t) (current position) + v
-
-
-def evaluate_nn(W, shape, X_train=X_train, Y_train=Y_train):    # W is the swarm (n_particles * dimensions) => 1 weight vector for each particle
-                                                                # this is going to evaluate each particle
-    results = []
-    for weights in W:
-        model.set_weights(set_shape(weights, shape)) # sets the weights of the model (usually they change through training over time)
-        score = model.evaluate(X_train, Y_train, verbose=0)  # evaluate each particle and store the accuracy
-        results.append(1 - score[1])
-    return results
-
-
-cost, pos = optimizer.optimize(evaluate_nn, 15, X_train=X_train, Y_train=Y_train, shape=shape)  # this runs the entire training with epoch = 15
-model.set_weights(set_shape(pos,shape)) # pos will be the optimized particle position after the training is completed
-score = model.evaluate(X_test, Y_test)
-
-```
+PySwarms (Python Library) gives you a way to train models without gradients, using PSO => provides the outer optimization loop
 
 -------------------------------------
 
@@ -250,5 +198,3 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
-
-consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
