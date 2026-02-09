@@ -97,6 +97,7 @@ Standard PSO works this way:
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
 ## =====================================================================================================================
+## =====================================================================================================================
 ## Project Architecture Description: ===================================================================================
 
 This is my project for PSO, for my thesis
