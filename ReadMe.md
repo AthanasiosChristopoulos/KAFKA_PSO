@@ -85,6 +85,7 @@ git rm -r --cached target
 
 ```
 ## Related Work: =====================================================================================================
+PySwarm:
 Standard PSO works this way:
 1) Initialize a population of particles with random positions and velocities on d dimensions
 2) For each particle, evaluate the desired optimization fitness function in d variables.
@@ -456,6 +457,8 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
+However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
+
 ## Improve congvergence: =========================================================
 
  - change model
@@ -487,7 +490,9 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
 
 ## Population size / Number of particles: =============================
+
  - 20 - 50 number of particles
+ - trade-off between variety / search space (more particles) and algorithm speed (fewer particles)
 
 ## Velocity:  =========================================================
 
@@ -505,6 +510,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
  - ## Clamping Velocity:
 
     - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. The velocity on a single dimension is limited to Vmax.
+        - if(|V[i]|< Vmax) V[i] = sign(V[i]) * Vmax
     - Vmax parameter (trade-off: local exploitation vs global exploration):
         - Influences how small or large the steps are when moving through the search space (aka search resolution, fineness)
         - Vmax too high: particles might fly past good solutions 
@@ -548,7 +554,25 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
             => large φ → strong pull → oscillation / explosion
             => Stable at: c1 = c2 = 2.05, φ = 4.1   => K ≈ 0.729
             =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
-    - If this is quaranteed then technically no need for Vmax (but Vmax is still helpfull in practice)
+    - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
+
+ - # Randomness Dimensionality: 
+    ```java
+    // 1) static randmoness per updateX / Statistically independent dimensions
+    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
+    
+    // 2) for each dimensions a different random Number is generated / Statistically dependent (coupled) dimensions:
+    float velocity = W_INERTIA * velocity[k] + C1 * r1[k] * (pbest[k] - x_i[k]) + C2 * r2[k] * (gbest[k] - x_i[k]);  // dimension randomness is the same
+    ```
+    - (1) larger search space / converges less easily / less direction / Each weight can “wiggle” independently
+        - May struggle comparatively ro rotated version of the problems. 
+        - A problem is rotated if:
+            1) the directions of improvement are not aligned with axes
+            2) progress requires coordinated changes across many variables
+            => Can you optimize by adjusting x or y (each dimension) independently ?
+    - (2) smaller search space / Particle moves along a fixed, but randomly scaled, ray toward pbest / gbest
+    - ## Rotation in NNs:
+        - NN Datasets arent explicitly rotated, but neural nets locally behave like rotated problems, which is why stabilization matters more than rotation-invariance tricks. 
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================
@@ -630,3 +654,12 @@ sudo pkill -2 java
 sudo pkill -9 -f java
 ```
 
+## =======================================================================================================================
+
+Καταχώριση πρακτικής άσκησης στο φοιτητολόγιο
+Είχα κάνει την πρακτική μου άσκηση κατά τους μήνες Ιούλιο–Αύγουστο και μέχρι στιγμής δεν εμφανίζεται στο φοιτητολόγιο.
+Επικοινώνησα με το Γραφείο Πρακτικής Άσκησης, το οποίο με ενημέρωσε ότι θα πρέπει να απευθυνθώ σε εσάς.
+Θα έπρεπε να έχει ανέβει η πρακτική άσκηση στο φοιτητολόγιο ή μήπως έχω καταλάβει κάτι λάθος;
+Αριθμός Μητρώου: 2022030077
+Με εκτίμηση,
+Αθανάσιος Χριστόπουλος

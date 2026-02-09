@@ -180,7 +180,7 @@ glxinfo -B | grep "renderer"	# glxinfo is a tool that reports information about 
 sudo prime-select intel			# Only 
 reboot
 
-sudo prime-select nvidia		# Reenable nvidia
+sudo prime-select nvidia	
 reboot
 
 sudo prime-select on-demand		# Intel display but CUDA works

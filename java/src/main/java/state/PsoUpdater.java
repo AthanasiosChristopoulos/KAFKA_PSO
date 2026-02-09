@@ -135,6 +135,7 @@ public class PsoUpdater {
     private float clamp(float v, float lo, float hi) {
         return Math.max(lo, Math.min(hi, v));
     }
+
     //================================================================================================
 
     private float clampVelocitySingle(float v) {      // this limits each coordinate Velocity independently
@@ -204,7 +205,7 @@ public class PsoUpdater {
 
         for (int k = 0; k < x_i.length; k++) {
 
-            float r1 = rnd.nextFloat();   // randomness
+            float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
 
             inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
