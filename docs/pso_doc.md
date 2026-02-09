@@ -212,3 +212,6 @@ dos2unix run_streams.sh
         - Topologically, every particle has its own neighborhood and neighborhoods overlap heavily
  - Number of Neighborhoods == 15% of the number of particles
     - 40 particles => 40 * 0.15 = 6 Neighborhood size + Number of neighborhoods = 40 (once per particle)
+
+ - PSO with a small neighborhood might perform better on complex problems, 
+ while PSO with a large neighborhood would perform better on simple problems
