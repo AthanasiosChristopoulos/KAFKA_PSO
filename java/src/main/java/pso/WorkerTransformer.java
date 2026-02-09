@@ -137,6 +137,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public void init(ProcessorContext context) {
         this.context = context;
         this.bestStore = (ReadOnlyKeyValueStore<String, ValueAndTimestamp<WeightsMessage>>) context.getStateStore(stateStoreName);
+            // bestStore is used for both FULLY_INFORMED and Neighborhood Best
 
         context.schedule(Duration.ofMillis(CHECK_EVERY_MS), PunctuationType.WALL_CLOCK_TIME, timestamp -> {
 
@@ -287,22 +288,23 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (FULLY_INFORMED == true) {
 
-            List<float[]> neighborPBestList = readNeighborPBestList();
+            List<float[]> pBestList = readPBestStore();
 
-            if (neighborPBestList == null || neighborPBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
+            if (pBestList == null || pBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
-                velocity = ws.psoUpdater.updateX(ws.model, null);
+                velocity = ws.psoUpdater.updateX(ws.model, null, accuracy);
 
             } else {
-                // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(neighborPBestList));
-                velocity = ws.psoUpdater.updateX(ws.model, neighborPBestList);
-                // velocity = ws.psoUpdater.updateXAdaptive(ws.model, neighborPBestList, accuracy);
+                // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(pBestList));
+                velocity = ws.psoUpdater.updateX(ws.model, pBestList, accuracy);
+                // velocity = ws.psoUpdater.updateXAdaptive(ws.model, pBestList, accuracy);
                 
             }
 
         } else {
 
-            float[] gBestWeights = readBestWeights();
+            float[] gBestWeights = readGBestStore();
+
             if (gBestWeights == null) {
                 gBestWeights = new float[this.pBestWeights.length];
             } else {
@@ -310,7 +312,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
             }
 
-            velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights);
+            velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights, accuracy);
         }
 
         updateTime();   // is updated  every time a new buffer has been processed
@@ -339,12 +341,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
-    private List<float[]> readNeighborPBestList() {
+    private List<float[]> readPBestStore() {     // for FULLY_INFORMED bestStore
 
         List<float[]> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
-            logger.log(taskInstance + ", readNeighborPBestList: bestStore is null");
+            logger.log(taskInstance + ", readPBestStore: bestStore is null");
             return neighbors;
         }
         
@@ -382,7 +384,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
-    private float[] readBestWeights() {
+    private float[] readGBestStore() {
 
         if (bestStore == null) {
             logger.log(taskInstance + ", bestStore is null");

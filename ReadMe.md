@@ -517,6 +517,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Most implementations (and all PSO_NN uses) use the same Vmax for all dimensions.
     - On NNs set xmin=-1, xmax=+1  NN weights do not have a fixed natural range. But [−1,1] is the assumed  an assumed scale, beucase in this amplitude they get initializied)
     - In reality, if you don’t enforce bounds on weights, then choosing xmin/xmax is arbitrary
+
  - ## C1, C2 Accelaration Constants:
 
     - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
@@ -525,6 +526,22 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
  - ## Invertia W:
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
+
+    - ## Inertia Adaptation during execution:
+        - Linear logic, from 0.9 to 0.4 across the run
+        - Fuzzy Logic / Controller considers:
+            - Current gBest fitness: “Are we, hollistically, doing well right now?”
+                - If yes, then decrease exploration
+            - Current inertia weight: “How exploratory are we currently?”
+                - If inertia too low increase exploration
+            - Output: Δw (change in inertia weight)
+            - Fuzzy: responds gradually to trends, does soft decisions (doesnt change inertia too much)
+        
+ - # Constriction factor:
+    - Problem: There is no mathematical guarantee that velocities would shrink. We need quaranteed convergence
+        - Convergence should happen naturally but there is no quarantee.
+    - Solution #1: Decrease inertia 
+
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================

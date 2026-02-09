@@ -15,7 +15,7 @@ public class PsoUpdater {
     private final float W_INERTIA = cfg.W_INERTIA;
     private final float W_INERTIA_START = cfg.W_INERTIA_START;
     private final float W_INERTIA_END = cfg.W_INERTIA_END;
-    private float W_INERTIA_CURRENT = cfg.W_INERTIA_START;
+    private float W_INERTIA_CURRENT = cfg.W_INERTIA;
 
     private final float C = cfg.C;
     private final float C1 = cfg.C1;
@@ -35,7 +35,7 @@ public class PsoUpdater {
     private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly C1 drops between 600±100” → around 500–700
 
     private final float VMAX;    
-    private final float VMAX_FACTOR = cfg.VMAX_FACTOR;;
+    private final float VMAX_FACTOR = cfg.VMAX_FACTOR;
     private final float VMAX_NORM;
     public final String VMAX_CLAMPING_TYPE = cfg.VMAX_CLAMPING_TYPE;
 
@@ -51,18 +51,30 @@ public class PsoUpdater {
 
     private int count_updates = 0;
 
-    // Extra clamp parameters:
-    private static final float W_MIN = 0.35f;     // exploitation
-    private static final float W_MAX = 0.95f;     // exploration
-    private static final float ACC_LOW  = 0.20f;  // below this: explore hard
-    private static final float ACC_HIGH = 0.80f;  // above this: exploit
-    private static final float EMA_ALPHA = 0.10f; // smoothing for noisy batch acc
+    // // Extra clamp parameters:
+    // private static final float W_MIN = 0.35f;     // exploitation
+    // private static final float W_MAX = 0.95f;     // exploration
+    // private static final float ACC_LOW  = 0.20f;  // below this: explore hard
+    // private static final float ACC_HIGH = 0.80f;  // above this: exploit
+    // private static final float EMA_ALPHA = 0.10f; // smoothing for noisy batch acc
 
-    private float accEma = -1f;
+    // private float accEma = -1f;
 
-    // Adaptive clamp
-    private static final float VMAX_MIN = 0.005f;
-    private static final float VMAX_MAX = 0.10f;
+    // // Adaptive clamp
+    // private static final float VMAX_MIN = 0.005f;
+    // private static final float VMAX_MAX = 0.10f;
+
+    // ---- Adaptive inertia (progress-based) ----
+    private float wCurrent = cfg.W_INERTIA_START;   // start high
+    private float bestAccEma = -1f;                 // best (so far) EMA of accuracy
+    private float accEma = -1f;                     // EMA of current batch accuracy
+
+    private final float W_MIN_ADAPT = cfg.W_INERTIA_END; // exploit
+    private final float W_MAX_ADAPT = cfg.W_INERTIA_START; // explore
+    private final float ACC_EMA_ALPHA = 0.10f;  // smoothing
+    private final float IMPROVE_EPS = 0.002f;    // “no progress” threshold (0.2% acc)
+    private final float W_STEP_UP = 0.02f;       // explore increase step
+    private final float W_STEP_DOWN = 0.01f;     // exploit decrease step
 
     //================================================================================================
 
@@ -119,6 +131,11 @@ public class PsoUpdater {
 
     //================================================================================================
 
+    private float clamp(float v, float lo, float hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+    //================================================================================================
+
     private float clampVelocitySingle(float v) {      // this limits each coordinate Velocity independently
 
         if (v > VMAX) {
@@ -168,14 +185,15 @@ public class PsoUpdater {
     //================================================================================================
     // update for Neighborhood Best: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest) {     // FOR GBEST, not fully informed
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy) {     // FOR GBEST, not fully informed
 
         count_updates++;
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
 
-        updateParametersSchedule();    
+        updateParametersSchedule(); 
+        // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         Random rnd = new Random();
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
@@ -237,14 +255,16 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList) {      // for FULLY INFORMED
+    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy) {      // for FULLY INFORMED
 
         count_updates++;
 
         Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
-        updateParametersSchedule(); 
+        updateParametersSchedule();
+        // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
+ 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
 
@@ -322,115 +342,7 @@ public class PsoUpdater {
     }
 
     // ===============================================================================================================
-    // ===============================================================================================================
-
-    private float lerp(float a, float b, float t) {
-        return a + (b - a) * t;
-    }
-
-    private float clamp01(float x) {    // be between 0 and 1
-        return Math.max(0f, Math.min(1f, x));
-    }
-
-    /**
-     * Maps accuracy -> inertia:
-     *   acc <= ACC_LOW  => W_MAX
-     *   acc >= ACC_HIGH => W_MIN
-     * linear in between
-     */
-    private float adaptiveInertia(float acc) {
-        // normalize acc into [0..1] within [ACC_LOW..ACC_HIGH]
-        float t = (acc - ACC_LOW) / (ACC_HIGH - ACC_LOW);
-        t = clamp01(t);
-
-        // t=0 => low acc => W_MAX
-        // t=1 => high acc => W_MIN
-        return lerp(W_MAX, W_MIN, t);
-    }
-
-    // public float[] updateXAdaptive(
-    //         MultiLayerNetwork model,
-    //         List<float[]> neighborPBestList,
-    //         float batchAccuracy
-    // ) {
-    //     count_updates++;
-
-    //     Arrays.fill(socialVec, 0f);
-    //     clamp_count = 0;
-
-    //     float[] x_i = Dl4jParamUtils.modelToFlatList(model);
-
-    //     // Smooth accuracy (important because batch accuracy is noisy)
-    //     if (accEma < 0f) accEma = batchAccuracy;
-    //     accEma = (1f - EMA_ALPHA) * accEma + EMA_ALPHA * batchAccuracy;
-
-    //     // Compute adaptive parameters
-    //     float w = adaptiveInertia(accEma);
-
-    //     Random rnd = new Random();
-
-    //     logger.log("Count_updates=" + count_updates
-    //             + " acc=" + batchAccuracy
-    //             + " accEma=" + accEma
-    //             + " w=" + w
-    //             + " dim=" + x_i.length);
-
-    //     // Initialization case (no neighbors yet)
-    //     if (neighborPBestList == null || neighborPBestList.isEmpty()) {
-    //         for (int k = 0; k < x_i.length; k++) {
-    //             x_i_new[k] = x_i[k] + w * velocity[k];
-    //         }
-    //         Dl4jParamUtils.updateModel(model, x_i_new);
-    //         return this.velocity;
-    //     }
-
-    //     // Social term
-    //     for (float[] pBest_j : neighborPBestList) {
-    //         if (pBest_j.length != x_i.length) {
-    //             throw new IllegalArgumentException("pBest size mismatch");
-    //         }
-    //         for (int k = 0; k < x_i.length; k++) {
-    //             float r = rnd.nextFloat();
-    //             socialVec[k] += r * (pBest_j[k] - x_i[k]);
-    //         }
-    //     }
-
-    //     float scale = C / (float) neighborPBestList.size();
-
-    //     for (int k = 0; k < x_i.length; k++) {
-    //         socialVec[k] *= scale;
-    //         inertiaVec[k] = w * velocity[k];
-
-    //         velocity[k] = inertiaVec[k] + socialVec[k];
-    //         x_i_new[k] = x_i[k] + velocity[k];
-    //     }
-
-    //     logger.log("magnitudes: inertia=" + Dl4jParamUtils.averageMagnitude(inertiaVec)
-    //             + " social=" + Dl4jParamUtils.averageMagnitude(socialVec)
-    //             + " clamps=" + clamp_count);
-
-    //     Dl4jParamUtils.updateModel(model, x_i_new);
-    //     return this.velocity;
-    // }
-
-
-    //================================================================================================
-
-    // private void updateParametersSchedule() {
-        
-    //     float t = Math.min(iter, MAX_ITERS);
-    //     float alpha = t / (float) MAX_ITERS;          // 0 -> 1
-    //     c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
-    // }
-
-    // private void updateParametersSchedule() {
-
-    //     float t = Math.min(iter, MAX_ITERS) / (float) MAX_ITERS;  // [0,1]
-    //     float k = 9.0f;   
-    //     float sigmoid = (float)(1.0 / (1.0 + Math.exp(k * (t - 0.5))));
-
-    //     c1 = C1_END + (C1_START - C1_END) * sigmoid;
-    // }
+    // updateParameters during the run:
 
     private void updateParametersSchedule() {
 
@@ -444,6 +356,31 @@ public class PsoUpdater {
         float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;   
         W_INERTIA_CURRENT = W_INERTIA_START + progressFactor * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
             // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall of INERTIA
+    }
+
+    //================================================================================================
+
+    private void updateInertiaFromProgress(float batchAccuracy) {
+
+        if (accEma < 0f) accEma = batchAccuracy;  // Initialization
+    
+        accEma = (1f - ACC_EMA_ALPHA) * accEma + ACC_EMA_ALPHA * batchAccuracy; // EMA = Exponential Moving Average
+            // EMA == What is the recent trend of accuracy, not just this one batch ?
+
+        if (bestAccEma < 0f) bestAccEma = accEma;   // init best
+
+        boolean improved = accEma > bestAccEma + IMPROVE_EPS;
+
+        if (improved) {
+            bestAccEma = accEma;
+            wCurrent -= W_STEP_DOWN;   // exploit more
+        } else {
+            wCurrent += W_STEP_UP;     // explore more
+        }
+
+        wCurrent = clamp(wCurrent, W_MIN_ADAPT, W_MAX_ADAPT);
+
+        W_INERTIA_CURRENT = wCurrent;  // keep your existing variable as the "source of truth"
     }
 
     //================================================================================================

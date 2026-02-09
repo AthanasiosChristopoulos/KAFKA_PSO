@@ -54,6 +54,13 @@
 		
 		- Is testStore ok ? only 500 samples, and cycle this every time ... before it was a Kafka Consumer ...
 
+		- Θελω convergence (inertia → 0, velocities → 0)=> κανω reduce inertia. This leads to a natural end of training. 
+			=> Ομως αμα θελουμε streaming enviroment / constant training ?
+				=> Βασικα γενικα eventually θα κανουμε converge ουτος ή αλλως αρα streaming env δεν παιζει
+			=> Streaming / federated systems want continuous operation (federated inherently streaming ?)
+			=> Maybe reset (gBest, pBest, W_INERTIA) pso after a time window or after Coordinator detects significant accuracy drop ?
+			
+
 	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
