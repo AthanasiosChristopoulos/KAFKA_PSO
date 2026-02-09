@@ -110,10 +110,17 @@ public class PsoUpdater {
     //================================================================================================
 
     private void clampVelocityByDim() {
+
         for (int i = 0; i < velocity.length; i++) {
+            
             float v = velocity[i];
-            if (v > VMAX) { velocity[i] = VMAX; clamp_count++; }
-            else if (v < -VMAX) { velocity[i] = -VMAX; clamp_count++; }
+            if (v > VMAX) { 
+                velocity[i] = VMAX; 
+                clamp_count++; 
+            } else if (v < -VMAX) { 
+                velocity[i] = -VMAX; 
+                clamp_count++; 
+            }
         }
     }
 
@@ -240,11 +247,27 @@ public class PsoUpdater {
 
         float scale = C / (float) neighborPBestList.size();
 
+        // for (int k = 0; k < socialVec.length; k++) {
+        //     socialVec[k] *= scale;
+        //     inertiaVec[k] = W_INERTIA * velocity[k];
+
+        //     velocity[k] = inertiaVec[k] + socialVec[k];
+        //     x_i_new[k] = x_i[k] + velocity[k];
+        // }
+
         for (int k = 0; k < socialVec.length; k++) {
             socialVec[k] *= scale;
             inertiaVec[k] = W_INERTIA * velocity[k];
-
             velocity[k] = inertiaVec[k] + socialVec[k];
+        }
+
+        if (VMAX_CLAMPING_TYPE.equals("DIM")) {
+            clampVelocityByDim();     
+        } else {
+            clipVelocityByNorm(VMAX_NORM);
+        }
+
+        for (int k = 0; k < x_i.length; k++) {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 

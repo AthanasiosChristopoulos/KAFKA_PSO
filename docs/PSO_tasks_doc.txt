@@ -61,8 +61,7 @@
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
-			
-
+		
 	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
 		- Improve code on Apache Kafka + Tensorflow:
 			- Parallelization (Threading / Instances):
@@ -124,6 +123,8 @@
 	21) Use Vector class not float[] => important for calculations
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
+	
+	30) Multiple particles in a worker => more communication efficient
 	
 ========================================================================================================================
 

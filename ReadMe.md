@@ -488,30 +488,24 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
 ## Velocity:  =========================================================
 
+ - “Acceleration Terms” = velocity change terms by addition 
  - Is initialized to have a significant amplitude at the start
  - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
  		- velocity like simulated annealing ? Make it reduce over time
+
  - **W_INERTIA_FULLY > W_INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
     ```java
-    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
-    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]
+    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
+    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]       // 2 accelarations
     ```
- - ## Clamping Velocity:
-        - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. 
-        If the sum of accelerations would
-cause the velocity on that dimension to exceed Vmax, which
-is a parameter specified by the user, then the velocity on that
-dimension is limited to Vmax.
-Vmax is therefore an important parameter. It determines
-the resolution, or fineness, with which regions between the
-present position and the target (best so far) position are
-searched. If Vmax is too high, particles might fly past good
-solutions. If Vmax is too small, on the other hand, particles
-may not explore sufficiently beyond locally good regions.
-In fact, they could become trapped in local optima, unable to
-move far enough to reach a better position in the problem
-space.
 
+ - ## Clamping Velocity:
+    - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. The velocity on a single dimension is limited to Vmax.
+    - Vmax parameter (trade-off):
+        - Influences how small or large the steps are when moving through the search space (aka search resolution, fineness)
+        - Vmax too high: particles might fly past good solutions
+        - Vmax too small: Particles will not explore sufficiently beyond locally good regions (trapped in local optima, not enough velocity)
+       
 ## =================================================================================================================================
 ## Functional Requirements: =========================================================
 
