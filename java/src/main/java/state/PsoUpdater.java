@@ -16,6 +16,7 @@ public class PsoUpdater {
     private final float W_INERTIA_START = cfg.W_INERTIA_START;
     private final float W_INERTIA_END = cfg.W_INERTIA_END;
     private float W_INERTIA_CURRENT = cfg.W_INERTIA;
+    public final boolean ADAPTIVE_INERTIA = cfg.ADAPTIVE_INERTIA;
 
     private final float C = cfg.C;
     private final float C1 = cfg.C1;
@@ -192,8 +193,11 @@ public class PsoUpdater {
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
 
-        updateParametersSchedule(); 
-        // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
+        if(ADAPTIVE_INERTIA) {
+            updateParametersSchedule(); 
+            // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
+        }
+
         Random rnd = new Random();
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
@@ -203,7 +207,6 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness
             float r2 = rnd.nextFloat();  
 
-            // inertiaVec[k] = W_INERTIA * velocity[k];
             inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
@@ -262,9 +265,11 @@ public class PsoUpdater {
         Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
-        updateParametersSchedule();
-        // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
- 
+        if(ADAPTIVE_INERTIA) {
+            updateParametersSchedule();
+            // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
+        }
+
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
 
@@ -300,17 +305,8 @@ public class PsoUpdater {
 
         float scale = C / (float) neighborPBestList.size();
 
-        // for (int k = 0; k < socialVec.length; k++) {
-        //     socialVec[k] *= scale;
-        //     inertiaVec[k] = W_INERTIA * velocity[k];
-
-        //     velocity[k] = inertiaVec[k] + socialVec[k];
-        //     x_i_new[k] = x_i[k] + velocity[k];
-        // }
-
         for (int k = 0; k < socialVec.length; k++) {
             socialVec[k] *= scale;
-            // inertiaVec[k] = W_INERTIA * velocity[k];
             inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
             velocity[k] = inertiaVec[k] + socialVec[k];
         }

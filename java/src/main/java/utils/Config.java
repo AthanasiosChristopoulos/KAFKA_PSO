@@ -34,6 +34,7 @@ public class Config {
     public final float W_INERTIA;
     public final float W_INERTIA_START;
     public final float W_INERTIA_END;
+    public final boolean ADAPTIVE_INERTIA;
     public final float C;
     public final float C1;
     public final float C2;
@@ -161,7 +162,8 @@ public class Config {
         }
         this.W_INERTIA_START = Float.parseFloat(getenv(dotenv, "W_INERTIA_START", "0.9"));
         this.W_INERTIA_END = Float.parseFloat(getenv(dotenv, "W_INERTIA_END", "0.4"));
-
+        this.ADAPTIVE_INERTIA = Boolean.parseBoolean(getenv(dotenv, "ADAPTIVE_INERTIA", "false"));
+        
         this.C = Float.parseFloat(getenv(dotenv, "C", "1.7"));
         this.C1 = Float.parseFloat(getenv(dotenv, "C1", "1.0"));
         this.C2 = Float.parseFloat(getenv(dotenv, "C2", "2.0"));

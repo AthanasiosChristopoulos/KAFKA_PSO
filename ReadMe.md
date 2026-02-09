@@ -538,10 +538,17 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
             - Fuzzy: responds gradually to trends, does soft decisions (doesnt change inertia too much)
         
  - # Constriction factor:
-    - Problem: There is no mathematical guarantee that velocities would shrink. We need quaranteed convergence
+    - Problem: There is no mathematical **guarantee convergence**. We need quaranteed convergence
         - Convergence should happen naturally but there is no quarantee.
     - Solution #1: Decrease inertia 
-
+    - Solution #2: Constriction Factor:
+        => scale the entire velocity update by a single factor K ? Damps all velocity, insuring convergence.
+            => vi​(t+1) = K * (vi​(t) + c1​r1​(pbest−xi​) + c2​r2​(gbest−xi​))
+        => ϕ = c1 ​+ c2 (total attraction strength), K is dependent on φ via formula only when φ > 4,
+            => large φ → strong pull → oscillation / explosion
+            => Stable at: c1 = c2 = 2.05, φ = 4.1   => K ≈ 0.729
+            =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
+    - If this is quaranteed then technically no need for Vmax (but Vmax is still helpfull in practice)
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================
