@@ -506,7 +506,9 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
     float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
     float velocity = W_INERTIA * velocity[k] + socialAggregate[k]       // 2 accelarations
 
-    // some original versions dont have the Inertia term alltogether
+    // some original versions dont have the Inertia term all together. Observed a significant performance decrease when doing so. 
+    // FI-PSO is not meant to drop inertia entirely, by itself, FI’s social term is either:
+        // too small (means it has prematurely convergenced) or too noisy
     float velocity = C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
 
     ```

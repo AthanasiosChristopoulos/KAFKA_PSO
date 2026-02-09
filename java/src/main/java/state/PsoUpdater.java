@@ -43,9 +43,9 @@ public class PsoUpdater {
     private CustomLogger logger;
     private float[] velocity; 
     private float[] x_i_new;
-    private float[] inertiaVector;
-    private float[] cognitiveVector;
-    private float[] socialVector;
+    private float[] inertiaVec;
+    private float[] cognitiveVec;
+    private float[] socialVec;
     private float[] diffPBestGBest;
 
     private int clamp_count = 0;
@@ -73,9 +73,9 @@ public class PsoUpdater {
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         x_i_new = new float[x.length];
         velocity = new float[x.length];
-        inertiaVector = new float[x.length];
-        cognitiveVector = new float[x.length];
-        socialVector = new float[x.length];
+        inertiaVec = new float[x.length];
+        cognitiveVec = new float[x.length];
+        socialVec = new float[x.length];
         diffPBestGBest = new float[x.length];
 
         // float xmin = -1.0f; // Each individual weight is allowed to change at this rate
@@ -196,24 +196,24 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
 
-            inertiaVector[k] = W_INERTIA_CURRENT * velocity[k];
+            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
-                cognitiveVector[k] = C1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
             } else {
-                cognitiveVector[k] = c1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
             }
             
-            socialVector[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
-            // float velocity_value = inertiaVector[k] + cognitiveVector[k] + socialVector[k];
+            // float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
             // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
 
-            // velocity[k] = inertiaVector[k] + cognitiveVector[k] + socialVector[k];
-            velocity[k] = cognitiveVector[k] + socialVector[k];
+            velocity[k] = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
+
             // x_i_new[k] = x_i[k] + velocity[k];
         }
 
@@ -230,11 +230,11 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: " + 
-                "inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVector) + 
+                "inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVector) + 
+                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + 
                 ", with C1: " + c1 +
-                ", social = " + Dl4jParamUtils.averageMagnitude(socialVector) +
+                ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
                 ", diff = " + Dl4jParamUtils.averageMagnitude(diffPBestGBest) + 
                 ", number of Clamps: " + clamp_count
         );
@@ -251,7 +251,7 @@ public class PsoUpdater {
 
         count_updates++;
 
-        Arrays.fill(socialVector, 0f);
+        Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
         if(ADAPTIVE_INERTIA) {
@@ -287,18 +287,16 @@ public class PsoUpdater {
 
             for (int k = 0; k < x_i.length; k++) {
                 float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
-                socialVector[k] += p_i_j * (pBest_j[k] - x_i[k]);
+                socialVec[k] += p_i_j * (pBest_j[k] - x_i[k]);
             }
         }
 
         float scale = C / (float) neighborPBestList.size();
 
-        for (int k = 0; k < socialVector.length; k++) {
-            socialVector[k] *= scale;
-            inertiaVector[k] = W_INERTIA_CURRENT * velocity[k];
-            // velocity[k] = inertiaVector[k] + socialVector[k];
-            velocity[k] = socialVector[k];
-
+        for (int k = 0; k < socialVec.length; k++) {
+            socialVec[k] *= scale;
+            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+            velocity[k] = inertiaVec[k] + socialVec[k];
         }
 
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
@@ -312,13 +310,13 @@ public class PsoUpdater {
         }
 
         logger.log("PSO magnitudes: " +
-                    "inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVector) + 
+                    "inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                    ", social = " + Dl4jParamUtils.averageMagnitude(socialVector) +
+                    ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {
-        //     velocity[k] = clampVelocity(inertiaVector[k] + socialVector[k]);
+        //     velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
         //     x_i_new[k] = x_i[k] + velocity[k];
         // }
 
