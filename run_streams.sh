@@ -45,7 +45,7 @@ if [[ "$1" != "--debug" ]]; then
     BOOTSTRAP="localhost:9092"
 
     if [[ "$FULLY_INFORMED" == "true" ]]; then
-        echo "Fully Informed run"
+        echo "Fully Informed Run"
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )

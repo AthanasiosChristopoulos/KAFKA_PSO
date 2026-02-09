@@ -13,9 +13,9 @@ public class PsoUpdater {
     private Config cfg = Config.getInstance();
 
     private final float W_INERTIA = cfg.W_INERTIA;
-    private final float W_INERTIA_START = cfg.W_INERTIA;
-    private final float W_INERTIA_END = 0.40f;
-    private float W_INERTIA_CURRENT = cfg.W_INERTIA;
+    private final float W_INERTIA_START = cfg.W_INERTIA_START;
+    private final float W_INERTIA_END = cfg.W_INERTIA_END;
+    private float W_INERTIA_CURRENT = cfg.W_INERTIA_START;
 
     private final float C = cfg.C;
     private final float C1 = cfg.C1;
@@ -175,7 +175,7 @@ public class PsoUpdater {
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
 
-        updateParametersSchedule();         // we are updating c1 only for the neighborhood case
+        updateParametersSchedule();    
         Random rnd = new Random();
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
@@ -219,7 +219,8 @@ public class PsoUpdater {
 
         Dl4jParamUtils.updateModel(model, x_i_new);
 
-        logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
+        logger.log("PSO magnitudes: " + 
+                "inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
                 ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + 
                 ", with C1: " + c1 +
@@ -243,6 +244,7 @@ public class PsoUpdater {
         Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
+        updateParametersSchedule(); 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         Random rnd = new Random();
 
@@ -288,7 +290,8 @@ public class PsoUpdater {
 
         for (int k = 0; k < socialVec.length; k++) {
             socialVec[k] *= scale;
-            inertiaVec[k] = W_INERTIA * velocity[k];
+            // inertiaVec[k] = W_INERTIA * velocity[k];
+            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
             velocity[k] = inertiaVec[k] + socialVec[k];
         }
 
@@ -302,7 +305,10 @@ public class PsoUpdater {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        logger.log("PSO magnitudes: inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
+        logger.log("PSO magnitudes: " +
+                    "inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
+                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                    ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {
@@ -428,16 +434,16 @@ public class PsoUpdater {
 
     private void updateParametersSchedule() {
 
-        float u = Math.min(count_updates, MAX_PSO_UPDATES); // makes u not surpass MAX_PSO_UPDATES
-        float k = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
-        float s = (float)(1.0 / (1.0 + Math.exp(k * (u - C1_MID_UPDATE))));
+        float updateIndex = Math.min(count_updates, MAX_PSO_UPDATES); // makes updateIndex not surpass MAX_PSO_UPDATES
 
-        c1 = C1_END + (C1_START - C1_END) * s;
+        float sigmoidSteepness = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
+        float retentionFactor = (float)(1.0 / (1.0 + Math.exp(sigmoidSteepness * (updateIndex - C1_MID_UPDATE))));
+        c1 = C1_END + (C1_START - C1_END) * retentionFactor;
+            // this is exponential fall, right around the middle
 
-        float t = u / (float) MAX_PSO_UPDATES;   
-        W_INERTIA_CURRENT = W_INERTIA_START + t * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
-            // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall
-
+        float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;   
+        W_INERTIA_CURRENT = W_INERTIA_START + progressFactor * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
+            // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall of INERTIA
     }
 
     //================================================================================================

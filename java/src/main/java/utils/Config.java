@@ -32,7 +32,8 @@ public class Config {
     public final String SAVE_MODEL_NAME;
 
     public final float W_INERTIA;
-    // public final float W_INERTIA_G_BEST;
+    public final float W_INERTIA_START;
+    public final float W_INERTIA_END;
     public final float C;
     public final float C1;
     public final float C2;
@@ -68,6 +69,7 @@ public class Config {
         System.out.println("DATASET: " + DATASET + ", DATA_TOPIC: " + DATA_TOPIC + ", TEST_TOPIC: " + TEST_TOPIC);        
         
         this.NUM_SAMPLES = 400000;
+        
         if("iris".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
@@ -156,8 +158,9 @@ public class Config {
 
         } else {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
-
         }
+        this.W_INERTIA_START = Float.parseFloat(getenv(dotenv, "W_INERTIA_START", "0.9"));
+        this.W_INERTIA_END = Float.parseFloat(getenv(dotenv, "W_INERTIA_END", "0.4"));
 
         this.C = Float.parseFloat(getenv(dotenv, "C", "1.7"));
         this.C1 = Float.parseFloat(getenv(dotenv, "C1", "1.0"));
