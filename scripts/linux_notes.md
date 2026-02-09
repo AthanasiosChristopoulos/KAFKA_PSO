@@ -9,7 +9,7 @@
  - sudo dpkg -i <file_name>.deb
  - Chrome
  
-# Apps using commands: =====================================================================
+# Tools / Apps using commands: =====================================================================
 
  - sudo apt install terminator
  - sudo update-alternatives --config x-terminal-emulator
@@ -23,6 +23,7 @@
 	- osd-bar=no
 
  - sudo apt install mesa-utils
+ - sudo apt install brightnessctl (brightnessctl info / brightnessctl set 100%)
 
 # Misc Commands: ======================================================================================
 
@@ -54,8 +55,9 @@ sudo update-grub
 
  - https://www.youtube.com/watch?v=NEpoh89MYnc
  - sudo nano /etc/systemd/logind.conf
- - HandleLidSwitch=ignore
- 
+	- HandleLidSwitch=ignore
+	- HandleLidSwitchExternalPower=ignore
+	
 sudo apt install terminator
 sudo update-alternatives --config x-terminal-emulator
 
@@ -104,6 +106,7 @@ python3 -c "import pyswarms, inspect, os; print('pyswarms:', os.path.dirname(pys
 ```
 
 or 
+
 Ubuntu uses python as system package. You dont want to break them "break-system-packages" with your own stuff.
 ```bash
 python3 -m venv ~/.venvs/dev
@@ -172,22 +175,29 @@ lsmod | grep nouveau	# should return nothing after blacklisting
 glxinfo -B | grep "renderer"	# glxinfo is a tool that reports information about OpenGL, your graphics driver, and GPU setup.
 								# This tells you which GPU is actually being used for rendering (the CPU or the GPU).
 
-sudo prime-select intel
+# ====================================================================
+# prime => Linux graphics switching framework. sets which GPU is responsible for rendering and display (gpu or cpu)
+sudo prime-select intel			# Only 
 reboot
 
-sudo prime-select nvidia
+sudo prime-select nvidia		# Reenable nvidia
 reboot
 
+sudo prime-select on-demand		# Intel display but CUDA works
+sudo reboot
+
+# Check which GPU is rendering: ======================================
 prime-select query
+# htop Alternatives for GPU:
+nvidia-smi	# Confirm if it was successfully installed
+glxinfo | grep "OpenGL renderer"
+
 
 ## Reinstall Driver: ===============================================
 
 sudo apt update
 sudo apt install nvidia-driver-535 nvidia-utils-535
 sudo reboot
-
-# htop Alternatives for GPU:
-nvidia-smi	# Confirm if it was successfully installed
 
 ```
 

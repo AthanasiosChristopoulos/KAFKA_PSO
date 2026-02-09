@@ -12,6 +12,7 @@ public class Config {
     public final int NUM_FEATURES;      // Number of Features of Dataset
     public final int NUM_CLASSES;     // Number of Classes of Dataset
     public final int NEURAL_OUTPUT;     // Number of Classes of Dataset
+    public int NUM_SAMPLES;
 
     public final String DATASET;
     public final String DATA_TOPIC;
@@ -66,6 +67,7 @@ public class Config {
         this.TEST_TOPIC = this.DATASET + "-test";
         System.out.println("DATASET: " + DATASET + ", DATA_TOPIC: " + DATA_TOPIC + ", TEST_TOPIC: " + TEST_TOPIC);        
         
+        this.NUM_SAMPLES = 400000;
         if("iris".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
@@ -105,6 +107,7 @@ public class Config {
         } else if("pendigits".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "16"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "10"));
+            this.NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_PENDIGITS", "400000"));
 
         } else if("pendigits-half".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS_HALF", "16"));
@@ -147,9 +150,6 @@ public class Config {
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
 
         this.FULLY_INFORMED = Boolean.parseBoolean(getenv(dotenv, "FULLY_INFORMED", "false"));
-
-        // this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA", "0.95"));
-        // this.W_INERTIA_G_BEST = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
 
         if(this.FULLY_INFORMED == true) {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_FULLY", "0.9"));

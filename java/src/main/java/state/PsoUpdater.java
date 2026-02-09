@@ -12,7 +12,11 @@ public class PsoUpdater {
 
     private Config cfg = Config.getInstance();
 
-    private final float W_INERTIA = cfg.W_INERTIA;;
+    private final float W_INERTIA = cfg.W_INERTIA;
+    private final float W_INERTIA_START = cfg.W_INERTIA;
+    private final float W_INERTIA_END = 0.40f;
+    private float W_INERTIA_CURRENT = cfg.W_INERTIA;
+
     private final float C = cfg.C;
     private final float C1 = cfg.C1;
     private final float C2 = cfg.C2;
@@ -25,12 +29,13 @@ public class PsoUpdater {
     private float c1 = C1_START;  
     private int iter = 0;
     private final int MAX_ITERS = 500;
-    private final int C1_MAX_UPDATES = (40 * 10000) / (N_WORKERS * TRAIN_SIZE); // expected max updates (for clamping)
-    private final int C1_MID_UPDATE = (int) Math.round(C1_MAX_UPDATES / 1.6);
-    private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly drops between 600±100” → around 500–700
+    private final int NUM_SAMPLES = cfg.NUM_SAMPLES;
+    private final int MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * TRAIN_SIZE); // expected max updates (for clamping)
+    private final int C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
+    private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly C1 drops between 600±100” → around 500–700
 
     private final float VMAX;    
-    private final float VMAX_FACTOR;
+    private final float VMAX_FACTOR = cfg.VMAX_FACTOR;;
     private final float VMAX_NORM;
     public final String VMAX_CLAMPING_TYPE = cfg.VMAX_CLAMPING_TYPE;
 
@@ -45,7 +50,6 @@ public class PsoUpdater {
     private int clamp_count = 0;
 
     private int count_updates = 0;
-
 
     // Extra clamp parameters:
     private static final float W_MIN = 0.35f;     // exploitation
@@ -72,22 +76,45 @@ public class PsoUpdater {
         socialVec = new float[x.length];
         diffPBestGBest = new float[x.length];
 
-        this.VMAX_FACTOR = cfg.VMAX_FACTOR;
+        // float xmin = -1.0f; // Each individual weight is allowed to change at this rate
+        // float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
+        // float range = xmax - xmin;  // the xmax - xmin, define the dynamic range. Dont enfoce xmax and xmin just use it to calculate dynamic range
 
-        float xmin = -1.0f; // Each individual weight is allowed to change at this rate
-        float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
+        float range = computeDynamicRangeFromWeights(x);
 
-        float range = xmax - xmin;  // the xmax - xmin, define the dynamic range. Dont enfoce xmax and xmin just use it to calculate dynamic range
-
-        this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
+        this.VMAX = this.VMAX_FACTOR * range;  // VMAX_FACTOR == the δ parameter (δ = VMAX_FACTOR)
         this.VMAX_NORM = (float)(Math.sqrt(x.length) * VMAX);
 
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", C1_MAX_UPDATES: " + C1_MAX_UPDATES + 
-                ", C1_MID_UPDATE: " + C1_MID_UPDATE);
+        logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+                ", C1_MID_UPDATE: " + C1_MID_UPDATE + "NUM_SAMPLES = " + NUM_SAMPLES);
+
+    }
+
+    //================================================================================================
+    
+    private float computeDynamicRangeFromWeights(float[] w) {
+        // Percentile-like cheap approximation: use mean±3*std as "range"
+        // (fast and no sorting)
+        double mean = 0.0;
+        for (float v : w) mean += v;
+        mean /= w.length;
+
+        double var = 0.0;
+        for (float v : w) {
+            double d = v - mean;
+            var += d * d;
+        }
+        var /= w.length;
+        double std = Math.sqrt(var);
+
+        float k = 3.0f;
+        float lo = (float)(mean - k * std);
+        float hi = (float)(mean + k * std);
+        return Math.max(1e-6f, hi - lo);
     }
 
     //================================================================================================
@@ -148,7 +175,7 @@ public class PsoUpdater {
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
 
-        updateC1Schedule();         // we are updating c1 only for the neighborhood case
+        updateParametersSchedule();         // we are updating c1 only for the neighborhood case
         Random rnd = new Random();
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
@@ -158,7 +185,8 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness
             float r2 = rnd.nextFloat();  
 
-            inertiaVec[k] = W_INERTIA * velocity[k];
+            // inertiaVec[k] = W_INERTIA * velocity[k];
+            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
                 cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
@@ -192,9 +220,12 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
-                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + ", with C1: " + c1 +
+                ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + 
+                ", with C1: " + c1 +
                 ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
-                ", diff = " + Dl4jParamUtils.averageMagnitude(diffPBestGBest) + ", number of Clamps: " + clamp_count
+                ", diff = " + Dl4jParamUtils.averageMagnitude(diffPBestGBest) + 
+                ", number of Clamps: " + clamp_count
         );
 
         iter++;
@@ -379,14 +410,14 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    // private void updateC1Schedule() {
+    // private void updateParametersSchedule() {
         
     //     float t = Math.min(iter, MAX_ITERS);
     //     float alpha = t / (float) MAX_ITERS;          // 0 -> 1
     //     c1 = C1_START + alpha * (C1_END - C1_START);  // linearly moves start -> end
     // }
 
-    // private void updateC1Schedule() {
+    // private void updateParametersSchedule() {
 
     //     float t = Math.min(iter, MAX_ITERS) / (float) MAX_ITERS;  // [0,1]
     //     float k = 9.0f;   
@@ -395,15 +426,19 @@ public class PsoUpdater {
     //     c1 = C1_END + (C1_START - C1_END) * sigmoid;
     // }
 
-    private void updateC1Schedule() {
+    private void updateParametersSchedule() {
 
-        float u = Math.min(count_updates, C1_MAX_UPDATES);
+        float u = Math.min(count_updates, MAX_PSO_UPDATES); // makes u not surpass MAX_PSO_UPDATES
         float k = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
         float s = (float)(1.0 / (1.0 + Math.exp(k * (u - C1_MID_UPDATE))));
 
         c1 = C1_END + (C1_START - C1_END) * s;
-    }
 
+        float t = u / (float) MAX_PSO_UPDATES;   
+        W_INERTIA_CURRENT = W_INERTIA_START + t * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
+            // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall
+
+    }
 
     //================================================================================================
 

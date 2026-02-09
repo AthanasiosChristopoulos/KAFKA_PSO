@@ -486,6 +486,9 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best)
 
+## Population size / Number of particles: =============================
+ - 20 - 50 number of particles
+
 ## Velocity:  =========================================================
 
  - “Acceleration Terms” = velocity change terms by addition 
@@ -500,22 +503,30 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     ```
 
  - ## Clamping Velocity:
+
     - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. The velocity on a single dimension is limited to Vmax.
-    - Vmax parameter (trade-off):
+    - Vmax parameter (trade-off: local exploitation vs global exploration):
         - Influences how small or large the steps are when moving through the search space (aka search resolution, fineness)
-        - Vmax too high: particles might fly past good solutions
+        - Vmax too high: particles might fly past good solutions 
+            - global exploration (maybe too much)
         - Vmax too small: Particles will not explore sufficiently beyond locally good regions (trapped in local optima, not enough velocity)
+            - local exploitation
     - Set it at about 10-20% of the dynamic range of the variable for every dimensions (each dimension => different dynamic range):
         - dynamic range: xmin - xmax => bounds for variable in a dimension
         - On each dimension => in the original PSO formulation, each dimension can have its own Vmax.
         - Most implementations (and all PSO_NN uses) use the same Vmax for all dimensions.
-
+    - On NNs set xmin=-1, xmax=+1  NN weights do not have a fixed natural range. But [−1,1] is the assumed  an assumed scale, beucase in this amplitude they get initializied)
+    - In reality, if you don’t enforce bounds on weights, then choosing xmin/xmax is arbitrary
  - ## C1, C2 Accelaration Constants:
+
     - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
     - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
     - Set both to 2.0
 
-## =================================================================================================================================
+ - ## Invertia W:
+    - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
+
+## ==================================================================================
 ## Functional Requirements: =========================================================
 
 ### Filtering / Communication prevention:
@@ -534,7 +545,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
 
-## =================================================================================================================================
+## ==========================================================================
 ## Experimentation: =========================================================
 
  - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)

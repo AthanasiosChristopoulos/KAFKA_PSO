@@ -96,7 +96,7 @@ PySwarms (Python Library) gives you a way to train models without gradients, usi
             => Averages x_i of all particles into x_g and sends the x_g to each particle
 
 
-====================================================================================================================================
+==============================================================================================
 
 ## Alternative 3: Distributed, data parallel PSO Protocol:
 
@@ -126,7 +126,7 @@ PySwarms (Python Library) gives you a way to train models without gradients, usi
                 => only if this x_g has a high enough accuracy (higher than desired accuracy) do we conclude training
 
 
-====================================================================================================================================
+==============================================================================================
 
 ## Alternative 3: Distributed, data parallel PSO Protocol:
 
@@ -162,7 +162,7 @@ Coordinator updates velocities/positions (or broadcasts needed information and l
         - Coordinator receives pBest scores, compares them with each other and sets the gBest 
         - Sends that gBest to all the workers / particles (to update their local copies), to update their equation parameters
 
-====================================================================================================================================
+==============================================================================================
 
 ## Alternative 4: Adapted for Geometric Monitoring FIPSO (Fully Informed)
 
@@ -178,12 +178,11 @@ Coordinator updates velocities/positions (or broadcasts needed information and l
 	
 public class PredictionBatchProcessor implements Processor<String, String, String, String> {
 
-====================================================================================================================================
-
+==============================================================================================
 ## Formulas for PSO / velocity update:
 
  - Neighbor best (classical PSO):
-    - v_i(t + 1) = c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X) + w * v_i(t)
+    - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (gbest - X)
 
  - Fully informed:
     - v_i(t + 1) = w * v_i(t) + (c / M) * sum_{j=1..M} [ ρ_ij(t) ⊙ (pBest_j - x_i(t)) ]
@@ -198,3 +197,18 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
+
+==============================================================================================
+## Local Version of PSO => Neighborhood based
+
+ - Particles get information only from their own neighborhoods best => local_best instead of gBest.
+ - Neighbors == Topological Neighbors (doesnt change during a run)
+    - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (lbest - X)
+ - Topology:
+    - The population is arranged in a ring, for example in 40 particles:
+        - 0 — 1 — 2 — 3 — 4 — 5 — ... — 39 — back to 0
+    - a neighborhood of six, or three topological neighbors on each side. means that particle i has:
+        - i-3, i-2, i-1, i+1, i+2, i+3 as neighbors 
+        - Topologically, every particle has its own neighborhood and neighborhoods overlap heavily
+ - Number of Neighborhoods == 15% of the number of particles
+    - 40 particles => 40 * 0.15 = 6 Neighborhood size + Number of neighborhoods = 40 (once per particle)
