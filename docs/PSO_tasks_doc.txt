@@ -125,6 +125,8 @@
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
 	30) Multiple particles in a worker => more communication efficient
+		- Make / Implement topologies / Neighborhoods using this. Particles inside one Worker belong to thesame neightborhood 
+			and communicate with each other
 	
 ========================================================================================================================
 

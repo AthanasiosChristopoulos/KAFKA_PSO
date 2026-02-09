@@ -77,7 +77,7 @@ public class PsoUpdater {
         float xmin = -1.0f; // Each individual weight is allowed to change at this rate
         float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
 
-        float range = xmax - xmin;  // the xmax - xmin discussed in the paper 
+        float range = xmax - xmin;  // the xmax - xmin, define the dynamic range. Dont enfoce xmax and xmin just use it to calculate dynamic range
 
         this.VMAX = VMAX_FACTOR * range;  // VMAX_FACTOR == the δ discussed in the paper 
         this.VMAX_NORM = (float)(Math.sqrt(x.length) * VMAX);

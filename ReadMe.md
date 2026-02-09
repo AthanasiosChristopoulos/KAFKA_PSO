@@ -505,10 +505,15 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Influences how small or large the steps are when moving through the search space (aka search resolution, fineness)
         - Vmax too high: particles might fly past good solutions
         - Vmax too small: Particles will not explore sufficiently beyond locally good regions (trapped in local optima, not enough velocity)
+    - Set it at about 10-20% of the dynamic range of the variable for every dimensions (each dimension => different dynamic range):
+        - dynamic range: xmin - xmax => bounds for variable in a dimension
+        - On each dimension => in the original PSO formulation, each dimension can have its own Vmax.
+        - Most implementations (and all PSO_NN uses) use the same Vmax for all dimensions.
 
  - ## C1, C2 Accelaration Constants:
-    - Low values allow particles to roam far from target regions before being tugged back
+    - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
     - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
+    - Set both to 2.0
 
 ## =================================================================================================================================
 ## Functional Requirements: =========================================================
