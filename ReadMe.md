@@ -505,6 +505,10 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
     ```java
     float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
     float velocity = W_INERTIA * velocity[k] + socialAggregate[k]       // 2 accelarations
+
+    // some original versions dont have the Inertia term alltogether
+    float velocity = C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
+
     ```
 
  - ## Clamping Velocity:
@@ -556,7 +560,7 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
             =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
     - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
 
- - # Randomness Dimensionality: 
+ - # Randomness Dimensionality (CLPSO - Page 2): 
     ```java
     // 1) static randmoness per updateX / Statistically independent dimensions
     float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
@@ -573,6 +577,7 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
     - (2) smaller search space / Particle moves along a fixed, but randomly scaled, ray toward pbest / gbest
     - ## Rotation in NNs:
         - NN Datasets arent explicitly rotated, but neural nets locally behave like rotated problems, which is why stabilization matters more than rotation-invariance tricks. 
+    - In practice, (1) performs much better
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================

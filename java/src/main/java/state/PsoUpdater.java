@@ -43,27 +43,16 @@ public class PsoUpdater {
     private CustomLogger logger;
     private float[] velocity; 
     private float[] x_i_new;
-    private float[] inertiaVec;
-    private float[] cognitiveVec;
-    private float[] socialVec;
+    private float[] inertiaVector;
+    private float[] cognitiveVector;
+    private float[] socialVector;
     private float[] diffPBestGBest;
 
     private int clamp_count = 0;
 
     private int count_updates = 0;
 
-    // // Extra clamp parameters:
-    // private static final float W_MIN = 0.35f;     // exploitation
-    // private static final float W_MAX = 0.95f;     // exploration
-    // private static final float ACC_LOW  = 0.20f;  // below this: explore hard
-    // private static final float ACC_HIGH = 0.80f;  // above this: exploit
-    // private static final float EMA_ALPHA = 0.10f; // smoothing for noisy batch acc
-
-    // private float accEma = -1f;
-
-    // // Adaptive clamp
-    // private static final float VMAX_MIN = 0.005f;
-    // private static final float VMAX_MAX = 0.10f;
+    private final Random rnd;
 
     // ---- Adaptive inertia (progress-based) ----
     private float wCurrent = cfg.W_INERTIA_START;   // start high
@@ -84,9 +73,9 @@ public class PsoUpdater {
         float[] x = Dl4jParamUtils.modelToFlatList(model);
         x_i_new = new float[x.length];
         velocity = new float[x.length];
-        inertiaVec = new float[x.length];
-        cognitiveVec = new float[x.length];
-        socialVec = new float[x.length];
+        inertiaVector = new float[x.length];
+        cognitiveVector = new float[x.length];
+        socialVector = new float[x.length];
         diffPBestGBest = new float[x.length];
 
         // float xmin = -1.0f; // Each individual weight is allowed to change at this rate
@@ -105,6 +94,7 @@ public class PsoUpdater {
         logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + "NUM_SAMPLES = " + NUM_SAMPLES);
 
+        this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
     }
 
     //================================================================================================
@@ -198,8 +188,6 @@ public class PsoUpdater {
             updateParametersSchedule(); 
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
-
-        Random rnd = new Random();
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
 
@@ -208,24 +196,24 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
 
-            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+            inertiaVector[k] = W_INERTIA_CURRENT * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
-                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVector[k] = C1 * r1 * (pbest[k] - x_i[k]);
             } else {
-                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVector[k] = c1 * r1 * (pbest[k] - x_i[k]);
             }
             
-            socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            socialVector[k] = C2 * r2 * (gbest[k] - x_i[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
             
-            // float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
+            // float velocity_value = inertiaVector[k] + cognitiveVector[k] + socialVector[k];
             // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
 
-            velocity[k] = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
-
+            // velocity[k] = inertiaVector[k] + cognitiveVector[k] + socialVector[k];
+            velocity[k] = cognitiveVector[k] + socialVector[k];
             // x_i_new[k] = x_i[k] + velocity[k];
         }
 
@@ -242,11 +230,11 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: " + 
-                "inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
+                "inertia = " + Dl4jParamUtils.averageMagnitude(inertiaVector) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVec) + 
+                ", cognitive = " + Dl4jParamUtils.averageMagnitude(cognitiveVector) + 
                 ", with C1: " + c1 +
-                ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
+                ", social = " + Dl4jParamUtils.averageMagnitude(socialVector) +
                 ", diff = " + Dl4jParamUtils.averageMagnitude(diffPBestGBest) + 
                 ", number of Clamps: " + clamp_count
         );
@@ -263,7 +251,7 @@ public class PsoUpdater {
 
         count_updates++;
 
-        Arrays.fill(socialVec, 0f);
+        Arrays.fill(socialVector, 0f);
         clamp_count = 0;
 
         if(ADAPTIVE_INERTIA) {
@@ -272,7 +260,6 @@ public class PsoUpdater {
         }
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
-        Random rnd = new Random();
 
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
 
@@ -300,16 +287,18 @@ public class PsoUpdater {
 
             for (int k = 0; k < x_i.length; k++) {
                 float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
-                socialVec[k] += p_i_j * (pBest_j[k] - x_i[k]);
+                socialVector[k] += p_i_j * (pBest_j[k] - x_i[k]);
             }
         }
 
         float scale = C / (float) neighborPBestList.size();
 
-        for (int k = 0; k < socialVec.length; k++) {
-            socialVec[k] *= scale;
-            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
-            velocity[k] = inertiaVec[k] + socialVec[k];
+        for (int k = 0; k < socialVector.length; k++) {
+            socialVector[k] *= scale;
+            inertiaVector[k] = W_INERTIA_CURRENT * velocity[k];
+            // velocity[k] = inertiaVector[k] + socialVector[k];
+            velocity[k] = socialVector[k];
+
         }
 
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
@@ -323,13 +312,13 @@ public class PsoUpdater {
         }
 
         logger.log("PSO magnitudes: " +
-                    "inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVec) + 
+                    "inertia acc = " + Dl4jParamUtils.averageMagnitude(inertiaVector) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                    ", social = " + Dl4jParamUtils.averageMagnitude(socialVec) +
+                    ", social = " + Dl4jParamUtils.averageMagnitude(socialVector) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {
-        //     velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
+        //     velocity[k] = clampVelocity(inertiaVector[k] + socialVector[k]);
         //     x_i_new[k] = x_i[k] + velocity[k];
         // }
 
@@ -383,24 +372,25 @@ public class PsoUpdater {
     //================================================================================================
 
     public void randomizeVelocity(int workerId, float sigma) {
-        Random rnd = new Random(workerId);
+        Random random = new Random(workerId);
 
         for (int i = 0; i < velocity.length; i++) {
-            velocity[i] = (float) rnd.nextGaussian() * sigma;
+            velocity[i] = (float) random.nextGaussian() * sigma;
         }
     }
 
     //================================================================================================
+    // unnecessary since model.init(); with .seed(123) does this deterministic weight initialization => good for debugging
+    // public void randomizeModelWeights(MultiLayerNetwork model, int seed, float sigma) {
 
-    public void randomizeModelWeights(MultiLayerNetwork model, int seed, float sigma) {
-        float[] flat = Dl4jParamUtils.modelToFlatList(model);
-        Random rnd = new Random(seed);
+    //     float[] flat = Dl4jParamUtils.modelToFlatList(model);
+    //     Random random = new Random(seed);
 
-        for (int i = 0; i < flat.length; i++) {
-            flat[i] += rnd.nextGaussian() * sigma;
-        }
+    //     for (int i = 0; i < flat.length; i++) {
+    //         flat[i] += random.nextGaussian() * sigma;
+    //     }
 
-        Dl4jParamUtils.updateModel(model, flat);
-    }
+    //     Dl4jParamUtils.updateModel(model, flat);
+    // }
 
 }
