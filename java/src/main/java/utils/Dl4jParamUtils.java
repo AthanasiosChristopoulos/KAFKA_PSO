@@ -33,7 +33,7 @@ public class Dl4jParamUtils {
     // Decode / Encode Model Number 1:
 
     public static float[] modelToFlatList(MultiLayerNetwork model) {    // Serializa model into float[]
-        
+                                                    // INDArray.toFloatVector() allocates a fresh float[] copy every call.
         return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
                                                     // specific order chosen by DL4J
     }

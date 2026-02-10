@@ -9,6 +9,7 @@ public class Stats {
     private float bestAccuracy = 0;
     private float bestLoss = 100000f;
     private float lastSentPBestLoss = 100000f;
+    private float lastSeenGBestLoss = 100000f;
 
     public void addBatch(int nSamples, int nCorrect, float loss) {
         if(nSamples == 0) {
@@ -20,7 +21,7 @@ public class Stats {
         this.loss += loss;
     }
 
-    public long getNumPredictions() {
+	public long getNumPredictions() {
         return nSamples;
     }
 
@@ -80,6 +81,13 @@ public class Stats {
         this.lastSentPBestLoss = lastSentPBestLoss;
     }
 
+    public float getLastSeenGBestLoss() {
+		return lastSeenGBestLoss;
+	}
+
+	public void setLastSeenGBestLoss(float lastSeenGBestLoss) {
+		this.lastSeenGBestLoss = lastSeenGBestLoss;
+	}
     // ================================================================================
 
     public void reset() {

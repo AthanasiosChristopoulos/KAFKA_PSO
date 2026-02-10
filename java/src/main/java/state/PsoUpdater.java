@@ -191,6 +191,9 @@ public class PsoUpdater {
         
         logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
 
+        // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
+        // float r2 = rnd.nextFloat();  
+
         for (int k = 0; k < x_i.length; k++) {
 
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
