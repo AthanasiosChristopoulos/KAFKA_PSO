@@ -100,7 +100,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private final CoordinatorControl control; 
 
-
+    private int bufferSizeAcc = 0;
 
     // ====================================================================================================================
     
@@ -186,9 +186,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         buffer.add(value);
 
         if (buffer.size() < TRAIN_SIZE) {   // if not completed the batch, just return
-            return null;
+            return null;                    // bufferSize is always: 100.0
         }
-
+        bufferSizeAcc += buffer.size();
         ws.stats.reset();
 
         float[] accLoss = ws.predictor.callPredictionsBatch(buffer);    // this is a forward pass
@@ -577,6 +577,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             System.out.println("Dist = " + String.format("%.4f", dist)
                     + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+            
+            logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
             
             ws.printedReport = true;
         }
