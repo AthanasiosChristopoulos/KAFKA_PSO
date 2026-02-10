@@ -263,6 +263,18 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
+    public static float rmsScaled(float[] flat, int scale) {    // this is RMS for vectors
+        float sum = 0f;
+
+        for (float v : flat) {
+            sum += v * v; 
+        }
+
+        return (float) Math.sqrt(sum / flat.length) * scale;
+    }
+
+    //=====================================================================================================
+
     // private static boolean checkIfIntersects(float[] center, double radius) {
 
     //     int dimensions = center.length; 

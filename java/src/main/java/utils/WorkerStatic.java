@@ -31,6 +31,7 @@ public final class WorkerStatic {
     public float local_gBestAccuracy = -1f;
 
     public int batchesRead = 0;
+    public boolean printedReport = false;
     
     // ========================================================
 

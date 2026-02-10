@@ -230,12 +230,11 @@ public class PsoUpdater {
         Dl4jParamUtils.updateModel(model, x_i_new);
 
         logger.log("PSO magnitudes: " + 
-                "inertia = " + Dl4jParamUtils.rms(inertiaVec) + 
+                " inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                ", cognitive = " + Dl4jParamUtils.rms(cognitiveVec) + 
-                ", with C1: " + c1 +
-                ", social = " + Dl4jParamUtils.rms(socialVec) +
-                ", diff = " + Dl4jParamUtils.rms(diffPBestGBest) + 
+                ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + 
+                ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
+                ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
                 ", number of Clamps: " + clamp_count
         );
 
@@ -310,9 +309,9 @@ public class PsoUpdater {
         }
 
         logger.log("PSO magnitudes: " +
-                    "inertia acc = " + Dl4jParamUtils.rms(inertiaVec) + 
+                    "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                    ", social = " + Dl4jParamUtils.rms(socialVec) +
+                    ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
                     ", number of Clamps: " + clamp_count);
         
         // for (int k = 0; k < x_i.length; k++) {

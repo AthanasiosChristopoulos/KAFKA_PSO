@@ -190,7 +190,6 @@ public class Worker implements Runnable {
             while (!control.isStopRequested(workerId)) {
                 Thread.sleep(50);  
             }
-            System.out.println("[Worker " + workerId + " ] stopping");
             streams.close();
 
             double seconds = (t1.get() - t0) / 1_000_000_000.0;     // t1 is updated at WorkerTransformer every time a new buffer has been processed

@@ -84,7 +84,7 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
-## Related Work: =====================================================================================================
+## Related Work: =============================================
 PySwarm:
 Standard PSO works this way:
 1) Initialize a population of particles with random positions and velocities on d dimensions
@@ -96,10 +96,9 @@ Standard PSO works this way:
     xid= xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
-## =====================================================================================================================
-## =====================================================================================================================
-## Project Architecture Description: ===================================================================================
-
+## ======================================================
+## =======================================================
+## Project Architecture Description: =============================================
 This is my project for PSO, for my thesis
 
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
@@ -120,7 +119,7 @@ The architecture is build to support two types of PSO:
     - classical PSO / best-of-neighboorhood 
     - fully informed PSO (FIPS)
 
-## Partitioning: =======================================================================================================
+## Partitioning: ==============================================================================
 
 N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
     5 workers ⇒ each gets ~8 partitions (if 40 partitions)
@@ -129,7 +128,7 @@ N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
 
 If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
 
-## =====================================================================================================================
+## ======================================================================
 ## Distributed, data parallel PSO Protocol: 
 
 - (1) Initialization of particles, randomize their initial positions + velocities
@@ -160,7 +159,7 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
             
     => After training (if we are not in a streaming envirment), the execution of the COORDINATOR doesnt end, since now the global best model will be used for inference of the data in PREDICTION_INPUT_TOPIC.
           
-## PSO Logic: ======================================================================================================================
+## PSO Logic: ===============================================================
 
  - callPredictionsBatch(List<DataMessage> batch)                        // evaluate PSO position
     - Loss Function (some of them Non - Differentiable)
@@ -170,7 +169,7 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
     - updateModel(MultiLayerNetwork model, float[] flat)
  - Exchange pBest / gBest Weight Messages through Kafka Topics
 
-## =================================================================================================================================
+## ============================================================================
 ## Kafka Message Documentation:
 
 Input pBest-weights-topic:
@@ -204,8 +203,8 @@ Input input-weights-topic:
     weights           | float[]
 
 
-## =================================================================================================================================
-## Datasets: =======================================================================================================================
+## ===================================================
+## Datasets: =========================================
 
 ## Input new Dataset - Model:
 

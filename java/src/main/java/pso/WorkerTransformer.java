@@ -97,8 +97,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
     private final String taskInstance = instanceNo + "@" + Integer.toHexString(System.identityHashCode(this));
-    private String taskTag = "task=UNKNOWN";
-    private static boolean ONCE = false;
 
     private final CoordinatorControl control; 
 
@@ -151,6 +149,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
                 logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
                 CoordinatorControl.getInstance().requestStop(workerId);
+                
+
+
+
+
             }
         });
 
@@ -319,7 +322,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         updateTime();   // is updated  every time a new buffer has been processed
         
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
-                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rms(velocity) * 100 + 
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
         );  // * 100 is for the user, just scale it upwards 
@@ -527,6 +530,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     @Override
     public void close() {
+
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
@@ -541,33 +545,39 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
         
         // Report on convergence: ==============================================================
-        float[] center = null;
+        if(ws.printedReport == false) {
+            float[] center = null;
 
-        if (FULLY_INFORMED == false) {
-            center = readGBestStore();
-            if (center == null) {
-                logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
-                return;
+            if (FULLY_INFORMED == false) {
+                center = readGBestStore();
+                if (center == null) {
+                    logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
+                    return;
+                }
+            } else {
+                center = computeMeanPBestFromStore();
+                if (center == null) {
+                    logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
+                    return;
+                }
             }
-        } else {
-            center = computeMeanPBestFromStore();
-            if (center == null) {
-                logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
-                return;
-            }
+
+            float[] x = Dl4jParamUtils.modelToFlatList(ws.model);
+            double dist = normL2PerDim(x, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
+            double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
+                // The particle is converged if, on average, each weight differs from the center by 
+                // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
+
+            boolean converged = dist <= radius;
+
+            logger.log(taskInstance + " dist = " + String.format("%.6f", dist)
+                    + " radius = " + radius
+                    + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+
+            System.out.println("[Worker " + workerId + "]: "+ (converged ? "CONVERGED" : "NOT_CONVERGED"));
+            
+            ws.printedReport = true;
         }
-
-        float[] x = Dl4jParamUtils.modelToFlatList(ws.model);
-        double dist = normL2PerDim(x, center);
-        double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
-
-        boolean converged = dist <= radius;
-
-        logger.log(taskInstance + " dist = " + String.format("%.6f", dist)
-                + " radius = " + CONVERGENCE_ALPHA
-                + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
-
-        System.out.println("[Worker " + workerId + "]: "+ (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
     }
 }
