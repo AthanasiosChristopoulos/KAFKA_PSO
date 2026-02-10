@@ -582,6 +582,10 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
         - NN Datasets arent explicitly rotated, but neural nets locally behave like rotated problems, which is why stabilization matters more than rotation-invariance tricks. 
     - In practice, (1) performs much better
 
+## Neighborhood Best =========================================================
+ - Will not work in a Kafka / Kafka Streams setting, because:
+ - shouldnt implement it the way it was designed it costs too much => Coordinator needs to send way more gBest (now lBest) messages, especially as the number of particles increases. Each particle would need to receive lBest messages just to reject them based on their ID.
+
 ## ==================================================================================
 ## Functional Requirements: =========================================================
 
@@ -662,7 +666,7 @@ sudo pkill -2 java
 sudo pkill -9 -f java
 ```
 
-## =======================================================================================================================
+## =========================================================================
 
 Καταχώριση πρακτικής άσκησης στο φοιτητολόγιο
 Είχα κάνει την πρακτική μου άσκηση κατά τους μήνες Ιούλιο–Αύγουστο και μέχρι στιγμής δεν εμφανίζεται στο φοιτητολόγιο.
