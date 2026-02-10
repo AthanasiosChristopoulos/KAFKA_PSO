@@ -21,6 +21,8 @@ public final class WorkerStatic {
     public final int workerId;
 
     public final MultiLayerNetwork model;
+    public float[] flatModel;
+
     public float[] pBestWeights;
 
     public final Stats stats;
@@ -39,6 +41,7 @@ public final class WorkerStatic {
         
         this.workerId = workerId;
         this.model = Dl4jModelFactory.createModel();
+        this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(model, workerId);
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId)); 

@@ -98,7 +98,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
         if (ws.pBestWeights == null) {
-            ws.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
+            ws.pBestWeights = ws.flatModel;
         }
 
         this.velocity =  new float[ws.pBestWeights.length];
@@ -194,8 +194,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return null;
         }
 
-        float[] weights = Dl4jParamUtils.modelToFlatList(ws.model);
-
         // =================================================================================================
         // Send pBest or current weights ===================================================================
 
@@ -207,10 +205,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.stats.setPBestAccuracy(accuracy);
             ws.stats.setPBestLoss(loss);
 
-            this.ws.pBestWeights = weights;
-            
+            this.ws.pBestWeights = ws.flatModel;
+
             logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
-                        + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
+                        + ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
         }
 
         // =========================================================================================================
@@ -222,13 +220,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (pBestList == null || pBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
-                velocity = ws.psoUpdater.updateX(ws.model, null, accuracy, taskInstance);
+                velocity = ws.psoUpdater.updateX(ws.model, ws.flatModel, null, accuracy, taskInstance);
 
             } else {
                 // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(pBestList));
-                velocity = ws.psoUpdater.updateX(ws.model, pBestList, accuracy, taskInstance);
-                // velocity = ws.psoUpdater.updateXAdaptive(ws.model, pBestList, accuracy);
-                
+                velocity = ws.psoUpdater.updateX(ws.model, ws.flatModel, pBestList, accuracy, taskInstance);                
             }
 
         } else {
@@ -237,12 +233,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (gBestWeights == null) {     // gBestWeights not yet initialized
                 gBestWeights = new float[ws.pBestWeights.length];
-                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
+                velocity = ws.psoUpdater.updateX(ws.model, ws.flatModel, ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
 
             } else {
                 logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
-                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, gBestWeights, accuracy, taskInstance);
+                velocity = ws.psoUpdater.updateX(ws.model, ws.flatModel, ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
             }
         }
@@ -276,9 +272,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             logger.log(taskInstance + ", Improved and sending pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
-                    + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
+                    + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
 
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.flatModel);
 
             return new KeyValue<>(keyName, msg);
         }
@@ -293,7 +289,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.batchesRead = 0;
             String msgIndex = java.util.UUID.randomUUID().toString();
 
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.flatModel);
 
             return new KeyValue<>("current_weights", msg);
         }
@@ -305,7 +301,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) + 
-                ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
+                ", updated Model to: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT) +
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
         );  // * 100 is for the user, just scale it upwards 
                 
@@ -546,8 +542,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 }
             }
 
-            float[] x = Dl4jParamUtils.modelToFlatList(ws.model);
-            double dist = normL2PerDim(x, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
+            double dist = normL2PerDim(ws.flatModel, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
             double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
                 // The particle is converged if, on average, each weight differs from the center by 
                 // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.

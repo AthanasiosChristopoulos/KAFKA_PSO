@@ -177,11 +177,10 @@ public class PsoUpdater {
     //================================================================================================
     // update for Neighborhood Best: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
+    public float[] updateX(MultiLayerNetwork model, float[] x_i, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
 
         count_updates++;
 
-        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
         clamp_count = 0;
 
         if(ADAPTIVE_INERTIA) {
@@ -227,10 +226,10 @@ public class PsoUpdater {
         }
 
         for (int k = 0; k < x_i.length; k++) {
-            x_i_new[k] = x_i[k] + velocity[k];
+            x_i[k] = x_i[k] + velocity[k];
         }
 
-        Dl4jParamUtils.updateModel(model, x_i_new);
+        Dl4jParamUtils.updateModel(model, x_i);
 
         logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
@@ -250,7 +249,7 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
+    public float[] updateX(MultiLayerNetwork model, float[] x_i, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
 
@@ -262,8 +261,6 @@ public class PsoUpdater {
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
 
-        float[] x_i = Dl4jParamUtils.modelToFlatList(model);
-
         // logger.log("Count_updates: " + count_updates);
 
         // neighborPBestList empty case (initialization) ===================================================
@@ -272,11 +269,9 @@ public class PsoUpdater {
 
             for (int k = 0; k < x_i.length; k++) {
                 velocity[k] = W_INERTIA_CURRENT * velocity[k];
-                x_i_new[k] = x_i[k] + velocity[k];
+                x_i[k] = x_i[k] + velocity[k];
             }
-
-            Dl4jParamUtils.updateModel(model, x_i_new);
-
+            Dl4jParamUtils.updateModel(model, x_i);
             return this.velocity;
         }
 
@@ -309,9 +304,9 @@ public class PsoUpdater {
         }
 
         for (int k = 0; k < x_i.length; k++) {
-            x_i_new[k] = x_i[k] + velocity[k];
+            x_i[k] = x_i[k] + velocity[k];
         }
-
+        Dl4jParamUtils.updateModel(model, x_i);
         logger.log(taskInstance + ", PSO magnitudes: " +
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
@@ -319,13 +314,6 @@ public class PsoUpdater {
                     ", number of Clamps: " + clamp_count + 
                     ", count_updates: " + count_updates
         );
-        
-        // for (int k = 0; k < x_i.length; k++) {
-        //     velocity[k] = clampVelocity(inertiaVec[k] + socialVec[k]);
-        //     x_i_new[k] = x_i[k] + velocity[k];
-        // }
-
-        Dl4jParamUtils.updateModel(model, x_i_new);
 
         return this.velocity;
     }
@@ -383,6 +371,7 @@ public class PsoUpdater {
     }
 
     //================================================================================================
+    // Random Weight Model Initialization  
     // unnecessary since model.init(); with .seed(123) does this deterministic weight initialization => good for debugging
     // public void randomizeModelWeights(MultiLayerNetwork model, int seed, float sigma) {
 

@@ -244,10 +244,6 @@ public class BatchPrediction {
         }
 
         float accuracy = (float) nCorrect / nSamples;
-        // if(isCoordinator) {
-        //     logger.log("BatchPrediction weights sample: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(model), SAMPLING_CONSTANT)
-        //         + ", accuracy: " + accuracy + ", with nSamples: " + nSamples + ", nCorrect: " + nCorrect );
-        // }
 
         float forwardMs = (end - start) / 1_000_000f;
 
