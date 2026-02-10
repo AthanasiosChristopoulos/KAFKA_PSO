@@ -41,6 +41,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final boolean FILTER_ENABLED = cfg.FILTER_ENABLED;
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+    private final float CONVERGENCE_RADIUS = cfg.CONVERGENCE_RADIUS;
 
     private ProcessorContext context;
 
@@ -469,6 +470,58 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
 
     //=========================================================================================================================
+    
+    private double normL2PerDim(float[] a, float[] b) {
+        double sum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            double d = (double)a[i] - (double)b[i];
+            sum += d * d;
+        }
+        return Math.sqrt(sum) / Math.sqrt(a.length);
+    }
+
+    //=========================================================================================================================
+
+    private float[] computeMeanPBestFromStore() {
+
+        if (bestStore == null) {
+            logger.log(taskInstance + ", [Convergence] bestStore is null");
+            return null;
+        }
+
+        double[] sum = null;
+        int n = 0;
+
+        try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
+            while (it.hasNext()) {
+                KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
+                WeightsMessage msg = entry.value.value();
+                if (msg == null || msg.weights == null || msg.weights.length == 0) continue;
+
+                float[] w = msg.weights;
+
+                if (sum == null) sum = new double[w.length];
+                if (w.length != sum.length) {
+                    logger.log(taskInstance + ", [Convergence] pBest length mismatch, skipping key=" + entry.key);
+                    continue;
+                }
+
+                for (int i = 0; i < w.length; i++) sum[i] += w[i];
+                n++;
+            }
+        } catch (Exception e) {
+            logger.log(taskInstance + ", [Convergence] error while reading pBest store: " + e.getMessage());
+            return null;
+        }
+
+        if (sum == null || n == 0) return null;
+
+        float[] mean = new float[sum.length];
+        for (int i = 0; i < sum.length; i++) mean[i] = (float)(sum[i] / n);
+        return mean;
+    }
+
+    //=========================================================================================================================
 
     @Override
     public void close() {
@@ -484,5 +537,34 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
                 + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
+        
+        // Report on convergence: ==============================================================
+        float[] center = null;
+
+        if (FULLY_INFORMED == false) {
+            center = readGBestStore();
+            if (center == null) {
+                logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
+                return;
+            }
+        } else {
+            center = computeMeanPBestFromStore();
+            if (center == null) {
+                logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
+                return;
+            }
+        }
+
+        float[] x = Dl4jParamUtils.modelToFlatList(ws.model);
+        double dist = normL2PerDim(x, center);
+        boolean converged = dist <= CONVERGENCE_RADIUS;
+
+        logger.log(taskInstance + ", [Convergence] mode=" + (FULLY_INFORMED ? "FIPS(mean pBest)" : "gBest")
+                + " dist=" + String.format("%.6f", dist)
+                + " radius=" + CONVERGENCE_RADIUS
+                + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+
+        System.out.println("[Worker " + workerId + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+
     }
 }

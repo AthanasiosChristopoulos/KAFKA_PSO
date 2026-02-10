@@ -585,6 +585,23 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
 ## Neighborhood Best =========================================================
  - Will not work in a Kafka / Kafka Streams setting, because:
  - shouldnt implement it the way it was designed it costs too much => Coordinator needs to send way more gBest (now lBest) messages, especially as the number of particles increases. Each particle would need to receive lBest messages just to reject them based on their ID.
+ - Possible workarounds is with Keyed-by-neighborhood / keyed-by-particle (routing via partitions):
+    - Make lBest a per-particle stream/table and route only relevant updates.
+    
+    Protocol 1) (Like it because of Router) - Router Fanout (x6):
+    The protocol (still has significant mesaage overhead based on neighborhood size):
+        Particle i publishes pBest to Broker / Topic: pbest-updates with Key i
+        Router (new Kafka Streams app / the coordinator) consumes pbest-updates and republishes to neighbors
+            Router computes neighbors N(i) = {i-3,i-2,i-1,i+1,i+2,i+3} mod P and emits 6 new records via the neighbor-candidates topic, Key = k (the neighbor particle id)
+                => neighbor-candidates has P partitions (number of particles)
+        Without a router:
+            particle must publish 6 records every time, to neighbor-candidates (one per neighbor key)   
+        Each particle k consumes only its own neighbor candidates and computes lBest_k = argmin fitness among received neighbor pbests
+
+    Protocol 2) (Less overhead):
+    Each particle publishes pBest to PBEST_WEIGHTS_TOPIC
+    Coordinator keeps all pBest_i and computes lBest_i = argmin{ fitness(pBest_j) | j in neighbors(i) ∪ {i} }
+    Coordinator publishes lBest_i updates to a single topic LBEST_TOPIC keyed by i (P messages / each particle is an individual lbest message), Each particle consumes only its own key i.
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================

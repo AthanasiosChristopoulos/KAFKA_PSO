@@ -212,7 +212,8 @@ dos2unix run_streams.sh
         - i-3, i-2, i-1, i+1, i+2, i+3 as neighbors 
         - Topologically, every particle has its own neighborhood and neighborhoods overlap heavily
         - neighbors(i) = {i-3, i-2, i-1, i+1, i+2, i+3} mod P   # P == number of particles, this is a circle. Its length is the global parameter neighborhood size 
-    - If particle i finds new pbest then only particles whose neighborhoods include i might update their lBest.
+    
+    - If particle i finds new pbest then only particles whose neighborhoods include i might update their lBest:
         => this is because different particles always see different neighborhoods
         => lBest_k = the best pBest among neighbors(k)
         => Examples:    1) Particle 10 improves pBest, articles that may update 7, 8, 9, 11, 12, 13
@@ -223,4 +224,5 @@ dos2unix run_streams.sh
 
  - PSO with a small neighborhood might perform better on complex problems, 
    while PSO with a large neighborhood would perform better on simple problems
+    - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
  

@@ -124,10 +124,13 @@
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
-	30) Multiple particles in a worker => more communication efficient
+	30) Implement Neighborhoods:
 		- Make / Implement topologies / Neighborhoods using this. Particles inside one Worker belong to thesame neightborhood 
 			and communicate with each other
-	
+		- Multiple particles in a worker => more communication efficient
+		- Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
+		- you just avoid broadcasting to all particles by re-keying and routing through a topic 
+			so that each particle only receives messages intended for it.
 ========================================================================================================================
 
 	Thesis Structure:
