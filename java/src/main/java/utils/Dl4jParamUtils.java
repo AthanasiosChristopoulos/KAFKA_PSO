@@ -263,14 +263,23 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static float rmsScaled(float[] flat, int scale) {    // this is RMS for vectors
+    public static float rmsScaled(float[] flat, int scale) {
         float sum = 0f;
 
         for (float v : flat) {
-            sum += v * v; 
+            sum += v * v;
         }
 
-        return (float) Math.sqrt(sum / flat.length) * scale;
+        float rms = (float) Math.sqrt(sum / flat.length) * scale;
+        return round(rms, 3);
+    }
+
+    //=====================================================================================================
+
+    public static float round(float number, int decimals) {
+
+        float scale_factor = (float) Math.pow(10, decimals);
+        return Math.round(number * scale_factor) / scale_factor;
     }
 
     //=====================================================================================================

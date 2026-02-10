@@ -117,6 +117,7 @@ public class Config {
         } else if("pendigits-half".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS_HALF", "16"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS_HALF", "5"));
+            this.NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_PENDIGITS_HALF", "400000"));
 
         } else if("winequality".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINEQUALITY", "12"));

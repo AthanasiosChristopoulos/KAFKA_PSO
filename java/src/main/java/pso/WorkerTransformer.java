@@ -570,11 +570,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             boolean converged = dist <= radius;
 
-            logger.log(taskInstance + " dist = " + String.format("%.6f", dist)
-                    + " radius = " + radius
+            logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
+                    + " radius = " + Dl4jParamUtils.round((float) radius, 4)
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
-            System.out.println("[Worker " + workerId + "]: "+ (converged ? "CONVERGED" : "NOT_CONVERGED"));
+            System.out.println("Dist = " + String.format("%.4f", dist)
+                    + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
+                    + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
             
             ws.printedReport = true;
         }

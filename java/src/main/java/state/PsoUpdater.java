@@ -92,7 +92,7 @@ public class PsoUpdater {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
-                ", C1_MID_UPDATE: " + C1_MID_UPDATE + "NUM_SAMPLES = " + NUM_SAMPLES);
+                ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
     }
