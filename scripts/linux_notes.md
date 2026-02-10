@@ -44,13 +44,15 @@
 sudo apt install gnome-shell-extension-manager
  - extension: Hide TopBar
 
-# Change Boot Order: ============================================================
+# Change Boot Order / Boot Priority: ============================================================
 
 https://www.youtube.com/watch?v=gVw1OMB-D5A
-sudo nano /etc/default/grub
-	- Change GRUB_DEFAULT= to 0 (Ubuntu) or 4 (Windows)
-sudo update-grub
 
+```bash
+sudo nano /etc/default/grub				# Change GRUB_DEFAULT= to 0 (Ubuntu) or 4 (Windows)
+sudo update-grub
+grep GRUB_DEFAULT /etc/default/grub		# check new boot priority
+```
 # Stop Lid: =====================================================================
 
  - https://www.youtube.com/watch?v=NEpoh89MYnc

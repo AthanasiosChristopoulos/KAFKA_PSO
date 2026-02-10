@@ -62,6 +62,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     
     private float[] pBestWeights;
     private int batchesRead = 0;
+    
+    private float[] velocity;
 
     private boolean printedOffset = false;
 
@@ -89,6 +91,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
+    private double eps = 1e-12;
 
     private static final long IDLE_MS = 3000; 
     private static final long CHECK_EVERY_MS = 100; // how often we check
@@ -116,6 +119,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
         this.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
+        this.velocity =  new float[this.pBestWeights.length];
 
         if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
@@ -227,26 +231,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         boolean improvement_to_pBest = (Math.round(loss * 1000f) / 1000f) < ws.stats.getPBestLoss(); 
                 // boolean has pBest changed (improved) or not ?
-
-        // Filtering: is the loss significant enough to be reported ?
-        double eps = 1e-12;
-        boolean significant_diff = true;
-
-        if(FILTER_ENABLED == true) {
-            if(FULLY_INFORMED == true) {
-
-                significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
-                    // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
-            
-            } else {
-
-                significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
-                    // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
-                    // this is a much more damaging filter, because the global affects all workers as the only sense of direction
-                    // thats why 0.3 
-            }
-            logger.log("Filtering takes place: " + (significant_diff == false) + ", since significance is: " + significant_diff);
-        }
         
         if(improvement_to_pBest) {    // update self always when improvement 
 
@@ -254,38 +238,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.stats.setPBestLoss(loss);
 
             this.pBestWeights = weights;
-
-            if(significant_diff) { // send only when significant improvement
-
-                ws.stats.setLastSentPBestLoss(loss);
-
-                String msgIndex = java.util.UUID.randomUUID().toString();
-
-                logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
-                        + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
-
-                WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
-
-                return new KeyValue<>(keyName, msg);
-            }
         }
-
-        // =========================================================================================================
-        // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset batchesRead
-
-        if (batchesRead >= N_BATCHES) {   
-
-            logger.log(taskInstance + ", Sending current weights ...");
-
-            batchesRead = 0;
-            String msgIndex = java.util.UUID.randomUUID().toString();
-
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
-
-            return new KeyValue<>("current_weights", msg);
-        }
-
-        float[] velocity = new float[this.pBestWeights.length];
 
         // =========================================================================================================
         // Update to next position, Using the State Store ===================================================================
@@ -318,6 +271,60 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights, accuracy);
         }
+
+        // =================================================================================================
+        // Send pBest or current weights ===================================================================
+
+        // Filtering: is the loss significant enough to be reported ?
+        boolean significant_diff = true;
+
+        if(FILTER_ENABLED == true) {
+            if(FULLY_INFORMED == true) {
+
+                significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
+                    // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
+            
+            } else {
+
+                significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+                    // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
+                    // this is a much more damaging filter, because the global affects all workers as the only sense of direction
+                    // thats why 0.3 
+            }
+            logger.log("Filtering takes place: " + (significant_diff == false) + ", since significance is: " + significant_diff);
+        }
+        
+        if(significant_diff && improvement_to_pBest) {    // update self always when improvement 
+
+            ws.stats.setLastSentPBestLoss(loss);
+
+            String msgIndex = java.util.UUID.randomUUID().toString();
+
+            logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
+                    + ", msgIndex = " + msgIndex + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
+
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+
+            return new KeyValue<>(keyName, msg);
+        }
+
+        // =========================================================================================================
+        // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset batchesRead
+
+        if (batchesRead >= N_BATCHES) {   
+
+            logger.log(taskInstance + ", Sending current weights ...");
+
+            batchesRead = 0;
+            String msgIndex = java.util.UUID.randomUUID().toString();
+
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
+
+            return new KeyValue<>("current_weights", msg);
+        }
+
+        // =========================================================================================================
+        // Logging and Time
 
         updateTime();   // is updated  every time a new buffer has been processed
         
@@ -572,10 +579,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
                     + " radius = " + Dl4jParamUtils.round((float) radius, 4)
+                    + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
             System.out.println("Dist = " + String.format("%.4f", dist)
                     + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
+                    + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
             
             logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
