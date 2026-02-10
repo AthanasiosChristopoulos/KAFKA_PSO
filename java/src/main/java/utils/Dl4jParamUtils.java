@@ -249,16 +249,16 @@ public class Dl4jParamUtils {
         return (float) Math.sqrt(sum);
     }
 
-    public static float averageMagnitude(float[] flat) {
+    //=====================================================================================================
+
+    public static float rms(float[] flat) {    // this is RMS for vectors
         float sum = 0f;
-        int count = 0;
 
         for (float v : flat) {
             sum += v * v; 
-            count += 1;
         }
 
-        return (float) Math.sqrt(sum / count);
+        return (float) Math.sqrt(sum / flat.length);
     }
 
     //=====================================================================================================

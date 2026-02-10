@@ -473,7 +473,11 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
 
 ## What to look at for training process: =========================================
 
- - convergence (the ideal result is located, but the swarm doesnt converge on it)
+ - convergence (the ideal result is located, but the swarm doesnt converge on it):
+    - Definition:
+        - Velocity collapse ||v_i|| → 0
+        - Swarm collapse Var(x_i) → 0 (x_i current position of particle i, each particle collapses to the same position) => all positions become (almost) the same (no exploration). Variance for mathematic reasons
+
     - this means the velocity magnitude needs to be decreasing over time => not staying constant / or getting clamped
     - Velocity is initialized with a significant amplitude which should decrease over time since INERTIA < 1
         - Early iterations: exploration-heavy

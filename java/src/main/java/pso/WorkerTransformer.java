@@ -41,7 +41,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final boolean FILTER_ENABLED = cfg.FILTER_ENABLED;
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
-    private final float CONVERGENCE_RADIUS = cfg.CONVERGENCE_RADIUS;
+    private final float CONVERGENCE_ALPHA = cfg.CONVERGENCE_ALPHA;
 
     private ProcessorContext context;
 
@@ -319,7 +319,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         updateTime();   // is updated  every time a new buffer has been processed
         
         logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
-                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.averageMagnitude(velocity) * 100 + 
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rms(velocity) * 100 + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(Dl4jParamUtils.modelToFlatList(ws.model), SAMPLING_CONSTANT) +
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
         );  // * 100 is for the user, just scale it upwards 
@@ -471,7 +471,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
     
-    private double normL2PerDim(float[] a, float[] b) {
+    private double normL2PerDim(float[] a, float[] b) { // computes L2 Distance, normalized
+        // dist = ||x − center||₂ / √d, dist = 0.01 means each parameter / weight differs by ~0.01 on average
+        // Typical magnitudes after training: 0.1 – 1.0 and small changes are considered to be: 0.001 - 0.01
         double sum = 0.0;
         for (int i = 0; i < a.length; i++) {
             double d = (double)a[i] - (double)b[i];
@@ -479,7 +481,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         return Math.sqrt(sum) / Math.sqrt(a.length);
     }
-
+    
     //=========================================================================================================================
 
     private float[] computeMeanPBestFromStore() {
@@ -557,14 +559,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] x = Dl4jParamUtils.modelToFlatList(ws.model);
         double dist = normL2PerDim(x, center);
-        boolean converged = dist <= CONVERGENCE_RADIUS;
+        double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
 
-        logger.log(taskInstance + ", [Convergence] mode=" + (FULLY_INFORMED ? "FIPS(mean pBest)" : "gBest")
-                + " dist=" + String.format("%.6f", dist)
-                + " radius=" + CONVERGENCE_RADIUS
+        boolean converged = dist <= radius;
+
+        logger.log(taskInstance + " dist = " + String.format("%.6f", dist)
+                + " radius = " + CONVERGENCE_ALPHA
                 + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
-        System.out.println("[Worker " + workerId + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+        System.out.println("[Worker " + workerId + "]: "+ (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
     }
 }

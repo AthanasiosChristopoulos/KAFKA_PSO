@@ -60,7 +60,7 @@ public class Config {
     public final float MONITORING_THRESHOLD;
     public final int POINTS_PER_AXIS; 
 
-    public final float CONVERGENCE_RADIUS;
+    public final float CONVERGENCE_ALPHA;
 
     public Config() {
         
@@ -199,7 +199,7 @@ public class Config {
         this.MONITORING_THRESHOLD = Float.parseFloat(getenv(dotenv, "MONITORING_THRESHOLD", "40"));
         this.POINTS_PER_AXIS = Integer.parseInt(getenv(dotenv, "POINTS_PER_AXIS", "5"));
 
-        this.CONVERGENCE_RADIUS = Float.parseFloat(getenv(dotenv, "CONVERGENCE_RADIUS", "0.01"));
+        this.CONVERGENCE_ALPHA = Float.parseFloat(getenv(dotenv, "CONVERGENCE_ALPHA", "0.01"));
     }
 
     // ==================================================================================================================================
