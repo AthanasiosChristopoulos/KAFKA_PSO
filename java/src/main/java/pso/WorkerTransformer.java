@@ -208,6 +208,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.stats.setPBestLoss(loss);
 
             this.ws.pBestWeights = weights;
+            
             logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
                         + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
         }
