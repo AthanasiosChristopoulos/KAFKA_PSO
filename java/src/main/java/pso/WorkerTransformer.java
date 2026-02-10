@@ -9,10 +9,6 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 import org.apache.kafka.streams.state.KeyValueIterator;
 
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-
 import java.util.*;
 
 import utils.*;
@@ -24,11 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.kafka.streams.processor.PunctuationType;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 public class WorkerTransformer implements Transformer<String, DataMessage, KeyValue<String, WeightsMessage>> {
 
@@ -49,27 +42,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private final List<DataMessage> buffer = new ArrayList<>();
 
-    // private static final MultiLayerNetwork model = Dl4jModelFactory.createModel();;
-    // private static final Stats stats = new Stats();;
-    // private static BatchPrediction predictor;
-    // private static PsoUpdater psoUpdater;
-
-    // private static float local_gBestAccuracy = -1f;
-    // private static float local_gBestLoss = 10000f;
-
     private CustomLogger logger;
     private final WorkerStatic ws;
-    
-    private float[] pBestWeights;
-    private int batchesRead = 0;
-    
+        
     private float[] velocity;
 
     private boolean printedOffset = false;
 
     private String stateStoreName;
     private String keyName;
-
 
     private float accuracy = -1f;
     private float loss = 10000f;
@@ -116,8 +97,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
-        this.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
-        this.velocity =  new float[this.pBestWeights.length];
+        if (ws.pBestWeights == null) {
+            ws.pBestWeights = Dl4jParamUtils.modelToFlatList(ws.model);
+        }
+
+        this.velocity =  new float[ws.pBestWeights.length];
 
         if(FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
@@ -187,9 +171,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         bufferSizeAcc += buffer.size();
-        ws.stats.reset();
-        logger.log("AFTER reset: pBestLoss=" + ws.stats.getPBestLoss()
-                + " lastSentPBestLoss=" + ws.stats.getLastSentPBestLoss());
 
         float[] accLoss = ws.predictor.callPredictionsBatch(buffer);    // this is a forward pass
         if(accLoss == null) {
@@ -206,7 +187,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // logger.log(taskInstance + ", accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
 
         buffer.clear();
-        batchesRead++;
+        ws.batchesRead++;
 
         if (loss == 0f) {
             System.out.println("Loss Invalid");
@@ -226,7 +207,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.stats.setPBestAccuracy(accuracy);
             ws.stats.setPBestLoss(loss);
 
-            this.pBestWeights = weights;
+            this.ws.pBestWeights = weights;
             logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
                         + ", with weights: " + Dl4jParamUtils.sampleFlat(weights, SAMPLING_CONSTANT));
         }
@@ -240,11 +221,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (pBestList == null || pBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
-                velocity = ws.psoUpdater.updateX(ws.model, null, accuracy);
+                velocity = ws.psoUpdater.updateX(ws.model, null, accuracy, taskInstance);
 
             } else {
                 // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(pBestList));
-                velocity = ws.psoUpdater.updateX(ws.model, pBestList, accuracy);
+                velocity = ws.psoUpdater.updateX(ws.model, pBestList, accuracy, taskInstance);
                 // velocity = ws.psoUpdater.updateXAdaptive(ws.model, pBestList, accuracy);
                 
             }
@@ -253,13 +234,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             float[] gBestWeights = readGBestStore();
 
-            if (gBestWeights == null) {
-                gBestWeights = new float[this.pBestWeights.length];
-                velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights, accuracy); // social term is ignored effectevly. 
+            if (gBestWeights == null) {     // gBestWeights not yet initialized
+                gBestWeights = new float[ws.pBestWeights.length];
+                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
+
             } else {
                 logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
-                velocity = ws.psoUpdater.updateX(ws.model, this.pBestWeights, gBestWeights, accuracy);
+                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
             }
         }
@@ -301,13 +283,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         // =========================================================================================================
-        // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset batchesRead
+        // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset ws.batchesRead
 
-        if (batchesRead >= N_BATCHES) {   
+        if (ws.batchesRead >= N_BATCHES) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             logger.log(taskInstance + ", Sending current weights ...");
 
-            batchesRead = 0;
+            ws.batchesRead = 0;
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, weights);
@@ -576,7 +558,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
-            System.out.println("Dist = " + String.format("%.4f", dist)
+            System.out.println("[Worker " + workerId + "], Dist = " + String.format("%.4f", dist)
                     + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
                     + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));

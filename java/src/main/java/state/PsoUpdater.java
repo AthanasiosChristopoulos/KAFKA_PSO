@@ -177,7 +177,7 @@ public class PsoUpdater {
     //================================================================================================
     // update for Neighborhood Best: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy) {     // FOR GBEST, not fully informed
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
 
         count_updates++;
 
@@ -189,7 +189,7 @@ public class PsoUpdater {
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
         
-        logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
+        // logger.log("Count_updates: " + count_updates);
 
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
@@ -232,7 +232,7 @@ public class PsoUpdater {
 
         Dl4jParamUtils.updateModel(model, x_i_new);
 
-        logger.log("PSO magnitudes: " + 
+        logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
                 ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + 
@@ -250,7 +250,7 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy) {      // for FULLY INFORMED
+    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
 
@@ -264,7 +264,7 @@ public class PsoUpdater {
 
         float[] x_i = Dl4jParamUtils.modelToFlatList(model);
 
-        logger.log("Count_updates: " + count_updates + ", Weight Dimensinality = " +  x_i.length);
+        // logger.log("Count_updates: " + count_updates);
 
         // neighborPBestList empty case (initialization) ===================================================
 
@@ -312,7 +312,7 @@ public class PsoUpdater {
             x_i_new[k] = x_i[k] + velocity[k];
         }
 
-        logger.log("PSO magnitudes: " +
+        logger.log(taskInstance + ", PSO magnitudes: " +
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
                     ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +

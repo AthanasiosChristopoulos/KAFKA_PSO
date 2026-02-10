@@ -32,7 +32,7 @@ public final class WorkerStatic {
 
     public int batchesRead = 0;
     public boolean printedReport = false;
-    
+
     // ========================================================
 
     private WorkerStatic(int workerId) {
