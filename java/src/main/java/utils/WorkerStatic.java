@@ -2,6 +2,7 @@ package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,9 +43,9 @@ public final class WorkerStatic {
         this.workerId = workerId;
         this.model = Dl4jModelFactory.createModel();
         this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+        this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();
-        this.psoUpdater = new PsoUpdater(model, workerId);
+        this.psoUpdater = new PsoUpdater(model, workerId, this);
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId)); 
-        this.pBestWeights = Dl4jParamUtils.modelToFlatList(model);
     }
 }

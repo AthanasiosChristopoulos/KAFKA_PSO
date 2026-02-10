@@ -42,7 +42,6 @@ public class PsoUpdater {
 
     private CustomLogger logger;
     private float[] velocity; 
-    private float[] x_i_new;
     private float[] inertiaVec;
     private float[] cognitiveVec;
     private float[] socialVec;
@@ -66,17 +65,20 @@ public class PsoUpdater {
     private final float W_STEP_UP = 0.02f;       // explore increase step
     private final float W_STEP_DOWN = 0.01f;     // exploit decrease step
 
+    private final WorkerStatic ws;
+
     //================================================================================================
 
-    public PsoUpdater(MultiLayerNetwork model, int workerId) {
+    public PsoUpdater(MultiLayerNetwork model, int workerId, WorkerStatic ws) {
     
         float[] x = Dl4jParamUtils.modelToFlatList(model);
-        x_i_new = new float[x.length];
         velocity = new float[x.length];
         inertiaVec = new float[x.length];
         cognitiveVec = new float[x.length];
         socialVec = new float[x.length];
         diffPBestGBest = new float[x.length];
+
+        this.ws = ws;
 
         // float xmin = -1.0f; // Each individual weight is allowed to change at this rate
         // float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
@@ -177,7 +179,7 @@ public class PsoUpdater {
     //================================================================================================
     // update for Neighborhood Best: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] x_i, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
+    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
 
         count_updates++;
 
@@ -193,7 +195,7 @@ public class PsoUpdater {
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
 
-        for (int k = 0; k < x_i.length; k++) {
+        for (int k = 0; k < ws.flatModel.length; k++) {
 
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
@@ -201,22 +203,20 @@ public class PsoUpdater {
             inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
 
             if(SIMULATED_ANNEALING == false) {
-                cognitiveVec[k] = C1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = C1 * r1 * (pbest[k] - ws.flatModel[k]);
             } else {
-                cognitiveVec[k] = c1 * r1 * (pbest[k] - x_i[k]);
+                cognitiveVec[k] = c1 * r1 * (pbest[k] - ws.flatModel[k]);
             }
             
-            socialVec[k] = C2 * r2 * (gbest[k] - x_i[k]);
+            socialVec[k] = C2 * r2 * (gbest[k] - ws.flatModel[k]);
             diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
 
-            // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);
+            // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - ws.flatModel[k]) + C2 * r2 * (gbest[k] - ws.flatModel[k]);
             
             // float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
             // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
 
             velocity[k] = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
-
-            // x_i_new[k] = x_i[k] + velocity[k];
         }
 
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
@@ -225,11 +225,11 @@ public class PsoUpdater {
             clipVelocityByNorm(VMAX_NORM);
         }
 
-        for (int k = 0; k < x_i.length; k++) {
-            x_i[k] = x_i[k] + velocity[k];
+        for (int k = 0; k < ws.flatModel.length; k++) {
+            ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
 
-        Dl4jParamUtils.updateModel(model, x_i);
+        Dl4jParamUtils.updateModel(model, ws.flatModel);
 
         logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
@@ -249,7 +249,7 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] x_i, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
+    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
 
@@ -267,11 +267,11 @@ public class PsoUpdater {
 
         if (neighborPBestList == null || neighborPBestList.isEmpty()) {
 
-            for (int k = 0; k < x_i.length; k++) {
+            for (int k = 0; k < ws.flatModel.length; k++) {
                 velocity[k] = W_INERTIA_CURRENT * velocity[k];
-                x_i[k] = x_i[k] + velocity[k];
+                ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
-            Dl4jParamUtils.updateModel(model, x_i);
+            Dl4jParamUtils.updateModel(model, ws.flatModel);
             return this.velocity;
         }
 
@@ -279,13 +279,13 @@ public class PsoUpdater {
 
         for (float[] pBest_j : neighborPBestList) {
 
-            if (pBest_j.length != x_i.length) {
+            if (pBest_j.length != ws.flatModel.length) {
                 throw new IllegalArgumentException("pBest size mismatch");
             }
 
-            for (int k = 0; k < x_i.length; k++) {
+            for (int k = 0; k < ws.flatModel.length; k++) {
                 float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
-                socialVec[k] += p_i_j * (pBest_j[k] - x_i[k]);
+                socialVec[k] += p_i_j * (pBest_j[k] - ws.flatModel[k]);
             }
         }
 
@@ -303,10 +303,10 @@ public class PsoUpdater {
             clipVelocityByNorm(VMAX_NORM);
         }
 
-        for (int k = 0; k < x_i.length; k++) {
-            x_i[k] = x_i[k] + velocity[k];
+        for (int k = 0; k < ws.flatModel.length; k++) {
+            ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
-        Dl4jParamUtils.updateModel(model, x_i);
+        Dl4jParamUtils.updateModel(model, ws.flatModel);
         logger.log(taskInstance + ", PSO magnitudes: " +
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
