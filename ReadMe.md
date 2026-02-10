@@ -667,13 +667,18 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
             - This means me may be able to afford bigger models or batches, but the primary bottleneck will still be Kafka / CPU Scheduling
             - CUDA just does faster tensor math, convolutions, matrix multiplications
         GPU gets more benefit from increased batch size
+
+        ND4J the “backend” (CPU vs CUDA) applies to everything ND4J does, not just model.output(...).
         
         - nvidia-smi -l 1
         - <code>nvidia-smi -q</code>  // see gpu specs
         
-        # htop Alternatives for GPU: ==========================================================
-        - nvidia-smi	# Confirm if it was successfully installed
-        - watch -n 0.5 nvidia-smi
+# htop Alternatives for GPU: ==========================================================
+```bash
+nvidia-smi	# Confirm if it was successfully installed
+watch -n 0.5 nvidia-smi
+watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
+```
 
  - Performance Theory:
     - True parallelism comes from CPU cores
@@ -687,11 +692,3 @@ sudo pkill -9 -f java
 ```
 
 ## =========================================================================
-
-Καταχώριση πρακτικής άσκησης στο φοιτητολόγιο
-Είχα κάνει την πρακτική μου άσκηση κατά τους μήνες Ιούλιο–Αύγουστο και μέχρι στιγμής δεν εμφανίζεται στο φοιτητολόγιο.
-Επικοινώνησα με το Γραφείο Πρακτικής Άσκησης, το οποίο με ενημέρωσε ότι θα πρέπει να απευθυνθώ σε εσάς.
-Θα έπρεπε να έχει ανέβει η πρακτική άσκηση στο φοιτητολόγιο ή μήπως έχω καταλάβει κάτι λάθος;
-Αριθμός Μητρώου: 2022030077
-Με εκτίμηση,
-Αθανάσιος Χριστόπουλος
