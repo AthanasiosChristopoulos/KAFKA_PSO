@@ -1,5 +1,5 @@
-## =====================================================================================================================
-## Run ============================================================================================================
+## =======================================================================
+## Run ===================================================================
 
 ```bash
 
@@ -11,8 +11,7 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exe
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
 ```
 
-## Run Docker: ==============================================================================================================
-
+## Run Docker: ===========================================================
 ```bash
 docker compose up
 docker compose stop
@@ -36,9 +35,8 @@ dos2unix run_streams.sh
 
 ```
 
-## =====================================================================================================================
-## Git: ================================================================================================================
-
+## ===========================================================================
+## Git: ======================================================================
 ```bash
 
 git clone https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
@@ -85,6 +83,7 @@ git rm -r --cached target
 
 ```
 ## Related Work: =============================================
+
 PySwarm:
 Standard PSO works this way:
 1) Initialize a population of particles with random positions and velocities on d dimensions
@@ -96,8 +95,8 @@ Standard PSO works this way:
     xid= xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
-## ======================================================
-## =======================================================
+## ===============================================================================
+## ===============================================================================
 ## Project Architecture Description: =============================================
 This is my project for PSO, for my thesis
 
@@ -472,9 +471,11 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
 
 ## Premature congvergence: =========================================================
+ - trapped in a local optimum if the search environment is complex with numerous local solutions.
  - Evolutionary operators such as selection, crossover, and mutation have been introduced to the PSO to increase the diversity of the population, and to
 improve the ability to escape local minima
  - collision-avoiding mechanisms to prevent particles from moving too close to each other
+ - Of course, it is hoped in practice that Pm (gBest and pBest) dont remain fixed. A key source of variation is the updating of Pm over time as new points are found in the search space which are better than those previous ones. If this Pm doesnt manage to change as we go towards it => convergence, but it might be premature 
 
 ## What to look at for training process: =========================================
 
@@ -545,6 +546,7 @@ improve the ability to escape local minima
     - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
     - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
     - Set both to 2.0
+    - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
 
  - ## Invertia W:
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
@@ -564,6 +566,7 @@ improve the ability to escape local minima
         - Convergence should happen naturally but there is no quarantee.
     - Solution #1: Decrease inertia 
     - Solution #2: Constriction Factor:
+        => In a constricted algorithm, the difference between current position and best position tends toward zero over time as velocity gets updated
         => scale the entire velocity update by a single factor K ? Damps all velocity, insuring convergence.
             => vi​(t+1) = K * (vi​(t) + c1​r1​(pbest−xi​) + c2​r2​(gbest−xi​))
         => ϕ = c1 ​+ c2 (total attraction strength), K is dependent on φ via formula only when φ > 4,
@@ -592,6 +595,7 @@ improve the ability to escape local minima
     - In practice, (1) performs much better
 
 ## Neighborhood Best =========================================================
+
  - Will not work in a Kafka / Kafka Streams setting, because:
  - shouldnt implement it the way it was designed it costs too much => Coordinator needs to send way more gBest (now lBest) messages, especially as the number of particles increases. Each particle would need to receive lBest messages just to reject them based on their ID.
  - Possible workarounds is with Keyed-by-neighborhood / keyed-by-particle (routing via partitions):
@@ -611,7 +615,21 @@ improve the ability to escape local minima
     Each particle publishes pBest to PBEST_WEIGHTS_TOPIC
     Coordinator keeps all pBest_i and computes lBest_i = argmin{ fitness(pBest_j) | j in neighbors(i) ∪ {i} }
     Coordinator publishes lBest_i updates to a single topic LBEST_TOPIC keyed by i (P messages / each particle is an individual lbest message), Each particle consumes only its own key i.
-
+ 
+ - gBest vs pBest:
+        - In gBest, neighborhood size means how many other particles you can choose among, and the more there are, the better the one you pick is likely to be. 
+        - In the fully informed neighborhood, however, all neighbors are a source of influence. Thus,
+        neighborhood size determines how diverse your influences will be. This might be detrimental (search becomes detrimental).
+        x
+## Fully Informed ===================================================================
+ - In classic PSO, in neighborhood best, there is no assumption, that the best neighbor at time actually
+found a better region than the second or third best neighbors (they may not have gone deep enough to their corresponding regions yet).
+ - This way, important information about the search space may be neglected through overemphasis on the single best neighbor.
+ - New Formula, because all the neighbors contribute to the velocity adjustment, we say that the particle is fully informed.
+ - 𝜑_k = φmax​/∣N∣, This is to keep the total expected acceleration roughly constant as neighborhood size changes.
+    - N = number of neighbors, φ_k will the same coefficient applied equally to all neighborhoods
+    - generally speaking you need to make the contribution of the social coefficient independent from number of particles and from N_WORKERS
+     
 ## ==================================================================================
 ## Functional Requirements: =========================================================
 

@@ -2,6 +2,8 @@ package state;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
+import pso.WorkerTransformer;
+
 import java.util.List;
 import java.util.Random;
 import java.util.Arrays;
@@ -66,16 +68,17 @@ public class PsoUpdater {
     private final float W_STEP_DOWN = 0.01f;     // exploit decrease step
 
     private final WorkerStatic ws;
+    private final int dimensionality;
 
     //================================================================================================
 
     public PsoUpdater(int workerId, WorkerStatic ws) {
-    
-        velocity = new float[ws.flatModel.length];
-        inertiaVec = new float[ws.flatModel.length];
-        cognitiveVec = new float[ws.flatModel.length];
-        socialVec = new float[ws.flatModel.length];
-        diffPBestGBest = new float[ws.flatModel.length];
+        dimensionality = ws.flatModel.length;
+        velocity = new float[dimensionality];
+        inertiaVec = new float[dimensionality];
+        cognitiveVec = new float[dimensionality];
+        socialVec = new float[dimensionality];
+        diffPBestGBest = new float[dimensionality];
 
         this.ws = ws;
 
@@ -86,13 +89,13 @@ public class PsoUpdater {
         float range = computeDynamicRangeFromWeights(ws.flatModel);
 
         this.VMAX = this.VMAX_FACTOR * range;  // VMAX_FACTOR == the δ parameter (δ = VMAX_FACTOR)
-        this.VMAX_NORM = (float)(Math.sqrt(ws.flatModel.length) * VMAX);
+        this.VMAX_NORM = (float)(Math.sqrt(dimensionality) * VMAX);
 
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        logger.log("PsoUpdater: Number of weights (dimensionality): " + ws.flatModel.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+        logger.log("PsoUpdater: Number of weights (dimensionality): " + dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
@@ -147,7 +150,7 @@ public class PsoUpdater {
 
     private void clampVelocityByDim() {
 
-        for (int i = 0; i < velocity.length; i++) {
+        for (int i = 0; i < dimensionality; i++) {
             
             float v = velocity[i];
             if (v > VMAX) { 
@@ -170,7 +173,7 @@ public class PsoUpdater {
 
         if (norm > vmaxNorm && norm > 0.0) {
             float scale = (float)(vmaxNorm / norm);
-            for (int i = 0; i < velocity.length; i++) velocity[i] *= scale;
+            for (int i = 0; i < dimensionality; i++) velocity[i] *= scale;
         }
     }
 
@@ -193,7 +196,7 @@ public class PsoUpdater {
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
 
-        for (int k = 0; k < ws.flatModel.length; k++) {
+        for (int k = 0; k < dimensionality; k++) {
 
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
@@ -223,7 +226,7 @@ public class PsoUpdater {
             clipVelocityByNorm(VMAX_NORM);
         }
 
-        for (int k = 0; k < ws.flatModel.length; k++) {
+        for (int k = 0; k < dimensionality; k++) {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
 
@@ -247,7 +250,7 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
+    public float[] updateX(List<NeighborPBest> neighbors, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
 
@@ -261,11 +264,11 @@ public class PsoUpdater {
 
         // logger.log("Count_updates: " + count_updates);
 
-        // neighborPBestList empty case (initialization) ===================================================
+        // neighbors.pBest empty case (initialization) ===================================================
 
-        if (neighborPBestList == null || neighborPBestList.isEmpty()) {
+        if (neighbors == null || neighbors.isEmpty()) {
 
-            for (int k = 0; k < ws.flatModel.length; k++) {
+            for (int k = 0; k < dimensionality; k++) {
                 velocity[k] = W_INERTIA_CURRENT * velocity[k];
                 ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
@@ -273,27 +276,90 @@ public class PsoUpdater {
             return this.velocity;
         }
 
+        // ===============================================================================
         // Normal fully-informed case with non empty neighbors: =============================================
 
-        for (float[] pBest_j : neighborPBestList) {
+        // for (NeighborPBest neighbor : neighbors) {
 
-            if (pBest_j.length != ws.flatModel.length) {
-                throw new IllegalArgumentException("pBest size mismatch");
-            }
+        //     if (neighbor.pBest.length != dimensionality) {
+        //         throw new IllegalArgumentException("pBest size mismatch");
+        //     }
 
-            for (int k = 0; k < ws.flatModel.length; k++) {
-                float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
-                socialVec[k] += p_i_j * (pBest_j[k] - ws.flatModel[k]);
+        //     for (int k = 0; k < dimensionality; k++) {
+        //         float p_i_j = rnd.nextFloat();      // this is a uniformly distributed float value between 0.0 and 1.0
+        //         socialVec[k] += p_i_j * (neighbor.pBest[k] - ws.flatModel[k]);
+        //     }
+        // }
+
+        // float scale = C / (float) neighbors.size();
+
+        // for (int k = 0; k < socialVec.length; k++) {
+        //     socialVec[k] *= scale;
+        //     inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+        //     velocity[k] = inertiaVec[k] + socialVec[k];
+        // }
+        // ===============================================================================
+        // float sumW = 0f;
+        // for (NeighborPBest nb : neighbors) {
+        //     sumW += Math.max(1e-8f, nb.accuracy);
+        // }
+
+        // Arrays.fill(socialVec, 0f);
+
+        // for (NeighborPBest nb : neighbors) {
+        //     float[] pBest_j = nb.pBest;
+        //     if (pBest_j.length != dimensionality) {
+        //         throw new IllegalArgumentException("pBest size mismatch");
+        //     }
+
+        //     // normalized weight so total social strength stays stable
+        //     float wj = Math.max(1e-8f, nb.accuracy) / sumW;
+
+        //     for (int k = 0; k < dimensionality; k++) {
+        //         float r = rnd.nextFloat(); // U[0,1]
+        //         socialVec[k] += (wj * r) * (pBest_j[k] - ws.flatModel[k]);
+        //     }
+        // }
+
+        // // now scale by C only (no /N because weights sum to 1)
+        // for (int k = 0; k < socialVec.length; k++) {
+        //     socialVec[k] *= C;
+        //     inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+        //     velocity[k] = inertiaVec[k] + socialVec[k];
+        // }
+        // ===============================================================================
+        final int N = neighbors.size();
+        final float phiMax = C;
+        final float phiMaxPerNeighbor = phiMax / (float) N;
+        final float eps = 1e-8f;
+
+        float[] num = new float[dimensionality];
+        float[] den = new float[dimensionality];
+        float[] den_without_weight = new float[dimensionality];
+
+        for (NeighborPBest nb : neighbors) {
+            float Wk = Math.max(eps, nb.accuracy); // your W(k)=accuracy
+            float[] Pk = nb.pBest;
+
+            for (int d = 0; d < dimensionality; d++) {
+                float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
+                den_without_weight[d] += phi_kd;
+                float wphi = Wk * phi_kd;
+
+                num[d] += wphi * Pk[d];
+                den[d] += wphi;
             }
         }
 
-        float scale = C / (float) neighborPBestList.size();
+        for (int d = 0; d < dimensionality; d++) {
+            float Pm_d = (den[d] > eps) ? (num[d] / den[d]) : ws.flatModel[d];
 
-        for (int k = 0; k < socialVec.length; k++) {
-            socialVec[k] *= scale;
-            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
-            velocity[k] = inertiaVec[k] + socialVec[k];
+            inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
+            // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
+            socialVec[d]  = den_without_weight[d] * (Pm_d - ws.flatModel[d]); 
+            velocity[d]   = inertiaVec[d] + socialVec[d];
         }
+        // ===============================================================================
 
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
             clampVelocityByDim();     
@@ -301,7 +367,7 @@ public class PsoUpdater {
             clipVelocityByNorm(VMAX_NORM);
         }
 
-        for (int k = 0; k < ws.flatModel.length; k++) {
+        for (int k = 0; k < dimensionality; k++) {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
@@ -363,7 +429,7 @@ public class PsoUpdater {
     public void randomizeVelocity(int workerId, float sigma) {
         Random random = new Random(workerId);
 
-        for (int i = 0; i < velocity.length; i++) {
+        for (int i = 0; i < dimensionality; i++) {
             velocity[i] = (float) random.nextGaussian() * sigma;
         }
     }

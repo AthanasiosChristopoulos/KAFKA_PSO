@@ -214,15 +214,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (FULLY_INFORMED == true) {
 
-            List<float[]> pBestList = readPBestStore();
+            List<NeighborPBest> neighborList = readPBestStore();
 
-            if (pBestList == null || pBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
+            if (neighborList == null || neighborList.isEmpty()) {
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
                 velocity = ws.psoUpdater.updateX(null, accuracy, taskInstance);
-
             } else {
-                // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(pBestList));
-                velocity = ws.psoUpdater.updateX(pBestList, accuracy, taskInstance);                
+                velocity = ws.psoUpdater.updateX(neighborList, accuracy, taskInstance);
             }
 
         } else {
@@ -323,9 +321,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
-    private List<float[]> readPBestStore() {     // for FULLY_INFORMED bestStore
+    private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
 
-        List<float[]> neighbors = new ArrayList<>();
+        List<NeighborPBest> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
             logger.log(taskInstance + ", readPBestStore: bestStore is null");
@@ -348,7 +346,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 float[] pBestArr = msg.weights;
 
-                neighbors.add(pBestArr);
+                neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
 
                 logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + ", with accuracy = " + msg.accuracy + 
                         ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
