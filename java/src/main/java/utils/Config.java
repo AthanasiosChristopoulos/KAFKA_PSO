@@ -64,6 +64,7 @@ public class Config {
 
     public final boolean ENABLE_NEIGHBORHOODS;
     public final int NEIGHBORHOOD_SIZE; 
+    public final boolean INCLUDE_SELF;
 
     public Config() {
         
@@ -207,6 +208,8 @@ public class Config {
 
         this.ENABLE_NEIGHBORHOODS = Boolean.parseBoolean(getenv(dotenv, "ENABLE_NEIGHBORHOODS", "false"));
         this.NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
+        this.INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
+
     }
 
     // ==================================================================================================================================

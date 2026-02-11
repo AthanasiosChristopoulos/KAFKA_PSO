@@ -44,7 +44,7 @@ if [[ "$1" != "--debug" ]]; then
     BROKER="broker"
     BOOTSTRAP="localhost:9092"
 
-    if [[ "$FULLY_INFORMED" == "true" ]]; then
+    if [[ "$FULLY_INFORMED" == "true" || "$ENABLE_NEIGHBORHOODS" == "true" ]]; then
         echo "Fully Informed Run"
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"

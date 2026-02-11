@@ -38,6 +38,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float CONVERGENCE_ALPHA = cfg.CONVERGENCE_ALPHA;
     public final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
     public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
+    public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
 
     private ProcessorContext context;
 
@@ -325,9 +326,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
-    private boolean isRingNeighbor(int self, int other, int radius, boolean includeSelf) {
+    private boolean isRingNeighbor(int self, int other, int radius) {
 
-        if (self == other) return includeSelf;
+        if (self == other) return INCLUDE_SELF;
 
         int diff = Math.floorMod(other - self, N_WORKERS); 
         int dist = Math.min(diff, N_WORKERS - diff);        // because this is a circle 
@@ -360,7 +361,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     continue;
                 }
 
-                if (ENABLE_NEIGHBORHOODS && !isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2, true)) {
+                if (ENABLE_NEIGHBORHOODS && !isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2)) {
                     continue;
                 }
 
@@ -401,14 +402,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
                                         // They have names: "pBest" + workerId
 
-
                     KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
                     WeightsMessage msg = entry.value.value(); 
                     if (msg == null || msg.weights == null || msg.weights.length == 0) {
                         continue;
                     }
 
-                    if (!isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2, true)) {
+                    if (!isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2)) {
                         continue;
                     }
 

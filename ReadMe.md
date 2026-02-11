@@ -630,7 +630,9 @@ improve the ability to escape local minima
  - PSO with a small neighborhood might perform better on complex problems, 
    while PSO with a large neighborhood would perform better on simple problems
     - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
- 
+ - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
+    - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => “U” prefix
+
 ## Neighborhood on Kafka =========================================================
 
  - Will not work in a Kafka / Kafka Streams setting, because:
@@ -653,6 +655,8 @@ improve the ability to escape local minima
     Coordinator keeps all pBest_i and computes lBest_i = argmin{ fitness(pBest_j) | j in neighbors(i) ∪ {i} }
     Coordinator publishes lBest_i updates to a single topic LBEST_TOPIC keyed by i (P messages / each particle is an individual lbest message), Each particle consumes only its own key i.
  
+    Protocol 3) Keep Kafka Topology, just filter based on Neighborhood + WorkerId
+
  - gBest vs pBest:
         - In gBest, neighborhood size means how many other particles you can choose among, and the more there are, the better the one you pick is likely to be. 
         - In the fully informed neighborhood, however, all neighbors are a source of influence. Thus,
