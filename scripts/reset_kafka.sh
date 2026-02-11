@@ -9,13 +9,13 @@ TOPICS=(
   "pbest-weights-topic"
 )
 
-for topic in "${TOPICS[@]}"; do
+for topic in "${TOPICS[@]}"; do                                       # Delete topics
     docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
         --bootstrap-server "$BOOTSTRAP" \
         --delete --topic "$topic"
 done
 
-for topic in "${TOPICS[@]}"; do
+for topic in "${TOPICS[@]}"; do                                       # Recreate topics
     docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
         --bootstrap-server "$BOOTSTRAP" \
         --create --topic "$topic" \

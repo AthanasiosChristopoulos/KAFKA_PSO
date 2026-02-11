@@ -610,7 +610,7 @@ improve the ability to escape local minima
     - Neighbors == Topological Neighbors (doesnt change during a run)
         - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (lbest - X)
         - Neighborhood PSO does not mean neighborhoods are disjoint clusters, they are cirularly dependent.
-    - Topology:
+    - Ring topology (a cycle graph) - URing - Most commonly used:
         - The population is arranged in a ring (particles == nodes in a ring), for example in 40 particles:
             - 0 — 1 — 2 — 3 — 4 — 5 — ... — 39 — back to 0
         - a neighborhood of six, or three topological neighbors on each side. means that particle_i has:

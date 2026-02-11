@@ -62,6 +62,9 @@ public class Config {
 
     public final float CONVERGENCE_ALPHA;
 
+    public final boolean ENABLE_NEIGHBORHOODS;
+    public final int NEIGHBORHOOD_SIZE; 
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -201,6 +204,9 @@ public class Config {
         this.POINTS_PER_AXIS = Integer.parseInt(getenv(dotenv, "POINTS_PER_AXIS", "5"));
 
         this.CONVERGENCE_ALPHA = Float.parseFloat(getenv(dotenv, "CONVERGENCE_ALPHA", "0.01"));
+
+        this.ENABLE_NEIGHBORHOODS = Boolean.parseBoolean(getenv(dotenv, "ENABLE_NEIGHBORHOODS", "false"));
+        this.NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
     }
 
     // ==================================================================================================================================

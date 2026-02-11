@@ -41,7 +41,7 @@ public class Worker implements Runnable {
     private final String RUN_ID = cfg.RUN_ID;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
-    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+    private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
 
     private String stateStoreName;
     private String keyName;
@@ -57,7 +57,7 @@ public class Worker implements Runnable {
 
         this.workerId = workerId;
 
-        if(FULLY_INFORMED == true) {
+        if(ENABLE_NEIGHBORHOODS == true  || FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;
         } else {
@@ -99,7 +99,7 @@ public class Worker implements Runnable {
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
-        if(FULLY_INFORMED == true) {
+        if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
 
             GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,
@@ -114,7 +114,7 @@ public class Worker implements Runnable {
             // });
 
         } else {
-
+            
             GlobalKTable<String, WeightsMessage> gBestTable = builder.globalTable(
                 GLOBAL_WEIGHTS_TOPIC,
                 Consumed.with(Serdes.String(), weightsSerde),
@@ -152,7 +152,7 @@ public class Worker implements Runnable {
 
         streams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
             System.out.println("[Worker " + workerId + "] exception in Thread " + t.getName() + "requesting final stop.");
-            // e.printStackTrace();
+            e.printStackTrace();
             CoordinatorControl.getInstance().requestStopFinal();
             streams.close();
         });

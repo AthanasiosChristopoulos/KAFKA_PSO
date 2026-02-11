@@ -28,6 +28,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final int workerId;
 
     private static Config cfg = Config.getInstance();
+    private final int N_WORKERS = cfg.N_WORKERS;  
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
@@ -35,6 +36,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
     private final float CONVERGENCE_ALPHA = cfg.CONVERGENCE_ALPHA;
+    public final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
+    public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
 
     private ProcessorContext context;
 
@@ -99,7 +102,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         this.velocity =  new float[ws.pBestWeights.length];
 
-        if(FULLY_INFORMED == true) {
+        if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;   // this is the unique key, necessary for the statestore to work
         } else {
@@ -321,6 +324,17 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
+    private boolean isRingNeighbor(int self, int other, int radius, boolean includeSelf) {
+        if (self == other) return includeSelf;
+
+        int diff = Math.floorMod(other - self, N_WORKERS); 
+        int dist = Math.min(diff, N_WORKERS - diff);        // because this is a circle 
+
+        return dist >= 1 && dist <= radius;
+    }
+
+    //=========================================================================================================================
+
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
 
         List<NeighborPBest> neighbors = new ArrayList<>();
@@ -330,8 +344,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return neighbors;
         }
         
-        logger.log(taskInstance + ", pBest Weights: ");
-
         try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                                                 // this is GlobalKTable it will run for all of them
             while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
@@ -344,12 +356,16 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     continue;
                 }
 
+                if (ENABLE_NEIGHBORHOODS && !isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2, true)) {
+                    continue;
+                }
+
                 float[] pBestArr = msg.weights;
 
                 neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
 
-                logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + ", with accuracy = " + msg.accuracy + 
-                        ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
+                logger.log(taskInstance + ", pBest Weights: " + msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
+                        ", with accuracy = " + msg.accuracy +  ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
             }
 
 
@@ -366,89 +382,95 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private float[] readGBestStore() {
 
-        if (bestStore == null) {
-            logger.log(taskInstance + ", bestStore is null");
-            return null;
+        if(ENABLE_NEIGHBORHOODS == true) {
+
+            float minLoss = 100000;
+            WeightsMessage pBestMsg = null; 
+
+            if (bestStore == null) {
+                logger.log(taskInstance + ", readPBestStore: bestStore is null");
+                return null;
+            }
+            
+            logger.log(taskInstance + ", pBest Weights: ");
+
+            try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
+                                                                    // this is GlobalKTable it will run for all of them
+                while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
+                                        // They have names: "pBest" + workerId
+
+
+                    KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
+                    WeightsMessage msg = entry.value.value(); 
+                    if (msg == null || msg.weights == null || msg.weights.length == 0) {
+                        continue;
+                    }
+
+                    if (!isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2, true)) {
+                        continue;
+                    }
+
+                    if(minLoss > msg.loss) {
+                        minLoss = msg.loss;
+                        pBestMsg = msg;
+                    }
+
+                }
+
+                if(pBestMsg == null) {
+                    return null;
+                }
+                
+                logger.log(pBestMsg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + pBestMsg.accuracy + 
+                        ", with loss = " + pBestMsg.loss + ", with msgIndex: " + pBestMsg.msgIndex);
+
+            } catch (Exception e) {
+                logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return pBestMsg.weights;
+
+        } else {
+
+            if (bestStore == null) {
+                logger.log(taskInstance + ", bestStore is null");
+                return null;
+            }
+
+            ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
+            if (wrapper == null) {
+                logger.log(taskInstance + ", gBestWeights returned null (no entry for key '" + keyName + "')");
+                return null;
+            }
+
+            WeightsMessage best = wrapper.value();
+            if (best == null || best.weights == null || best.weights.length == 0) {
+                logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
+                return null;
+            }
+
+            float[] gBestWeights = best.weights;
+            
+            if(best.loss < ws.local_gBestLoss) {  // update ws.local_gBestAccuracy
+                ws.local_gBestLoss = best.loss;
+                ws.local_gBestAccuracy = best.accuracy;
+            }
+
+            if (gBestWeights == null || gBestWeights.length == 0) {
+                logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
+                return null;
+            }
+
+            if (best.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
+                ws.stats.setLastSeenGBestLoss(best.loss);
+                logger.log(taskInstance + ", gBest updated ! , with loss = " + best.loss + " and acc = " + best.accuracy);
+            }
+
+            return gBestWeights;
         }
 
-        ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
-        if (wrapper == null) {
-            logger.log(taskInstance + ", gBestWeights returned null (no entry for key '" + keyName + "')");
-            return null;
-        }
-
-        WeightsMessage best = wrapper.value();
-        if (best == null || best.weights == null || best.weights.length == 0) {
-            logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
-            return null;
-        }
-
-        float[] gBestWeights = best.weights;
-        
-        if(best.loss < ws.local_gBestLoss) {  // update ws.local_gBestAccuracy
-            ws.local_gBestLoss = best.loss;
-            ws.local_gBestAccuracy = best.accuracy;
-        }
-
-        if (gBestWeights == null || gBestWeights.length == 0) {
-            logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
-            return null;
-        }
-
-        if (best.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
-            ws.stats.setLastSeenGBestLoss(best.loss);
-            logger.log(taskInstance + ", gBest updated ! , with loss = " + best.loss + " and acc = " + best.accuracy);
-        }
-
-        return gBestWeights;
     }
-
-    // =====================================================================================================================
-
-    // private void dumpBestStore() {
-
-    //     if (bestStore == null) {
-    //         logger.log(taskInstance + ", [bestStore] Store is null!");
-    //         return;
-    //     }
-
-    //     try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
-
-    //         boolean empty = true;
-
-    //         while (it.hasNext()) {
-    //             empty = false;
-    //             KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
-
-    //             WeightsMessage msg = entry.value.value(); // unwrap
-    //             if (msg == null) {
-    //                 logger.log(taskInstance + ", [bestStore] key = " + entry.key + ", value = null");
-    //                 continue;
-    //             }
-
-    //             int nWeights = (msg.weights != null) ? msg.weights.length : 0;
-
-    //             logger.log(taskInstance + " " +
-    //                 "[bestStore] key = " + entry.key +
-    //                 ", id_worker = " + msg.workerId +
-    //                 ", msgIndex = " + msg.msgIndex +
-    //                 ", accuracy = " + msg.accuracy +
-    //                 ", loss = " + msg.loss +
-    //                 ", nWeights = " + nWeights
-    //             );
-    //         }
-
-    //         if (empty) {
-    //             logger.log(taskInstance + ", [bestStore] Store is empty!");
-    //         }
-
-    //     } catch (Exception e) {
-    //         logger.log(taskInstance + ", Error while dumping bestStore: " + e.getMessage());
-    //         e.printStackTrace();
-    //     }
-    // }
-
-
 
     //=========================================================================================================================
     
@@ -523,16 +545,20 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
         
         // Report on convergence: ==============================================================
+
         if(ws.printedReport == false) {
             float[] center = null;
 
             if (FULLY_INFORMED == false) {
+
                 center = readGBestStore();
                 if (center == null) {
                     logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
                     return;
                 }
+
             } else {
+
                 center = computeMeanPBestFromStore();
                 if (center == null) {
                     logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
@@ -556,9 +582,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
                     + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                     + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
-            
-            logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
-            
+
+            if(countForwardPass != 0) {
+                logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
+            }            
             ws.printedReport = true;
         }
 

@@ -56,6 +56,7 @@ public class Coordinator implements Runnable {
     private final String RUN_ID = cfg.RUN_ID;
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
+    private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
 
     private final CustomLogger logger;
 
@@ -126,14 +127,14 @@ public class Coordinator implements Runnable {
 
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
         Topology gbestTopology = null;
-        if (!FULLY_INFORMED) {
+        if (!ENABLE_NEIGHBORHOODS && !FULLY_INFORMED) {
             gbestTopology = buildGBestRelayTopology(weightsSerde);
         }
 
         // Create streams Instances =============================================================
 
         KafkaStreams mainStreams = new KafkaStreams(mainTopology, mainProps);
-        KafkaStreams gbestStreams = (!FULLY_INFORMED) ? new KafkaStreams(gbestTopology, gbestProps) : null;
+        KafkaStreams gbestStreams = (gbestTopology != null) ? new KafkaStreams(gbestTopology, gbestProps) : null;
 
         CoordinatorControl control = CoordinatorControl.getInstance();
         CountDownLatch latch = new CountDownLatch(1);
@@ -148,7 +149,7 @@ public class Coordinator implements Runnable {
             }
 
             System.out.println("[Coordinator] Uncaught exception in thread " + t.getName());
-            // cause.printStackTrace();
+            cause.printStackTrace();
 
             try {
                 safeClose(mainStreams);
@@ -161,7 +162,7 @@ public class Coordinator implements Runnable {
         if (gbestStreams != null) {
             gbestStreams.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
                 System.out.println("[GBestRelay] Uncaught exception in thread " + t.getName());
-                // e.printStackTrace();
+                e.printStackTrace();
 
                 try {
                     safeClose(gbestStreams);
@@ -252,7 +253,6 @@ public class Coordinator implements Runnable {
 
     // ==========================================================================================================
     // MAIN TOPOLOGY
-    // ==========================================================================================================
 
     private Topology buildMainTopology(Serde<DataMessage> dataSerde, Serde<WeightsMessage> weightsSerde) {
 
@@ -337,7 +337,10 @@ public class Coordinator implements Runnable {
         if (streams == null) return;
         try {
             streams.close(Duration.ofSeconds(5));
-        } catch (Exception ignored) {}
+        } catch (Exception ex) { 
+            ex.printStackTrace(); 
+        }
+
     }
 
     private static void printThreadsAndTasks(KafkaStreams streams) {
