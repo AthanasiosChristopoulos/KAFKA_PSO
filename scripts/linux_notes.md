@@ -53,6 +53,8 @@ sudo nano /etc/default/grub				# Change GRUB_DEFAULT= to 0 (Ubuntu) or 4 (Window
 sudo update-grub
 grep GRUB_DEFAULT /etc/default/grub		# check new boot priority
 ```
+# Power Stuff: =====================================================================
+
 # Stop Lid: =====================================================================
 
  - https://www.youtube.com/watch?v=NEpoh89MYnc
@@ -62,6 +64,18 @@ grep GRUB_DEFAULT /etc/default/grub		# check new boot priority
 	
 sudo apt install terminator
 sudo update-alternatives --config x-terminal-emulator
+
+# Stop turning off Screen: =====================================================================
+```bash
+mkdir -p ~/.config/autostart
+nano ~/.config/autostart/disable-dpms.desktop
+```
+Paste this:
+[Desktop Entry]
+Type=Application
+Name=Disable DPMS
+Exec=sh -c "xset -dpms; xset s off; xset s noblank"
+X-GNOME-Autostart-enabled=true
 
 ## Git: ======================================================================
 

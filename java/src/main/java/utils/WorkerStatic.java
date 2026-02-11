@@ -45,7 +45,7 @@ public final class WorkerStatic {
         this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();
-        this.psoUpdater = new PsoUpdater(model, workerId, this);
+        this.psoUpdater = new PsoUpdater(workerId, this);
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId)); 
     }
 }

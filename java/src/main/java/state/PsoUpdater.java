@@ -69,14 +69,13 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    public PsoUpdater(MultiLayerNetwork model, int workerId, WorkerStatic ws) {
+    public PsoUpdater(int workerId, WorkerStatic ws) {
     
-        float[] x = Dl4jParamUtils.modelToFlatList(model);
-        velocity = new float[x.length];
-        inertiaVec = new float[x.length];
-        cognitiveVec = new float[x.length];
-        socialVec = new float[x.length];
-        diffPBestGBest = new float[x.length];
+        velocity = new float[ws.flatModel.length];
+        inertiaVec = new float[ws.flatModel.length];
+        cognitiveVec = new float[ws.flatModel.length];
+        socialVec = new float[ws.flatModel.length];
+        diffPBestGBest = new float[ws.flatModel.length];
 
         this.ws = ws;
 
@@ -84,16 +83,16 @@ public class PsoUpdater {
         // float xmax = 1.0f;  // During training, most weights should stay relatively small (in practice < 0.2 or < 0.5).
         // float range = xmax - xmin;  // the xmax - xmin, define the dynamic range. Dont enfoce xmax and xmin just use it to calculate dynamic range
 
-        float range = computeDynamicRangeFromWeights(x);
+        float range = computeDynamicRangeFromWeights(ws.flatModel);
 
         this.VMAX = this.VMAX_FACTOR * range;  // VMAX_FACTOR == the δ parameter (δ = VMAX_FACTOR)
-        this.VMAX_NORM = (float)(Math.sqrt(x.length) * VMAX);
+        this.VMAX_NORM = (float)(Math.sqrt(ws.flatModel.length) * VMAX);
 
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        logger.log("PsoUpdater: Number of weights (dimensionality): " + x.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+        logger.log("PsoUpdater: Number of weights (dimensionality): " + ws.flatModel.length + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
@@ -102,8 +101,7 @@ public class PsoUpdater {
     //================================================================================================
     
     private float computeDynamicRangeFromWeights(float[] w) {
-        // Percentile-like cheap approximation: use mean±3*std as "range"
-        // (fast and no sorting)
+        // Percentile-like cheap approximation
         double mean = 0.0;
         for (float v : w) mean += v;
         mean /= w.length;
@@ -179,7 +177,7 @@ public class PsoUpdater {
     //================================================================================================
     // update for Neighborhood Best: 
 
-    public float[] updateX(MultiLayerNetwork model, float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
+    public float[] updateX(float[] pbest, float[] gbest, float batchAccuracy, String taskInstance) {     // FOR GBEST, not fully informed
 
         count_updates++;
 
@@ -229,7 +227,7 @@ public class PsoUpdater {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
 
-        Dl4jParamUtils.updateModel(model, ws.flatModel);
+        Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
 
         logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
@@ -249,7 +247,7 @@ public class PsoUpdater {
     // ================================================================================================
     // update for Fully Informed: 
 
-    public float[] updateX(MultiLayerNetwork model, List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
+    public float[] updateX(List<float[]> neighborPBestList, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
 
@@ -271,7 +269,7 @@ public class PsoUpdater {
                 velocity[k] = W_INERTIA_CURRENT * velocity[k];
                 ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
-            Dl4jParamUtils.updateModel(model, ws.flatModel);
+            Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
             return this.velocity;
         }
 
@@ -306,7 +304,7 @@ public class PsoUpdater {
         for (int k = 0; k < ws.flatModel.length; k++) {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
-        Dl4jParamUtils.updateModel(model, ws.flatModel);
+        Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
         logger.log(taskInstance + ", PSO magnitudes: " +
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +

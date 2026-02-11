@@ -658,7 +658,7 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
                 => normally .output() would be async but in this case we need the results immidiatly to calculate loss
                 => Sync means => CPU is blocked until the results from the GPU have arrived                  
             5) [CPU loss + accuracy loops]  
-        (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time.
+        (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
             => On a simple NN, cpu is preferable
 

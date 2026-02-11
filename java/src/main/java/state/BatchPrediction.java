@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,12 @@ public class BatchPrediction {
     private long end = System.nanoTime();
 
     private final boolean MODEL_IS_CNN;
+    private INDArray X;
+    private INDArray Xbuffer;
+    private INDArray probs; 
+    private INDArray argMax;
+
+    private int EXPECTED_SIZE; 
 
     // for Worker =======================================================================================================
 
@@ -59,6 +66,17 @@ public class BatchPrediction {
         this.bestModel = null;
         this.logger = logger;
         this.isCoordinator = false;
+        EXPECTED_SIZE = cfg.TRAIN_SIZE;
+
+        if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
+            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+                Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
+            } else if ("cifar3".equals(DATASET)) {
+                Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
+            }
+        } else {
+            Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
+        }
     }
 
     // for Coordinator ==================================================================================================
@@ -69,7 +87,20 @@ public class BatchPrediction {
         this.bestModel = bestModel;
         this.logger = logger;
         this.isCoordinator = true;
+        this.EXPECTED_SIZE = 500;
+
+        if (MODEL_IS_CNN) {
+            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+                Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
+            } else if ("cifar3".equals(DATASET)) {
+                Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
+            }
+        } else {
+            Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
+        }
     }
+
+    // ===========================================================================
 
     public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
         if(coordinatorInstance == null) {
@@ -82,6 +113,7 @@ public class BatchPrediction {
     // ===========================================================================
 
     public static boolean isCnnByFirstLayer(MultiLayerNetwork model) {
+
         Layer l0 = model.getLayerWiseConfigurations().getConf(0).getLayer();
         return (l0 instanceof ConvolutionLayer); 
     }
@@ -132,41 +164,102 @@ public class BatchPrediction {
         // Forward Pass Start ===============================================================================
         start = System.nanoTime();
 
-        INDArray X;
-        
-        // The feature data is always serialized into a float[], it has no dimensionality. In case of image datasets, when using a CNN,
-        // we need to reshape() that float[] to the proper dimensionality (i.e. 28x28). Otherwise (else) this will remain a float[].
-        // each dataset has different image dimensionalities
+        // INDArray X = Xbuffer.get(
+        //     NDArrayIndex.interval(0, nSamples),
+        //     NDArrayIndex.all(),
+        //     NDArrayIndex.all(),
+        //     NDArrayIndex.all()
+        // );
+        // // try {
+            
+        //     // The feature data is always serialized into a float[], it has no dimensionality. In case of image datasets, when using a CNN,
+        //     // we need to reshape() that float[] to the proper dimensionality (i.e. 28x28). Otherwise (else) this will remain a float[].
+        //     // each dataset has different image dimensionalities
 
-        if(MODEL_IS_CNN) {
-            if("cifar3".equals(DATASET)) {
+        //     if(MODEL_IS_CNN) {
+        //         if("cifar3".equals(DATASET)) {
 
-                INDArray X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
-                INDArray X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
+        //             X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
+        //             X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
 
-                // if(checked == false) {
-                //     float r = X4d.getFloat(0, 0, 0, 0);
-                //     float g = X4d.getFloat(0, 0, 0, 1);
-                //     float b = X4d.getFloat(0, 0, 0, 2);
-                //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
-                //     checked = true;
-                // }
+        //             // if(checked == false) {
+        //             //     float r = X4d.getFloat(0, 0, 0, 0);
+        //             //     float g = X4d.getFloat(0, 0, 0, 1);
+        //             //     float b = X4d.getFloat(0, 0, 0, 2);
+        //             //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
+        //             //     checked = true;
+        //             // }
 
-                X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
+        //             // X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
+        //             X = X4d.permute(0, 3, 1, 2); 
 
-            } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
+        //         } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
-                INDArray X2d = Nd4j.create(data);          // [batch, 784]
-                X = X2d.reshape(X2d.size(0), 1, 28, 28);
-            }
+        //             X2d = Nd4j.create(data);          // [batch, 784]
+        //             X = X2d.reshape(X2d.size(0), 1, 28, 28);
+        //         }
 
-        } else {    // Normal dataset (no image) + no CNN used 
-            X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        //     } else {    // Normal dataset (no image) + no CNN used 
+        //         X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        //     }
+
+        // logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
+
+        if (nSamples > EXPECTED_SIZE) {
+            logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+            System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+
+            nSamples = EXPECTED_SIZE;
         }
 
-        INDArray probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
-                                                            // this is one forward pass per batch (has multiple samples)
+        for (int i = 0; i < nSamples; i++) {
 
+            float[] features = featureList.get(i);
+
+            if (MODEL_IS_CNN) {
+
+                if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+
+                    // flatten 784 into 1x28x28
+                    for (int j = 0; j < NUM_FEATURES; j++) {
+                        int row = j / 28;
+                        int col = j % 28;
+                        Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
+                    }
+
+                } else if ("cifar3".equals(DATASET)) {
+
+                    for (int j = 0; j < NUM_FEATURES; j++) {
+                        int channel = j / (32 * 32);
+                        int pixel = j % (32 * 32);
+                        int row = pixel / 32;
+                        int col = pixel % 32;
+
+                        Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+                    }
+                }
+
+            } else {
+                for (int j = 0; j < NUM_FEATURES; j++) {
+                    Xbuffer.putScalar(i, j, features[j]);
+                }
+            }
+        }
+        
+        if (nSamples == EXPECTED_SIZE) {
+            X = Xbuffer;
+        } else {
+            X = Xbuffer.get(
+                NDArrayIndex.interval(0, nSamples),
+                NDArrayIndex.all(),
+                NDArrayIndex.all(),
+                NDArrayIndex.all()
+            );
+        }
+
+        probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
+                                                            // this is one forward pass per batch (has multiple samples)
+        
         end = System.nanoTime();
 
         // Forward Pass End ===============================================================================
@@ -203,7 +296,7 @@ public class BatchPrediction {
 
         } else {
 
-            INDArray argMax = probs.argMax(1);   // [batch]
+            argMax = probs.argMax(1);   // [batch]
 
             for (int i = 0; i < nSamples; i++) {
                 int pred = argMax.getInt(i);
@@ -246,8 +339,19 @@ public class BatchPrediction {
         float accuracy = (float) nCorrect / nSamples;
 
         float forwardMs = (end - start) / 1_000_000f;
+        // X.close();
+        // probs.close();
 
         return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
+
+        // } finally {
+        //     if (probs != null) probs.close();
+        //     if (X != null) X.close();
+        //     if (argMax != null) argMax.close();
+        //     if (X2d != null) X2d.close();
+        //     if (X4d != null) X4d.close();
+        // }
+
     }
 
         

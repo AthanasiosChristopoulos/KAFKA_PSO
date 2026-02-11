@@ -218,11 +218,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (pBestList == null || pBestList.isEmpty()) {     // if no neighbor has yet reported their pBest
                 logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
-                velocity = ws.psoUpdater.updateX(ws.model, null, accuracy, taskInstance);
+                velocity = ws.psoUpdater.updateX(null, accuracy, taskInstance);
 
             } else {
                 // logger.log(taskInstance + ", pBest Weights: \n" + Dl4jParamUtils.sampleFlats(pBestList));
-                velocity = ws.psoUpdater.updateX(ws.model, pBestList, accuracy, taskInstance);                
+                velocity = ws.psoUpdater.updateX(pBestList, accuracy, taskInstance);                
             }
 
         } else {
@@ -231,12 +231,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (gBestWeights == null) {     // gBestWeights not yet initialized
                 gBestWeights = new float[ws.pBestWeights.length];
-                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
+                velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
 
             } else {
                 logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
-                velocity = ws.psoUpdater.updateX(ws.model, ws.pBestWeights, gBestWeights, accuracy, taskInstance);
+                velocity = ws.psoUpdater.updateX(ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
             }
         }
@@ -272,7 +272,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log(taskInstance + ", Improved and sending pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
                     + ", msgIndex = " + msgIndex);
 
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.flatModel);
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
 
             return new KeyValue<>(keyName, msg);
         }
@@ -287,7 +287,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.batchesRead = 0;
             String msgIndex = java.util.UUID.randomUUID().toString();
 
-            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.flatModel);
+            float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
+
+            WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
 
             return new KeyValue<>("current_weights", msg);
         }

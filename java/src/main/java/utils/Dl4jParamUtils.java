@@ -38,16 +38,23 @@ public class Dl4jParamUtils {
                                                     // specific order chosen by DL4J
     }
 
-    public static void updateModel(MultiLayerNetwork model, float[] flat) { // Deserialize model, from a float[] to a MultiLayerNetwork model object
-        if (flat.length != model.numParams()) {
-            throw new IllegalArgumentException(
-                "Expected " + model.numParams() + " params but got " + flat.length
-            );
-        }
-        model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
-                                                        // updateModel(...) mutates the existing MultiLayerNetwork object in place.
-    }                                                   // DL4J provides the serialization convention
+    //=====================================================================================================
 
+    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+        INDArray params = model.params();   // a pointer to the actual parameter buffer owned by that model
+        params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
+    }
+
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) { // Deserialize model, from a float[] to a MultiLayerNetwork model object
+    //     if (flat.length != model.numParams()) {
+    //         throw new IllegalArgumentException(
+    //             "Expected " + model.numParams() + " params but got " + flat.length
+    //         );
+    //     }
+    //     model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
+    //                                                     // updateModel(...) mutates the existing MultiLayerNetwork object in place.
+    // }                                                   // DL4J provides the serialization convention
+    // createFromArray => then every update step creates a new GPU buffer for params.
     //=====================================================================================================
     // Decode / Encode Model Number 2:
 
