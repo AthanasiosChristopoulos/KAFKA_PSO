@@ -469,6 +469,12 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Fully Informed seems to be slower, but converging more surely (its always improving)
  - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
     - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
+ - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
+
+## Premature congvergence: =========================================================
+ - Evolutionary operators such as selection, crossover, and mutation have been introduced to the PSO to increase the diversity of the population, and to
+improve the ability to escape local minima
+ - collision-avoiding mechanisms to prevent particles from moving too close to each other
 
 ## What to look at for training process: =========================================
 
