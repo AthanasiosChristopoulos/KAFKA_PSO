@@ -156,10 +156,9 @@ source ~/.venvs/dev/bin/activate	# do this for every project
 	- sudo systemctl status docker
 	
 
-## Helper Notes ==========================================================================================
+## Disks: ==========================================================================================
 
- - Disks:
- 	- lsblk
+ 	- lsblk	(figure out name of the drive, i.e. sda1)
 
 	- rsync -av --delete /home/ds123f15/Documents/vvv/ /media/ds123f15/4AC86F1FC86F0891/projects/vvv/
 
@@ -170,6 +169,12 @@ source ~/.venvs/dev/bin/activate	# do this for every project
 
 	- sudo mkdir -p /mnt/win_test
 	  sudo mount -o ro /dev/nvme0n1p3 /mnt/win_test
+
+	=============================================================================================================
+	- sudo apt update
+	  sudo apt install ntfs-3g
+	  sudo ntfsfix /dev/sda1
+	  sudo mount /dev/sda1 /mnt
 
 ## GPU ==========================================================================================
 

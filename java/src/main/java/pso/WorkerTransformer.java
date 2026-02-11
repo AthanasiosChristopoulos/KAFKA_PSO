@@ -237,6 +237,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             } else {
                 logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
                     ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
+
                 velocity = ws.psoUpdater.updateX(ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
             }
@@ -275,7 +276,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
 
-            return new KeyValue<>(keyName, msg);
+            return new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
         }
 
         // =========================================================================================================
@@ -325,6 +326,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private boolean isRingNeighbor(int self, int other, int radius, boolean includeSelf) {
+
         if (self == other) return includeSelf;
 
         int diff = Math.floorMod(other - self, N_WORKERS); 
@@ -343,7 +345,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log(taskInstance + ", readPBestStore: bestStore is null");
             return neighbors;
         }
-        
+
+        logger.log(taskInstance + ", pBest Weights: ");
+
         try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                                                 // this is GlobalKTable it will run for all of them
             while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
@@ -364,7 +368,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
 
-                logger.log(taskInstance + ", pBest Weights: " + msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
+                logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
                         ", with accuracy = " + msg.accuracy +  ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
             }
 
@@ -392,8 +396,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 return null;
             }
             
-            logger.log(taskInstance + ", pBest Weights: ");
-
             try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                                                     // this is GlobalKTable it will run for all of them
                 while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
@@ -421,15 +423,25 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     return null;
                 }
                 
-                logger.log(pBestMsg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + pBestMsg.accuracy + 
-                        ", with loss = " + pBestMsg.loss + ", with msgIndex: " + pBestMsg.msgIndex);
+                // logger.log(taskInstance + ", pBest Weights: " + pBestMsg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + pBestMsg.accuracy + 
+                //         ", with loss = " + pBestMsg.loss + ", with msgIndex: " + pBestMsg.msgIndex);
 
             } catch (Exception e) {
                 logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
                 e.printStackTrace();
             }
-
+            if (pBestMsg.loss < ws.local_gBestLoss) {
+                ws.local_gBestLoss = pBestMsg.loss;
+                ws.local_gBestAccuracy = pBestMsg.accuracy;
+            }
+            if (pBestMsg.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
+                ws.stats.setLastSeenGBestLoss(pBestMsg.loss);
+                logger.log(taskInstance + ", lBest updated !,  loss = " + pBestMsg.loss + ", acc = " + pBestMsg.accuracy);
+            }
+            
             return pBestMsg.weights;
+
+        // ===============================================================================================================================
 
         } else {
 
@@ -451,17 +463,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             float[] gBestWeights = best.weights;
-            
-            if(best.loss < ws.local_gBestLoss) {  // update ws.local_gBestAccuracy
-                ws.local_gBestLoss = best.loss;
-                ws.local_gBestAccuracy = best.accuracy;
-            }
-
             if (gBestWeights == null || gBestWeights.length == 0) {
                 logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
                 return null;
             }
 
+            if(best.loss < ws.local_gBestLoss) {  // update ws.local_gBestAccuracy
+                ws.local_gBestLoss = best.loss;
+                ws.local_gBestAccuracy = best.accuracy;
+            }
             if (best.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
                 ws.stats.setLastSeenGBestLoss(best.loss);
                 logger.log(taskInstance + ", gBest updated ! , with loss = " + best.loss + " and acc = " + best.accuracy);

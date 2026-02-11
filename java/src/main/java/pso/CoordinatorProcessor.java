@@ -184,6 +184,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         weightsBuffer.put(workerId, weights);
 
         // Run only if all workers have reported their position 
+        logger.log("Which worker Id have already sent: " + weightsBuffer.keySet() + ", weightsBuffer.size() : " + weightsBuffer.size());
+
         if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
         
             float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
