@@ -197,32 +197,3 @@ dos2unix run_streams.sh
 ./run_streams.sh --reset
 
 ```
-
-==============================================================================================
-## Local Version of PSO => Neighborhood based (Communication Topology)
-
- - Particles get information only from their own neighborhoods best => local_best instead of gBest.
- - Neighbors == Topological Neighbors (doesnt change during a run)
-    - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (lbest - X)
-    - Neighborhood PSO does not mean neighborhoods are disjoint clusters, they are cirularly dependent.
- - Topology:
-    - The population is arranged in a ring (particles == nodes in a ring), for example in 40 particles:
-        - 0 — 1 — 2 — 3 — 4 — 5 — ... — 39 — back to 0
-    - a neighborhood of six, or three topological neighbors on each side. means that particle_i has:
-        - i-3, i-2, i-1, i+1, i+2, i+3 as neighbors 
-        - Topologically, every particle has its own neighborhood and neighborhoods overlap heavily
-        - neighbors(i) = {i-3, i-2, i-1, i+1, i+2, i+3} mod P   # P == number of particles, this is a circle. Its length is the global parameter neighborhood size 
-    
-    - If particle i finds new pbest then only particles whose neighborhoods include i might update their lBest:
-        => this is because different particles always see different neighborhoods
-        => lBest_k = the best pBest among neighbors(k)
-        => Examples:    1) Particle 10 improves pBest, articles that may update 7, 8, 9, 11, 12, 13
-                        2) particle 9 => neighbors(9) = {6,7,8,10,11,12} recomputes lBest_9 = best( pBest_6, pBest_7, pBest_8, pBest_10, pBest_11, pBest_12 )
-
- - Number of Neighborhoods == 15% of the number of particles
-    - 40 particles => 40 * 0.15 = 6 Neighborhood size + Number of neighborhoods = 40 (once per particle)
-
- - PSO with a small neighborhood might perform better on complex problems, 
-   while PSO with a large neighborhood would perform better on simple problems
-    - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
- 

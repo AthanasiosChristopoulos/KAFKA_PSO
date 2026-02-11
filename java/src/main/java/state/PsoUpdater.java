@@ -357,6 +357,7 @@ public class PsoUpdater {
             inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
             // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
             socialVec[d]  = den_without_weight[d] * (Pm_d - ws.flatModel[d]); 
+                // accuracy decides direction (where Pm sits), but not step size
             velocity[d]   = inertiaVec[d] + socialVec[d];
         }
         // ===============================================================================

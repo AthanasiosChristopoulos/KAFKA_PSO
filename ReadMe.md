@@ -594,7 +594,44 @@ improve the ability to escape local minima
         - NN Datasets arent explicitly rotated, but neural nets locally behave like rotated problems, which is why stabilization matters more than rotation-invariance tricks. 
     - In practice, (1) performs much better
 
-## Neighborhood Best =========================================================
+==============================================================================================
+## Local Version of PSO => Neighborhood based (Communication Topology)
+
+ - Increasing neighborhood size deteriorates performance, the worst of FIPS is on ALL topologies:    
+    - The swarm behaves like a single mass + it becomes more prone to local minima => exploration decreases
+    - Too many pBests leads to direction being dilouted and the particles wont move coherently.
+    - **This effect gets worse as population size increases. Not Scalable** => The paper used 40 particles 
+    Neighborhood size controls the balance between:
+    - Exploitation (large neighborhoods)
+    - Exploration (small neighborhoods)
+ 
+ - ## Protocol:
+    - Particles get information only from their own neighborhoods best => local_best instead of gBest.
+    - Neighbors == Topological Neighbors (doesnt change during a run)
+        - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (lbest - X)
+        - Neighborhood PSO does not mean neighborhoods are disjoint clusters, they are cirularly dependent.
+    - Topology:
+        - The population is arranged in a ring (particles == nodes in a ring), for example in 40 particles:
+            - 0 — 1 — 2 — 3 — 4 — 5 — ... — 39 — back to 0
+        - a neighborhood of six, or three topological neighbors on each side. means that particle_i has:
+            - i-3, i-2, i-1, i+1, i+2, i+3 as neighbors 
+            - Topologically, every particle has its own neighborhood and neighborhoods overlap heavily
+            - neighbors(i) = {i-3, i-2, i-1, i+1, i+2, i+3} mod P   # P == number of particles, this is a circle. Its length is the global parameter neighborhood size 
+    
+    - If particle i finds new pbest then only particles whose neighborhoods include i might update their lBest:
+        => this is because different particles always see different neighborhoods
+        => lBest_k = the best pBest among neighbors(k)
+        => Examples:    1) Particle 10 improves pBest, articles that may update 7, 8, 9, 11, 12, 13
+                        2) particle 9 => neighbors(9) = {6,7,8,10,11,12} recomputes lBest_9 = best( pBest_6, pBest_7, pBest_8, pBest_10, pBest_11, pBest_12 )
+
+ - Number of Neighborhoods == 15% of the number of particles
+    - 40 particles => 40 * 0.15 = 6 Neighborhood size + Number of neighborhoods = 40 (once per particle)
+
+ - PSO with a small neighborhood might perform better on complex problems, 
+   while PSO with a large neighborhood would perform better on simple problems
+    - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
+ 
+## Neighborhood on Kafka =========================================================
 
  - Will not work in a Kafka / Kafka Streams setting, because:
  - shouldnt implement it the way it was designed it costs too much => Coordinator needs to send way more gBest (now lBest) messages, especially as the number of particles increases. Each particle would need to receive lBest messages just to reject them based on their ID.
@@ -620,8 +657,14 @@ improve the ability to escape local minima
         - In gBest, neighborhood size means how many other particles you can choose among, and the more there are, the better the one you pick is likely to be. 
         - In the fully informed neighborhood, however, all neighbors are a source of influence. Thus,
         neighborhood size determines how diverse your influences will be. This might be detrimental (search becomes detrimental).
-        x
+        
+More problems:
+ - Partition count of a broker is stable   
+ - Increasing partitions (manually) is allowed, but it changes (key, partition) mapping for new partitions
+ - Cant use “one partition per worker” as core design, since we need elastic workers (controlled via N_WORKERS)
+
 ## Fully Informed ===================================================================
+
  - In classic PSO, in neighborhood best, there is no assumption, that the best neighbor at time actually
 found a better region than the second or third best neighbors (they may not have gone deep enough to their corresponding regions yet).
  - This way, important information about the search space may be neglected through overemphasis on the single best neighbor.
@@ -629,7 +672,8 @@ found a better region than the second or third best neighbors (they may not have
  - 𝜑_k = φmax​/∣N∣, This is to keep the total expected acceleration roughly constant as neighborhood size changes.
     - N = number of neighbors, φ_k will the same coefficient applied equally to all neighborhoods
     - generally speaking you need to make the contribution of the social coefficient independent from number of particles and from N_WORKERS
-     
+    - might have improved handling of increased amount of workers
+
 ## ==================================================================================
 ## Functional Requirements: =========================================================
 
