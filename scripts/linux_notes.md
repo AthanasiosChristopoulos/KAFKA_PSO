@@ -175,6 +175,7 @@ source ~/.venvs/dev/bin/activate	# do this for every project
 	  sudo apt install ntfs-3g
 	  sudo ntfsfix /dev/sda1
 	  sudo mount /dev/sda1 /mnt
+	  sudo umount /mnt
 
 ## GPU ==========================================================================================
 
