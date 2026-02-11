@@ -51,6 +51,8 @@ public class BatchPrediction {
     private long end = System.nanoTime();
 
     private final boolean MODEL_IS_CNN;
+    private INDArray X4d;
+    private INDArray X2d;
     private INDArray X;
     private INDArray Xbuffer;
     private INDArray probs; 
@@ -163,99 +165,96 @@ public class BatchPrediction {
 
         // Forward Pass Start ===============================================================================
         start = System.nanoTime();
+        // ==============================================================================================================
+        // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
 
-        // INDArray X = Xbuffer.get(
-        //     NDArrayIndex.interval(0, nSamples),
-        //     NDArrayIndex.all(),
-        //     NDArrayIndex.all(),
-        //     NDArrayIndex.all()
-        // );
-        // // try {
-            
-        //     // The feature data is always serialized into a float[], it has no dimensionality. In case of image datasets, when using a CNN,
-        //     // we need to reshape() that float[] to the proper dimensionality (i.e. 28x28). Otherwise (else) this will remain a float[].
-        //     // each dataset has different image dimensionalities
+        if(MODEL_IS_CNN) {
+            if("cifar3".equals(DATASET)) {
 
-        //     if(MODEL_IS_CNN) {
-        //         if("cifar3".equals(DATASET)) {
+                X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
+                X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
 
-        //             X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
-        //             X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
+                // if(checked == false) {
+                //     float r = X4d.getFloat(0, 0, 0, 0);
+                //     float g = X4d.getFloat(0, 0, 0, 1);
+                //     float b = X4d.getFloat(0, 0, 0, 2);
+                //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
+                //     checked = true;
+                // }
 
-        //             // if(checked == false) {
-        //             //     float r = X4d.getFloat(0, 0, 0, 0);
-        //             //     float g = X4d.getFloat(0, 0, 0, 1);
-        //             //     float b = X4d.getFloat(0, 0, 0, 2);
-        //             //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
-        //             //     checked = true;
-        //             // }
+                // X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
+                X = X4d.permute(0, 3, 1, 2); 
 
-        //             // X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
-        //             X = X4d.permute(0, 3, 1, 2); 
+            } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
-        //         } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
+                X2d = Nd4j.create(data);          // [batch, 784]
+                X = X2d.reshape(X2d.size(0), 1, 28, 28);
+            }
 
-        //             X2d = Nd4j.create(data);          // [batch, 784]
-        //             X = X2d.reshape(X2d.size(0), 1, 28, 28);
+        } else {    // Normal dataset (no image) + no CNN used 
+            X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        }
+
+        logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
+
+        // ==============================================================================================================
+        // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
+        // Often much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
+        // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
+
+        // if (nSamples > EXPECTED_SIZE) {
+        //     logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+        //     System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+
+        //     nSamples = EXPECTED_SIZE;
+        // }
+
+        // for (int i = 0; i < nSamples; i++) {
+
+        //     float[] features = featureList.get(i);
+
+        //     if (MODEL_IS_CNN) {
+
+        //         if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+
+        //             // flatten 784 into 1x28x28
+        //             for (int j = 0; j < NUM_FEATURES; j++) {
+        //                 int row = j / 28;
+        //                 int col = j % 28;
+        //                 Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
+        //             }
+
+        //         } else if ("cifar3".equals(DATASET)) {
+
+        //             for (int j = 0; j < NUM_FEATURES; j++) {
+        //                 int channel = j / (32 * 32);
+        //                 int pixel = j % (32 * 32);
+        //                 int row = pixel / 32;
+        //                 int col = pixel % 32;
+
+        //                 Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+        //             }
         //         }
 
-        //     } else {    // Normal dataset (no image) + no CNN used 
-        //         X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        //     } else {
+        //         for (int j = 0; j < NUM_FEATURES; j++) {
+        //             Xbuffer.putScalar(i, j, features[j]);
+        //         }
         //     }
-
-        // logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
-
-        if (nSamples > EXPECTED_SIZE) {
-            logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
-            System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
-
-            nSamples = EXPECTED_SIZE;
-        }
-
-        for (int i = 0; i < nSamples; i++) {
-
-            float[] features = featureList.get(i);
-
-            if (MODEL_IS_CNN) {
-
-                if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
-
-                    // flatten 784 into 1x28x28
-                    for (int j = 0; j < NUM_FEATURES; j++) {
-                        int row = j / 28;
-                        int col = j % 28;
-                        Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
-                    }
-
-                } else if ("cifar3".equals(DATASET)) {
-
-                    for (int j = 0; j < NUM_FEATURES; j++) {
-                        int channel = j / (32 * 32);
-                        int pixel = j % (32 * 32);
-                        int row = pixel / 32;
-                        int col = pixel % 32;
-
-                        Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
-                    }
-                }
-
-            } else {
-                for (int j = 0; j < NUM_FEATURES; j++) {
-                    Xbuffer.putScalar(i, j, features[j]);
-                }
-            }
-        }
+        // }
         
-        if (nSamples == EXPECTED_SIZE) {
-            X = Xbuffer;
-        } else {
-            X = Xbuffer.get(
-                NDArrayIndex.interval(0, nSamples),
-                NDArrayIndex.all(),
-                NDArrayIndex.all(),
-                NDArrayIndex.all()
-            );
-        }
+        // if (nSamples == EXPECTED_SIZE) {
+        //     X = Xbuffer;
+        // } else {
+        //     X = Xbuffer.get(
+        //         NDArrayIndex.interval(0, nSamples),
+        //         NDArrayIndex.all(),
+        //         NDArrayIndex.all(),
+        //         NDArrayIndex.all()
+        //     );
+        // }
+
+        // ==============================================================================================================
 
         probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
                                                             // this is one forward pass per batch (has multiple samples)

@@ -88,6 +88,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private int bufferSizeAcc = 0;
 
+    private int[] neighborIds;                 // precomputed ids
+    private String[] neighborKeys;             // precomputed keys "pBestX"
+    private int ringRadius;                    // NEIGHBORHOOD_SIZE/2
+    private final float LOSS_INIT = 1e30f;
+
+
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t1) {
@@ -113,6 +119,20 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         this.control = CoordinatorControl.getInstance();
+    
+        this.ringRadius = Math.max(0, NEIGHBORHOOD_SIZE / 2);
+
+        // Build neighbor list only if neighborhoods enabled
+        if (ENABLE_NEIGHBORHOODS) {
+            this.neighborIds = computeRingNeighborIds(workerId, N_WORKERS, ringRadius, INCLUDE_SELF);
+            this.neighborKeys = new String[neighborIds.length];
+            for (int i = 0; i < neighborIds.length; i++) {
+                neighborKeys[i] = "pBest" + neighborIds[i];
+            }
+        } else {
+            this.neighborIds = null;
+            this.neighborKeys = null;
+        }
     }
 
     //=========================================================================================================================
@@ -337,6 +357,110 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
+    private static int[] computeNeighborIds(
+            int self,
+            int nWorkers,
+            int neighborhoodSize,
+            boolean includeSelf,
+            String topology
+    ) {
+        if (nWorkers <= 0) return new int[0];
+
+        String topo = (topology == null) ? "RING" : topology.trim().toUpperCase(Locale.ROOT);
+
+        switch (topo) {
+            case "USQUARE":
+            case "SQUARE":
+                return computeSquareNeighborIds(self, nWorkers, includeSelf);
+
+            case "RING":
+            default:
+                int radius = Math.max(0, neighborhoodSize / 2);
+                return computeRingNeighborIds(self, nWorkers, radius, includeSelf);
+        }
+    }
+
+    //=========================================================================================================================
+
+    private static int[] computeRingNeighborIds(int self, int nWorkers, int radius, boolean includeSelf) {
+        if (nWorkers <= 0) return new int[0];
+        if (radius <= 0) return includeSelf ? new int[]{ self } : new int[0];
+
+        // Ensure we don't request more unique neighbors than exist
+        radius = Math.min(radius, (nWorkers - 1) / 2);
+
+        int size = includeSelf ? (2 * radius + 1) : (2 * radius);
+        int[] ids = new int[size];
+        int idx = 0;
+
+        if (includeSelf) ids[idx++] = self;
+
+        for (int d = 1; d <= radius; d++) {
+            int left  = Math.floorMod(self - d, nWorkers);
+            int right = Math.floorMod(self + d, nWorkers);
+            ids[idx++] = left;
+            ids[idx++] = right;
+        }
+
+        return ids;
+    }
+
+    private static int[] computeRingNeighborIds(int self, int nWorkers, int radius, boolean includeSelf) {
+
+        if (nWorkers <= 0) return new int[0];
+        if (radius <= 0) {
+            return includeSelf ? new int[]{self} : new int[0];
+        }
+
+        int size = includeSelf ? (2 * radius + 1) : (2 * radius);
+        int[] ids = new int[size];
+        int idx = 0;
+
+        if (includeSelf) ids[idx++] = self;
+
+        for (int d = 1; d <= radius; d++) {
+            int left  = Math.floorMod(self - d, nWorkers);
+            int right = Math.floorMod(self + d, nWorkers);
+            ids[idx++] = left;
+            ids[idx++] = right;
+        }
+        return ids;
+    }
+
+    private static int[] computeSquareNeighborIds(int self, int nWorkers, boolean includeSelf) {
+        if (nWorkers <= 0) return new int[0];
+
+        int rows = (int) Math.floor(Math.sqrt(nWorkers));
+        int cols = rows;
+
+        // If not a perfect square, degrade gracefully to a rectangle
+        if (rows * cols != nWorkers) {
+            cols = (int) Math.ceil((double) nWorkers / rows);
+            // Now rows*cols may exceed nWorkers; we will map only valid ids via mod nWorkers
+            // (simple + stable)
+        }
+
+        int r = self / cols;
+        int c = self % cols;
+
+        int up    = Math.floorMod(r - 1, rows) * cols + c;
+        int down  = Math.floorMod(r + 1, rows) * cols + c;
+        int left  = r * cols + Math.floorMod(c - 1, cols);
+        int right = r * cols + Math.floorMod(c + 1, cols);
+
+        // Map back into [0, nWorkers) in case rows*cols > nWorkers
+        up    = Math.floorMod(up, nWorkers);
+        down  = Math.floorMod(down, nWorkers);
+        left  = Math.floorMod(left, nWorkers);
+        right = Math.floorMod(right, nWorkers);
+
+        if (includeSelf) {
+            return new int[]{ self, up, down, left, right };
+        } else {
+            return new int[]{ up, down, left, right };
+        }
+    }
+    //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
 
@@ -346,40 +470,54 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             logger.log(taskInstance + ", readPBestStore: bestStore is null");
             return neighbors;
         }
-
         logger.log(taskInstance + ", pBest Weights: ");
 
-        try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
-                                                                // this is GlobalKTable it will run for all of them
-            while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
-                                    // They have names: "pBest" + workerId
+        if(!ENABLE_NEIGHBORHOODS) {
+
+            try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
+                                                                    // this is GlobalKTable it will run for all of them
+                while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
+                                        // They have names: "pBest" + workerId
 
 
-                KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
-                WeightsMessage msg = entry.value.value(); 
-                if (msg == null || msg.weights == null || msg.weights.length == 0) {
-                    continue;
+                    KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
+                    WeightsMessage msg = entry.value.value(); 
+                    if (msg == null || msg.weights == null || msg.weights.length == 0) {
+                        continue;
+                    }
+
+                    float[] pBestArr = msg.weights;
+
+                    neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
+
+                    logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
+                            ", with accuracy = " + msg.accuracy +  ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
                 }
 
-                if (ENABLE_NEIGHBORHOODS && !isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2)) {
-                    continue;
-                }
 
-                float[] pBestArr = msg.weights;
-
-                neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
-
-                logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
-                        ", with accuracy = " + msg.accuracy +  ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
+            } catch (Exception e) {
+                logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
+                e.printStackTrace();
             }
 
+            return neighbors;
 
-        } catch (Exception e) {
-            logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
-            e.printStackTrace();
+        } else {    // for neighborhood, pick specific keyes
+
+            for (int i = 0; i < neighborKeys.length; i++) {
+                String key = neighborKeys[i];
+                ValueAndTimestamp<WeightsMessage> value_time = bestStore.get(key);
+                if (value_time == null) continue;
+
+                WeightsMessage msg = value_time.value();
+                if (msg == null || msg.weights == null || msg.weights.length == 0) continue;
+
+                neighbors.add(new NeighborPBest(msg.weights, msg.accuracy));
+            }
+
+            return neighbors;
+
         }
-
-        return neighbors;
     }
 
 
@@ -389,57 +527,43 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(ENABLE_NEIGHBORHOODS == true) {
 
-            float minLoss = 100000;
-            WeightsMessage pBestMsg = null; 
+                float minLoss = LOSS_INIT;
+                WeightsMessage bestMsg = null;
 
-            if (bestStore == null) {
-                logger.log(taskInstance + ", readPBestStore: bestStore is null");
-                return null;
-            }
-            
-            try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
-                                                                    // this is GlobalKTable it will run for all of them
-                while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
-                                        // They have names: "pBest" + workerId
-
-                    KeyValue<String, ValueAndTimestamp<WeightsMessage>> entry = it.next();
-                    WeightsMessage msg = entry.value.value(); 
-                    if (msg == null || msg.weights == null || msg.weights.length == 0) {
-                        continue;
-                    }
-
-                    if (!isRingNeighbor(workerId, msg.workerId, (int) NEIGHBORHOOD_SIZE / 2)) {
-                        continue;
-                    }
-
-                    if(minLoss > msg.loss) {
-                        minLoss = msg.loss;
-                        pBestMsg = msg;
-                    }
-
-                }
-
-                if(pBestMsg == null) {
+                if (neighborKeys == null || neighborKeys.length == 0) {
                     return null;
                 }
-                
-                // logger.log(taskInstance + ", pBest Weights: " + pBestMsg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + pBestMsg.accuracy + 
-                //         ", with loss = " + pBestMsg.loss + ", with msgIndex: " + pBestMsg.msgIndex);
+                if (bestStore == null) return null;
 
-            } catch (Exception e) {
-                logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
-                e.printStackTrace();
-            }
-            if (pBestMsg.loss < ws.local_gBestLoss) {
-                ws.local_gBestLoss = pBestMsg.loss;
-                ws.local_gBestAccuracy = pBestMsg.accuracy;
-            }
-            if (pBestMsg.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
-                ws.stats.setLastSeenGBestLoss(pBestMsg.loss);
-                logger.log(taskInstance + ", lBest updated !,  loss = " + pBestMsg.loss + ", acc = " + pBestMsg.accuracy);
-            }
-            
-            return pBestMsg.weights;
+                for (String key : neighborKeys) {
+                    ValueAndTimestamp<WeightsMessage> vat = bestStore.get(key);
+                    if (vat == null) continue;
+
+                    WeightsMessage msg = vat.value();
+                    if (msg == null || msg.weights == null || msg.weights.length == 0) continue;
+
+                    if (msg.loss < minLoss) {
+                        minLoss = msg.loss;
+                        bestMsg = msg;
+                    }
+                }
+
+                if (bestMsg == null) return null;
+
+                // Keep your stats updates
+                if (bestMsg.loss < ws.local_gBestLoss) {
+                    ws.local_gBestLoss = bestMsg.loss;
+                    ws.local_gBestAccuracy = bestMsg.accuracy;
+                }
+                if (bestMsg.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
+                    ws.stats.setLastSeenGBestLoss(bestMsg.loss);
+                    logger.log(taskInstance + ", pBest Weights: " + bestMsg.workerId + ")" + 
+                        Dl4jParamUtils.sampleFlat(bestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + bestMsg.accuracy + 
+                        ", with loss = " + bestMsg.loss + ", with msgIndex: " + bestMsg.msgIndex);
+                }
+
+                return bestMsg.weights;
+                
 
         // ===============================================================================================================================
 
@@ -494,7 +618,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         return Math.sqrt(sum) / Math.sqrt(a.length);
     }
-    
+
     //=========================================================================================================================
 
     private float[] computeMeanPBestFromStore() {

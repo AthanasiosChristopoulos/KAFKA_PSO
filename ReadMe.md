@@ -632,6 +632,8 @@ improve the ability to escape local minima
     - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
  - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
     - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => “U” prefix
+    - Ring is slower spread, square/von-Neumann spreads faster => Information flow speed (like a pBest spreads between the particles faster)
+    - Neighborhoodsize: {4, 6, 8}
 
 ## Neighborhood on Kafka =========================================================
 
