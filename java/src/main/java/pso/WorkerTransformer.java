@@ -94,6 +94,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private int ringRadius;                    // NEIGHBORHOOD_SIZE/2
     private final float LOSS_INIT = 1e30f;
 
+    private int consecutiveConvergence = 0;
+    private static final int CONSECUTIVE_CONVERGENCE_REQUIRED = 6;
 
     // ====================================================================================================================
     
@@ -329,6 +331,16 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
         );  // * 100 is for the user, just scale it upwards 
                 
+
+        if(checkConvergence(true, false)) {
+            consecutiveConvergence++;
+            if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
+                CoordinatorControl.getInstance().requestStop(workerId);
+            }
+        } else {
+            consecutiveConvergence = 0;
+        }
+
         end = System.nanoTime();
         sumElapsedNs += (end - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
                                         // Doesnt trigger when we are collecting a batch
@@ -657,6 +669,55 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
+    
+    private boolean checkConvergence(boolean stricter, boolean verbose) {
+
+            float[] center = null;
+
+            if (FULLY_INFORMED == false) {
+
+                center = readGBestStore();
+                if (center == null) {
+                    logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
+                    return false;
+                }
+
+            } else {
+
+                center = computeMeanPBestFromStore();
+                if (center == null) {
+                    logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
+                    return false;
+                }
+            }
+
+            double dist = normL2PerDim(ws.flatModel, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
+            double radius;
+            if(stricter) {
+                radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+            } else {
+                radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
+                    // The particle is converged if, on average, each weight differs from the center by 
+                    // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
+            }
+
+            boolean converged = dist <= radius;
+            if(verbose) {
+                logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
+                        + " radius = " + Dl4jParamUtils.round((float) radius, 4)
+                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
+                        + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+
+                System.out.println("[Worker " + workerId + "], Dist = " + String.format("%.4f", dist)
+                        + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
+                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
+                        + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+            }
+
+            return converged;
+    }
+
+    //=========================================================================================================================
 
     @Override
     public void close() {
@@ -677,42 +738,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Report on convergence: ==============================================================
 
         if(ws.printedReport == false) {
+
             logger.log("Report ============================================================");
-            float[] center = null;
 
-            if (FULLY_INFORMED == false) {
-
-                center = readGBestStore();
-                if (center == null) {
-                    logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
-                    return;
-                }
-
-            } else {
-
-                center = computeMeanPBestFromStore();
-                if (center == null) {
-                    logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
-                    return;
-                }
-            }
-
-            double dist = normL2PerDim(ws.flatModel, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
-            double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
-                // The particle is converged if, on average, each weight differs from the center by 
-                // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
-
-            boolean converged = dist <= radius;
-
-            logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
-                    + " radius = " + Dl4jParamUtils.round((float) radius, 4)
-                    + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
-                    + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
-
-            System.out.println("[Worker " + workerId + "], Dist = " + String.format("%.4f", dist)
-                    + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
-                    + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
-                    + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
+            checkConvergence(false, true);
 
             if(countForwardPass != 0) {
                 logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
