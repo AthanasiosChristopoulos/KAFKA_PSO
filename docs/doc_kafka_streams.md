@@ -86,26 +86,29 @@ But when caching is disabled:
 ============================================================================
 ## KTable vs GlobalKTable:
 
-A KTable is partitioned across instances of the same Streams application.
-    => Each Kafka Streams Instance must have the same application ID to be considered the same application
-    => No single Instance sees the full KTable
+Each Kafka Streams Instance must have the same application ID to be considered the same application
 
-In a GlobalKTable (still keeps only the latest value per key):
-    => Every instance of the application gets all partitions of the topic, and keeps a full copy of the table in a local state store.
+A KTable is partitioned across instances of the same Streams application.
+    => keeps only the latest value per key (core functionality)
+    => Each Instance stores only the keys for the partitions it owns (in the same application ID, every instance sees different partitions).
+    => No single Instance sees the full KTable
+    => If one topic has only 1 partition, then KTable ≈ GlobalKTable, since every Kafka Streams instance will get the same full KTable data
+
+In a GlobalKTable (still performs the same core functionality, but):
+    => Every Instance of the application gets all partitions of the topic and keeps a full copy of the table in a local state store.
         => An application (identified by a unique application.id) still keeps a local copy of the GlobalKTable 
-        => Each application will build it own State Store
+        => Each application will build it own State Store / own GlobalKTable
 
     => Make every Streams instance consume all partitions of the INPUT_TOPIC into that store.
     => They don’t participate in Kafka Streams task scheduling
         => They dont create a task
-        => They run a dedicated internal consumer thread (is separate from the stream threads.)
+        => They run a dedicated internal consumer thread (is separate from the stream threads)
 
 ## Why I use GlobalKTable:
  - To effectively perform parallelization using an additional thread. 
  - I cant do this with normal stream threads since state store is shared and topology cant be split into subtopologies
  - GlobalKTable creates its own independent subtopology, since the StateStore is instance independent, there is no dependency:
     => then Kafka Streams can split the topologies
-
 
 ============================================================================
 ## Processor API:

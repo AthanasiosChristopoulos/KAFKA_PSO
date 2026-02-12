@@ -42,6 +42,7 @@ public class Worker implements Runnable {
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
     private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
+    public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
 
     private String stateStoreName;
     private String keyName;
@@ -76,12 +77,20 @@ public class Worker implements Runnable {
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 
         Properties props = new Properties();
+        String applicationID;
+        if (INDEPENDENT_WORKER_DATA_PROCESSING) {
+            applicationID = "pso-worker-" + workerId + "_" + RUN_ID;
+        } else {
+            applicationID = "pso-worker-_" + RUN_ID;
+        }
 
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationID);
         // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);     // different group Id, processing of the same data
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + "_" + RUN_ID);        // same group Id, parallel processing
+        // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + "_" + RUN_ID);        // same group Id, parallel processing
+       
         props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams-" + RUN_ID + "-worker-" + workerId);
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "pso-worker-" + workerId + "-RUN-" + RUN_ID);
-            // Kafka Streams this that client id as a prefix when naming its threads,
+            // Kafka Streams uses this that client id as a prefix when naming its threads,
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -102,21 +111,18 @@ public class Worker implements Runnable {
         if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
 
             GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
-                PBEST_WEIGHTS_TOPIC,
+                PBEST_WEIGHTS_TOPIC,    // messages from this are keyed differently for every worker
                 Consumed.with(Serdes.String(), weightsSerde),
                 Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
                     .withKeySerde(Serdes.String())
                     .withValueSerde(weightsSerde)
             );
-            // .peek((key, value) -> {
-            //     logger.log("New pBest with accuracy: " + value.accuracy + ", and loss: " + value.loss 
-            //         + ", and weights: " + Dl4jParamUtils.sampleFlat(value.weights, SAMPLING_CONSTANT));
-            // });
 
         } else {
             
             GlobalKTable<String, WeightsMessage> gBestTable = builder.globalTable(
-                GLOBAL_WEIGHTS_TOPIC,
+                GLOBAL_WEIGHTS_TOPIC,   // messages from this have the same key, "gBest",
+                                        // we get only overwrites of gBest there is only one gBest
                 Consumed.with(Serdes.String(), weightsSerde),
                 Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
                     .withKeySerde(Serdes.String())

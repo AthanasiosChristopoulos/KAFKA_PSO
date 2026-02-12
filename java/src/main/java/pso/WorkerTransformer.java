@@ -358,7 +358,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
-    private static int[] computeNeighborIds(int workerId, int nWorkers, int neighborhoodSize, boolean includeSelf,String topology) {
+    private static int[] computeNeighborIds(int workerId, int nWorkers, int ringRadious, boolean includeSelf,String topology) {
         if (nWorkers <= 0) return new int[0];
 
         switch (topology) {
@@ -367,7 +367,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             case "ring":
             default:
-                return computeRingNeighborIds(workerId, nWorkers, neighborhoodSize / 2, includeSelf);
+                return computeRingNeighborIds(workerId, nWorkers, ringRadious, includeSelf);
         }
     }
 
@@ -460,7 +460,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(!ENABLE_NEIGHBORHOODS) {
 
             try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
-                                                                    // this is GlobalKTable it will run for all of them
+                                        // this is GlobalKTable it will run for all of them
                 while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
                                         // They have names: "pBest" + workerId
 
@@ -615,6 +615,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private float[] computeMeanPBestFromStore() {
+        // this has nothing to do with converging in the neighborhood
+        // convergence is global this is why we use bestStore.all()
 
         if (bestStore == null) {
             logger.log(taskInstance + ", [Convergence] bestStore is null");
@@ -641,6 +643,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 for (int i = 0; i < w.length; i++) sum[i] += w[i];
                 n++;
             }
+
         } catch (Exception e) {
             logger.log(taskInstance + ", [Convergence] error while reading pBest store: " + e.getMessage());
             return null;
@@ -674,6 +677,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Report on convergence: ==============================================================
 
         if(ws.printedReport == false) {
+            logger.log("Report ============================================================");
             float[] center = null;
 
             if (FULLY_INFORMED == false) {
@@ -714,7 +718,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
             }            
 
-            logger.log("neighborKeys: " + neighborKeys.toString());
+            logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
             ws.printedReport = true;
         }
 

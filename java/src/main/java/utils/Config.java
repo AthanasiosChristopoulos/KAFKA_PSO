@@ -67,6 +67,8 @@ public class Config {
     public final boolean INCLUDE_SELF;
     public final String NEIGHBORHOOD_TOPOLOGY;
 
+    public final boolean INDEPENDENT_WORKER_DATA_PROCESSING;
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -169,7 +171,7 @@ public class Config {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
             System.out.println("Neighborhood Best Run");
         }
-        
+
         this.W_INERTIA_START = Float.parseFloat(getenv(dotenv, "W_INERTIA_START", "0.9"));
         this.W_INERTIA_END = Float.parseFloat(getenv(dotenv, "W_INERTIA_END", "0.4"));
         this.ADAPTIVE_INERTIA = Boolean.parseBoolean(getenv(dotenv, "ADAPTIVE_INERTIA", "false"));
@@ -213,6 +215,8 @@ public class Config {
         this.NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
         this.INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
         this.NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
+
+        this.INDEPENDENT_WORKER_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_WORKER_DATA_PROCESSING", "false"));
 
     }
 

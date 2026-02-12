@@ -26,6 +26,7 @@ public class PsoUpdater {
     private final int N_WORKERS = cfg.N_WORKERS;
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     public final boolean SIMULATED_ANNEALING = cfg.SIMULATED_ANNEALING;
+    public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
 
     private final float C1_START = cfg.C1; 
     private final float C1_END = 0.2f;
@@ -33,8 +34,9 @@ public class PsoUpdater {
     private int iter = 0;
     private final int MAX_ITERS = 500;
     private final int NUM_SAMPLES = cfg.NUM_SAMPLES;
-    private final int MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * TRAIN_SIZE); // expected max updates (for clamping)
-    private final int C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
+    private final int MAX_PSO_UPDATES; // expected max updates (for clamping)
+
+    private final int C1_MID_UPDATE;
     private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly C1 drops between 600±100” → around 500–700
 
     private final float VMAX;    
@@ -94,6 +96,13 @@ public class PsoUpdater {
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
+
+        if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
+            MAX_PSO_UPDATES = NUM_SAMPLES / TRAIN_SIZE;
+        } else {
+            MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * TRAIN_SIZE);
+        }
+        C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
 
         logger.log("PsoUpdater: Number of weights (dimensionality): " + dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
