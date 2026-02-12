@@ -195,7 +195,7 @@ public class BatchPrediction {
             X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
         }
 
-        logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
+        // logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
 
         // ==============================================================================================================
         // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms

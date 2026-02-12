@@ -76,7 +76,8 @@ if [[ "$1" != "--debug" ]]; then
         docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
             --bootstrap-server "$BOOTSTRAP" \
             --create --topic "$topic" \
-            --partitions 1 --if-not-exists
+            --partitions 1 --if-not-exists  # this 1 could be N_WORKERS so this would work with 
+                                            # the exact partitions (1 partition per worker)
     done
 
     echo Executing ...

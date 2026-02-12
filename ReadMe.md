@@ -635,6 +635,34 @@ improve the ability to escape local minima
     - Ring is slower spread, square/von-Neumann spreads faster => Information flow speed (like a pBest spreads between the particles faster)
     - Neighborhoodsize: {4, 6, 8}
 
+the goal is to reduce the total amount of messages being sent and received 
+a worker might with N_WORKERS = 40 receive 40 messages only to drop the 35 ...
+
+the solution you are proposing is hard but seems to solve the problem but it only creates a bigger on ... now the Router needs to send a bunch of messages, lets say Neighborhood size = 6. It needs to sends 6 for each different worker (we will have 1 partition per workerisnt this what you are proposing ?) thats sending 6 * 40 messages ...
+
+Current (GlobalKTable “broadcast-like”)
+    Each pBest update is seen by every worker:
+    Produced: N
+    Consumed (deliveries): N * N = N² (N Workers consume N messages. Holistically)
+N = 40 => 1640 deliveries
+N = 10 => 110 deliveries
+
+Router fanout (targeted)
+    Each pBest update is forwarded only to the workers that need it. K == Neighborhood size = 6
+    Produced by workers: N
+    Produced by router: N * K
+    Consumed by workers: N * K
+N = 40 => 520 deliveries
+N = 10 => 130 deliveries
+! Problem: Kafka doesn’t “know workerId”; it assigns partitions to consumers.
+    - You cannot do consumer.assign() (manual assignment) inside Kafka Streams. You can in a plain Kafka Consumer. This means a worker cant decide which partitions to subscribe to.
+    - You can choose to which partition to send to (by keyes) but not which Kafka Streams instance receives from what partition / gets assigned to what partition
+
+Worker fanout (targeted) - Without the router, just have worker make K-duplicates 
+    Produced by workers: N * K
+    Consumed by workers: N * K
+    => this saves on some stuff, but makes workers do more work + Router better for diplomatiki
+
 ## Neighborhood on Kafka =========================================================
 
  - Will not work in a Kafka / Kafka Streams setting, because:

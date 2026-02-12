@@ -358,24 +358,23 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
-    private static int[] computeNeighborIds(int self, int nWorkers, int neighborhoodSize, boolean includeSelf,String topology) {
+    private static int[] computeNeighborIds(int workerId, int nWorkers, int neighborhoodSize, boolean includeSelf,String topology) {
         if (nWorkers <= 0) return new int[0];
 
         switch (topology) {
             case "square":
-                return computeSquareNeighborIds(self, nWorkers, includeSelf);
+                return computeSquareNeighborIds(workerId, nWorkers, includeSelf);
 
             case "ring":
             default:
-                int radius = Math.max(0, neighborhoodSize / 2);
-                return computeRingNeighborIds(self, nWorkers, radius, includeSelf);
+                return computeRingNeighborIds(workerId, nWorkers, neighborhoodSize / 2, includeSelf);
         }
     }
 
     //=========================================================================================================================
 
-    private static int[] computeRingNeighborIds(int self, int nWorkers, int radius, boolean includeSelf) {
-        if (radius <= 0) return includeSelf ? new int[]{ self } : new int[0];
+    private static int[] computeRingNeighborIds(int workerId, int nWorkers, int radius, boolean includeSelf) {
+        if (radius <= 0) return includeSelf ? new int[]{ workerId } : new int[0];
 
         // Ensure we don't request more unique neighbors than exist
         radius = Math.min(radius, (nWorkers - 1) / 2);
@@ -384,11 +383,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         int[] ids = new int[size];
         int idx = 0;
 
-        if (includeSelf) ids[idx++] = self;
+        if (includeSelf) ids[idx++] = workerId;
 
         for (int d = 1; d <= radius; d++) {
-            int left  = Math.floorMod(self - d, nWorkers);
-            int right = Math.floorMod(self + d, nWorkers);
+            int left  = Math.floorMod(workerId - d, nWorkers);
+            int right = Math.floorMod(workerId + d, nWorkers);
             ids[idx++] = left;
             ids[idx++] = right;
         }
@@ -398,7 +397,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //===================================================================================
 
-    private static int[] computeSquareNeighborIds(int self, int nWorkers, boolean includeSelf) {
+    private static int[] computeSquareNeighborIds(int workerId, int nWorkers, boolean includeSelf) {
         // each node talks to its 4 von-Neumann neighbors (up/down/left/right).
 
         int rows = (int) Math.floor(Math.sqrt(nWorkers));   // √N_WORKERS × √N_WORKERS torus grid (2D)
@@ -409,14 +408,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             cols = (int) Math.ceil((double) nWorkers / rows); // Now rows*cols may exceed nWorkers;
         }
 
-        int r = self / cols;
-        int c = self % cols;
+        // This converts a linear index (workerId) into 2D grid coordinates.
+        int row = workerId / cols;
+        int col = workerId % cols;
 
         // these should translate into worker IDs - if they dont we need to mod with nWorkers:
-        int up    = Math.floorMod(r - 1, rows) * cols + c;
-        int down  = Math.floorMod(r + 1, rows) * cols + c;
-        int left  = r * cols + Math.floorMod(c - 1, cols);
-        int right = r * cols + Math.floorMod(c + 1, cols);
+        int up    = Math.floorMod(row - 1, rows) * cols + col;
+        int down  = Math.floorMod(row + 1, rows) * cols + col;
+        int left  = row * cols + Math.floorMod(col - 1, cols);
+        int right = row * cols + Math.floorMod(col + 1, cols);
 
         up = Math.floorMod(up, nWorkers);   // Map back into [0, nWorkers) in case rows*cols > nWorkers
         down = Math.floorMod(down, nWorkers);
@@ -424,15 +424,30 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         right = Math.floorMod(right, nWorkers);
 
         if (includeSelf) {
-            return new int[]{ self, up, down, left, right };
+            return new int[]{ workerId, up, down, left, right };
         } else {
             return new int[]{ up, down, left, right };
         }
     }
-    
+    // If N_WORKERS = 16, rows = 4, cols = 4
+    // maps workerId to the grid, int row = workerId / cols; int col = workerId % cols;
+    // Row 0:   0   1   2   3
+    // Row 1:   4   5   6   7
+    // Row 2:   8   9  10  11
+    // Row 3:  12  13  14  15
+    // id = r * cols + c
+    // stuff like Math.floorMod(row - 1, rows) is used to wrap around the grid so as to:
+        // neighbors for 0 => {12, 4, 3, 1}
+
+    // If N_WORKERS = 10, do a rectangle, rows = 3, cols = 4  
+    // r=0:  0  1  2  3
+    // r=1:  4  5  6  7
+    // r=2:  8  9 10 11 
+    // If you get an id of 10, 11, then it automatically becomes a 0, 1 respectively
     //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
+        logger.log(taskInstance + ", readPBestStore: bestStore is null");
 
         List<NeighborPBest> neighbors = new ArrayList<>();
 
@@ -456,12 +471,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                         continue;
                     }
 
-                    float[] pBestArr = msg.weights;
+                    neighbors.add(new NeighborPBest(msg.weights, msg.accuracy));
 
-                    neighbors.add(new NeighborPBest(pBestArr, msg.accuracy));
-
-                    logger.log(msg.workerId + ")" + Dl4jParamUtils.sampleFlat(pBestArr, SAMPLING_CONSTANT) + 
-                            ", with accuracy = " + msg.accuracy +  ", with loss = " + msg.loss + ", with msgIndex: " + msg.msgIndex);
+                    logger.log(msg.workerId + ")" + 
+                            Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
+                            ", with accuracy = " + msg.accuracy +  ", with loss = " + 
+                            msg.loss + ", with msgIndex: " + msg.msgIndex
+                    );
                 }
 
 
@@ -483,6 +499,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 if (msg == null || msg.weights == null || msg.weights.length == 0) continue;
 
                 neighbors.add(new NeighborPBest(msg.weights, msg.accuracy));
+
+                logger.log(msg.workerId + ")" + 
+                        Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
+                        ", with accuracy = " + msg.accuracy +  ", with loss = " +   
+                        msg.loss + ", with msgIndex: " + msg.msgIndex
+                );
+                        
             }
 
             return neighbors;
