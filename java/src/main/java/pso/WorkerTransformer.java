@@ -39,6 +39,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
     public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
+    public final String NEIGHBORHOOD_TOPOLOGY = cfg.NEIGHBORHOOD_TOPOLOGY;
 
     private ProcessorContext context;
 
@@ -124,7 +125,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // Build neighbor list only if neighborhoods enabled
         if (ENABLE_NEIGHBORHOODS) {
-            this.neighborIds = computeRingNeighborIds(workerId, N_WORKERS, ringRadius, INCLUDE_SELF);
+            this.neighborIds = computeNeighborIds(workerId, N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
             this.neighborKeys = new String[neighborIds.length];
             for (int i = 0; i < neighborIds.length; i++) {
                 neighborKeys[i] = "pBest" + neighborIds[i];
@@ -357,23 +358,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
-    private static int[] computeNeighborIds(
-            int self,
-            int nWorkers,
-            int neighborhoodSize,
-            boolean includeSelf,
-            String topology
-    ) {
+    private static int[] computeNeighborIds(int self, int nWorkers, int neighborhoodSize, boolean includeSelf,String topology) {
         if (nWorkers <= 0) return new int[0];
 
-        String topo = (topology == null) ? "RING" : topology.trim().toUpperCase(Locale.ROOT);
-
-        switch (topo) {
-            case "USQUARE":
-            case "SQUARE":
+        switch (topology) {
+            case "square":
                 return computeSquareNeighborIds(self, nWorkers, includeSelf);
 
-            case "RING":
+            case "ring":
             default:
                 int radius = Math.max(0, neighborhoodSize / 2);
                 return computeRingNeighborIds(self, nWorkers, radius, includeSelf);
@@ -383,7 +375,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private static int[] computeRingNeighborIds(int self, int nWorkers, int radius, boolean includeSelf) {
-        if (nWorkers <= 0) return new int[0];
         if (radius <= 0) return includeSelf ? new int[]{ self } : new int[0];
 
         // Ensure we don't request more unique neighbors than exist
@@ -405,53 +396,31 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         return ids;
     }
 
-    private static int[] computeRingNeighborIds(int self, int nWorkers, int radius, boolean includeSelf) {
-
-        if (nWorkers <= 0) return new int[0];
-        if (radius <= 0) {
-            return includeSelf ? new int[]{self} : new int[0];
-        }
-
-        int size = includeSelf ? (2 * radius + 1) : (2 * radius);
-        int[] ids = new int[size];
-        int idx = 0;
-
-        if (includeSelf) ids[idx++] = self;
-
-        for (int d = 1; d <= radius; d++) {
-            int left  = Math.floorMod(self - d, nWorkers);
-            int right = Math.floorMod(self + d, nWorkers);
-            ids[idx++] = left;
-            ids[idx++] = right;
-        }
-        return ids;
-    }
+    //===================================================================================
 
     private static int[] computeSquareNeighborIds(int self, int nWorkers, boolean includeSelf) {
-        if (nWorkers <= 0) return new int[0];
+        // each node talks to its 4 von-Neumann neighbors (up/down/left/right).
 
-        int rows = (int) Math.floor(Math.sqrt(nWorkers));
+        int rows = (int) Math.floor(Math.sqrt(nWorkers));   // √N_WORKERS × √N_WORKERS torus grid (2D)
         int cols = rows;
-
+        
         // If not a perfect square, degrade gracefully to a rectangle
         if (rows * cols != nWorkers) {
-            cols = (int) Math.ceil((double) nWorkers / rows);
-            // Now rows*cols may exceed nWorkers; we will map only valid ids via mod nWorkers
-            // (simple + stable)
+            cols = (int) Math.ceil((double) nWorkers / rows); // Now rows*cols may exceed nWorkers;
         }
 
         int r = self / cols;
         int c = self % cols;
 
+        // these should translate into worker IDs - if they dont we need to mod with nWorkers:
         int up    = Math.floorMod(r - 1, rows) * cols + c;
         int down  = Math.floorMod(r + 1, rows) * cols + c;
         int left  = r * cols + Math.floorMod(c - 1, cols);
         int right = r * cols + Math.floorMod(c + 1, cols);
 
-        // Map back into [0, nWorkers) in case rows*cols > nWorkers
-        up    = Math.floorMod(up, nWorkers);
-        down  = Math.floorMod(down, nWorkers);
-        left  = Math.floorMod(left, nWorkers);
+        up = Math.floorMod(up, nWorkers);   // Map back into [0, nWorkers) in case rows*cols > nWorkers
+        down = Math.floorMod(down, nWorkers);
+        left = Math.floorMod(left, nWorkers);
         right = Math.floorMod(right, nWorkers);
 
         if (includeSelf) {
@@ -460,6 +429,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return new int[]{ up, down, left, right };
         }
     }
+    
     //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore

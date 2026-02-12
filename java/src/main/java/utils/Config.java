@@ -65,6 +65,7 @@ public class Config {
     public final boolean ENABLE_NEIGHBORHOODS;
     public final int NEIGHBORHOOD_SIZE; 
     public final boolean INCLUDE_SELF;
+    public final String NEIGHBORHOOD_TOPOLOGY;
 
     public Config() {
         
@@ -163,10 +164,12 @@ public class Config {
 
         if(this.FULLY_INFORMED == true) {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_FULLY", "0.9"));
-
+            System.out.println("Fully Informed Run");
         } else {
             this.W_INERTIA = Float.parseFloat(getenv(dotenv, "W_INERTIA_G_BEST", "0.7"));
+            System.out.println("Neighborhood Best Run");
         }
+        
         this.W_INERTIA_START = Float.parseFloat(getenv(dotenv, "W_INERTIA_START", "0.9"));
         this.W_INERTIA_END = Float.parseFloat(getenv(dotenv, "W_INERTIA_END", "0.4"));
         this.ADAPTIVE_INERTIA = Boolean.parseBoolean(getenv(dotenv, "ADAPTIVE_INERTIA", "false"));
@@ -196,7 +199,7 @@ public class Config {
             this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 4;
         }
-        
+
         this.SIMULATED_ANNEALING = Boolean.parseBoolean(getenv(dotenv, "SIMULATED_ANNEALING", "false"));
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
@@ -209,6 +212,7 @@ public class Config {
         this.ENABLE_NEIGHBORHOODS = Boolean.parseBoolean(getenv(dotenv, "ENABLE_NEIGHBORHOODS", "false"));
         this.NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
         this.INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
+        this.NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
 
     }
 

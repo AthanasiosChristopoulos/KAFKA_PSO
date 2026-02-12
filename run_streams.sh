@@ -45,7 +45,6 @@ if [[ "$1" != "--debug" ]]; then
     BOOTSTRAP="localhost:9092"
 
     if [[ "$FULLY_INFORMED" == "true" || "$ENABLE_NEIGHBORHOODS" == "true" ]]; then
-        echo "Fully Informed Run"
         TOPICS=(
             "$PBEST_WEIGHTS_TOPIC"
         )
@@ -59,7 +58,6 @@ if [[ "$1" != "--debug" ]]; then
         )
 
     else
-        echo "Neighborhood Best Run"
         TOPICS=(
             # "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"
