@@ -637,10 +637,19 @@ improve the ability to escape local minima
  - PSO with a small neighborhood might perform better on complex problems, 
    while PSO with a large neighborhood would perform better on simple problems
     - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
- - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
-    - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => “U” prefix
-    - Ring is slower spread, square/von-Neumann spreads faster => Information flow speed (like a pBest spreads between the particles faster)
-    - Neighborhoodsize: {4, 6, 8}
+ - Topology Comparison:
+    - All: 
+        - Basically disabling Neighborhoods
+    - Ring:
+        - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
+        - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => “U” prefix
+        - Ring has slower spread of information, it has higher average distance (average number of edges between two nodes in neighborhood graph)
+        - Expected Neighborhoodsize: {4, 6, 8}
+    - Square/von-Neumann Topology spreads faster 
+        - Information flow speed (like how quickly a pBest spreads) is higher, Information spreads between the particles faster
+        - Neighborhoodsize: 4
+        - good in-between Ring vs All 
+            
 
 - gBest vs pBest:
     - In gBest, neighborhood size means how many other particles you can choose among, and the more there are, the better the one you pick is likely to be. 
@@ -707,7 +716,6 @@ Worker fanout (targeted) - Without the router, just have worker make K-duplicate
     => this saves on some stuff, but makes workers do more work + Router better for diplomatiki
 
 Potential Solution => Create a variable amount of topics, one per worker ... (insane)
-
 
 ## Fully Informed ===================================================================
 
@@ -788,6 +796,7 @@ found a better region than the second or third best neighbors (they may not have
         - <code>nvidia-smi -q</code>  // see gpu specs
         
 # htop Alternatives for GPU: ==========================================================
+
 ```bash
 nvidia-smi	# Confirm if it was successfully installed
 watch -n 0.5 nvidia-smi

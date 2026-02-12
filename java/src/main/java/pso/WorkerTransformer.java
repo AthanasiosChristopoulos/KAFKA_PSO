@@ -339,7 +339,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             consecutiveConvergence++;
             if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
                 logger.log("Closed, because determined convergence");
-                System.out.println("Worker [" + workerId + "] Closed, because determined convergence");
+                System.out.println("[Worker " + workerId + "] Closed, because determined convergence");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
         } else {
@@ -701,7 +701,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             // ==========================================================================================================
             double radius;
             if(stricter) {
-                radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+                radius = 1 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
             } else {
                 radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
                     // The particle is converged if, on average, each weight differs from the center by 

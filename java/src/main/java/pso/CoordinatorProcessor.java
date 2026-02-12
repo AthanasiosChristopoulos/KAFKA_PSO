@@ -259,7 +259,25 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
             control.setBestTrainingAccuracy(bestTrainingAccuracy);
 
-            weightsBuffer.clear();
+            //=================================================================================
+            // weightsBuffer.clear();
+            //=================================================================================
+            // for(int workerId = weightsBuffer.keyes; i++) {
+            //     if(control.isStopRequested(workerId) == false) {
+            //         weightsBuffer[i].remove();
+            //     } 
+            // }
+            //=================================================================================
+            weightsBuffer.entrySet().removeIf(e -> {
+                int wid;
+                try {
+                    wid = Integer.parseInt(e.getKey());
+                } catch (NumberFormatException ex) {
+                    return true;
+                }
+                return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
+            });
+            //=================================================================================
         } 
     }
 
