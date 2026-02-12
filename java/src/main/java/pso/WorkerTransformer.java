@@ -335,6 +335,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(checkConvergence(true, false)) {
             consecutiveConvergence++;
             if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
+                logger.log("Closed, because determined convergence");
+                System.out.println("Worker [" + workerId + "] Closed, because determined convergence");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
         } else {
