@@ -223,6 +223,18 @@ sudo reboot
 
 ```
 
+# Firefox: =====================================================================================
+Remove bottom left panel showing the URL:
+```bash
+nano ~/snap/firefox/common/.mozilla/firefox/r382k5vg.default/chrome/userChrome.css
+```
+```css
+#statuspanel {
+display: none !important;
+}
+```
+
+
 # Performance stuff: =====================================================================================
 
 Create a systemd service

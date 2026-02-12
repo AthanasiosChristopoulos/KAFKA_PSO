@@ -697,14 +697,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             double dist = normL2PerDim(ws.flatModel, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
-            double radius;
-            if(stricter) {
-                radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
-            } else {
-                radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
-                    // The particle is converged if, on average, each weight differs from the center by 
-                    // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
-            }
+            // double radius;
+            // if(stricter) {
+            //     radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+            // } else {
+            //     radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
+            //         // The particle is converged if, on average, each weight differs from the center by 
+            //         // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
+            // }
+
+            double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
+                // The particle is converged if, on average, each weight differs from the center by 
+                // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
 
             boolean converged = dist <= radius;
             if(verbose) {

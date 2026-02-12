@@ -462,7 +462,7 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
 
  - change model
  - change constants => velocity, inertia, C1, C2
- - increase the number of children
+ - increase the number of input data, more batches means more steps / updates  
  - look how velocity amplitude behaves
     - velocity show always start big and then becose smaller
  - Fully Informed seems to be slower, but converging more surely (its always improving)
