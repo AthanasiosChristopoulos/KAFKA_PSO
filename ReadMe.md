@@ -605,7 +605,9 @@ improve the ability to escape local minima
 
  - Neighborhood size controls the balance between:
     - Exploitation (large neighborhoods)
-    - Exploration (small neighborhoods)
+    - Exploration (small neighborhoods - decreased neighborhood size):
+        - With decreased neighborhood size / scope of a particle, there is a delay in the information spread through the graph.
+        - Less convergence, more randmoness exploration
 
  - Particles that are acquainted to one another (in the same Neighborhood) tend to explore the same region of the search space (lower level search). Neighborhood topology affects also relationships between neighborhood (higher level search)
  -
