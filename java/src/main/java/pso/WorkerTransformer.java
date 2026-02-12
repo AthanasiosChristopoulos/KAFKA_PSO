@@ -167,7 +167,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, DataMessage value) {
-
+        
+        if(CoordinatorControl.getInstance().isStopRequested(workerId)) {
+            return null;
+        }
         start = System.nanoTime();
 
         if (!printedOffset) {
