@@ -654,7 +654,8 @@ Router fanout (targeted)
     Consumed by workers: N * K
 N = 40 => 520 deliveries
 N = 10 => 130 deliveries
-! Problem: Kafka doesn’t “know workerId”; it assigns partitions to consumers.
+! Problem: Kafka doesn’t “know workerId”; it assigns partitions to consumers:
+    - Kafka Streams uses consumer group assignment / protocol → partitions go to whoever is alive, i.e. StreamsPartitionAssignor is used.
     - You cannot do consumer.assign() (manual assignment) inside Kafka Streams. You can in a plain Kafka Consumer. This means a worker cant decide which partitions to subscribe to.
     - You can choose to which partition to send to (by keyes) but not which Kafka Streams instance receives from what partition / gets assigned to what partition
 
@@ -662,6 +663,8 @@ Worker fanout (targeted) - Without the router, just have worker make K-duplicate
     Produced by workers: N * K
     Consumed by workers: N * K
     => this saves on some stuff, but makes workers do more work + Router better for diplomatiki
+
+Potential Solution => Create a variable amount of topics, one per worker ... (insane)
 
 ## Neighborhood on Kafka =========================================================
 

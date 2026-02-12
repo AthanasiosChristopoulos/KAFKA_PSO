@@ -374,6 +374,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private static int[] computeRingNeighborIds(int workerId, int nWorkers, int radius, boolean includeSelf) {
+        
         if (radius <= 0) return includeSelf ? new int[]{ workerId } : new int[0];
 
         // Ensure we don't request more unique neighbors than exist
@@ -447,7 +448,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
-        logger.log(taskInstance + ", readPBestStore: bestStore is null");
 
         List<NeighborPBest> neighbors = new ArrayList<>();
 
@@ -713,6 +713,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if(countForwardPass != 0) {
                 logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
             }            
+
+            logger.log("neighborKeys: " + neighborKeys.toString());
             ws.printedReport = true;
         }
 
