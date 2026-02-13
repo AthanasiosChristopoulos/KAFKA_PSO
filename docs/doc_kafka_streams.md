@@ -1,11 +1,10 @@
-============================================================================
-## State Store:
+## State Store: ==========================================================
+
 There is local State Store (a state store is simply a local database) and remote State Store.
 Both on Memory and on Disk (RocksDB)
 A State Store, stores a key-value store.
 
-============================================================================
-## KTable:
+## KTable: ============================================================================
 
 A changelog is a stream of state changes over time.
 A changelog stream interpreted as a table for each key, keep only the latest value:
@@ -110,8 +109,7 @@ In a GlobalKTable (still performs the same core functionality, but):
  - GlobalKTable creates its own independent subtopology, since the StateStore is instance independent, there is no dependency:
     => then Kafka Streams can split the topologies
 
-============================================================================
-## Processor API:
+## Processor API: ==========================================================================
 
 ```java
 

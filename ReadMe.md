@@ -608,6 +608,9 @@ improve the ability to escape local minima
  - Increasing neighborhood size deteriorates performance, the worst of FIPS is on ALL topologies:    
     - The swarm behaves like a single mass + it becomes more prone to local minima => exploration decreases
     - Too many pBests leads to direction being dilouted and the particles wont move coherently. Not necessarily because of pure random behavior, but simple iability for spatial convergence. There are too many directions to be considered
+        - the simultaneous influence of all the particles in the swarm ‘confounds’ the particle
+        - “confound” means: to confuse / overwhelm
+        
     - **This effect gets worse as population size increases. Not Scalable** => The paper used 40 particles 
 
  - Neighborhood size controls the balance between:
@@ -646,7 +649,7 @@ improve the ability to escape local minima
     - Point of neighborhood PSO is that global Best (converges faster, but might collapse on a local minima - minimize the loss function) vs lBest (less premature convergence - keeps diversity longer)
  - Topology Comparison:
     - All: 
-        - Basically disabling Neighborhoods
+        - Basically disabling Neighborhoods. K (neighborhood size) == N (number of particles)
     - Ring:
         - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
         - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => "U" prefix
@@ -741,6 +744,9 @@ found a better region than the second or third best neighbors (they may not have
     - N = number of neighbors, φ_k will the same coefficient applied equally to all neighborhoods
     - generally speaking you need to make the contribution of the social coefficient independent from number of particles and from N_WORKERS
     - might have improved handling of increased amount of workers
+ - In the abscence of improvement (of the neighborhood best particles), aka in stagnation, the swarm converges toward 
+    the centroid of its neighbors’ previous best positions.
+    - This might create a bias towards the centroid (premature convergence). This effected increases with population size
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================

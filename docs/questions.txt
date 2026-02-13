@@ -62,6 +62,8 @@
 			
 		- τρεξιμο σε server reliance on static classes για coordination
 		
+		- Kafka Record Processing performance affects accuracy / convergence behavior
+
 	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

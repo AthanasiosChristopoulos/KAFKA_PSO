@@ -117,6 +117,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.t1 = t1;
 
         this.ws = WorkerStatic.get(workerId);
+        ws.numberOfTasks += 1;
+
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
@@ -805,11 +807,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }            
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
+            double avgMs = (sumElapsedNs / 1_000_000.0) / count; 
+            System.out.println("[Worker " + workerId + "] average elapsed time per batch: " +
+                    String.format("%.3f ms", avgMs)); 
 
             ws.printedReport = true;
         }
-        
-        if(ws.countPartitionsFinished == 40) {
+
+        logger.log("countPartitionsFinished: " + ws.countPartitionsFinished + 
+            ", numberOfTasks: " + ws.numberOfTasks);
+
+        if(ws.countPartitionsFinished == ws.numberOfTasks - 5) {    // these 5 are not normal tasks
+                        // there are always 5 extra control threads
             if(logger.isEnabled(2)) logger.log("Final inActivePartitions: " + ws.inactivePartitions);
             System.out.println("[Worker " + workerId + "], inActivePartitions " + ws.inactivePartitions);
         }
@@ -817,3 +826,4 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         logger.flush();
     }
 }
+

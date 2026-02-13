@@ -37,6 +37,7 @@ public final class WorkerStatic {
     public boolean printedReport = false;
 
     public int inactivePartitions = 0;
+    public int numberOfTasks = 0;
     public int countPartitionsFinished = 0;
 
     // ========================================================
