@@ -130,7 +130,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             this.neighborIds = computeNeighborIds(workerId, N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
             this.neighborKeys = new String[neighborIds.length];
             for (int i = 0; i < neighborIds.length; i++) {
-                neighborKeys[i] = "pBest" + neighborIds[i];
+                neighborKeys[i] = "pBest" + neighborIds[i];     // if wieghtId - key isnt there then pBest weight gets filtered out
             }
         } else {
             this.neighborIds = null;
@@ -363,18 +363,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
-
-    private boolean isRingNeighbor(int self, int other, int radius) {
-
-        if (self == other) return INCLUDE_SELF;
-
-        int diff = Math.floorMod(other - self, N_WORKERS); 
-        int dist = Math.min(diff, N_WORKERS - diff);        // because this is a circle 
-
-        return dist >= 1 && dist <= radius;
-    }
-
-    //=========================================================================================================================
     private static int[] computeNeighborIds(int workerId, int nWorkers, int ringRadious, boolean includeSelf,String topology) {
         if (nWorkers <= 0) return new int[0];
 
@@ -447,6 +435,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return new int[]{ up, down, left, right };
         }
     }
+
     // If N_WORKERS = 16, rows = 4, cols = 4
     // maps workerId to the grid, int row = workerId / cols; int col = workerId % cols;
     // Row 0:   0   1   2   3
@@ -488,7 +477,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                         continue;
                     }
 
-                    neighbors.add(new NeighborPBest(msg.weights, msg.accuracy));
+                    neighbors.add(new NeighborPBest(msg.weights, msg.accuracy, msg.workerId));
 
                     logger.log(msg.workerId + ")" + 
                             Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
@@ -515,7 +504,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 WeightsMessage msg = value_time.value();
                 if (msg == null || msg.weights == null || msg.weights.length == 0) continue;
 
-                neighbors.add(new NeighborPBest(msg.weights, msg.accuracy));
+                neighbors.add(new NeighborPBest(msg.weights, msg.accuracy, msg.workerId));
 
                 logger.log(msg.workerId + ")" + 
                         Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
@@ -701,7 +690,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             // ==========================================================================================================
             double radius;
             if(stricter) {
-                radius = 1 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+                radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
             } else {
                 radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
                     // The particle is converged if, on average, each weight differs from the center by 
@@ -731,25 +720,31 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     @Override
     public void close() {
-
+        
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
+        if(lastOffset == 0) {
+            ws.inactivePartitions++;
+            logger.log(taskInstance + ", Empty partition: " + seenPartitions + ", with lastOffset: " + lastOffset + 
+                ", inactivePartitions so far: " + ws.inactivePartitions);
+        } else {
+            logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
-        logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
+            double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
+            double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
+                            // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
 
-        double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
-        double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
-                        // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
+            logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs) +
+                    " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs + 
+                    ", inactivePartitions so far: " + ws.inactivePartitions);
+        } 
 
-        logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
-                + " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
-        
         // Report on convergence: ==============================================================
 
         if(ws.printedReport == false) {
 
-            logger.log("Report ============================================================");
+            logger.log("Closing Report ============================================================");
 
             checkConvergence(false, true);
 
@@ -758,6 +753,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }            
 
             logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
+
             ws.printedReport = true;
         }
 

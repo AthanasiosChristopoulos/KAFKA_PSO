@@ -26,7 +26,9 @@ public class PsoUpdater {
     private final int N_WORKERS = cfg.N_WORKERS;
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     public final boolean SIMULATED_ANNEALING = cfg.SIMULATED_ANNEALING;
+    public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
+    public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
 
     private final float C1_START = cfg.C1; 
     private final float C1_END = 0.2f;
@@ -75,6 +77,7 @@ public class PsoUpdater {
     //================================================================================================
 
     public PsoUpdater(int workerId, WorkerStatic ws) {
+
         dimensionality = ws.flatModel.length;
         velocity = new float[dimensionality];
         inertiaVec = new float[dimensionality];
@@ -262,8 +265,6 @@ public class PsoUpdater {
     public float[] updateX(List<NeighborPBest> neighbors, float batchAccuracy, String taskInstance) {      // for FULLY INFORMED
 
         count_updates++;
-
-        Arrays.fill(socialVec, 0f);
         clamp_count = 0;
 
         if(ADAPTIVE_INERTIA) {
@@ -313,8 +314,6 @@ public class PsoUpdater {
         //     sumW += Math.max(1e-8f, nb.accuracy);
         // }
 
-        // Arrays.fill(socialVec, 0f);
-
         // for (NeighborPBest nb : neighbors) {
         //     float[] pBest_j = nb.pBest;
         //     if (pBest_j.length != dimensionality) {
@@ -337,16 +336,32 @@ public class PsoUpdater {
         //     velocity[k] = inertiaVec[k] + socialVec[k];
         // }
         // ===============================================================================
-        final int N = neighbors.size();
-        final float phiMax = C;
+
+        int N = neighbors.size();
+
+        final float phiMax;
+        
+        if(GIVE_HALF_TO_SELF) {
+            phiMax = 0.5f * C; 
+            if(INCLUDE_SELF && N > 1) {
+                N = neighbors.size() - 1;
+            }
+        } else {
+            phiMax = C; 
+        }
+            
         final float phiMaxPerNeighbor = phiMax / (float) N;
         final float eps = 1e-8f;
 
         float[] num = new float[dimensionality];
         float[] den = new float[dimensionality];
         float[] den_without_weight = new float[dimensionality];
-
+        
         for (NeighborPBest nb : neighbors) {
+            if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
+                logger.log("AAAAAA");
+                continue;
+            }
             float Wk = Math.max(eps, nb.accuracy); // your W(k)=accuracy
             float[] Pk = nb.pBest;
 
@@ -365,10 +380,19 @@ public class PsoUpdater {
 
             inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
             // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
+
+            
             socialVec[d]  = den_without_weight[d] * (Pm_d - ws.flatModel[d]); 
                 // accuracy decides direction (where Pm sits), but not step size
-            velocity[d]   = inertiaVec[d] + socialVec[d];
+            if(GIVE_HALF_TO_SELF) {
+                cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
+                velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
+            } else {
+                velocity[d] = inertiaVec[d] + socialVec[d];
+            }
+           
         }
+
         // ===============================================================================
 
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {

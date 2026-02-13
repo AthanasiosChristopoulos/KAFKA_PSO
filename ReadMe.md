@@ -600,7 +600,7 @@ improve the ability to escape local minima
 
  - Increasing neighborhood size deteriorates performance, the worst of FIPS is on ALL topologies:    
     - The swarm behaves like a single mass + it becomes more prone to local minima => exploration decreases
-    - Too many pBests leads to direction being dilouted and the particles wont move coherently.
+    - Too many pBests leads to direction being dilouted and the particles wont move coherently. Not necessarily because of pure random behavior, but simple iability for spatial convergence. There are too many directions to be considered
     - **This effect gets worse as population size increases. Not Scalable** => The paper used 40 particles 
 
  - Neighborhood size controls the balance between:
@@ -642,13 +642,20 @@ improve the ability to escape local minima
         - Basically disabling Neighborhoods
     - Ring:
         - Most reliable / stable Neighborhood topology is URing, which never failed when implemented with the wFIPS algorithm.
-        - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => “U” prefix
+        - Without the self (the same particle doesnt include it self in the prefix, self is removed from the neighborhood topology) => "U" prefix
+        - This goes contrary to particle swarm lore, which describes the algorithm in terms of the combination of “cognitive” and “social” experience.
+            => in URing the "self" is missing
+        - Self (protocol) => the owns pBest influence is more important, your own pBest gets 0.5 * c, while if N = 4, others gets the other half => 0.5 * c / 4
+            => own pBest gets half of c (φmax), all the others get the other half of c 
+            => keeps diversity longer, FIPS may coverge too fast
         - Ring has slower spread of information, it has higher average distance (average number of edges between two nodes in neighborhood graph)
+            - Generally speaking it requires more time to converge
         - Expected Neighborhoodsize: {4, 6, 8}
     - Square/von-Neumann Topology spreads faster 
         - Information flow speed (like how quickly a pBest spreads) is higher, Information spreads between the particles faster
         - Neighborhoodsize: 4
         - good in-between Ring vs All 
+    - End Note: The best performance of all occurred in the selfless-square FIPS configuration. Selfless is good, because we are actually either way considering the self because of X (Pm - X, aka current position habbit)
             
 
 - gBest vs pBest:
@@ -748,7 +755,7 @@ found a better region than the second or third best neighbors (they may not have
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
 
 ## ==========================================================================
-## Experimentation: =========================================================
+## Experimentation & Performance: =========================================================
 
  - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)
     - divide this by 40 partitions => each partition gets 10000 samples
@@ -759,13 +766,20 @@ found a better region than the second or third best neighbors (they may not have
 
  - Run for N_Workers = [5, 10, 15, 20]
  
- - Performance Measurements:
+ - Performance Measurement Methods:
     - htop (shows logical CPUs and ||| represent CPU time usage on each logical CPU)
         - 6 physical cores × 2 threads = 12 logical CPUs
         - 12 physical cores × 1 thread = 12 logical CPUs
         - use <code>lscpu</code> to evaluate CPU number and number of threads
             - number of physical cores: Core(s) per socket: 6
             - number of threads on its core: Thread(s) per core: 2
+
+ - Performance Metrics:
+    - accuracy - N_WORKERS
+    - time - N_WORKERS 
+    - accuracy after fixed time given / data given 
+    - time / data needed to reach accuracy goal    
+
 
     - ## GPU: ================================================================================
 

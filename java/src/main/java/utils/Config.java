@@ -68,6 +68,7 @@ public class Config {
     public final String NEIGHBORHOOD_TOPOLOGY;
 
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING;
+    public final boolean GIVE_HALF_TO_SELF;
 
     public Config() {
         
@@ -217,6 +218,8 @@ public class Config {
         this.NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
 
         this.INDEPENDENT_WORKER_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_WORKER_DATA_PROCESSING", "false"));
+
+        this.GIVE_HALF_TO_SELF = Boolean.parseBoolean(getenv(dotenv, "GIVE_HALF_TO_SELF", "false"));
 
     }
 
