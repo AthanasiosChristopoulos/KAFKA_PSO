@@ -59,6 +59,11 @@ public class BatchPrediction {
     private INDArray argMax;
 
     private int EXPECTED_SIZE; 
+    private float EPS = 0.0000001f; 
+
+    List<float[]> featureList = new ArrayList<>();
+    List<Integer> labels = new ArrayList<>();
+    float[] probabilities = new float[NUM_CLASSES];;
 
     // for Worker =======================================================================================================
 
@@ -128,9 +133,6 @@ public class BatchPrediction {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
             return null;
         }
-
-        List<float[]> featureList = new ArrayList<>();
-        List<Integer> labels = new ArrayList<>();
 
         for (DataMessage msg : batch) {
             if (msg == null) continue;
@@ -272,10 +274,8 @@ public class BatchPrediction {
 
         int nCorrect = 0;
         float loss = 0f;
-        float loss_fast = 0f;
 
         float[] sampleLosses = new float[nSamples];
-        float[] sampleLosses_fast = new float[nSamples];
 
         // BINARY CASE (SIGMOID) ======================================================================
 
@@ -285,8 +285,8 @@ public class BatchPrediction {
 
                 float p = probs.getFloat(i, 0);
 
-                if (p < 1e-7f) p = 1e-7f;
-                if (p > 1f - 1e-7f) p = 1f - 1e-7f;
+                if (p < EPS) p = EPS;
+                if (p > 1f - EPS) p = 1f - EPS;
 
                 int label = labels.get(i);   // 0 or 1
 
@@ -300,38 +300,60 @@ public class BatchPrediction {
 
         } else {
 
-            if(false) {
+            if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
                 argMax = probs.argMax(1);   // max probability => this is what we are deciding
-
+                
+                float[] flatProps = probs.data().asFloat();  // converd 2D [nSamples, classes] into flat array
+                
                 for (int i = 0; i < nSamples; i++) {
+
                     int pred = argMax.getInt(i);
                     int label = labels.get(i);
                     if (pred == label) nCorrect++;
 
-                    // float[] probabilities = probs.getRow(i).toFloatVector();    
-                    // float p = probabilities[label];
-                    // if (p < eps) {          // avoid log(0)
-                    //     p = eps;
-                    // }
-                    // sampleLosses[i] = (float) -Math.log(p);
-
-                    float p1 = probs.getFloat(i, label);
-                    // logger.log("Label = " + label + ", probabilities: " + 
-                    //     Arrays.toString(probabilities) + ", p = " + p1);
-
-                    // sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
-                    float eps = 0.0000001f;            
-                    if(p1 < eps) {
-                        p1 = eps;
+                    int base = i * NUM_CLASSES; 
+                    for (int c = 0; c < NUM_CLASSES; c++) { // C order (row-major) - how it will implement
+                        // 2D array to flat array conversion (here write 1 row, then 2 row, ...)
+                                                            
+                        probabilities[c] = flatProps[base + c];
                     }
-
-                    sampleLosses[i] = (float) -Math.log(p1);
+                    sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
                 }
 
-                // logger.log("sampleLosses = " + Arrays.toString(sampleLosses) + 
-                //             "sampleLosses_fast = " + Arrays.toString(sampleLosses_fast));
+                // for (int i = 0; i < nSamples; i++) {
+
+                //     int pred = argMax.getInt(i);
+                //     int label = labels.get(i);
+                //     if (pred == label) nCorrect++;
+
+                //     // float[] probabilities = probs.getRow(i).toFloatVector();   
+                //         // Expensive because: getRow(i) creates a view,
+                //         // toFloatVector() allocates a new float[] and copies data every iteration
+                //     // float p = probabilities[label];
+                //     // if (p < EPS) p = EPS;
+
+                //     // probabilities = probs.data().asFloat();
+                //     INDArray row = probs.getRow(i);     // still creates a view per sample
+                //     for (int c = 0; c < NUM_CLASSES; c++) {
+                //         probabilities[c] = row.getFloat(c);     // doesnt allocate but overwrites memory
+                //     }
+                //     sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
+                    
+                //     // float p1 = probs.getFloat(i, label);
+                //     // logger.log("Label = " + label + ", probabilities: " + 
+                //     //     Arrays.toString(probabilities) + ", p = " + p1);
+
+                //     // if(p1 < EPS) {
+                //     //     p1 = EPS;
+                //     // }
+
+                //     // sampleLosses[i] = (float) -Math.log(p1);
+                // }
+
+                // // logger.log("sampleLosses = " + Arrays.toString(sampleLosses) + 
+                // //             "sampleLosses_fast = " + Arrays.toString(sampleLosses_fast));
                         
-                // logger.log("Same arrays? " + Arrays.equals(sampleLosses, sampleLosses_fast));
+                // // logger.log("Same arrays? " + Arrays.equals(sampleLosses, sampleLosses_fast));
 
 
             } else {
@@ -343,12 +365,10 @@ public class BatchPrediction {
                     int label = labels.get(i);
                     if (pred == label) nCorrect++;
 
-                    float p = probs.getFloat(i, label);
-                    // if (p < 1e-7f) p = 1e-7f;
-                    float eps = 0.0000001f;    
-                    if(p < eps) {
-                        p = eps;
-                    }
+                    float p = probs.getFloat(i, label);     // probs.getFloat(i, j), probs is 2D-Array 
+                                                            // probs = [nSamples, NUM_CLASSES]
+                    if(p < EPS) p = EPS;
+                    
                     sampleLosses[i] = (float) -Math.log(p); // cross-entropy
                 }
             }
@@ -368,21 +388,6 @@ public class BatchPrediction {
         } else {
             loss = LossFunction.average(sampleLosses);
         }
-
-        if ("TOP_K".equals(COMBINE_LOSS)) {
-            loss_fast = LossFunction.topKAverage(sampleLosses_fast);
-
-        } else if ("SUM".equals(COMBINE_LOSS)) {
-            loss_fast = LossFunction.sum(sampleLosses_fast);
-
-        } else if ("AVG".equals(COMBINE_LOSS)) {
-            loss_fast = LossFunction.average(sampleLosses_fast);
-
-        } else {
-            loss_fast = LossFunction.average(sampleLosses_fast);
-        }
-
-        // loss = loss_fast;
         
         // ===========================================================================================
         
@@ -400,7 +405,8 @@ public class BatchPrediction {
         float forwardMs = (end - start) / 1_000_000f;
         // X.close();
         // probs.close();
-
+        featureList.clear();
+        labels.clear();
         return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
 
         // } finally {

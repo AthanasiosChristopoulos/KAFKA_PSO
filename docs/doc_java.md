@@ -1,7 +1,7 @@
 
-# Java Project - Maven ==================================================================================================================
+# Java Project - Maven ==========================================
 
-## Two different tasks: compile vs package with shade: ==================================================================================
+## Two different tasks: compile vs package with shade: ===========================================
 
  - For dev, you only need compile.
      - Use mvn exec:java for day-to-day runs of the code.
@@ -33,14 +33,14 @@ mvn -q -DskipTests clean compile exec:java
     - compile (create compiled .class, put them in target/classes)
     - exec:java (run the code)
 
-## Artifacts: ==================================================================================================================
+## Artifacts: ============================================================================
  
  - An artifact is any file produced or used by Maven.
     - It has the attributes: groupId + artifactId + version + packaging 
  - In a maven project they are stored under target/ directory
  - .jar is a type of artifact (it has the .jar packaging)
 
-## pom.xml: ==================================================================================================================
+## pom.xml: =================================================================
 
 Has dependency JARs with versions, artifact IDs, ... 
 This is one dependency JAR: 
@@ -53,7 +53,8 @@ This is one dependency JAR:
  - The paerticular one is a platform / aggregator dependency, that brings in from the internet other dependency JARs automatically.
  - Maven will read pom.xml and build a compile classpath. Using that classpath, compile .java source files
  - Dependencies are not recompiled when you build your project. They’re already compiled JARs.
-## Run with CPU or GPU: ========================================================================================================
+
+## Run with CPU or GPU: =====================================================================
 
 Test:
  - htop => CPU / RAM only 
@@ -91,4 +92,23 @@ It bundles CUDA native libraries (via JavaCPP/Bytedeco) so your Java app can run
 ```bash
 sudo apt install nvidia-cuda-toolkit
 ldconfig -p | grep libcudart
+```
+
+## Memory Allocation ========================================================
+
+Memory Allocation is expensive even when you have plenty of memory. It’s not "running out of RAM", it’s that allocating + cleaning up burns CPU, also makes GC (Garbage Collector) work harder.
+ - Allocation cost by itself time, not just memory
+ - GC also adds overhead and pauses 
+
+```java
+// Example: 
+float[] flatProps = function(data)
+// float[] flatProps => this is the reference / pointer variable, it does NOT allocate the array itself
+    // this is still an allocation, but just a pointer / stack allocation, it doesnt cost anything
+// function(data) is a function that might allocate memory or not and return to flatProps its starting address
+    // depending on the functions internals, this might overwrite or allocate new memory
+
+probs.getRow(i).toFloatVector();    // this function allocates new memory
+probs.data().asFloat();             // this one overwrites memory
+
 ```

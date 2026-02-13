@@ -6,6 +6,7 @@ import pso.WorkerTransformer;
 
 import java.util.List;
 import java.util.Random;
+import java.util.SplittableRandom;
 import java.util.Arrays;
 
 import utils.*; 
@@ -56,7 +57,8 @@ public class PsoUpdater {
 
     private int count_updates = 0;
 
-    private final Random rnd;
+    // private final Random rnd;    // Random is thread-safe and uses synchronization / atomic updates
+    private final SplittableRandom rnd; // SplittableRandom is NOT thread-safe and uses simple arithmetic
 
     // ---- Adaptive inertia (progress-based) ----
     private float wCurrent = cfg.W_INERTIA_START;   // start high
@@ -72,6 +74,12 @@ public class PsoUpdater {
 
     private final WorkerStatic ws;
     private final int dimensionality;
+
+    private float[] num;
+    private float[] den;
+    // private float[] den_without_weight;
+
+    private float EPS = 0.0000001f; 
 
     //================================================================================================
 
@@ -110,7 +118,13 @@ public class PsoUpdater {
                 dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
-        this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
+        // this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
+        this.rnd = new SplittableRandom(1234L + workerId);
+
+        this.num = new float[dimensionality];
+        this.den = new float[dimensionality];
+        // this.den_without_weight = new float[dimensionality];
+                
     }
 
     //================================================================================================
@@ -334,6 +348,9 @@ public class PsoUpdater {
         // ===============================================================================
 
         int N = neighbors.size();
+        Arrays.fill(num, 0f);
+        Arrays.fill(den, 0f);
+        // Arrays.fill(den_without_weight, 0f);
 
         final float phiMax;
         
@@ -347,37 +364,39 @@ public class PsoUpdater {
         }
             
         final float phiMaxPerNeighbor = phiMax / (float) N;
-        final float eps = 1e-8f;
+        float accWk = 0;
 
-        float[] num = new float[dimensionality];
-        float[] den = new float[dimensionality];
-        float[] den_without_weight = new float[dimensionality];
-        
         for (NeighborPBest nb : neighbors) {
             if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
                 continue;
             }
-            float Wk = Math.max(eps, nb.accuracy); // your W(k)=accuracy
+            float Wk = Math.max(EPS, nb.accuracy); // your W(k)=accuracy
+            accWk += Wk;
+
             float[] Pk = nb.pBest;
 
             for (int d = 0; d < dimensionality; d++) {
-                float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
-                den_without_weight[d] += phi_kd;
+
+                float phi_kd = (float) rnd.nextDouble() * phiMaxPerNeighbor; // U[0, C/N]
+                // float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
+                
+                // den_without_weight[d] += phi_kd;
                 float wphi = Wk * phi_kd;
 
                 num[d] += wphi * Pk[d];
                 den[d] += wphi;
             }
         }
+        float scaleWk = accWk / neighbors.size();
 
         for (int d = 0; d < dimensionality; d++) {
-            float Pm_d = (den[d] > eps) ? (num[d] / den[d]) : ws.flatModel[d];
+            float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
 
             inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
             // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
 
             
-            socialVec[d]  = den_without_weight[d] * (Pm_d - ws.flatModel[d]); 
+            socialVec[d]  = (den[d] / scaleWk) * (Pm_d - ws.flatModel[d]); 
                 // accuracy decides direction (where Pm sits), but not step size
             if(GIVE_HALF_TO_SELF) {
                 cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);

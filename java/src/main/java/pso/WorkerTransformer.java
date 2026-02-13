@@ -759,7 +759,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     @Override
     public void close() {
-        
+        ws.countPartitionsFinished += 1;
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
@@ -807,6 +807,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
 
             ws.printedReport = true;
+        }
+        
+        if(ws.countPartitionsFinished == 40) {
+            if(logger.isEnabled(2)) logger.log("Final inActivePartitions: " + ws.inactivePartitions);
+            System.out.println("[Worker " + workerId + "], inActivePartitions " + ws.inactivePartitions);
         }
 
         logger.flush();
