@@ -66,12 +66,23 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final AtomicLong t1;
     private double lastActivitySeconds = 0.0;
     
+    // Performance Measurements ==============================================
     private long start = System.nanoTime();
-    private long end = System.nanoTime();
     private long sumElapsedNs = 0;
     private int count = 0;
+
+    private long startPredict = System.nanoTime();
+    private long sumElapsedNsPredict = 0;
+
+    private long startUpdateX = System.nanoTime();
+    private long sumElapsedNsUpdateX = 0;
+
+    private long startCommunication = System.nanoTime();
+    private long sumElapsedNsCommunication = 0;
+
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
+    // =======================================================================
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
@@ -196,10 +207,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         
         start = System.nanoTime();
+        startPredict = System.nanoTime();
 
         bufferSizeAcc += buffer.size();
 
-        float[] accLoss = ws.predictor.callPredictionsBatch(buffer);    // this is a forward pass
+        float[] accLoss = ws.predictor.callPredictionsBatch(buffer, false);    // this is a forward pass
         if(accLoss == null) {
             control.requestStopFinal(); // a serious error has happend
             return null;
@@ -210,6 +222,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         nCorrect = (int) accLoss[3];
         forwardPassNs += accLoss[4];
         countForwardPass += 1;                  // forward pass completed
+
+        sumElapsedNsPredict += (System.nanoTime() - startPredict);
 
         buffer.clear();
         ws.batchesRead++;
@@ -242,6 +256,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // =========================================================================================================
         // Update to next position, Using the State Store ===================================================================
+        startUpdateX = System.nanoTime();
 
         if (FULLY_INFORMED == true) {
 
@@ -272,11 +287,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             }
         }
+        sumElapsedNsUpdateX += (System.nanoTime() - startUpdateX);
 
         // =================================================================================================
         // Send pBest or current weights ===================================================================
 
         // Filtering: is the loss significant enough to be reported ?
+        startCommunication = System.nanoTime();
         boolean significant_diff = true;
 
         if(FILTER_ENABLED == true) {
@@ -308,7 +325,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     " and accuracy: " + ws.stats.getBestAccuracy() + ", msgIndex = " + msgIndex);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
-
+            count++;
             return new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
         }
 
@@ -326,9 +343,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
-
+            count++;
             return new KeyValue<>("current_weights", msg);
         }
+
+        sumElapsedNsCommunication += (System.nanoTime() - startCommunication);
 
         // =========================================================================================================
         // Logging and Time
@@ -354,8 +373,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             consecutiveConvergence = 0;
         }
 
-        end = System.nanoTime();
-        sumElapsedNs += (end - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
+        sumElapsedNs += (System.nanoTime() - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
                                         // Doesnt trigger when we are collecting a batch
         count++;
 
@@ -660,7 +678,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 if (sum == null) sum = new double[w.length];
                 if (w.length != sum.length) {
                     if (logger.isEnabled(2)) logger.log(taskInstance + 
-                        ", [Convergence] pBest length mismatch, skipping key=" + entry.key);
+                        ", [Convergence] pBest length mismatch, skipping key = " + entry.key);
                     continue;
                 }
 
@@ -745,19 +763,32 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
-        if(lastOffset == 0) {
+
+        if(lastOffset == 0) {   // if inActive Partition
             ws.inactivePartitions++;
-            if (logger.isEnabled(2)) logger.log(taskInstance + ", Empty partition: " + seenPartitions + ", with lastOffset: " + lastOffset + 
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Empty partition: " 
+                + seenPartitions + ", with lastOffset: " + lastOffset + 
                 ", inactivePartitions so far: " + ws.inactivePartitions);
+
         } else {
-            if (logger.isEnabled(2)) logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
+        
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Seen partitions: " 
+                + seenPartitions + ", with lastOffset: " + lastOffset);
 
             double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
+            double avgMsUpdateX = (sumElapsedNsUpdateX / 1_000_000.0) / count; 
+            double avgMsPredict = (sumElapsedNsPredict / 1_000_000.0) / count; 
+            double avgMsCommunication = (sumElapsedNsCommunication / 1_000_000.0) / count; 
             double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
 
-            if (logger.isEnabled(2)) logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs) +
-                    " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", average elapsed time Measurements: over " + count + " batches: " + "\n" +
+                    "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
+                    "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
+                    "=> per Communication: " + String.format("%.3f ms", avgMsCommunication) + "\n" + 
+                    "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
+                    "   => per forwardPassMs: " + avgForwardPassMs + "\n"
             );
         } 
 
@@ -778,5 +809,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             ws.printedReport = true;
         }
 
+        logger.flush();
     }
 }

@@ -213,7 +213,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 return;
             }
 
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);  // inference / evaluate every time all workers current models arrive
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, false);  // inference / evaluate every time all workers current models arrive
                                                                                 // monitor how training is going
             accuracy = accLoss[0];
             loss = accLoss[1];
@@ -237,14 +237,16 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             
             // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
             if (logger.isEnabled(0)) logger.log(taskInstance + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + 
+                        ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
                         ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
                         ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
             System.out.println(evaluation_count + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + 
+                        ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
                         ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +

@@ -137,9 +137,21 @@ public class CustomLogger {
         try {
             logWriter.write(msg);
             logWriter.newLine();
+            // logWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //=====================================================================================
+
+    public void flush() {
+        if (!ENABLE_LOGGING || logWriter == null) return;
+        try {
             logWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }

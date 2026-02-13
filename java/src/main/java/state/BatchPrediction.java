@@ -122,7 +122,7 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public float[] callPredictionsBatch(List<DataMessage> batch) {
+    public float[] callPredictionsBatch(List<DataMessage> batch, boolean coordinator) {
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -164,7 +164,9 @@ public class BatchPrediction {
 
 
         // Forward Pass Start ===============================================================================
+        
         start = System.nanoTime();
+
         // ==============================================================================================================
         // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
 
@@ -255,9 +257,11 @@ public class BatchPrediction {
         // ==============================================================================================================
 
         probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
-                                                            // this is one forward pass per batch (has multiple samples)
-        
+                                                // this is one forward pass per batch (has multiple samples)
         end = System.nanoTime();
+        // double min = probs.minNumber().doubleValue();
+        // double max = probs.maxNumber().doubleValue();
+        // System.out.println("probs min/max = " + min + " / " + max);
 
         // Forward Pass End ===============================================================================
 
@@ -268,7 +272,10 @@ public class BatchPrediction {
 
         int nCorrect = 0;
         float loss = 0f;
+        float loss_fast = 0f;
+
         float[] sampleLosses = new float[nSamples];
+        float[] sampleLosses_fast = new float[nSamples];
 
         // BINARY CASE (SIGMOID) ======================================================================
 
@@ -293,17 +300,57 @@ public class BatchPrediction {
 
         } else {
 
-            argMax = probs.argMax(1);   // [batch]
+            if(false) {
+                argMax = probs.argMax(1);   // max probability => this is what we are deciding
 
-            for (int i = 0; i < nSamples; i++) {
-                int pred = argMax.getInt(i);
-                int label = labels.get(i);
+                for (int i = 0; i < nSamples; i++) {
+                    int pred = argMax.getInt(i);
+                    int label = labels.get(i);
+                    if (pred == label) nCorrect++;
 
-                if (pred == label) nCorrect++;
+                    // float[] probabilities = probs.getRow(i).toFloatVector();    
+                    // float p = probabilities[label];
+                    // if (p < eps) {          // avoid log(0)
+                    //     p = eps;
+                    // }
+                    // sampleLosses[i] = (float) -Math.log(p);
 
-                float[] probabilities = probs.getRow(i).toFloatVector();
+                    float p1 = probs.getFloat(i, label);
+                    // logger.log("Label = " + label + ", probabilities: " + 
+                    //     Arrays.toString(probabilities) + ", p = " + p1);
 
-                sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
+                    // sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
+                    float eps = 0.0000001f;            
+                    if(p1 < eps) {
+                        p1 = eps;
+                    }
+
+                    sampleLosses[i] = (float) -Math.log(p1);
+                }
+
+                // logger.log("sampleLosses = " + Arrays.toString(sampleLosses) + 
+                //             "sampleLosses_fast = " + Arrays.toString(sampleLosses_fast));
+                        
+                // logger.log("Same arrays? " + Arrays.equals(sampleLosses, sampleLosses_fast));
+
+
+            } else {
+                
+                argMax = probs.argMax(1);
+
+                for (int i = 0; i < nSamples; i++) {
+                    int pred = argMax.getInt(i);
+                    int label = labels.get(i);
+                    if (pred == label) nCorrect++;
+
+                    float p = probs.getFloat(i, label);
+                    // if (p < 1e-7f) p = 1e-7f;
+                    float eps = 0.0000001f;    
+                    if(p < eps) {
+                        p = eps;
+                    }
+                    sampleLosses[i] = (float) -Math.log(p); // cross-entropy
+                }
             }
         }
 
@@ -322,6 +369,21 @@ public class BatchPrediction {
             loss = LossFunction.average(sampleLosses);
         }
 
+        if ("TOP_K".equals(COMBINE_LOSS)) {
+            loss_fast = LossFunction.topKAverage(sampleLosses_fast);
+
+        } else if ("SUM".equals(COMBINE_LOSS)) {
+            loss_fast = LossFunction.sum(sampleLosses_fast);
+
+        } else if ("AVG".equals(COMBINE_LOSS)) {
+            loss_fast = LossFunction.average(sampleLosses_fast);
+
+        } else {
+            loss_fast = LossFunction.average(sampleLosses_fast);
+        }
+
+        // loss = loss_fast;
+        
         // ===========================================================================================
         
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {

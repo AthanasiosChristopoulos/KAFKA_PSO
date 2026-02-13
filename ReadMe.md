@@ -458,7 +458,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
 However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
 
-## Improve congvergence: =========================================================
+## Congvergence: =========================================================
 
  - change model
  - change constants => velocity, inertia, C1, C2
@@ -469,8 +469,15 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
     - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
  - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
+ - Performance (record processing speed) affects convergence. 
+    - Increase record processing speed => more updateX + higher data processing speed
+    - 1) Faster updatesX => Not as reactive to social directive (because of communication latency)
+        - Essentially communication latency becomes more substantial / significant
+        - This harms convergence because particle behavior "depends" more on inertia + cognitive accelarators
+    - 2) This can still be regulated by adaptive inertia
 
 ## Premature congvergence: =========================================================
+
  - trapped in a local optimum if the search environment is complex with numerous local solutions.
  - Evolutionary operators such as selection, crossover, and mutation have been introduced to the PSO to increase the diversity of the population, and to
 improve the ability to escape local minima
@@ -610,7 +617,7 @@ improve the ability to escape local minima
         - Less convergence, more randmoness exploration
 
  - Particles that are acquainted to one another (in the same Neighborhood) tend to explore the same region of the search space (lower level search). Neighborhood topology affects also relationships between neighborhood (higher level search)
- -
+
   ## Protocol:
     - Particles get information only from their own neighborhoods best => local_best instead of gBest.
     - Neighbors == Topological Neighbors (doesnt change during a run)
