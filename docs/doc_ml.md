@@ -13,3 +13,12 @@
         - old data fades out
     - Pattern B - Periodic Reset
 
+## Funnels / Valeys:
+
+The landscape of the neural networks is:
+    - partially funnel-like locally
+    - multi-funnel / multimodal => this means as a function, NNs, dont behave always the same way.
+
+Dense Neural Networks have a loss landscape of sharp directions , many valeys, no correlation betwen weighrs / more parameter independence
+
+CNNs have smoother valeys ? 

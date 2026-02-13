@@ -610,7 +610,7 @@ improve the ability to escape local minima
     - Too many pBests leads to direction being dilouted and the particles wont move coherently. Not necessarily because of pure random behavior, but simple iability for spatial convergence. There are too many directions to be considered
         - the simultaneous influence of all the particles in the swarm ‘confounds’ the particle
         - “confound” means: to confuse / overwhelm
-        
+
     - **This effect gets worse as population size increases. Not Scalable** => The paper used 40 particles 
 
  - Neighborhood size controls the balance between:
@@ -744,9 +744,13 @@ found a better region than the second or third best neighbors (they may not have
     - N = number of neighbors, φ_k will the same coefficient applied equally to all neighborhoods
     - generally speaking you need to make the contribution of the social coefficient independent from number of particles and from N_WORKERS
     - might have improved handling of increased amount of workers
- - In the abscence of improvement (of the neighborhood best particles), aka in stagnation, the swarm converges toward 
-    the centroid of its neighbors’ previous best positions.
-    - This might create a bias towards the centroid (premature convergence). This effected increases with population size
+ - In the abscence of improvement (of the neighborhood best particles), aka in stagnation, the swarm converges toward the centroid of its neighbors’ previous best positions.
+    - This creates a built in bias towards the centroid of the topology / neighborhood. 
+        - Loss Landscape: single funnels or multiple funnels (funnels => like a physical bowl, its going down (its a low not a peak), because we are trying to minimize loss). Many different starting points all “flow” downhill toward the same good solution
+    - So even if one neighbor has a great pBest far away, the combined pull from everyone tends to drag you toward the middle of the group.
+        - If this bias is good or not depends from the optimization landscape (of the function)
+    - This effected increases with population size, increasing N_WORKERS generally should help exploration, but in this case, due to the increased central pull, its harming it
+    - This is why with increased neighborhood size we get stronger smaller exploration
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================
