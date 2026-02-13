@@ -108,7 +108,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.ws = WorkerStatic.get(workerId);
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
+        if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
 
         this.velocity =  new float[ws.pBestWeights.length];
 
@@ -156,7 +156,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             long idleNs = System.nanoTime() - t1.get();
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
-                logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
+                if (logger.isEnabled(0)) logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
         });
@@ -171,13 +171,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(CoordinatorControl.getInstance().isStopRequested(workerId)) {
             return null;
         }
-        start = System.nanoTime();
 
         if (!printedOffset) {
             printedOffset = true;
-            logger.log(taskInstance + ", Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Starting at -> " + 
+                            "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
-            logger.log(taskInstance + ", Sample DataMessage: " + value.toStringFull());
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", Sample DataMessage: " + value.toStringFull());
             
             seenPartitions.add(context.partition());    // if no records processed, this never runs
         }
@@ -193,6 +194,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (buffer.size() < TRAIN_SIZE) {   // if not completed the batch, just return
             return null;                    // bufferSize is always: 100.0
         }
+        
+        start = System.nanoTime();
 
         bufferSizeAcc += buffer.size();
 
@@ -207,8 +210,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         nCorrect = (int) accLoss[3];
         forwardPassNs += accLoss[4];
         countForwardPass += 1;                  // forward pass completed
-
-        // logger.log(taskInstance + ", accuracy on current batch: " + accuracy + ", with nSamples: " + nSamples + " and nCorrect: " + nCorrect);
 
         buffer.clear();
         ws.batchesRead++;
@@ -233,8 +234,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ws.pBestWeights[i] = ws.flatModel[i];
             }
 
-            logger.log(taskInstance + ", Improved pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
-                        + ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
+            if (logger.isEnabled(1)) logger.log(taskInstance + 
+                ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
+                " and accuracy: " + ws.stats.getBestAccuracy() +
+                ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
         }
 
         // =========================================================================================================
@@ -245,7 +248,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             List<NeighborPBest> neighborList = readPBestStore();
 
             if (neighborList == null || neighborList.isEmpty()) {
-                logger.log(taskInstance + ", No neighbor pBest found; skipping social update this round.");
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", No neighbor pBest found; skipping social update this round.");
                 velocity = ws.psoUpdater.updateX(null, accuracy, taskInstance);
             } else {
                 velocity = ws.psoUpdater.updateX(neighborList, accuracy, taskInstance);
@@ -260,8 +264,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
 
             } else {
-                logger.log(taskInstance + ", gBest Weights: " + Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + 
-                    ", gBest Accuracy: " + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
+                if (logger.isEnabled(1)) logger.log(taskInstance + ", gBest Weights: " + 
+                    Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + ", gBest Accuracy: " 
+                    + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
 
                 velocity = ws.psoUpdater.updateX(ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
@@ -287,7 +292,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     // this is a much more damaging filter, because the global affects all workers as the only sense of direction
                     // thats why 0.3 
             }
-            logger.log("Filtering takes place: " + (significant_diff == false) + ", since significance is: " + significant_diff);
+            if (logger.isEnabled(1)) logger.log("Filtering takes place: " + 
+                (significant_diff == false) + 
+                ", since significance is: " + significant_diff);
         }
         
         if(significant_diff && improvement_to_pBest) {    // update self always when improvement 
@@ -296,8 +303,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             String msgIndex = java.util.UUID.randomUUID().toString();
 
-            logger.log(taskInstance + ", Improved and sending pBest with loss: " + ws.stats.getPBestLoss() + " and accuracy: " + ws.stats.getBestAccuracy()
-                    + ", msgIndex = " + msgIndex);
+            if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", Improved and sending pBest with loss: " + ws.stats.getPBestLoss() + 
+                    " and accuracy: " + ws.stats.getBestAccuracy() + ", msgIndex = " + msgIndex);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
 
@@ -309,7 +317,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (ws.batchesRead >= N_BATCHES) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
-            logger.log(taskInstance + ", Sending current weights ...");
+            if (logger.isEnabled(1)) logger.log(taskInstance + 
+                ", Sending current weights ...");
 
             ws.batchesRead = 0;
             String msgIndex = java.util.UUID.randomUUID().toString();
@@ -326,17 +335,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         updateTime();   // is updated  every time a new buffer has been processed
         
-        logger.log(taskInstance + ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
+        if (logger.isEnabled(0)) logger.log(taskInstance + 
+                ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT) +
-                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT)
-        );  // * 100 is for the user, just scale it upwards 
+                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT));  
+        // * 100 is for the user, just scale it upwards 
                 
 
         if(checkConvergence(true, false)) {
             consecutiveConvergence++;
             if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
-                logger.log("Closed, because determined convergence");
+                if (logger.isEnabled(2)) logger.log("Closed, because determined convergence");
                 System.out.println("[Worker " + workerId + "] Closed, because determined convergence");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
@@ -456,10 +466,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         List<NeighborPBest> neighbors = new ArrayList<>();
 
         if (bestStore == null) {
-            logger.log(taskInstance + ", readPBestStore: bestStore is null");
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", readPBestStore: bestStore is null");
             return neighbors;
         }
-        logger.log(taskInstance + ", pBest Weights: ");
+        if (logger.isEnabled(1)) logger.log(taskInstance + ", pBest Weights: ");
 
         if(!ENABLE_NEIGHBORHOODS) {
 
@@ -477,7 +488,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                     neighbors.add(new NeighborPBest(msg.weights, msg.accuracy, msg.workerId));
 
-                    logger.log(msg.workerId + ")" + 
+                    if (logger.isEnabled(1)) logger.log(msg.workerId + ")" + 
                             Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
                             ", with accuracy = " + msg.accuracy +  ", with loss = " + 
                             msg.loss + ", with msgIndex: " + msg.msgIndex
@@ -486,7 +497,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
 
             } catch (Exception e) {
-                logger.log(taskInstance + ", Error iterating bestStore: " + e.getMessage());
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        ", Error iterating bestStore: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -504,7 +516,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 neighbors.add(new NeighborPBest(msg.weights, msg.accuracy, msg.workerId));
 
-                logger.log(msg.workerId + ")" + 
+                if (logger.isEnabled(1)) logger.log(msg.workerId + ")" + 
                         Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT) + 
                         ", with accuracy = " + msg.accuracy +  ", with loss = " +   
                         msg.loss + ", with msgIndex: " + msg.msgIndex
@@ -554,8 +566,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 }
                 if (bestMsg.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
                     ws.stats.setLastSeenGBestLoss(bestMsg.loss);
-                    logger.log(taskInstance + ", pBest Weights: " + bestMsg.workerId + ")" + 
-                        Dl4jParamUtils.sampleFlat(bestMsg.weights, SAMPLING_CONSTANT) + ", with accuracy = " + bestMsg.accuracy + 
+                    if (logger.isEnabled(1)) logger.log(taskInstance + 
+                        ", pBest Weights: " + bestMsg.workerId + ")" + 
+                        Dl4jParamUtils.sampleFlat(bestMsg.weights, SAMPLING_CONSTANT) + 
+                        ", with accuracy = " + bestMsg.accuracy + 
                         ", with loss = " + bestMsg.loss + ", with msgIndex: " + bestMsg.msgIndex);
                 }
 
@@ -567,25 +581,28 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         } else {
 
             if (bestStore == null) {
-                logger.log(taskInstance + ", bestStore is null");
+                if (logger.isEnabled(2)) logger.log(taskInstance + ", bestStore is null");
                 return null;
             }
 
             ValueAndTimestamp<WeightsMessage> wrapper = bestStore.get(keyName);
             if (wrapper == null) {
-                logger.log(taskInstance + ", gBestWeights returned null (no entry for key '" + keyName + "')");
+                if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", gBestWeights returned null (no entry for key '" + keyName + "')");
                 return null;
             }
 
             WeightsMessage best = wrapper.value();
             if (best == null || best.weights == null || best.weights.length == 0) {
-                logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
+                if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", gBestWeights is empty for key '" + keyName + "'");
                 return null;
             }
 
             float[] gBestWeights = best.weights;
             if (gBestWeights == null || gBestWeights.length == 0) {
-                logger.log(taskInstance + ", gBestWeights is empty for key '" + keyName + "'");
+                if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", gBestWeights is empty for key '" + keyName + "'");
                 return null;
             }
 
@@ -595,7 +612,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
             if (best.loss < ws.stats.getLastSeenGBestLoss() - 1e-9) {
                 ws.stats.setLastSeenGBestLoss(best.loss);
-                logger.log(taskInstance + ", gBest updated ! , with loss = " + best.loss + " and acc = " + best.accuracy);
+                if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", gBest updated ! , with loss = " + best.loss + " and acc = " + best.accuracy);
             }
 
             return gBestWeights;
@@ -623,7 +641,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // convergence is global this is why we use bestStore.all()
 
         if (bestStore == null) {
-            logger.log(taskInstance + ", [Convergence] bestStore is null");
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", [Convergence] bestStore is null");
             return null;
         }
 
@@ -640,7 +659,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 if (sum == null) sum = new double[w.length];
                 if (w.length != sum.length) {
-                    logger.log(taskInstance + ", [Convergence] pBest length mismatch, skipping key=" + entry.key);
+                    if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        ", [Convergence] pBest length mismatch, skipping key=" + entry.key);
                     continue;
                 }
 
@@ -649,7 +669,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
         } catch (Exception e) {
-            logger.log(taskInstance + ", [Convergence] error while reading pBest store: " + e.getMessage());
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", [Convergence] error while reading pBest store: " + e.getMessage());
             return null;
         }
 
@@ -670,7 +691,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 center = readGBestStore();
                 if (center == null) {
-                    logger.log(taskInstance + ", [Convergence] gBest not available -> cannot evaluate convergence.");
+                    if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        ", [Convergence] gBest not available -> cannot evaluate convergence.");
                     return false;
                 }
 
@@ -678,7 +700,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 center = computeMeanPBestFromStore();
                 if (center == null) {
-                    logger.log(taskInstance + ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
+                    if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        ", [Convergence] pBest mean not available -> cannot evaluate convergence.");
                     return false;
                 }
             }
@@ -700,7 +723,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             boolean converged = dist <= radius;
             if(verbose) {
-                logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
+                if (logger.isEnabled(2)) logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
                         + " radius = " + Dl4jParamUtils.round((float) radius, 4)
                         + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
                         + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
@@ -724,16 +747,16 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         if(lastOffset == 0) {
             ws.inactivePartitions++;
-            logger.log(taskInstance + ", Empty partition: " + seenPartitions + ", with lastOffset: " + lastOffset + 
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Empty partition: " + seenPartitions + ", with lastOffset: " + lastOffset + 
                 ", inactivePartitions so far: " + ws.inactivePartitions);
         } else {
-            logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Seen partitions: " + seenPartitions + ", with lastOffset: " + lastOffset);
 
             double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
             double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
 
-            logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs) +
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs) +
                     " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs
             );
         } 
@@ -742,15 +765,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(ws.printedReport == false) {
 
-            logger.log("Closing Report ============================================================");
+            if (logger.isEnabled(2)) logger.log("Closing Report ============================================================");
 
             checkConvergence(false, true);
 
             if(countForwardPass != 0) {
-                logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
+                if (logger.isEnabled(2)) logger.log("Average bufferSize: " + Dl4jParamUtils.round(bufferSizeAcc / countForwardPass, 2));
             }            
 
-            logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
+            if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
 
             ws.printedReport = true;
         }

@@ -60,7 +60,8 @@
 			=> Streaming / federated systems want continuous operation (federated inherently streaming ?)
 			=> Maybe reset (gBest, pBest, W_INERTIA) pso after a time window or after Coordinator detects significant accuracy drop ?
 			
-
+		- τρεξιμο σε server reliance on static classes για coordination
+		
 	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

@@ -12,6 +12,10 @@ import java.nio.file.StandardOpenOption;
 
 public class CustomLogger {
 
+    private Config cfg = Config.getInstance();
+    public final boolean ENABLE_LOGGING = cfg.ENABLE_LOGGING;
+    private final int LOGGER_LEVEL = cfg.LOGGER_LEVEL;
+
     public final BufferedWriter logWriter;
     public static CustomLogger coordinatorInstance;
     private static final Map<Integer, CustomLogger> workerInstances = new HashMap<>();
@@ -25,6 +29,12 @@ public class CustomLogger {
         if(clearedLogsDir == false) {
             clearLogsDirectory();
             clearedLogsDir = true;
+        }
+
+        if (!ENABLE_LOGGING) {      // If logging is enabled, clear the directory 
+                                    // and return without creating new log files
+            this.logWriter = null;
+            return;
         }
 
         if(workerId != -1) {
@@ -55,8 +65,9 @@ public class CustomLogger {
                 e.printStackTrace();
             }            
         } 
-
+        
         this.logWriter = w;
+
     } 
     
     //=====================================================================================\
@@ -106,14 +117,27 @@ public class CustomLogger {
         }
     }
 
-    //=====================================================================================\
+    //=====================================================================================
+
+    public boolean isEnabled(int log_level) {
+        return ENABLE_LOGGING && LOGGER_LEVEL <= log_level;
+    }
+
+    //=====================================================================================
 
     public void log(String msg) {
-        if (logWriter == null) return;
+        if (logWriter == null || !ENABLE_LOGGING) return;
+
+        // if (logWriter == null || !ENABLE_LOGGING || LOGGER_LEVEL > log_level) return;
+            // Logger Level: 
+            //  0 => causes performance issues, recurring log, not critical 
+            //  1 => uncommon, recurring log message (pBest update)
+            //  2 => errors / final report / critical / only once logs
+
         try {
             logWriter.write(msg);
             logWriter.newLine();
-            logWriter.flush();
+            // logWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

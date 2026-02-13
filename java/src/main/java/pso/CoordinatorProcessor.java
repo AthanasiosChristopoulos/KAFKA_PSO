@@ -125,9 +125,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
         consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        // logger.log(taskInstance + ", TEST_TOPIC: " + TEST_TOPIC);
 
-        logger.log(taskInstance + " thread = " + Thread.currentThread().getName()
+        if (logger.isEnabled(2)) logger.log(taskInstance + " thread = " + Thread.currentThread().getName()
             + " TEST_TOPIC = " + TEST_TOPIC + " testStoreName = " + testStoreName);
             
         this.consumer = new KafkaConsumer<>(consumerProps);
@@ -139,7 +138,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.context = context;
         this.testStore = (KeyValueStore<String, ValueAndTimestamp<DataMessage>>) context.getStateStore(testStoreName);
         this.taskTag = "task = " + context.taskId() + " thread = " + Thread.currentThread().getName();
-        logger.log(taskInstance + " INIT " + taskTag + " store = " + testStoreName);
+        if (logger.isEnabled(2)) logger.log(taskInstance + " INIT " + taskTag 
+                + " store = " + testStoreName);
 
     }
 
@@ -158,9 +158,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
 
         if(evaluation_count == 0) {
-            context.recordMetadata().ifPresent(meta -> 
-                logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + ", Partition: " + meta.partition() + ", Offset: " + meta.offset())
-            );
+
+            context.recordMetadata().ifPresent(meta -> {
+                if (logger.isEnabled(2)) {
+                    logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + 
+                    ", Partition: " + meta.partition() + ", Offset: " + meta.offset());
+                }
+            });
         }
 
         WeightsMessage msg = record.value();
@@ -170,8 +174,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         String workerId = String.valueOf(msg.workerId);
         
-        // logger.log(taskInstance + ", Time: " + lastActivitySeconds + " current Position message with msgIndex " + msg.msgIndex + ", from worker " + workerId);
-
         float[] weights = msg.weights;
         if (weights == null) {
             return;
@@ -184,7 +186,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         weightsBuffer.put(workerId, weights);
 
         // Run only if all workers have reported their position 
-        // logger.log("Which worker Id have already sent: " + weightsBuffer.keySet() + ", weightsBuffer.size() : " + weightsBuffer.size());
+        // if (logger.isEnabled(0)) logger.log("Which worker Id have already sent: " + weightsBuffer.keySet() + ", weightsBuffer.size() : " + weightsBuffer.size());
 
         if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
         
@@ -206,7 +208,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             }
 
             if (evalBatch == null || evalBatch.isEmpty()) {
-                logger.log(taskInstance + ", Cannot evaluate, Test set is null/empty.");
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        ", Cannot evaluate, Test set is null/empty.");
                 return;
             }
 
@@ -224,7 +227,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             if(accuracy > bestGlobalModelAccuracy) {    
                 Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                 bestGlobalModelAccuracy = accuracy;
-                logger.log(taskInstance + ", New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+                if (logger.isEnabled(1)) logger.log(taskInstance + 
+                    ", New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
             }
 
             if(loss < bestLoss) {    
@@ -232,7 +236,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             }
             
             // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
-            logger.log(taskInstance + 
+            if (logger.isEnabled(0)) logger.log(taskInstance + 
                         ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
@@ -330,14 +334,15 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         if (cachedTestSet != null) return cachedTestSet;    // if already cached, just return the cache
 
-        logger.log("Waiting on loadAndCacheTestSet");
+        if (logger.isEnabled(2)) logger.log("Waiting on loadAndCacheTestSet");
 
         // wait until State Store has enough rows
         for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
             int sz = approximateStoreSize();
 
             if (sz >= minRows) {
-                logger.log("Breaking sleeping, estimated size is: " + sz + ", with minRows: " + minRows);
+                if (logger.isEnabled(2)) logger.log("Breaking sleeping, estimated size is: " + 
+                    sz + ", with minRows: " + minRows);
                 break;
             };
 
@@ -345,7 +350,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 Thread.sleep(WAIT_SLEEP_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.log(taskInstance + " interrupted while waiting for testStore");
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        " interrupted while waiting for testStore");
                 return null;
             }
         }
@@ -366,12 +372,14 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         updateTime();
 
-        logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
+        if (logger.isEnabled(2)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + 
+                ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-            logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", TEST[" + i + "]: " + cachedTestSet.get(i));
         }
 
-        logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
+        if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
 
         return cachedTestSet;
@@ -390,127 +398,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         }
         return countLocal;
     }
-
-    // ===============================================================================================
-
-    // private List<DataMessage> getAllTestRowsFromStoreOnce() {
-
-    //     if (cachedTestSet != null) return cachedTestSet;
-
-    //     // Wait for the global store to populate (size stabilizes)
-    //     int lastSize = -1;
-    //     int stableCount = 0;
-
-    //     for (int tries = 0; tries < 50; tries++) { // ~50 * 100ms = 5s max
-    //         int sz = approximateStoreSize();
-    //         if (sz == lastSize && sz > 0) {
-    //             stableCount++;
-    //             if (stableCount >= 5) break; // stable for 5 checks
-    //         } else {
-    //             stableCount = 0;
-    //             lastSize = sz;
-    //         }
-
-    //         try { Thread.sleep(50);  } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
-    //     }
-
-    //     List<DataMessage> all = new ArrayList<>();
-    //     try (var it = testStore.all()) {
-    //         while (it.hasNext()) {
-    //             var kv = it.next();
-    //             ValueAndTimestamp<DataMessage> vat = kv.value;
-    //             if (vat != null && vat.value() != null) {
-    //                 all.add(vat.value());
-    //             }
-    //         }
-    //     }
-
-    //     all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
-    //     cachedTestSet = Collections.unmodifiableList(all);
-
-    //     logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
-    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-    //         logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
-    //     }
-
-    //     return cachedTestSet;
-    // }
-
-    // private int approximateStoreSize() {
-    //     int count = 0;
-    //     try (var it = testStore.all()) {
-    //         while (it.hasNext()) {
-    //             var kv = it.next();
-    //             var vat = kv.value;
-    //             if (vat != null && vat.value() != null) count++;
-    //         }
-    //     }
-    //     return count;
-    // }
-
-    // ======================================================================================================================
-
-    // private List<DataMessage> loadAllTestDataOnce() {
-
-    //     if (cachedTestSetLoaded && cachedTestSet != null) {
-    //         logger.log(taskInstance + ", Using cached Test Set");
-    //         return cachedTestSet;
-    //     }
-
-    //     consumer.poll(Duration.ZERO);
-    //     Set<TopicPartition> asg = consumer.assignment();
-
-    //     if (asg == null || asg.isEmpty()) {
-    //         // poll again to get assignment
-    //         consumer.poll(Duration.ofMillis(100));
-    //         asg = consumer.assignment();
-    //     }
-    //     if (asg == null || asg.isEmpty()) {
-    //         logger.log(taskInstance + ", Could not get assignment for TEST_TOPIC; cannot cache test set.");
-    //         return null;
-    //     }
-
-    //     consumer.seekToBeginning(asg);
-    //     consumer.poll(Duration.ZERO);
-
-    //     Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
-
-    //     List<DataMessage> all = new ArrayList<>(4096);
-
-    //     while (true) {   // Read until all partitions reach end offsets
-
-    //         ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(200));
-
-    //         for (ConsumerRecord<String, DataMessage> rec : records) {
-    //             DataMessage dm = rec.value();
-    //             if (dm != null) all.add(dm);
-    //         }
-
-    //         boolean allAtEnd = true;
-    //         for (TopicPartition tp : asg) {
-    //             long pos = consumer.position(tp);
-    //             long end = ends.getOrDefault(tp, -1L);
-
-    //             if (pos < end) {    // if not yet at end
-    //                 allAtEnd = false;
-    //                 break;
-    //             }
-    //         }
-
-    //         if (allAtEnd) break;    // if at end break
-    //     }
-
-    //     cachedTestSet = Collections.unmodifiableList(all);
-    //     cachedTestSetLoaded = true;
-
-    //     logger.log(taskInstance + ", Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
-    //     logger.log(taskInstance + ", First 5 TEST samples:");
-    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-    //         logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i).toString());
-    //     }
-
-    //     return cachedTestSet;
-    // }
 
     //=========================================================================================================================
 
@@ -545,7 +432,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             carry.clear();
             consumer.seekToBeginning(asg);
             consumer.poll(Duration.ZERO);
-            logger.log(taskInstance + ", Reached end-of-topic; resetting consumer to beginning (offset 0).");
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", Reached end-of-topic; resetting consumer to beginning (offset 0).");
             return true;
         }
 
@@ -574,9 +462,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                     .append("] ");
             }
 
-            logger.log(sb.toString());
+            if (logger.isEnabled(1)) logger.log(sb.toString());
         } catch (Exception e) {
-            logger.log(taskInstance + ", Coordinator failed to log consumer offsets: " + e.getMessage());
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", Coordinator failed to log consumer offsets: " + e.getMessage());
         }
     }
    
@@ -625,9 +514,130 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 
-        logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
-                + " over " + evaluation_count + " batches" + ", average forwardPassMs: " + avgForwardPassMs);
-
+        if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
+                + " over " + evaluation_count + " batches" + ", average forwardPassMs: " 
+                + avgForwardPassMs);
     }
-
 }
+
+    // ===============================================================================================
+
+    // private List<DataMessage> getAllTestRowsFromStoreOnce() {
+
+    //     if (cachedTestSet != null) return cachedTestSet;
+
+    //     // Wait for the global store to populate (size stabilizes)
+    //     int lastSize = -1;
+    //     int stableCount = 0;
+
+    //     for (int tries = 0; tries < 50; tries++) { // ~50 * 100ms = 5s max
+    //         int sz = approximateStoreSize();
+    //         if (sz == lastSize && sz > 0) {
+    //             stableCount++;
+    //             if (stableCount >= 5) break; // stable for 5 checks
+    //         } else {
+    //             stableCount = 0;
+    //             lastSize = sz;
+    //         }
+
+    //         try { Thread.sleep(50);  } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+    //     }
+
+    //     List<DataMessage> all = new ArrayList<>();
+    //     try (var it = testStore.all()) {
+    //         while (it.hasNext()) {
+    //             var kv = it.next();
+    //             ValueAndTimestamp<DataMessage> vat = kv.value;
+    //             if (vat != null && vat.value() != null) {
+    //                 all.add(vat.value());
+    //             }
+    //         }
+    //     }
+
+    //     all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
+    //     cachedTestSet = Collections.unmodifiableList(all);
+
+    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
+    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
+    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
+    //     }
+
+    //     return cachedTestSet;
+    // }
+
+    // private int approximateStoreSize() {
+    //     int count = 0;
+    //     try (var it = testStore.all()) {
+    //         while (it.hasNext()) {
+    //             var kv = it.next();
+    //             var vat = kv.value;
+    //             if (vat != null && vat.value() != null) count++;
+    //         }
+    //     }
+    //     return count;
+    // }
+
+    // ======================================================================================================================
+
+    // private List<DataMessage> loadAllTestDataOnce() {
+
+    //     if (cachedTestSetLoaded && cachedTestSet != null) {
+    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", Using cached Test Set");
+    //         return cachedTestSet;
+    //     }
+
+    //     consumer.poll(Duration.ZERO);
+    //     Set<TopicPartition> asg = consumer.assignment();
+
+    //     if (asg == null || asg.isEmpty()) {
+    //         // poll again to get assignment
+    //         consumer.poll(Duration.ofMillis(100));
+    //         asg = consumer.assignment();
+    //     }
+    //     if (asg == null || asg.isEmpty()) {
+    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", Could not get assignment for TEST_TOPIC; cannot cache test set.");
+    //         return null;
+    //     }
+
+    //     consumer.seekToBeginning(asg);
+    //     consumer.poll(Duration.ZERO);
+
+    //     Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+
+    //     List<DataMessage> all = new ArrayList<>(4096);
+
+    //     while (true) {   // Read until all partitions reach end offsets
+
+    //         ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(200));
+
+    //         for (ConsumerRecord<String, DataMessage> rec : records) {
+    //             DataMessage dm = rec.value();
+    //             if (dm != null) all.add(dm);
+    //         }
+
+    //         boolean allAtEnd = true;
+    //         for (TopicPartition tp : asg) {
+    //             long pos = consumer.position(tp);
+    //             long end = ends.getOrDefault(tp, -1L);
+
+    //             if (pos < end) {    // if not yet at end
+    //                 allAtEnd = false;
+    //                 break;
+    //             }
+    //         }
+
+    //         if (allAtEnd) break;    // if at end break
+    //     }
+
+    //     cachedTestSet = Collections.unmodifiableList(all);
+    //     cachedTestSetLoaded = true;
+
+    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
+    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", First 5 TEST samples:");
+    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
+    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i).toString());
+    //     }
+
+    //     return cachedTestSet;
+    // }

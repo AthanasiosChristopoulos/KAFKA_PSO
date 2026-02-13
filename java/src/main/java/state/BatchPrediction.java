@@ -125,7 +125,7 @@ public class BatchPrediction {
     public float[] callPredictionsBatch(List<DataMessage> batch) {
 
         if (batch == null || batch.isEmpty()) {
-            logger.log("Batch is empty");
+            if (logger.isEnabled(2)) logger.log("Batch is empty");
             return null;
         }
 
@@ -137,12 +137,12 @@ public class BatchPrediction {
 
             float[] features = msg.features;
             if (features == null) {
-                logger.log("Null features in DataMessage");
+                if (logger.isEnabled(0)) logger.log("Null features in DataMessage");
                 continue;
             }
 
             if (features.length != NUM_FEATURES) {
-                logger.log("Wrong features length. Got " + features.length + " but NUM_FEATURES = " + NUM_FEATURES);
+                if (logger.isEnabled(0)) logger.log("Wrong features length. Got " + features.length + " but NUM_FEATURES = " + NUM_FEATURES);
                 System.out.println("Wrong features length. Got " + features.length + " but NUM_FEATURES = " + NUM_FEATURES);
                 continue; // skip non-conforming record
             }
@@ -153,7 +153,7 @@ public class BatchPrediction {
 
         int nSamples = featureList.size();
         if (nSamples == 0) {
-            logger.log("No samples after parsing batch");
+            if (logger.isEnabled(0)) logger.log("No samples after parsing batch");
             return null;
         }
 
@@ -195,7 +195,7 @@ public class BatchPrediction {
             X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
         }
 
-        // logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
+        // if (logger.isEnabled(0)) logger.log("EXPECTED_SIZE: " + EXPECTED_SIZE + ", nSamples: " + nSamples);
 
         // ==============================================================================================================
         // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
@@ -203,7 +203,7 @@ public class BatchPrediction {
         // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
 
         // if (nSamples > EXPECTED_SIZE) {
-        //     logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+        //     if (logger.isEnabled(0)) logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
         //     System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
 
         //     nSamples = EXPECTED_SIZE;
@@ -264,7 +264,7 @@ public class BatchPrediction {
         // Forward Pass End ===============================================================================
 
         if (probs == null || probs.size(0) == 0) {
-            logger.log("Empty probs batch");
+            if (logger.isEnabled(0)) logger.log("Empty probs batch");
             return null;
         }
 
@@ -327,12 +327,12 @@ public class BatchPrediction {
         // ===========================================================================================
         
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {
-            logger.log("loss is NaN/Inf, X length: " + X.length());
+            if (logger.isEnabled(0)) logger.log("loss is NaN/Inf, X length: " + X.length());
             return null;
         }
 
         if (nCorrect == 0) {
-            logger.log("nCorrect == 0");
+            if (logger.isEnabled(0)) logger.log("nCorrect == 0");
         }
 
         float accuracy = (float) nCorrect / nSamples;
@@ -373,7 +373,7 @@ public class BatchPrediction {
             return MAPPER.writeValueAsString(out);
 
         } catch (Exception e) {
-            logger.log("Error in predictSingle: " + e.getMessage());
+            if (logger.isEnabled(0)) logger.log("Error in predictSingle: " + e.getMessage());
             return null;
         }
     }

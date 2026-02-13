@@ -318,7 +318,7 @@ public class Coordinator implements Runnable {
 
         pBestStream.peek((k, msg) -> {
             updateTime();
-            logger.log(lastActivitySeconds +", [pBest received] workerId = " + msg.workerId + ", msgindex: " + msg.msgIndex
+            if (logger.isEnabled(1)) logger.log(lastActivitySeconds +", [pBest received] workerId = " + msg.workerId + ", msgindex: " + msg.msgIndex
                 + ", accuracy: " + msg.accuracy + ", loss: " + msg.loss);
         });
 

@@ -70,6 +70,9 @@ public class Config {
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF;
 
+    public final boolean ENABLE_LOGGING;
+    public final int LOGGER_LEVEL; 
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -220,6 +223,9 @@ public class Config {
         this.INDEPENDENT_WORKER_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_WORKER_DATA_PROCESSING", "false"));
 
         this.GIVE_HALF_TO_SELF = Boolean.parseBoolean(getenv(dotenv, "GIVE_HALF_TO_SELF", "false"));
+
+        this.ENABLE_LOGGING = Boolean.parseBoolean(getenv(dotenv, "ENABLE_LOGGING", "true"));
+        this.LOGGER_LEVEL = Integer.parseInt(getenv(dotenv, "LOGGER_LEVEL", "0"));
 
     }
 

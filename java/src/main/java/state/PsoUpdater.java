@@ -13,7 +13,6 @@ import utils.*;
 public class PsoUpdater {
 
     private Config cfg = Config.getInstance();
-
     private final float W_INERTIA = cfg.W_INERTIA;
     private final float W_INERTIA_START = cfg.W_INERTIA_START;
     private final float W_INERTIA_END = cfg.W_INERTIA_END;
@@ -107,7 +106,7 @@ public class PsoUpdater {
         }
         C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
 
-        logger.log("PsoUpdater: Number of weights (dimensionality): " + dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+        if (logger.isEnabled(0)) logger.log("PsoUpdater: Number of weights (dimensionality): " + dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
@@ -203,7 +202,7 @@ public class PsoUpdater {
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
         
-        // logger.log("Count_updates: " + count_updates);
+        // if (logger.isEnabled(0)) logger.log("Count_updates: " + count_updates);
 
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
@@ -244,7 +243,7 @@ public class PsoUpdater {
 
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
 
-        logger.log(taskInstance + ", PSO magnitudes: " + 
+        if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
                 ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + 
@@ -272,7 +271,7 @@ public class PsoUpdater {
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
 
-        // logger.log("Count_updates: " + count_updates);
+        // if (logger.isEnabled(0)) logger.log("Count_updates: " + count_updates);
 
         // neighbors.pBest empty case (initialization) ===================================================
 
@@ -359,7 +358,7 @@ public class PsoUpdater {
         
         for (NeighborPBest nb : neighbors) {
             if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
-                logger.log("AAAAAA");
+                if (logger.isEnabled(0)) logger.log("AAAAAA");
                 continue;
             }
             float Wk = Math.max(eps, nb.accuracy); // your W(k)=accuracy
@@ -405,7 +404,7 @@ public class PsoUpdater {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
-        logger.log(taskInstance + ", PSO magnitudes: " +
+        if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                     ", with W_INERTIA: " + W_INERTIA_CURRENT +
                     ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +

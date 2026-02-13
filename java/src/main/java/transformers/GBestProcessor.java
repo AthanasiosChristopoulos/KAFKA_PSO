@@ -51,7 +51,7 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
 
             context.forward(new Record<>("gBest", gBestMsg, record.timestamp()));
 
-            logger.log("[gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy + ", loss = " + msg.loss
+            if (logger.isEnabled(0)) logger.log("[gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy + ", loss = " + msg.loss
                         + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
         }
 

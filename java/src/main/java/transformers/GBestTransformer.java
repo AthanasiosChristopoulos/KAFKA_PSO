@@ -64,7 +64,7 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
         float newLoss = msg.loss;
 
-        // logger.log("I am here: newLoss " + newLoss + " and gBestLoss: " + gBestLoss);
+        // if (logger.isEnabled(0)) logger.log("I am here: newLoss " + newLoss + " and gBestLoss: " + gBestLoss);
         
         if (newLoss < (gBestLoss - EPS)) {
 
@@ -73,11 +73,11 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
 
             WeightsMessage gBestMsg = new WeightsMessage(msg.workerId, msg.msgIndex, msg.accuracy, msg.loss, msg.weights);
 
-            // logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
+            // if (logger.isEnabled(0)) logger.log(taskInstance + " thread=" + Thread.currentThread().getName()
             //     + "[gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
             //     + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
-            logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
+            if (logger.isEnabled(0)) logger.log(lastActivitySeconds + ", [gBest updated] workerId = " + msg.workerId + ", accuracy = " + msg.accuracy
                 + ", loss = " + msg.loss + ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
 
             boolean significant_improvement = Math.abs((lastSentGBestLoss - newLoss)) / (Math.abs(lastSentGBestLoss) + EPS) > 0.3 * SIGNIFICANT_LOSS_DIFF;
