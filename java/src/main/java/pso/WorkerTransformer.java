@@ -177,11 +177,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             printedOffset = true;
             logger.log(taskInstance + ", Starting at -> " + "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
-
-            // logger.log(taskInstance + ", Sample DataMessage: " + value.toString());
             logger.log(taskInstance + ", Sample DataMessage: " + value.toStringFull());
             
-            seenPartitions.add(context.partition());
+            seenPartitions.add(context.partition());    // if no records processed, this never runs
         }
 
         lastOffset = context.offset();
@@ -736,8 +734,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
 
             logger.log(taskInstance + ", average elapsed time per batch: " + String.format("%.3f ms", avgMs) +
-                    " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs + 
-                    ", inactivePartitions so far: " + ws.inactivePartitions);
+                    " over " + count + " batches" + ", average forwardPassMs: " + avgForwardPassMs
+            );
         } 
 
         // Report on convergence: ==============================================================

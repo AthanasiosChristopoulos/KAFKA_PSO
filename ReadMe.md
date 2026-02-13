@@ -780,6 +780,19 @@ found a better region than the second or third best neighbors (they may not have
     - accuracy after fixed time given / data given 
     - time / data needed to reach accuracy goal    
 
+ - Kafka performance bottleneck:
+    - Increasing the number of consumers per partition (identified from the tuple (application, task)) on a single broker will lead to the inability of the broker to handle all of them, and it will drop a frew
+        - broker too busy => missed heartbeats and polls => then drops the tasks
+    - If tasks within an application remain idle for too long, then they miss, as a Kafka Consumer, heartbeats / they dont poll fast enough, then Broker rebalances and kills the task.
+        - consumer doesn’t call poll() (asks for new data) often enough → exceeds max.poll.interval.ms
+        - slow polling, happens because of heavy processing + many independent apps
+        - Rebalancing == the ownership of partitions changes
+        - This causes rebalancing, which causes task churn
+        - Task churn means that Kafka Streams keeps creating tasks, then revoking/closing them, then creating them again, repeatedly. rapid task create/close cycles, often with 0 records processed in between.
+    
+    - Idle for too long happens because of the computers capacity for parallelism (its limited):
+        - If some tasks take too long / overall processing takes too long, then some tasks get starved
+        - Starved tasks => dont communicate with broker, get kicked out 
 
     - ## GPU: ================================================================================
 

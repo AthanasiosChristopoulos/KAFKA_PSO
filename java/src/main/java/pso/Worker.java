@@ -100,6 +100,12 @@ public class Worker implements Runnable {
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
         props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
         
+        if(INDEPENDENT_WORKER_DATA_PROCESSING) {
+            props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 10 * 60 * 1000); // 10 minutes
+            props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);
+            props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 10000);
+        }
+        
         Serde<DataMessage> dataSerde = new DataMessageSerde();
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
