@@ -126,7 +126,7 @@ public class CustomLogger {
     //=====================================================================================
 
     public void log(String msg) {
-        if (logWriter == null || !ENABLE_LOGGING) return;
+        // if (logWriter == null || !ENABLE_LOGGING) return;
 
         // if (logWriter == null || !ENABLE_LOGGING || LOGGER_LEVEL > log_level) return;
             // Logger Level: 
@@ -137,7 +137,7 @@ public class CustomLogger {
         try {
             logWriter.write(msg);
             logWriter.newLine();
-            // logWriter.flush();
+            logWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -106,7 +106,8 @@ public class PsoUpdater {
         }
         C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
 
-        if (logger.isEnabled(0)) logger.log("PsoUpdater: Number of weights (dimensionality): " + dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+        if (logger.isEnabled(2)) logger.log("PsoUpdater: Number of weights (dimensionality): " + 
+                dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
@@ -202,8 +203,6 @@ public class PsoUpdater {
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
         
-        // if (logger.isEnabled(0)) logger.log("Count_updates: " + count_updates);
-
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
 
@@ -270,8 +269,6 @@ public class PsoUpdater {
             updateParametersSchedule();
             // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
         }
-
-        // if (logger.isEnabled(0)) logger.log("Count_updates: " + count_updates);
 
         // neighbors.pBest empty case (initialization) ===================================================
 
@@ -358,7 +355,6 @@ public class PsoUpdater {
         
         for (NeighborPBest nb : neighbors) {
             if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
-                if (logger.isEnabled(0)) logger.log("AAAAAA");
                 continue;
             }
             float Wk = Math.max(eps, nb.accuracy); // your W(k)=accuracy
