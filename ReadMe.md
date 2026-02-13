@@ -458,10 +458,12 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
 However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
 
-## Congvergence: =========================================================
+## Convergence: =========================================================
 
  - change model
- - change constants => velocity, inertia, C1, C2
+ - change constants => inertia, C1, C2
+ - Change VMAX (in this case VMAX_FACTOR) => high VMAX, allows for velocity explosion, particles may fly completely randomly 
+                                            => low VMAX, reduce explration, converge prematurely 
  - increase the number of input data, more batches means more steps / updates  
  - look how velocity amplitude behaves
     - velocity show always start big and then becose smaller
@@ -549,14 +551,15 @@ improve the ability to escape local minima
     - On NNs set xmin=-1, xmax=+1  NN weights do not have a fixed natural range. But [−1,1] is the assumed  an assumed scale, beucase in this amplitude they get initializied)
     - In reality, if you don’t enforce bounds on weights, then choosing xmin/xmax is arbitrary
 
- - ## C1, C2 Accelaration Constants:
+ - ## C1, C2 Accelaration Constants:    ===================================================================================
 
     - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
     - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
     - Set both to 2.0
     - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
 
- - ## Invertia W:
+ - ## Invertia W:   ===================================================================================
+    - Three ways of inertia mechanisms: static, change with iteration number (or with time), adaptive inertia 
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
 
     - ## Inertia Adaptation during execution:

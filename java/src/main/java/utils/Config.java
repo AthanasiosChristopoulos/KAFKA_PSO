@@ -73,6 +73,9 @@ public class Config {
     public final boolean ENABLE_LOGGING;
     public final int LOGGER_LEVEL; 
 
+    public final boolean STOP_ON_CONVERGENCE;
+    public final float CONVERGENCE_STRICTNESS_FACTOR;
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -227,7 +230,9 @@ public class Config {
         this.ENABLE_LOGGING = Boolean.parseBoolean(getenv(dotenv, "ENABLE_LOGGING", "true"));
         this.LOGGER_LEVEL = Integer.parseInt(getenv(dotenv, "LOGGER_LEVEL", "0"));
 
-    }
+        this.STOP_ON_CONVERGENCE = Boolean.parseBoolean(getenv(dotenv, "STOP_ON_CONVERGENCE", "true"));
+        this.CONVERGENCE_STRICTNESS_FACTOR = Float.parseFloat(getenv(dotenv, "CONVERGENCE_STRICTNESS_FACTOR", "0.5"));
+    } 
 
     // ==================================================================================================================================
     

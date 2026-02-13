@@ -40,6 +40,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final String NEIGHBORHOOD_TOPOLOGY = cfg.NEIGHBORHOOD_TOPOLOGY;
+    public final boolean STOP_ON_CONVERGENCE = cfg.STOP_ON_CONVERGENCE;
+    private final float CONVERGENCE_STRICTNESS_FACTOR = cfg.CONVERGENCE_STRICTNESS_FACTOR;
 
     private ProcessorContext context;
 
@@ -169,7 +171,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             long idleNs = System.nanoTime() - t1.get();
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
-                if (logger.isEnabled(0)) logger.log(taskInstance + ", [Worker " + workerId + "] Idle for " + (idleNs / 1_000_000) + " ms -> requesting stop");
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
+                System.out.println("Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
                 CoordinatorControl.getInstance().requestStop(workerId);
             }
         });
@@ -364,7 +368,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // * 100 is for the user, just scale it upwards 
                 
 
-        if(checkConvergence(true, false)) {
+        if(STOP_ON_CONVERGENCE && checkConvergence(true, false)) {
             consecutiveConvergence++;
             if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
                 if (logger.isEnabled(2)) logger.log("Closed, because determined convergence");
@@ -731,7 +735,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             // ==========================================================================================================
             double radius;
             if(stricter) {
-                radius = 0.5 * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+                radius = CONVERGENCE_STRICTNESS_FACTOR * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
             } else {
                 radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
                     // The particle is converged if, on average, each weight differs from the center by 
@@ -766,13 +770,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             buffer.clear();
         }
 
-        if(lastOffset == 0) {   // if inActive Partition
+        if(lastOffset == 0) {   // if inactive Partition
             ws.inactivePartitions++;
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Empty partition: " 
                 + seenPartitions + ", with lastOffset: " + lastOffset + 
                 ", inactivePartitions so far: " + ws.inactivePartitions);
 
-        } else {
+        } else {    // if active partition
         
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Seen partitions: " 
                 + seenPartitions + ", with lastOffset: " + lastOffset);
@@ -792,6 +796,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
                     "   => per forwardPassMs: " + avgForwardPassMs + "\n"
             );
+
+            ws.validAvgMs = avgMs;
         } 
 
         // Report on convergence: ==============================================================
@@ -807,9 +813,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }            
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
-            double avgMs = (sumElapsedNs / 1_000_000.0) / count; 
-            System.out.println("[Worker " + workerId + "] average elapsed time per batch: " +
-                    String.format("%.3f ms", avgMs)); 
 
             ws.printedReport = true;
         }
@@ -820,7 +823,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(ws.countPartitionsFinished == ws.numberOfTasks - 5) {    // these 5 are not normal tasks
                         // there are always 5 extra control threads
             if(logger.isEnabled(2)) logger.log("Final inActivePartitions: " + ws.inactivePartitions);
-            System.out.println("[Worker " + workerId + "], inActivePartitions " + ws.inactivePartitions);
+            System.out.println("[Worker " + workerId + "], Average Elapsed Time per Batch: " +
+                    String.format("%.3f ms", ws.validAvgMs) + ", InActivePartitions " + ws.inactivePartitions);
         }
 
         logger.flush();

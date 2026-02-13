@@ -39,6 +39,7 @@ public final class WorkerStatic {
     public int inactivePartitions = 0;
     public int numberOfTasks = 0;
     public int countPartitionsFinished = 0;
+    public double validAvgMs;
 
     // ========================================================
 
