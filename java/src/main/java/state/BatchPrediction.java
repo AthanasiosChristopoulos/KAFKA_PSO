@@ -166,12 +166,12 @@ public class BatchPrediction {
 
 
         // Forward Pass Start ===============================================================================
-        
-        start = System.nanoTime();
 
         // ==============================================================================================================
         // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
-
+        // doesnt seem to have a significant difference memory wise, at least on the GPU, 
+        // choose this for better performance and simpler code
+        
         if(MODEL_IS_CNN) {
             if("cifar3".equals(DATASET)) {
 
@@ -257,7 +257,7 @@ public class BatchPrediction {
         // }
 
         // ==============================================================================================================
-
+        start = System.nanoTime();                  // We only want to evaluate the performance of the forward pass, not the GPU transfer overhead
         probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
                                                 // this is one forward pass per batch (has multiple samples)
         end = System.nanoTime();

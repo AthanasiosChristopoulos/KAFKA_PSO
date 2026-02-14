@@ -452,6 +452,12 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
+## Neural Networks - PSO:
+
+ - For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
+    - PSO => NN Architecture. This is part of NAS (Neural Architecture Search), a method used to programmatically determing NN architectures
+    - Gradient Descent => Actuall Weight Training "Apply Adam optimisation"
+
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
@@ -794,6 +800,12 @@ found a better region than the second or third best neighbors (they may not have
  - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)
     - divide this by 40 partitions => each partition gets 10000 samples
 
+ - Algorithm effieciency / performance should be measured as the Kafka Record processing time (of WorkerTransformer) of a batch:
+    - What we aim to is the forwardPass to be the primary source of delay (the rest of the processing shouldnt cost more that + 4 ms)
+    - We cant improve the forward Pass. Its complicated and handled by DL4J, except to:
+        - Activate GPU => adds too much overhead if Neural Network is simple
+        - Make Neural Network simpler, which costs on Neural Network quality / fitting potency
+
  - Need to measure:
     - Diagramm 1: y-axis: Accuracy - N_Workers
     - Diagramm 2: y-axis: Training Time - N_Workers
@@ -836,10 +848,14 @@ found a better region than the second or third best neighbors (they may not have
             1) [CPU parsing + copying]
             2) [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
                 => Memory copy overhead
+                => Happens on: X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); probs = model.output(X, false); (transfer X)
+                => read/copy from Java heap → ND4J buffer (still host-side initially), copy X host → device (CPU RAM → GPU VRAM) if it isn’t already there
             3) [GPU forward pass]
             4) [GPU → CPU sync]     (Pull data back to CPU, synchronizing on every batch => get results when they are needed)
                 => normally .output() would be async but in this case we need the results immidiatly to calculate loss
-                => Sync means => CPU is blocked until the results from the GPU have arrived                  
+                => Sync means => CPU is blocked until the results from the GPU have arrived        
+                => is enforced from commands like these which request probs / the result:  float[] flatProps = probs.data().asFloat();  
+
             5) [CPU loss + accuracy loops]  
         (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
