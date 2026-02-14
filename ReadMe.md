@@ -848,7 +848,7 @@ found a better region than the second or third best neighbors (they may not have
             1) [CPU parsing + copying]
             2) [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
                 => Memory copy overhead
-                => Happens on: X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); probs = model.output(X, false); (transfer X)
+                => Happens on: probs = model.output(X, false); (transfer X) - This is BOTH Memory transfer + forward pass
                 => read/copy from Java heap → ND4J buffer (still host-side initially), copy X host → device (CPU RAM → GPU VRAM) if it isn’t already there
             3) [GPU forward pass]
             4) [GPU → CPU sync]     (Pull data back to CPU, synchronizing on every batch => get results when they are needed)

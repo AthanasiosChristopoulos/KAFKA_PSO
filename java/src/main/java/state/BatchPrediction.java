@@ -169,9 +169,10 @@ public class BatchPrediction {
 
         // ==============================================================================================================
         // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
-        // doesnt seem to have a significant difference memory wise, at least on the GPU, 
+        // doesnt seem to have a significant difference memory wise
         // choose this for better performance and simpler code
-        
+        // X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); happens on the CPU memory / host-side NDArray
+
         if(MODEL_IS_CNN) {
             if("cifar3".equals(DATASET)) {
 
@@ -257,8 +258,8 @@ public class BatchPrediction {
         // }
 
         // ==============================================================================================================
-        start = System.nanoTime();                  // We only want to evaluate the performance of the forward pass, not the GPU transfer overhead
-        probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid
+        start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
+        probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid. Here is where the memory transfer happens between CPU and GPU
                                                 // this is one forward pass per batch (has multiple samples)
         end = System.nanoTime();
         // double min = probs.minNumber().doubleValue();
