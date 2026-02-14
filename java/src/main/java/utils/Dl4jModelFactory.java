@@ -492,7 +492,7 @@ public class Dl4jModelFactory {
 						.activation(Activation.RELU)
 						.build())
 				.layer(new DenseLayer.Builder()
-						.nOut(64)              
+						.nOut(32)              
 						.activation(Activation.RELU)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)

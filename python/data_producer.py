@@ -560,7 +560,7 @@ def load_dataset():
         y_enc = encoder.fit_transform(y)
         train_size = 19500
         X_train, X_test, y_train, y_test = train_test_split(X, y_enc, train_size=train_size, random_state=42, stratify=y_enc)
-    
+        evaluate_dataset(X_train, y_train, X_test, y_test)
         return X_train, y_train, X_test, y_test, None
 
     # ==================================================================================================

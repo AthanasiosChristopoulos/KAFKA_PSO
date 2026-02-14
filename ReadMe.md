@@ -312,30 +312,42 @@ def run_bank():
     save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 ```
 
-
+## ===================================================================
 ## DATASETS: =========================================================
+## Small / Easy Datasets / UCI datasets:
+Few Samples / Few classes (2 - 3 classes)
 
-### Iris:
+Horse => 300
+Vertebral => 310
+Wine => 178
+Diabetes => 768
+Blood Tissue => 748
+Seed => 210
+Heart => 300
+Iris => 150
+
+### Iris: ========================================================
     3 Classes
     150 Samples
     4 Features
 
-### Susy:
+### Susy: ========================================================
     2 Classes
     Balanced
     80% on Gradient Descent, 72% on PSO
     5000000 Samples
 
-### Bank:
+### Bank: ========================================================
     2 Classes
     Unbalanced 1/10 class_0 vs 9/10 class_1
     90% Gradient Descent, 90% on PSO
-
+    45k samples
+        
     Did the client subscribe to a bank term deposit after the marketing phone calls ?
         - class_0: yes → the client did subscribe (opened a term deposit)
         - class_1: no → the client did not subscribe
 
-### Adult Income:
+### Adult Income: ========================================================
 
     2 Classes
     1/3 vs 2/3 Split between classes
@@ -411,6 +423,12 @@ def run_bank():
 
     - // forward pass cost: CPU = 10ms / GPU = 3ms
 
+### Letter: =============================================================================================
+
+ - Evenly Distributed
+ - Very similar to Pendigits, just letters / alphabetical characters instead of numerical Digits
+ - 24 classes (alphabet)
+
 ### HIGGS: ===============================================================================================
 
 The HIGGS dataset comes from high-energy physics
@@ -435,6 +453,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
 
+## ==========================================================================================================================
 ## CNNs - Image Datasets: ===================================================================================================
 
     - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a forward pass to a CNN, rather than a Dense NN: 
