@@ -463,12 +463,17 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 
 However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
 
-## Convergence: =========================================================
+## Convergence vs Exploration: =========================================================
 
  - change model
  - change constants => inertia, C1, C2
  - Change VMAX (in this case VMAX_FACTOR) => high VMAX, allows for velocity explosion, particles may fly completely randomly 
                                             => low VMAX, reduce explration, converge prematurely 
+        - Increasing this helps exploration, but going overboard makes convergence impossible 
+        - Increasing velocity too much beyond VMAX may also be detrimental
+            - velocities will become similar because they will all get clamped in the same way
+            - particles will have the same velocity
+            - problem happens when number_of_clamps == dimensionality. This may be solvable with CLAMPING_TYPE=NORM
  - increase the number of input data, more batches means more steps / updates  
  - look how velocity amplitude behaves
     - velocity show always start big and then becose smaller
@@ -494,6 +499,7 @@ improve the ability to escape local minima
 ## What to look at for training process: =========================================
 
  - convergence (the ideal result is located, but the swarm doesnt converge on it):
+    - We need to always be converging when the execution ends. If we dont then the FedAvg will yield a bad result
     - Definition:
         - Velocity collapse ||v_i|| → 0
         - Swarm collapse Var(x_i) → 0 (x_i current position of particle i, each particle collapses to the same position) => all positions become (almost) the same (no exploration). Variance for mathematic reasons
@@ -592,7 +598,8 @@ improve the ability to escape local minima
             - Output: Δw (change in inertia weight)
             - Fuzzy: responds gradually to trends, does soft decisions (doesnt change inertia too much)
         
- - # Constriction factor:
+ - # Constriction factor: ===================================================================================================
+
     - Problem: There is no mathematical **guarantee convergence**. We need quaranteed convergence
         - Convergence should happen naturally but there is no quarantee.
     - Solution #1: Decrease inertia 
@@ -606,7 +613,7 @@ improve the ability to escape local minima
             =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
     - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
 
- - # Randomness Dimensionality (CLPSO - Page 2): 
+ - # Randomness Dimensionality (CLPSO - Page 2): ============================================================================ 
     ```java
     // 1) static randmoness per updateX / Statistically independent dimensions
     float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
@@ -625,7 +632,7 @@ improve the ability to escape local minima
         - NN Datasets arent explicitly rotated, but neural nets locally behave like rotated problems, which is why stabilization matters more than rotation-invariance tricks. 
     - In practice, (1) performs much better
 
-==============================================================================================
+## ==============================================================================================
 ## Local Version of PSO => Neighborhood based (Communication Topology) - Theory
 
  - Increasing neighborhood size deteriorates performance, the worst of FIPS is on ALL topologies:    
@@ -860,6 +867,7 @@ found a better region than the second or third best neighbors (they may not have
         (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
             => On a simple NN, cpu is preferable
+            => GPU is worth it if: ForwardPassTime >> Transfer + Sync cost
 
         But GPU is limited, it will only help in neural net compute.
             - No contribution for serialization / Kafka messages

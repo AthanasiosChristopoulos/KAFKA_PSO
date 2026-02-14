@@ -25,7 +25,6 @@ public class PsoUpdater {
     private final float C2 = cfg.C2;
     private final int N_WORKERS = cfg.N_WORKERS;
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
-    public final boolean SIMULATED_ANNEALING = cfg.SIMULATED_ANNEALING;
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
@@ -219,7 +218,10 @@ public class PsoUpdater {
 
         if (norm > vmaxNorm && norm > 0.0) {
             float scale = (float)(vmaxNorm / norm);
-            for (int i = 0; i < dimensionality; i++) velocity[i] *= scale;
+            for (int i = 0; i < dimensionality; i++) {
+                velocity[i] *= scale;
+                clamp_count++; 
+            }
         }
     }
 
@@ -272,8 +274,8 @@ public class PsoUpdater {
         if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
                 "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
                 ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + 
-                ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
+                ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
+                ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
                 ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
                 ", number of Clamps: " + clamp_count +
                 ", count_updates: " + count_updates

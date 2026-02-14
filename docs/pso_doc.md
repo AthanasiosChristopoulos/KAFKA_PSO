@@ -1,5 +1,5 @@
 ## PSO Theory:
-
+ - Belongs to the EC algorithms (Evolutionary Computation), population based algorithm
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
 

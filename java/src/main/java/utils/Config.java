@@ -53,7 +53,6 @@ public class Config {
 
     public final float SIGNIFICANT_LOSS_DIFF;
     public final boolean FILTER_ENABLED;
-    public final boolean SIMULATED_ANNEALING;
 
     public final int SAMPLING_CONSTANT;
 
@@ -218,8 +217,6 @@ public class Config {
             this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 4;
         }
-
-        this.SIMULATED_ANNEALING = Boolean.parseBoolean(getenv(dotenv, "SIMULATED_ANNEALING", "false"));
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
 

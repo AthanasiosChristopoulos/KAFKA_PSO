@@ -312,7 +312,7 @@ def run_susy():
     print(f"[SUSY] Test loss: {test_loss:.4f}")
     print(f"[SUSY] Test accuracy: {test_acc:.4f}")
 
-    save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
+    # save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
 # ======================================================================
 # BANK DATASET
@@ -375,7 +375,7 @@ def run_bank():
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
-    save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
+    # save_model_as_flat_txt(model, path=f"model_serialization/{DATASET}_model_weights.txt")
 
 # ======================================================================
 # MNIST DATASET
@@ -1476,7 +1476,7 @@ def evaluate_letter_recognition():
     history = model.fit(X_train, y_train, epochs=20, batch_size=128, validation_split=0.1)
     test_loss, test_acc = model.evaluate(X_test, y_test)
     print("Test Accuracy:", test_acc)
-    save_model_as_flat_txt(model)
+    # save_model_as_flat_txt(model)
 
 def run_letter():
 

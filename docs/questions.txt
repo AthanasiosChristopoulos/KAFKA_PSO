@@ -16,6 +16,9 @@
 				- N_WORKERS => [2, 4, 6] or [3, 5, 8]
 
 		- New Datasets
+			=> Susy runs with 0.77 but on GD i am getting 0.8 cant get better in GD these results on PSO are fine.
+				=> Maybe something wrong with the model
+			=> Pendigits is easier to see improvement since multiple classes
 
 		- Cacherd data set only 500 samples always used
 
