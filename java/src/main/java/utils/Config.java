@@ -74,7 +74,17 @@ public class Config {
     public final int LOGGER_LEVEL; 
 
     public final boolean STOP_ON_CONVERGENCE;
-    public final float CONVERGENCE_STRICTNESS_FACTOR;
+    public final float CONVERGENCE_STRICTNESS_FACTOR; 
+
+    public final boolean WEIGHTS_ON_UPDATEX;
+
+    public final boolean ACCELARATION_COEFF_TIME_VARYING;
+    public final float C1_START; 
+    public final float C1_END; 
+    public final float C2_START; 
+    public final float C2_END; 
+    public final float C_START; 
+    public final float C_END; 
 
     public Config() {
         
@@ -231,7 +241,16 @@ public class Config {
         this.LOGGER_LEVEL = Integer.parseInt(getenv(dotenv, "LOGGER_LEVEL", "0"));
 
         this.STOP_ON_CONVERGENCE = Boolean.parseBoolean(getenv(dotenv, "STOP_ON_CONVERGENCE", "true"));
-        this.CONVERGENCE_STRICTNESS_FACTOR = Float.parseFloat(getenv(dotenv, "CONVERGENCE_STRICTNESS_FACTOR", "0.5"));
+        this.CONVERGENCE_STRICTNESS_FACTOR = Float.parseFloat(getenv(dotenv, "CONVERGENCE_STRICTNESS_FACTOR", "0.5")); 
+
+        this.WEIGHTS_ON_UPDATEX = Boolean.parseBoolean(getenv(dotenv, "WEIGHTS_ON_UPDATEX", "true"));
+        this.ACCELARATION_COEFF_TIME_VARYING = Boolean.parseBoolean(getenv(dotenv, "ACCELARATION_COEFF_TIME_VARYING", "true"));
+        this.C1_START = Float.parseFloat(getenv(dotenv, "C1_START", "2.5")); 
+        this.C1_END = Float.parseFloat(getenv(dotenv, "C1_END", "0.5")); 
+        this.C2_START = Float.parseFloat(getenv(dotenv, "C2_START", "0.5")); 
+        this.C2_END = Float.parseFloat(getenv(dotenv, "C2_END", "2.5")); 
+        this.C_START = Float.parseFloat(getenv(dotenv, "C_START", "0.5")); 
+        this.C_END = Float.parseFloat(getenv(dotenv, "C_END", "2.5")); 
     } 
 
     // ==================================================================================================================================

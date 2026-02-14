@@ -127,8 +127,7 @@ N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
 
 If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remain idle / will have 0 partitions assigned.
 
-## ======================================================================
-## Distributed, data parallel PSO Protocol: 
+## Distributed, data parallel PSO Protocol: ===========================================================
 
 - (1) Initialization of particles, randomize their initial positions + velocities
     => initialize each particle with the same global model architecture (the architecture never changes, only the weights)
@@ -168,8 +167,8 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
     - updateModel(MultiLayerNetwork model, float[] flat)
  - Exchange pBest / gBest Weight Messages through Kafka Topics
 
-## ============================================================================
-## Kafka Message Documentation:
+## Kafka Message Documentation:  ============================================================================
+
 
 Input pBest-weights-topic:
 
@@ -553,16 +552,31 @@ improve the ability to escape local minima
 
  - ## C1, C2 Accelaration Constants:    ===================================================================================
 
-    - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
-    - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
-    - Set both to 2.0
+    - Comparison between the two: 
+        - a relatively high value of c1 causes particles to extremely wander in the search space.
+        - arelatively high value of c2 might cause the problem of premature convergence    
+    - Strategy (HPSO-TVAC): 
+        - At the Beggining of the search: Increase c1, decrease c2 (exploration)
+        - At the Ending of the search: Decrease c1, increase c2 (exploitation) 
+    - On both: 
+        - Low values allow particles to roam far from target regions before being tugged back (by the pBest / gBest)
+        - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
+        - Set both to 2.0
     - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
-
+    -
  - ## Invertia W:   ===================================================================================
-    - Three ways of inertia mechanisms: static, change with iteration number (or with time), adaptive inertia 
+    - Three ways of inertia mechanisms: 1) static, 2) change with iteration number (or with time), 3) adaptive inertia 
+        - 1) It can be random static as well (randomly choosen but dtatic during the run)
+        - 2) linearly-varying inertia weight (LVIW). Here time t == number of iterations, with T == the maximum number of iterations
+                => many time variations functions of this 
+        - 3) Introduce feedback parameter Ps(t) - the percentage of particles that succeeded to enhance their fitness in the previous iteration:
+                => w(t) = (wmax − wmin) * Ps(t) + wmin
+                => there is no way to efficiently compute Ps(t) in a distributed enviroment this will not be implemented here 
+            => Logic: In PSO, a high inertia w means: keep more of your current velocity / direction (more momentum), since it seems you are getting correct results this direction (be more effected by current trend, rather than social pulls)
+
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
 
-    - ## Inertia Adaptation during execution:
+    - ## Inertia Adaptation during execution: ===================================================================================
         - Linear logic, from 0.9 to 0.4 across the run
         - Fuzzy Logic / Controller considers:
             - Current gBest fitness: “Are we, hollistically, doing well right now?”

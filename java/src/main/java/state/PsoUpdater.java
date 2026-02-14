@@ -29,10 +29,20 @@ public class PsoUpdater {
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
+    public final boolean WEIGHTS_ON_UPDATEX = cfg.WEIGHTS_ON_UPDATEX;
+    
+    public final boolean ACCELARATION_COEFF_TIME_VARYING = cfg.ACCELARATION_COEFF_TIME_VARYING;
+    private float C1_START = cfg.C1_START; 
+    private float C1_END = cfg.C1_END;
+    private float C2_START = cfg.C2_START; 
+    private float C2_END = cfg.C2_END;
+    private float C_START = cfg.C_START; 
+    private float C_END = cfg.C_END;
+    
+    private float c1;  
+    private float c2;  
+    private float c;  
 
-    private final float C1_START = cfg.C1; 
-    private final float C1_END = 0.2f;
-    private float c1 = C1_START;  
     private int iter = 0;
     private final int MAX_ITERS = 500;
     private final int NUM_SAMPLES = cfg.NUM_SAMPLES;
@@ -124,6 +134,16 @@ public class PsoUpdater {
         this.num = new float[dimensionality];
         this.den = new float[dimensionality];
         // this.den_without_weight = new float[dimensionality];
+
+        if(ACCELARATION_COEFF_TIME_VARYING) {
+            this.c1 = C1_START;
+            this.c2 = C2_START;
+            this.c = C_START;
+        } else {
+            this.c1 = C1;
+            this.c2 = C2;
+            this.c = C;
+        }
                 
     }
 
@@ -212,10 +232,8 @@ public class PsoUpdater {
 
         clamp_count = 0;
 
-        if(ADAPTIVE_INERTIA) {
-            updateParametersSchedule(); 
-            // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
-        }
+        if(ADAPTIVE_INERTIA) updateParametersSchedule(); 
+        if(ACCELARATION_COEFF_TIME_VARYING) updateC1C2Schedule();
         
         // float r1 = rnd.nextFloat();   // randomness. Is not dimensional, it is a factor equal in all dimensions
         // float r2 = rnd.nextFloat();  
@@ -227,14 +245,9 @@ public class PsoUpdater {
 
             inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
 
-            if(SIMULATED_ANNEALING == false) {
-                cognitiveVec[k] = C1 * r1 * (pbest[k] - ws.flatModel[k]);
-            } else {
-                cognitiveVec[k] = c1 * r1 * (pbest[k] - ws.flatModel[k]);
-            }
-            
-            socialVec[k] = C2 * r2 * (gbest[k] - ws.flatModel[k]);
-            diffPBestGBest[k] = C2 * r2 * (pbest[k] - gbest[k]);
+            cognitiveVec[k] = c1 * r1 * (pbest[k] - ws.flatModel[k]);
+            socialVec[k] = c2 * r2 * (gbest[k] - ws.flatModel[k]);
+            diffPBestGBest[k] = c2 * r2 * (pbest[k] - gbest[k]);
 
             // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - ws.flatModel[k]) + C2 * r2 * (gbest[k] - ws.flatModel[k]);
             
@@ -279,10 +292,8 @@ public class PsoUpdater {
         count_updates++;
         clamp_count = 0;
 
-        if(ADAPTIVE_INERTIA) {
-            updateParametersSchedule();
-            // updateInertiaFromProgress(batchAccuracy);   // adaptive inertia   
-        }
+        if(ADAPTIVE_INERTIA) updateParametersSchedule(); 
+        if(ACCELARATION_COEFF_TIME_VARYING) updateC1C2Schedule();
 
         // neighbors.pBest empty case (initialization) ===================================================
 
@@ -355,56 +366,94 @@ public class PsoUpdater {
         final float phiMax;
         
         if(GIVE_HALF_TO_SELF) {
-            phiMax = 0.5f * C; 
+            phiMax = 0.5f * c; 
             if(INCLUDE_SELF && N > 1) {
                 N = neighbors.size() - 1;
             }
         } else {
-            phiMax = C; 
+            phiMax = c; 
         }
             
         final float phiMaxPerNeighbor = phiMax / (float) N;
         float accWk = 0;
+        if(WEIGHTS_ON_UPDATEX) {
 
-        for (NeighborPBest nb : neighbors) {
-            if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
-                continue;
+            for (NeighborPBest nb : neighbors) {
+                if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
+                    continue;
+                }
+                float Wk = Math.max(EPS, nb.accuracy); // your W(k)=accuracy
+                accWk += Wk;
+
+                float[] Pk = nb.pBest;
+
+                for (int d = 0; d < dimensionality; d++) {
+
+                    float phi_kd = (float) rnd.nextDouble() * phiMaxPerNeighbor; // U[0, C/N]
+                    // float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
+                    
+                    // den_without_weight[d] += phi_kd;
+                    float wphi = Wk * phi_kd;
+
+                    num[d] += wphi * Pk[d];
+                    den[d] += wphi;
+                }
             }
-            float Wk = Math.max(EPS, nb.accuracy); // your W(k)=accuracy
-            accWk += Wk;
-
-            float[] Pk = nb.pBest;
+            float scaleWk = accWk / N;
 
             for (int d = 0; d < dimensionality; d++) {
+                float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
 
-                float phi_kd = (float) rnd.nextDouble() * phiMaxPerNeighbor; // U[0, C/N]
-                // float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
+                inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
+                // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
+
                 
-                // den_without_weight[d] += phi_kd;
-                float wphi = Wk * phi_kd;
-
-                num[d] += wphi * Pk[d];
-                den[d] += wphi;
-            }
-        }
-        float scaleWk = accWk / neighbors.size();
-
-        for (int d = 0; d < dimensionality; d++) {
-            float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
-
-            inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
-            // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
-
+                socialVec[d]  = (den[d] / scaleWk) * (Pm_d - ws.flatModel[d]); 
+                    // accuracy decides direction (where Pm sits), but not step size
+                if(GIVE_HALF_TO_SELF) {
+                    cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
+                    velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
+                } else {
+                    velocity[d] = inertiaVec[d] + socialVec[d];
+                }
             
-            socialVec[d]  = (den[d] / scaleWk) * (Pm_d - ws.flatModel[d]); 
-                // accuracy decides direction (where Pm sits), but not step size
-            if(GIVE_HALF_TO_SELF) {
-                cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
-                velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
-            } else {
-                velocity[d] = inertiaVec[d] + socialVec[d];
             }
-           
+
+        } else {
+
+            for (NeighborPBest nb : neighbors) {
+                if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
+                    continue;
+                }
+
+                float[] Pk = nb.pBest;
+
+                for (int d = 0; d < dimensionality; d++) {
+
+                    float phi_kd = (float) rnd.nextDouble() * phiMaxPerNeighbor; // U[0, C/N]
+                    // float phi_kd = rnd.nextFloat() * phiMaxPerNeighbor; // U[0, C/N]
+                    num[d] += phi_kd * Pk[d];
+                    den[d] += phi_kd;
+                }
+            }
+
+            for (int d = 0; d < dimensionality; d++) {
+                float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
+
+                inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
+                // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
+
+                
+                socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]); 
+                    // accuracy decides direction (where Pm sits), but not step size
+                if(GIVE_HALF_TO_SELF) {
+                    cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
+                    velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
+                } else {
+                    velocity[d] = inertiaVec[d] + socialVec[d];
+                }
+            
+            }
         }
 
         // ===============================================================================
@@ -437,14 +486,31 @@ public class PsoUpdater {
 
         float updateIndex = Math.min(count_updates, MAX_PSO_UPDATES); // makes updateIndex not surpass MAX_PSO_UPDATES
 
-        float sigmoidSteepness = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
-        float retentionFactor = (float)(1.0 / (1.0 + Math.exp(sigmoidSteepness * (updateIndex - C1_MID_UPDATE))));
-        c1 = C1_END + (C1_START - C1_END) * retentionFactor;
+        // float sigmoidSteepness = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
+        // float retentionFactor = (float)(1.0 / (1.0 + Math.exp(sigmoidSteepness * (updateIndex - C1_MID_UPDATE))));
+        // c1 = C1_END + (C1_START - C1_END) * retentionFactor;
             // this is exponential fall, right around the middle
 
         float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;   
         W_INERTIA_CURRENT = W_INERTIA_START + progressFactor * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
             // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall of INERTIA
+        // Mathematicall equivalent: 
+        // W_INERTIA_CURRENT = W_INERTIA_END + progressFactor * (W_INERTIA_START - W_INERTIA_END);  
+        // float progressFactor = (MAX_PSO_UPDATES - updateIndex) / (float) MAX_PSO_UPDATES;      // T = MAX_PSO_UPDATES. 
+        // W_INERTIA_CURRENT = W_INERTIA_MIN + progressFactor * (W_INERTIA_MAX - W_INERTIA_MIN);  // from IEEE PSO survey
+        // if progressFactor = 0 (if updateIndex == MAX_PSO_UPDATES), then W_INERTIA_CURRENT = W_INERTIA_MIN
+    }
+
+    //================================================================================================
+
+    private void updateC1C2Schedule() {
+
+        float updateIndex = Math.min(count_updates, MAX_PSO_UPDATES); // makes updateIndex not surpass MAX_PSO_UPDATES
+        float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;  
+        
+        c1 = (C1_END - C1_START) * progressFactor + C1_START;
+        c2 = (C2_END - C2_START) * progressFactor + C2_START;
+        c =  (C_END - C_START) * progressFactor + C_START;
     }
 
     //================================================================================================

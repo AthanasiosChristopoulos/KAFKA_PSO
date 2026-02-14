@@ -770,7 +770,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             buffer.clear();
         }
 
-        if(lastOffset == 0) {   // if inactive Partition
+        if(lastOffset == 0) {   // if inactive Partition, means Worker terminated before starting to read that partition 
+                                // (worker reads the partitions with a limited degree of parallelism, not 40 at once)
+                                // limited degree of parallelism => depends on num.stream.threads. Some tasks never get scheduled
+                                // Each stream thread processes one task at a time => limited concurrent partition processing overall
             ws.inactivePartitions++;
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Empty partition: " 
                 + seenPartitions + ", with lastOffset: " + lastOffset + 
