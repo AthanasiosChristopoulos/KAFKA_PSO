@@ -513,6 +513,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         }
 
+        Dl4jParamUtils.saveModel(bestGlobalModel);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 

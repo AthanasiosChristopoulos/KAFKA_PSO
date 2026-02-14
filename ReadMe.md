@@ -534,7 +534,24 @@ improve the ability to escape local minima
  - We want high discrepancy (a measure of how unevenly points cover a space):
     - High discrepancy: points cluster, leave gaps, oversample some areas.
     - Low discrepancy: points are spread “evenly” with minimal clustering and minimal holes 
+        => classical uniform distribution
         => Sobol, Halton, Faure sequences: they fill the space more uniformly than standard RNG.
+ - Bad Initial Fitnesses isnt bad, mediocere solutions are bad => If the whole swarm starts in a mediocre region, 
+    they can prematurely collapse / converge and stop exploring. Especially at the start we favor exploration
+
+ - Weight initialization Method:
+    ```java
+  	.seed(123 + workerId)
+	.weightInit(WeightInit.XAVIER)	// or .weightInit(WeightInit.RELU) but seems to be worse scale for the weights
+    ```
+    - We seed with workerId for predictability and to differentiate between every worker (different positions at init)
+    - WeightInit.XAVIER seems to be giving a good scale
+        - Scale of the biases might be higher than the scale of normal weights
+        - Is uniform based NOT uniform(−1,1), but uniform(−a,a). a is the scale and it is calculated based on layer size 
+            => scale is different between every Layer
+    - WeightInit.RELU:
+        - slightly larger scale
+    - .weightInit(WeightInit.UNIFORM)   => [−0.05,0.05] / or more custom: .weightInit(new UniformDistribution(-1.0, 1.0))
 
 ## Population size / Number of particles: =============================
 

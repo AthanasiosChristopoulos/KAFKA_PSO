@@ -827,7 +827,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(ws.countPartitionsFinished == ws.numberOfTasks - 5) {    // these 5 are not normal tasks
                         // there are always 5 extra control threads
             if(logger.isEnabled(2)) logger.log("Final inActivePartitions: " + ws.inactivePartitions);
-            System.out.println("[Worker " + workerId + "], Average Elapsed Time per Batch: " +
+            System.out.println("[Worker " + workerId + "] Average Elapsed Time per Batch: " +
                     String.format("%.3f ms", ws.validAvgMs) + ", InActivePartitions " + ws.inactivePartitions);
         }
 

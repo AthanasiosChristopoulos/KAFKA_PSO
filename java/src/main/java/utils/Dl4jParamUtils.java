@@ -28,9 +28,11 @@ public class Dl4jParamUtils {
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
     public static final float MONITORING_THRESHOLD = cfg.MONITORING_THRESHOLD;
 	public static int POINTS_PER_AXIS = cfg.POINTS_PER_AXIS;
+    public static String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
 
     //=====================================================================================================
-    // Decode / Encode Model Number 1:
+    // Decode / Encode Model Number 1 (both of your methods include the biases as well.):
+    // model.params() => both weights and biases (actually all other trainable parameters)
 
     public static float[] modelToFlatList(MultiLayerNetwork model) {    // Serializa model into float[]
                                                     // INDArray.toFloatVector() allocates a fresh float[] copy every call.
@@ -39,7 +41,7 @@ public class Dl4jParamUtils {
     }
 
     //=====================================================================================================
-
+    
     public static void updateModel(MultiLayerNetwork model, float[] flat) {
         INDArray params = model.params();   // a pointer to the actual parameter buffer owned by that model
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
@@ -360,9 +362,6 @@ public class Dl4jParamUtils {
     //=====================================================================================================
 
     public static void saveModel(MultiLayerNetwork model) {
-
-        Config cfg = Config.getInstance();
-        String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
 
         File dir = new File("models"); // create Models Directory if it doesnt exist
         if (!dir.exists()) {

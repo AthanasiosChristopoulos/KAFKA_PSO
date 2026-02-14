@@ -3,6 +3,11 @@
  - Belongs to the EC algorithms (Evolutionary Computation), population based algorithm
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
+ - One of the main drawbacks of the gradient-based technique is that is easily captured in the local minimum, the maximum number
+of iterations required.
+ - PSONN is PSO used for Neural Networks
+    => current position vector x is considered as the collection of weights
+    => The dimension d of x is considered as the total number of corresponding weights connected to the network.
 
 ## TensorFlow (Keras) + PySwarms ImplementationL ============================================================
 

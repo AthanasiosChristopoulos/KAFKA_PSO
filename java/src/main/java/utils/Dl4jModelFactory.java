@@ -28,59 +28,59 @@ public class Dl4jModelFactory {
 		// System.out.println("DATASET: " + DATASET);
 
 		if("iris".equals(DATASET)) {
-			return createIrisModel();
+			return createIrisModel(workerId);
 
 		} else if ("wine".equals(DATASET)) {
-			return createWineModel();
+			return createWineModel(workerId);
 
 		} else if ("mnist".equals(DATASET)) {
-			// return createMNISTModel();
-			// return createMNISTCnn();
-			return createMNIST4Cnn_New();
+			// return createMNISTModel(workerId);
+			// return createMNISTCnn(workerId);
+			return createMNIST4Cnn_New(workerId);
 				
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
-			// return createMNISTModel();
-			// return createMNIST4Cnn();	// 70ms forward pass
-			// return createMNIST4Cnn_Simple();	// 25ms forward pass on average
-			// return createMNIST4MLP();
-			// return createMNIST4MLP_Reduced();
-			return createMNIST4Cnn_New();
-			// return createMNIST4Cnn_New_Simpler();
+			// return createMNISTModel(workerId);
+			// return createMNIST4Cnn(workerId);	// 70ms forward pass
+			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
+			// return createMNIST4MLP(workerId);
+			// return createMNIST4MLP_Reduced(workerId);
+			return createMNIST4Cnn_New(workerId);
+			// return createMNIST4Cnn_New_Simpler(workerId);
 				
 		} else if ("susy".equals(DATASET)) {
-			// return createSUSYModel_SOFTMAX();
-			return createSUSYModel();
+			// return createSUSYModel_SOFTMAX(workerId);
+			return createSUSYModel(workerId);
 
 		} else if ("bank".equals(DATASET)) {
-			// return createBankModel();
-			return createBankModel40K();
+			// return createBankModel(workerId);
+			return createBankModel40K(workerId);
 
 		} else if ("adult".equals(DATASET)) {
-			return createAdultModel();
+			return createAdultModel(workerId);
 
 		} else if ("covertype".equals(DATASET)) {
-			return createCovertypeModel();
+			return createCovertypeModel(workerId);
 
 		} else if ("har".equals(DATASET)) {
-			return createHarModel();
+			return createHarModel(workerId);
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
 			return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 
 		} else if ("winequality".equals(DATASET)) {
-			return createWineQualityModel();
+			return createWineQualityModel(workerId);
 
 		} else if ("letter".equals(DATASET)) {
-			return createLetterModel();
-			// return createLetterModel70K();
+			return createLetterModel(workerId);
+			// return createLetterModel70K(workerId);
 		} else if ("cifar3".equals(DATASET)) {
-			// return createCifar3Model_PSO_Simple();
-			// return createCifar3Model();
-			// return createLetterModel70K();
-			// return createCifar3Model_New();
-			// return createCifar3Model_New_Simpler();
-			return createCifar3Model_New_Simpler_2();
-			// return createCifar3Model_New_Simpler_3();
+			// return createCifar3Model_PSO_Simple(workerId);
+			// return createCifar3Model(workerId);
+			// return createLetterModel70K(workerId);
+			// return createCifar3Model_New(workerId);
+			// return createCifar3Model_New_Simpler(workerId);
+			return createCifar3Model_New_Simpler_2(workerId);
+			// return createCifar3Model_New_Simpler_3(workerId);
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -89,13 +89,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Iris Dataset Model Architecture 
 
-	public static MultiLayerNetwork createIrisModel() {
+	public static MultiLayerNetwork createIrisModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Iris Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123) // or pass seed from outside
+				.seed(123 + workerId) // or pass seed from outside
+				.weightInit(WeightInit.XAVIER)				
 				.list()
 				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
 						.nIn(NUM_FEATURES)
@@ -129,13 +130,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Wine Dataset Model Architecture 
 
-	public static MultiLayerNetwork createWineModel() {
+	public static MultiLayerNetwork createWineModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Wine Model");
 		}
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
                 .list()
                 .layer(new DenseLayer.Builder()
                         .nIn(NUM_FEATURES)
@@ -168,13 +170,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// MNIST Dataset Model Architecture 
 
-	public static MultiLayerNetwork createMNISTModel() {
+	public static MultiLayerNetwork createMNISTModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using MNIST Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
@@ -212,10 +215,10 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-    public static MultiLayerNetwork createMNIST4MLP() {
+    public static MultiLayerNetwork createMNIST4MLP(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(123 + workerId)
                 .weightInit(WeightInit.XAVIER)
                 .updater(new Adam(1e-3))
                 .list()
@@ -246,10 +249,10 @@ public class Dl4jModelFactory {
 	// 64×4 + 4 = 260
 	// total = 100,480 + 8,256 + 260 = 108,996 weights
 
-	public static MultiLayerNetwork createMNIST4MLP_Reduced() {
+	public static MultiLayerNetwork createMNIST4MLP_Reduced(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
@@ -281,13 +284,13 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-    public static MultiLayerNetwork createMNISTCnn() {
+    public static MultiLayerNetwork createMNISTCnn(int workerId) {
 		if(printModel) {
 			System.out.println("Using CNN MNIST Model");
 		}
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(123 + workerId)
                 .weightInit(WeightInit.RELU)
                 .updater(new Adam(1e-3))
                 .list()
@@ -356,13 +359,13 @@ public class Dl4jModelFactory {
 	// MNIST4CNN
 
 
-	public static MultiLayerNetwork createMNIST4Cnn() {
+	public static MultiLayerNetwork createMNIST4Cnn(int workerId) {
 		if (printModel) {
 				System.out.println("Using CNN MNIST4 Model");
 			}
 
 			MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-					.seed(123)
+					.seed(123 + workerId)
 					.weightInit(WeightInit.RELU)
 					.list()
 					.layer(new ConvolutionLayer.Builder(3, 3)	// 3 × 3 × 1 (because GrayScale) × 8 + 8 (Biases) = 80
@@ -408,13 +411,13 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_Simple() {
+	public static MultiLayerNetwork createMNIST4Cnn_Simple(int workerId) {
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN SIMPLE");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.RELU)  
 				.list()
 				.layer(new ConvolutionLayer.Builder(3, 3)
@@ -449,7 +452,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_New() {
+	public static MultiLayerNetwork createMNIST4Cnn_New(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN");
@@ -458,7 +461,7 @@ public class Dl4jModelFactory {
 		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER) 
 				.list()
 				.layer(new ConvolutionLayer.Builder(3, 3)
@@ -514,7 +517,7 @@ public class Dl4jModelFactory {
 	// total 320 + 18496 + 36928 + 36928 = 92932 params
 	// Reported Dimensionality: 92932
 
-	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler() {
+	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN");
@@ -523,7 +526,7 @@ public class Dl4jModelFactory {
 		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER) 
 				.list()
 				.layer(new ConvolutionLayer.Builder(3, 3)
@@ -566,13 +569,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 
-	public static MultiLayerNetwork createSUSYModel_SOFTMAX() {
+	public static MultiLayerNetwork createSUSYModel_SOFTMAX(int workerId) {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)  // 18
@@ -607,13 +611,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
 
-	public static MultiLayerNetwork createSUSYModel() {
+	public static MultiLayerNetwork createSUSYModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)  // 18
@@ -640,14 +645,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Bank Dataset Model Architecture 
 
-	public static MultiLayerNetwork createBankModel() {
+	public static MultiLayerNetwork createBankModel(int workerId) {
 		int outputSize = 1;
 		if(printModel) {
 			System.out.println("Using BANK Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.updater(new Adam(1e-3))
 				.l2(1e-4)
@@ -683,14 +688,14 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createBankModel40K() {
+	public static MultiLayerNetwork createBankModel40K(int workerId) {
 		int outputSize = 1; 
 		if(printModel) {
 			System.out.println("Using BANK Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.updater(new Adam(1e-3))
 				.l2(1e-4)
@@ -726,14 +731,14 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createAdultModel() {
+	public static MultiLayerNetwork createAdultModel(int workerId) {
 
 		if(printModel) {
 			System.out.println("Using ADULT_INCOME Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.updater(new Adam(1e-3))
 				.l2(1e-4)
@@ -770,13 +775,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// COVERTYPE Dataset Model Architecture
 
-	public static MultiLayerNetwork createCovertypeModel() {
+	public static MultiLayerNetwork createCovertypeModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Covertype Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)    
@@ -813,14 +819,14 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// HAR (UCI Human Activity Recognition) Dataset Model Architecture
 
-	public static MultiLayerNetwork createHarModel() {
+	public static MultiLayerNetwork createHarModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using HAR Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
-				
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)  // 561
@@ -870,7 +876,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
+				.weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)   // 16 
@@ -911,10 +917,11 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// WineQuality Dataset Model Architecture
 
-	public static MultiLayerNetwork createWineQualityModel() {
+	public static MultiLayerNetwork createWineQualityModel(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				// Hidden Layer 1: nIn = inputDim, nOut = 12, relu
 				.layer(new DenseLayer.Builder()
@@ -958,9 +965,10 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Letter
 
-	public static MultiLayerNetwork createLetterModel() {
+	public static MultiLayerNetwork createLetterModel(int workerId) {
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
@@ -1003,10 +1011,11 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Letter 70k (bigger)
 
-	public static MultiLayerNetwork createLetterModel70K() {
+	public static MultiLayerNetwork createLetterModel70K(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
@@ -1034,10 +1043,10 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// CIFAR3
 
-    public static MultiLayerNetwork createCifar3Model() {
+    public static MultiLayerNetwork createCifar3Model(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(123 + workerId)
                 .weightInit(WeightInit.XAVIER)
                 .updater(new Adam(1e-3))
                 .list()
@@ -1081,14 +1090,14 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_PSO_Simple() {
+	public static MultiLayerNetwork createCifar3Model_PSO_Simple(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN SIMPLE (PSO): Conv8 -> LeakyReLU -> Pool -> GAP -> Softmax");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.RELU)
 				.list()
 				.layer(new ConvolutionLayer.Builder(3, 3)
@@ -1125,14 +1134,14 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New() {
+	public static MultiLayerNetwork createCifar3Model_New(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
 
@@ -1187,14 +1196,14 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler() {
+	public static MultiLayerNetwork createCifar3Model_New_Simpler(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
 
@@ -1242,17 +1251,16 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler_2() {
+	public static MultiLayerNetwork createCifar3Model_New_Simpler_2(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 SIMPLE A: Conv(32) -> MaxPool -> Dense(64 relu) -> Softmax(3)");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-
 				.layer(new ConvolutionLayer.Builder(3, 3)
 						.nIn(3)
 						.nOut(32)
@@ -1296,17 +1304,16 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler_3() {
+	public static MultiLayerNetwork createCifar3Model_New_Simpler_3(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 SIMPLE B: Conv(16)->Pool->Conv(32)->Pool->Dense(64)->Softmax(3)");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-
 				.layer(new ConvolutionLayer.Builder(3, 3)
 						.nIn(3)
 						.nOut(16)
