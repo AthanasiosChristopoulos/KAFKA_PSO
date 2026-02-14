@@ -171,11 +171,12 @@ source ~/.venvs/dev/bin/activate	# do this for every project
 	  sudo mount -o ro /dev/nvme0n1p3 /mnt/win_test
 
 	=============================================================================================================
-	- sudo apt update
-	  sudo apt install ntfs-3g
-	  sudo ntfsfix /dev/sda1
-	  sudo mount /dev/sda1 /mnt
-	  sudo umount /mnt
+	sudo apt update
+	sudo apt install ntfs-3g
+	sudo ntfsfix /dev/sda1
+	sudo mkdir -p /mnt/usb1
+	sudo mount -t ntfs3 /dev/sdb1 /mnt/usb1 2>/dev/null || sudo mount -t ntfs-3g /dev/sdb1 /mnt/usb1
+	sudo umount /mnt/usb1
 
 ## GPU ==========================================================================================
 

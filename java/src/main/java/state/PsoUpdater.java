@@ -42,13 +42,10 @@ public class PsoUpdater {
     private float c2;  
     private float c;  
 
-    private int iter = 0;
-    private final int MAX_ITERS = 500;
     private final int NUM_SAMPLES = cfg.NUM_SAMPLES;
     private final int MAX_PSO_UPDATES; // expected max updates (for clamping)
 
     private final int C1_MID_UPDATE;
-    private final float C1_DROP_WIDTH = 200f;   // the 200 means “mostly C1 drops between 600±100” → around 500–700
 
     private final float VMAX;    
     private final float VMAX_FACTOR = cfg.VMAX_FACTOR;
@@ -90,6 +87,8 @@ public class PsoUpdater {
 
     private float EPS = 0.0000001f; 
 
+    private double velocity_norm;
+
     //================================================================================================
 
     public PsoUpdater(int workerId, WorkerStatic ws) {
@@ -108,7 +107,6 @@ public class PsoUpdater {
         // float range = xmax - xmin;  // the xmax - xmin, define the dynamic range. Dont enfoce xmax and xmin just use it to calculate dynamic range
 
         float range = computeDynamicRangeFromWeights(ws.flatModel);
-
         this.VMAX = this.VMAX_FACTOR * range;  // VMAX_FACTOR == the δ parameter (δ = VMAX_FACTOR)
         this.VMAX_NORM = (float)(Math.sqrt(dimensionality) * VMAX);
 
@@ -211,14 +209,17 @@ public class PsoUpdater {
 
     //================================================================================================
 
-    private void clipVelocityByNorm(float vmaxNorm) {   // this is limiting overall length / magnitude of velocity
+    private void clipVelocityByNorm() {   // this is limiting overall length / magnitude of velocity
                                                         // the goal is to not limit individual dimensionalities, because this would change direction
         double sumSq = 0.0;
         for (float v : velocity) sumSq += (double)v * v;
-        double norm = Math.sqrt(sumSq);
+        velocity_norm = Math.sqrt(sumSq);
 
-        if (norm > vmaxNorm && norm > 0.0) {
-            float scale = (float)(vmaxNorm / norm);
+        if (velocity_norm > VMAX_NORM) {
+
+            float scale = (float)(VMAX_NORM / velocity_norm);   // this means that the scale (hollistically for all dimensionalities), are going
+                                                                // going to be VMAX_NORM. Essentially we are doing: velocity_norm * (VMAX_NORM / velocity_norm)
+
             for (int i = 0; i < dimensionality; i++) {
                 velocity[i] *= scale;
                 clamp_count++; 
@@ -263,7 +264,7 @@ public class PsoUpdater {
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
             clampVelocityByDim();     
         } else {
-            clipVelocityByNorm(VMAX_NORM);
+            clipVelocityByNorm();
         }
 
         for (int k = 0; k < dimensionality; k++) {
@@ -271,18 +272,29 @@ public class PsoUpdater {
         }
 
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+        if(VMAX_CLAMPING_TYPE.equals("NORM")) {
+            if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
+                    "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
+                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                    ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
+                    ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
+                    ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
+                    ", VMAX_NORM: " + VMAX_NORM + ", velocity_norm: " + velocity_norm + 
+                    ", count_updates: " + count_updates
+            );
+        } else {
+        
+            if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
+                    "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
+                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                    ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
+                    ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
+                    ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
+                    ", number of Clamps: " + clamp_count +
+                    ", count_updates: " + count_updates
+            );
 
-        if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
-                "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
-                ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
-                ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
-                ", number of Clamps: " + clamp_count +
-                ", count_updates: " + count_updates
-        );
-
-        iter++;
+        }
 
         return velocity;
     }
@@ -464,20 +476,31 @@ public class PsoUpdater {
         if (VMAX_CLAMPING_TYPE.equals("DIM")) {
             clampVelocityByDim();     
         } else {
-            clipVelocityByNorm(VMAX_NORM);
+            clipVelocityByNorm();
         }
 
         for (int k = 0; k < dimensionality; k++) {
             ws.flatModel[k] = ws.flatModel[k] + velocity[k];
         }
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
-        if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
-                    "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
-                    ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
-                    ", number of Clamps: " + clamp_count + 
-                    ", count_updates: " + count_updates
-        );
+        
+        if(VMAX_CLAMPING_TYPE.equals("NORM")) {
+            if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
+                        "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
+                        ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                        ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
+                        ", VMAX_NORM: " + VMAX_NORM + ", velocity_norm: " + velocity_norm + 
+                        ", count_updates: " + count_updates
+            );
+        } else {
+            if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
+                        "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
+                        ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                        ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
+                        ", number of Clamps: " + clamp_count + 
+                        ", count_updates: " + count_updates
+            );
+        }
 
         return this.velocity;
     }

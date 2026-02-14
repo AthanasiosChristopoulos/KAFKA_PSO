@@ -820,6 +820,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123)
+				
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)  // 561
@@ -869,6 +870,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)   // 16 

@@ -13,28 +13,6 @@ if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there i
     export N_WORKERS="$1"
 fi
 
-# --- Reset section -----------------------------------------------------------
-
-# if [[ "$1" == "--reset" ]]; then    # execute only if there is a reset flag
-
-#     for ((i=0; i<N_WORKERS; i++)); do
-#         app="pso-worker-$i"
-#         docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-#             --application-id "$app" \
-#             --input-topics iris-input \
-#             --bootstrap-server localhost:9092 \
-#             --force
-#     done
-
-#     # app="pso-coordinator"
-#     # docker exec -it broker /opt/kafka/bin/kafka-streams-application-reset.sh \
-#     #     --application-id "$app" \
-#     #     --input-topics local-weights-topic \
-#     #     --bootstrap-server localhost:9092 \
-#     #     --force
-
-# fi
-
 if [[ -n "$1" ]]; then
     echo "$1"
 fi
@@ -59,9 +37,7 @@ if [[ "$1" != "--debug" ]]; then
 
     else
         TOPICS=(
-            # "$PBEST_WEIGHTS_TOPIC"
             "$GLOBAL_WEIGHTS_TOPIC"
-            # "$LOCAL_WEIGHTS_TOPIC"
         )
     fi
 

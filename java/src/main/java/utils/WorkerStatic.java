@@ -39,6 +39,7 @@ public final class WorkerStatic {
 
     public int batchesRead = 0;
     public boolean printedReport = false;
+    public boolean endedWorker = false;
 
     public int inactivePartitions = 0;
     public int numberOfTasks = 0;
