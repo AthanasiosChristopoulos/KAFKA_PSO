@@ -10,7 +10,9 @@ import state.*;
 
 public final class WorkerStatic {
 
-    // One entry per workerId
+    private static Config cfg = Config.getInstance();
+    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
+
     private static final ConcurrentHashMap<Integer, WorkerStatic> INSTANCES = new ConcurrentHashMap<>();
 
     public static WorkerStatic get(int workerId) {
@@ -30,6 +32,8 @@ public final class WorkerStatic {
     public final PsoUpdater psoUpdater;
     public final BatchPrediction predictor;
 
+    private CustomLogger logger;
+
     public float local_gBestLoss = 100000f;
     public float local_gBestAccuracy = -1f;
 
@@ -46,8 +50,13 @@ public final class WorkerStatic {
     private WorkerStatic(int workerId) {
         
         this.workerId = workerId;
-        this.model = Dl4jModelFactory.createModel();
+        this.model = Dl4jModelFactory.createModel(workerId);
         this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+
+        this.logger = CustomLogger.getWorkerInstance(workerId);
+        if(logger.isEnabled(2)) this.logger.log("Initial Model: " + 
+            Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
+
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(workerId, this);

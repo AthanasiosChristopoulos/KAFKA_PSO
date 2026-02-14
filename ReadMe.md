@@ -521,6 +521,21 @@ improve the ability to escape local minima
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
 
+## Initialization of the population ======================================
+
+ - Particles initial position is very important, particles need to be scattered in intialiazation
+    => this applies to both weights (position) and vectors. The random generation should be seeded by particleId
+    => model.init() is where the weights get randomized, and it happens internally inside DL4J/ND4J
+        => Without specifying weightInit(...), DL4J uses its default weight initialization => internally decided "Xavier", "He", normal/uniform,
+    => randomizeVelocity(int workerId, float sigma) is where the velocities gets randomized
+ - Standard PSO the particles are initialized randomly using the uniform distribution which is
+    not considered as the best choice
+ - If your swarm starts spread out (“scattered”) / diversity at initialization, then some particles will start in terrible places (high loss / “worst fitness”) and some will start in decent places. This is good for exploration and sampling the search space properly.
+ - We want high discrepancy (a measure of how unevenly points cover a space):
+    - High discrepancy: points cluster, leave gaps, oversample some areas.
+    - Low discrepancy: points are spread “evenly” with minimal clustering and minimal holes 
+        => Sobol, Halton, Faure sequences: they fill the space more uniformly than standard RNG.
+
 ## Population size / Number of particles: =============================
 
  - 20 - 50 number of particles

@@ -1,9 +1,10 @@
-## PSO Theory:
+## PSO Theory: ============================================================
+
  - Belongs to the EC algorithms (Evolutionary Computation), population based algorithm
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
 
-## TensorFlow (Keras) + PySwarms Implementation
+## TensorFlow (Keras) + PySwarms ImplementationL ============================================================
 
 TensorFlow gives you easy model definition, provides the “neural forward pass”.
 PySwarms (Python Library) gives you a way to train models without gradients, using PSO => provides the outer optimization loop

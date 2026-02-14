@@ -24,7 +24,7 @@ public class Dl4jModelFactory {
 
 	public static final boolean printModel = false;
 
-	public static MultiLayerNetwork createModel() {
+	public static MultiLayerNetwork createModel(int workerId) {
 		// System.out.println("DATASET: " + DATASET);
 
 		if("iris".equals(DATASET)) {
@@ -65,7 +65,7 @@ public class Dl4jModelFactory {
 			return createHarModel();
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			return createPendigitsModel();	// forward pass cost: CPU = 10ms / GPU = 3ms
+			return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel();
@@ -862,13 +862,13 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
 
-	public static MultiLayerNetwork createPendigitsModel() {
+	public static MultiLayerNetwork createPendigitsModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123)
+				.seed(123 + workerId)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)   // 16 

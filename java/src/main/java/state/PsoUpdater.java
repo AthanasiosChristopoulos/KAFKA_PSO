@@ -113,6 +113,7 @@ public class PsoUpdater {
         this.VMAX_NORM = (float)(Math.sqrt(dimensionality) * VMAX);
 
         randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
+                // velocity is initialized uniquelly / seeded by workerId
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
