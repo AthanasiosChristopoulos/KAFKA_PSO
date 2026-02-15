@@ -894,12 +894,29 @@ def load_pendigits_data(base_path="../data"):
 
 # ===============================================================================
 
+# def build_pendigits_model(input_dim=16, num_classes=10):
+
+#     model = keras.Sequential([
+#         layers.Input(shape=(input_dim,)),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dense(num_classes, activation="softmax"),
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.SGD(learning_rate=0.05, momentum=0.9),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     return model
+
+
 def build_pendigits_model(input_dim=16, num_classes=10):
 
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
-        layers.Dense(128, activation="relu"),
-        layers.Dense(128, activation="relu"),
         layers.Dense(num_classes, activation="softmax"),
     ])
 
@@ -911,7 +928,6 @@ def build_pendigits_model(input_dim=16, num_classes=10):
 
     model.summary()
     return model
-
 # ===============================================================================
 
 def run_pendigits():
@@ -1057,54 +1073,119 @@ def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
 
 # ======================================================================
 
-def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
+# def build_cifar10_model(input_shape=(32, 32, 3), num_classes: int = 10):
 
-    augment = tf.keras.Sequential(
-        [
-            layers.RandomFlip("horizontal"),
-            layers.RandomTranslation(0.1, 0.1),
-            layers.RandomRotation(0.05),
-        ],
-        name="augment",
-    )
+#     augment = tf.keras.Sequential(
+#         [
+#             layers.RandomFlip("horizontal"),
+#             layers.RandomTranslation(0.1, 0.1),
+#             layers.RandomRotation(0.05),
+#         ],
+#         name="augment",
+#     )
 
-    def conv_block(x, filters: int):
-        x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Activation("relu")(x)
+#     def conv_block(x, filters: int):
+#         x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
+#         x = layers.BatchNormalization()(x)
+#         x = layers.Activation("relu")(x)
 
-        x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Activation("relu")(x)
+#         x = layers.Conv2D(filters, 3, padding="same", use_bias=False)(x)
+#         x = layers.BatchNormalization()(x)
+#         x = layers.Activation("relu")(x)
 
-        x = layers.MaxPooling2D()(x)
-        return x
+#         x = layers.MaxPooling2D()(x)
+#         return x
 
-    inputs = layers.Input(shape=input_shape)
+#     inputs = layers.Input(shape=input_shape)
 
-    # x = augment(inputs)
-    # Augmentation: 
-        # forward pass becomes: inputs → random transform → conv layers → output
-        # So each batch, the model sees a slightly randomized version of your images.
+#     x = inputs
 
-    x = inputs
+#     x = conv_block(x, 32)
+#     x = conv_block(x, 64)
+#     x = conv_block(x, 128)
 
-    x = conv_block(x, 32)
-    x = conv_block(x, 64)
-    x = conv_block(x, 128)
+#     x = layers.GlobalAveragePooling2D()(x)
+#     x = layers.Dropout(0.3)(x)
+#     outputs = layers.Dense(num_classes, activation="softmax")(x)
 
-    x = layers.GlobalAveragePooling2D()(x)
-    x = layers.Dropout(0.3)(x)
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
+#     model = models.Model(inputs, outputs)
 
-    model = models.Model(inputs, outputs)
+#     model.compile(
+#         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+#     return model
+
+# ======================================================================
+
+def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, lr=1e-3):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # Block 1
+        layers.Conv2D(32, (3, 3), strides=(1, 1), padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
+
+        # Block 2
+        layers.Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
+
+        # Classifier head (MNIST-style)
+        layers.Flatten(),                        # 8*8*64 = 4096
+        layers.Dense(128, activation="tanh"),     # analogous to Dense(32) in MNIST, but larger for CIFAR
+        layers.Dense(num_classes, activation="softmax"),
+    ])
 
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
     return model
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+        layers.Conv2D(
+            filters=8,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
+            activation="relu",
+            use_bias=True
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+        layers.Conv2D(
+            filters=16,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
+            activation="relu",
+            use_bias=True
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+        layers.Flatten(),
+        layers.Dense(32, activation="tanh", use_bias=True),
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+
+    return model
+
 
 # ======================================================================
 

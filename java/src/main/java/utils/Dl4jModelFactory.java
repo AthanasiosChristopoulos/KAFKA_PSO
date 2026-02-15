@@ -71,8 +71,10 @@ public class Dl4jModelFactory {
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
 			// return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			// return createPendigitsModelTanh(workerId);
-			return createPendigitsModelSmaller(workerId);
+			// return createPendigitsModelSmaller(workerId);
 			// return createPendigitsModelSmaller_2(workerId);
+			return createPendigitsModelSmaller_3(workerId);
+
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel(workerId);
 
@@ -1099,20 +1101,18 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createPendigitsModelSmaller_2(int workerId) {
+	public static MultiLayerNetwork createPendigitsModelSmaller_2(int workerId) {	// single hidden layer
 		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH, small)");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-				// 16 -> 32
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
 						.nOut(32)
 						.activation(Activation.TANH)
 						.build())
-				// 32 -> 10
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
 						.nIn(32)
 						.nOut(NEURAL_OUTPUT)
@@ -1125,6 +1125,30 @@ public class Dl4jModelFactory {
 		return model;
 	}
 
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createPendigitsModelSmaller_3(int workerId) {	// no hidden layer just weights connecting input and output layer ...
+		if (printModel) System.out.println("Using PenDigits Ultra-Simple Model (no hidden)");
+
+		int nIn = 16;           
+		int nOut = NEURAL_OUTPUT;    
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(nIn)
+						.nOut(nOut)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.feedForward(nIn)) 
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 
 	// ======================================================================================================================
 	// WineQuality Dataset Model Architecture
