@@ -722,11 +722,14 @@ improve the ability to escape local minima
     - Exploration (small neighborhoods - decreased neighborhood size):
         - With decreased neighborhood size / scope of a particle, there is a delay in the information spread through the graph.
         - Less convergence, more randmoness exploration
+        - Less communication / Communication Inhibition
 
  - Particles that are acquainted to one another (in the same Neighborhood) tend to explore the same region of the search space (lower level search). Neighborhood topology affects also relationships between neighborhood (higher level search)
 
   ## Protocol:
     - Particles get information only from their own neighborhoods best => local_best instead of gBest.
+    - Communicatio Inhibition / Delay:
+        - If individual i finds a good solution, this may be passed toits adjacent neighbor j, but not immediately to k, which is not connected to i.
     - Neighbors == Topological Neighbors (doesnt change during a run)
         - v_i(t + 1) =  w * v_i(t) + c1 * r1 * (pbest - X) + c2 * r2 * (lbest - X)
         - Neighborhood PSO does not mean neighborhoods are disjoint clusters, they are cirularly dependent.
