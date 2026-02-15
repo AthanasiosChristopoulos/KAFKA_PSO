@@ -100,7 +100,7 @@ Standard PSO works this way:
 This is my project for PSO, for my thesis. Its purpose is PSO training of Neural Networks used for dataset classification
     => mostly UCI / common datasets of significant number of samples / features 
     => mostly FNN models, but also trying out CNNs as well
-    
+
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
     DATA_TOPIC
@@ -482,6 +482,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     => In backpropagation the size of the model is - overfitting discounted - a net positive
  - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
  - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
+ - Single hidden layer networks
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
  
 ## CNNs - PSO: =========================================================================

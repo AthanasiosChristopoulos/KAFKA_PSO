@@ -585,40 +585,32 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-
-				// ---- Conv block 1 (small) ----
-				.layer(new ConvolutionLayer.Builder(3, 3)
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
 						.nIn(1)
-						.nOut(8)                 // was 32
+						.nOut(8)       
+						.stride(1, 1)
+						.padding(0, 0)							// 26 x 26 x 8
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
+						.nOut(16)     
 						.stride(1, 1)
 						.padding(0, 0)
 						.activation(Activation.RELU)
 						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
 						.kernelSize(2, 2)
 						.stride(2, 2)
 						.build())
-
-				// ---- Conv block 2 (small) ----
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(16)                // was 64
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-
-				// ---- Dense layer (KEEP) ----
 				.layer(new DenseLayer.Builder()
 						.nOut(32)                // keep 32 (good PSO control knob)
 						.activation(Activation.TANH)  // smoother than ReLU for PSO
 						.build())
-
-				// ---- Output ----
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
 						.nOut(numClasses)
 						.activation(Activation.SOFTMAX)
 						.build())
@@ -630,7 +622,12 @@ public class Dl4jModelFactory {
 		model.init();
 		return model;
 	}
-
+	// Input Layer is always considered: 
+	// 9 * 1 (input) * 8 (output) + 8 = 80
+	// 9 * 8 (input) * 16 + 16 = 1168
+	// 32 * 5 x 5 x 16 + 32= 12832
+	// 32 * 4 + 4 = 132
+	// 80 + 1168 + 12832 + 132 = 14212 trainable parameters
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 

@@ -57,6 +57,7 @@ public final class WorkerStatic {
         this.logger = CustomLogger.getWorkerInstance(workerId);
         if(logger.isEnabled(2)) this.logger.log("Initial Model: " + 
             Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
+        Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model");
 
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();

@@ -27,3 +27,13 @@ CNNs have smoother valeys ?
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
  - CNNs
  - RNNs
+
+ ## CNNs =========================================================================
+ 
+  - Dimensionality after conv layer:
+        - output size = floor((N - F + 2 * P) / S) + 1
+        - N = input size, F = Filter size (if 3,3 then F = 3), P = padding, S = Stride
+        - .padding(0, 0) => P = 0
+
+ - Dimensionality after maxPooling layer:
+        - out = floor((N − F + 2 * P) / S)​ + 1

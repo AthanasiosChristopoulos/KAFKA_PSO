@@ -361,7 +361,7 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static void saveModel(MultiLayerNetwork model) {
+    public static void saveModel(MultiLayerNetwork model, String name) {
 
         File dir = new File("models"); // create Models Directory if it doesnt exist
         if (!dir.exists()) {
@@ -370,7 +370,7 @@ public class Dl4jParamUtils {
 
         // ===================== Save the model using DL4J =====================
         try {
-            File modelFile = new File(dir, SAVE_MODEL_NAME + "-dl4j.zip");
+            File modelFile = new File(dir, name + "-dl4j.zip");
             ModelSerializer.writeModel(model, modelFile, true);
 
             System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
@@ -383,7 +383,7 @@ public class Dl4jParamUtils {
         // ===================== Save the model as a list =====================
 
         float[] flat = modelToFlatList(model);
-        String filenameFlat = "models/" + SAVE_MODEL_NAME + "-flat.txt";
+        String filenameFlat = "models/" + name + "-flat.txt";
 
         try {
             try (BufferedWriter writer = Files.newBufferedWriter(

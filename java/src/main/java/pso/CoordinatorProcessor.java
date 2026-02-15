@@ -67,6 +67,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final float DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
     private final String RUN_ID = cfg.RUN_ID;   
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
+    private final String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;   
 
     private final KafkaConsumer<String, DataMessage> consumer;
 
@@ -253,7 +254,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
             if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
-                Dl4jParamUtils.saveModel(bestGlobalModel);
+                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME);
                 control.requestStopFinal();
                 return;
             }
@@ -513,7 +514,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         }
 
-        Dl4jParamUtils.saveModel(bestGlobalModel);         // save final solution
+        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 
