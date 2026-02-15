@@ -35,13 +35,16 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModelMLP(workerId);
+			return createMNISTModelSimple_1(workerId);
+			// return createMNISTModelSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4MLP(workerId);
-			return createMNISTCnn_New_2(workerId);
+			// return createMNISTCnn_New_2(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
+			// return createMNISTModelSimple_1(workerId);
 			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
@@ -190,16 +193,16 @@ public class Dl4jModelFactory {
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
-						.nOut(256)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(256)
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+				.layer(new DenseLayer.Builder()
 						.nIn(128)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(64)
 						.nOut(NEURAL_OUTPUT)
 						.activation(Activation.SOFTMAX)
 						.build())
@@ -221,6 +224,67 @@ public class Dl4jModelFactory {
 		// 1048576
 		// 1881444
 		//  940584
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNISTModelSimple_1(int workerId) {
+		if (printModel) {
+			System.out.println("Using MNIST Tiny MLP (1 hidden layer, PSO-friendly)");
+		}
+
+		int nIn = NUM_FEATURES;   // 784
+		int nH  = 32;
+		int nOut = NEURAL_OUTPUT; // 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(0, new DenseLayer.Builder()
+						.nIn(nIn)
+						.nOut(nH)
+						.activation(Activation.TANH) // smooth for PSO, like you used elsewhere
+						.build())
+				.layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(nH)
+						.nOut(nOut)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.feedForward(nIn))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNISTModelSimple_2(int workerId) {
+		if (printModel) {
+			System.out.println("Using MNIST Ultra-Simple Model (no hidden / logistic regression)");
+		}
+
+		int nIn = NUM_FEATURES;       // should be 28*28 = 784
+		int nOut = NEURAL_OUTPUT;     // should be 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(nIn)
+						.nOut(nOut)
+						.activation(Activation.SOFTMAX)
+						.build())
+				// Helps DL4J infer shapes cleanly for a single-layer net:
+				.setInputType(InputType.feedForward(nIn))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 
 	// ======================================================================================================================
 

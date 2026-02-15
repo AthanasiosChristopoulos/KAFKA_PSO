@@ -480,11 +480,17 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
  - Shallow networks / Low Parameter / Weight Count / Small number of neurons => Low Dimensionality, important for PSO 
     => sensitive to parameter count - PSO performance drops super fast as D increases
     => In backpropagation the size of the model is - overfitting discounted - a net positive
+    => PSO obtains the best solution from particles’ interaction, but through high-dimensional search space, 
+        it converges at a very slow speed towards the global optimum / usually just fails to find the optimum.
+    => prefers Single hidden layer networks
+ - This is important because:
+    - local optima trap, 
+    - but also the potential fluctuation of the velocities of particles such that the successive range of trials is bounded within a sub-plain of the whole search hyper-plain
+
  - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
  - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
- - Single hidden layer networks
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
- 
+  
 ## CNNs - PSO: =========================================================================
 
 For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
@@ -520,11 +526,11 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
     - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
  - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
- - Performance (record processing speed) affects convergence. 
-    - Increase record processing speed => more updateX + higher data processing speed
-    - 1) Faster updatesX => Not as reactive to social directive (because of communication latency)
+ - Performance (record processing speed - overall data processing time) affects convergence:
+    - Increase record processing speed => more updateX in a shorter amount of time + higher data processing speed
+    - 1) Faster updateX => Not as reactive to social directive (because of communication latency)
         - Essentially communication latency becomes more substantial / significant
-        - This harms convergence because particle behavior "depends" more on inertia + cognitive accelarators
+        - This harms convergence, because particle behavior "depends" more on inertia + cognitive accelarators
     - 2) This can still be regulated by adaptive inertia
 
 ## Premature congvergence: =========================================================
@@ -654,7 +660,7 @@ improve the ability to escape local minima
         - High values result in abrupt movement toward, or past, target regions (pBest / gBest).
         - Set both to 2.0
     - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
-    -
+    
  - ## Invertia W:  ===================================================================================
     - Three ways of inertia mechanisms: 1) static, 2) change with iteration number (or with time), 3) adaptive inertia 
         - 1) It can be random static as well (randomly choosen but dtatic during the run)
