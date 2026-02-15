@@ -97,8 +97,10 @@ Standard PSO works this way:
 
 ## =====================================================================================================
 ## Project Architecture Description: ===================================================================
-This is my project for PSO, for my thesis
-
+This is my project for PSO, for my thesis. Its purpose is PSO training of Neural Networks used for dataset classification
+    => mostly UCI / common datasets of significant number of samples / features 
+    => mostly FNN models, but also trying out CNNs as well
+    
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
     DATA_TOPIC
@@ -199,7 +201,8 @@ Input input-weights-topic:
     loss              | float
     weights           | float[]
 
-
+## ===================================================
+## ===================================================
 ## ===================================================
 ## Datasets: =========================================
 
@@ -556,10 +559,11 @@ improve the ability to escape local minima
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
+        => As long as INDEPENDENT_WORKER_DATA_PROCESSING=false => count_updates decreases
     - In practice, increasing N_WORKERS is a net positive (both on time and accuracy), as long as:
         - Data per worker doesnt get reduced (happens if data is already plentiful and convergence happens already before data runs out)
             - Stable number of updates
-            - Still using INDEPENDENT_WORKER_DATA_PROCESSING=false 
+            - Still using INDEPENDENT_WORKER_DATA_PROCESSING=false
         - Using neighborhoods (so as to not dialute the direction)
         - You can ensure true parallelism between the workers or at least this isnt computationaly too heavy
 

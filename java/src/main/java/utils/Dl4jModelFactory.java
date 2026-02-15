@@ -45,9 +45,9 @@ public class Dl4jModelFactory {
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
-			return createMNIST4Cnn_New(workerId);
+			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4Cnn_New_Simpler(workerId);
-			// return createMNIST4Cnn_New_2(workerId);
+			return createMNIST4Cnn_New_2(workerId);
 
 				
 		} else if ("susy".equals(DATASET)) {
