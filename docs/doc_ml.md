@@ -1,4 +1,4 @@
-## Data Streaming / Data Pipeline:
+## Data Streaming / Data Pipeline: ===============================================================================================
 
 - “We just keep feeding data and doing backprop forever.” => This almost never happens in practice
     => catastrophic forgetting of data already processed
@@ -13,7 +13,7 @@
         - old data fades out
     - Pattern B - Periodic Reset
 
-## Funnels / Valeys:
+## Funnels / Valeys:    ===============================================================================================
 
 The landscape of the neural networks is:
     - partially funnel-like locally
@@ -22,3 +22,8 @@ The landscape of the neural networks is:
 Dense Neural Networks have a loss landscape of sharp directions , many valeys, no correlation betwen weighrs / more parameter independence
 
 CNNs have smoother valeys ? 
+
+## Different Types of Neural Networks: ================================================================================
+ - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
+ - CNNs
+ - RNNs

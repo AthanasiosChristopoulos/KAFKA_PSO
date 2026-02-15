@@ -5,10 +5,18 @@
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
  - One of the main drawbacks of the gradient-based technique is that is easily captured in the local minimum, the maximum number
 of iterations required.
- - PSONN is PSO used for Neural Networks
+    => BPA == Back Propagation Algorithm
+    => requires a large number of iterations to converge and can be trapped in local minima
+    => This was the case before 2010 ... after this many improvements were made which made BPA + GD the best
+ - PSO is gradient-free and therefore far less sample-efficient on smooth, differentiable loss landscapes typical of neural nets.
+ - PSONN is PSO used for Neural Networks, train a neural network using PSO
     => current position vector x is considered as the collection of weights
     => The dimension d of x is considered as the total number of corresponding weights connected to the network.
-
+ - OPSONN = train a neural network using PSO + opposition-based learning
+    - For every candidate solution, for every particle, also consider its "opposite" solution - opposite particle, and keep the better one 
+ - Fitness Function:
+    - MSE
+    
 ## TensorFlow (Keras) + PySwarms ImplementationL ============================================================
 
 TensorFlow gives you easy model definition, provides the “neural forward pass”.

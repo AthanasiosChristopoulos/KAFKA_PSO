@@ -36,7 +36,8 @@ public class Dl4jModelFactory {
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModel(workerId);
 			// return createMNISTCnn(workerId);
-			return createMNIST4Cnn_New(workerId);
+			// return createMNIST4Cnn_New(workerId);
+			return createMNIST4MLP(workerId);
 				
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModel(workerId);

@@ -471,12 +471,16 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
-## Neural Networks - PSO:
+## CNNs - PSO: ====================================================================================================================
 
- - For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
-    - PSO => NN Architecture. This is part of NAS (Neural Architecture Search), a method used to programmatically determing NN architectures
-    - Gradient Descent => Actuall Weight Training "Apply Adam optimisation"
-
+For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
+ - 1) PSO => NN Architecture. This is part of NAS (Neural Architecture Search), a method used to programmatically determining NN architectures
+    - similarily with hyperparameter search (hyperparameters for Adam) 
+ - 2) Use something like this for direct training - PSO used for fine-tunning the weights:
+    - use GD to get into a good region
+    - use PSO-hybrid to escape stagnation / local traps with small data => PSO affects weights but after they are already in a good place 
+    - then use GD again to refine
+ - 3) Use PSO to optimize only a small subset of parameters (for example: last fully connected layer)
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
@@ -951,3 +955,5 @@ sudo pkill -9 -f java
 ```
 
 ## =========================================================================
+## Extra Sources:
+ - https://www.quora.com/Is-particle-swarm-optimization-an-appropriate-way-to-train-a-deep-convolutional-neural-network-for-image-recognition
