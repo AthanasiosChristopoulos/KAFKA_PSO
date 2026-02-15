@@ -37,19 +37,20 @@ public class Dl4jModelFactory {
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
-			return createMNIST4MLP(workerId);
-				
+			// return createMNIST4MLP(workerId);
+			return createMNISTCnn_New_2(workerId);
+
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
 			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
-			// return createMNIST4Cnn_New(workerId);
+			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
 			// return createMNIST4Cnn_New_Simpler(workerId);
-			return createMNIST4Cnn_New_2(workerId);
+			return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
-				
+
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX(workerId);
 			return createSUSYModel(workerId);
@@ -84,8 +85,9 @@ public class Dl4jModelFactory {
 			// return createLetterModel70K(workerId);
 			// return createCifar3Model_New(workerId);
 			// return createCifar3Model_New_Simpler(workerId);
-			return createCifar3Model_New_Simpler_2(workerId);
+			// return createCifar3Model_New_Simpler_2(workerId);
 			// return createCifar3Model_New_Simpler_3(workerId);
+			return createCifar3Model_New_Simpler_4(workerId);
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -253,6 +255,58 @@ public class Dl4jModelFactory {
 	// 128×64 + 64 = 8,256
 	// 64×4 + 4 = 260
 	// total = 100,480 + 8,256 + 260 = 108,996 weights
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNISTCnn_New_2(int workerId) {
+
+		if (printModel) {
+			System.out.println("Using MNIST4 CNN (PSO-feasible)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
+						.nIn(1)
+						.nOut(8)       
+						.stride(1, 1)
+						.padding(0, 0)							// 26 x 26 x 8
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
+						.nOut(16)     
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nOut(32)                // keep 32 (good PSO control knob)
+						.activation(Activation.TANH)  // smoother than ReLU for PSO
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
 
 	public static MultiLayerNetwork createMNIST4MLP_Reduced(int workerId) {
 
@@ -1515,4 +1569,55 @@ public class Dl4jModelFactory {
 		return model;
 	}
 
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createCifar3Model_New_Simpler_4(int workerId) {
+
+		if (printModel) {
+			System.out.println("Using MNIST4 CNN (PSO-feasible)");
+		}
+
+		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
+						.nIn(1)
+						.nOut(8)       
+						.stride(1, 1)
+						.padding(0, 0)							// 26 x 26 x 8
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
+						.nOut(16)     
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nOut(32)                // keep 32 (good PSO control knob)
+						.activation(Activation.TANH)  // smoother than ReLU for PSO
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
+						.nOut(numClasses)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				.setInputType(InputType.convolutional(32, 32, 3))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 }

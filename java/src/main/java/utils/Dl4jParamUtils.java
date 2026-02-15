@@ -368,19 +368,19 @@ public class Dl4jParamUtils {
             dir.mkdirs();
         }
 
-        // ===================== Save the model using DL4J =====================
-        try {
-            File modelFile = new File(dir, name + "-dl4j.zip");
-            ModelSerializer.writeModel(model, modelFile, true);
+        // Save the model using DL4J =====================
+        // try {
+        //     File modelFile = new File(dir, name + "-dl4j.zip");
+        //     ModelSerializer.writeModel(model, modelFile, true);
 
-            System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
+        //     System.out.println("Saved global model to: " + modelFile.getAbsolutePath());
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Failed to save model: " + e.getMessage());
-        }
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        //     System.out.println("Failed to save model: " + e.getMessage());
+        // }
 
-        // ===================== Save the model as a list =====================
+        // Save the model as a list =====================
 
         float[] flat = modelToFlatList(model);
         String filenameFlat = "models/" + name + "-flat.txt";

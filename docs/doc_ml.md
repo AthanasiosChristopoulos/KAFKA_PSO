@@ -34,6 +34,21 @@ CNNs have smoother valeys ?
         - output size = floor((N - F + 2 * P) / S) + 1
         - N = input size, F = Filter size (if 3,3 then F = 3), P = padding, S = Stride
         - .padding(0, 0) => P = 0
+        - padding(1,1) => "same", padding(0,0) => "valid"
 
  - Dimensionality after maxPooling layer:
         - out = floor((N − F + 2 * P) / S)​ + 1
+    
+ - If input feature Maps / iunput channels is 8 then
+    ```java
+    .layer(new ConvolutionLayer.Builder(3, 3)
+        .nOut(16)
+        .stride(1, 1)
+        .padding(0, 0))
+    ```
+    This is 16 Filters of size 3×3×8 (NOT 3×3×1)
+        => Filters are not per channel
+        => Each filter combines all 8 input channels together into one output.
+        => filter combines all 8 previous feature maps (feature fusion) together to detect more complex features.
+        => Because meaningful patterns in images usually depend on combinations of simpler features, not each one alone.
+        => Real patterns are combinations of primitives
