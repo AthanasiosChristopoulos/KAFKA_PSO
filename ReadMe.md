@@ -95,9 +95,8 @@ Standard PSO works this way:
     xid= xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
-## ===============================================================================
-## ===============================================================================
-## Project Architecture Description: =============================================
+## =====================================================================================================
+## Project Architecture Description: ===================================================================
 This is my project for PSO, for my thesis
 
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
@@ -219,7 +218,7 @@ Input input-weights-topic:
             - build_keras_model()
             - evaluate_model()
 
-## New Dataset - Specifications:
+## New Dataset - Specifications: ================================================================================================
 
  - Given the specifications i need you to give me a link to where someone showcases his model and the dataset and 
     that he has achieved a 90% accuracy on that Dataset.
@@ -456,7 +455,8 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
 ## ==========================================================================================================================
 ## CNNs - Image Datasets: ===================================================================================================
 
-    - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a forward pass to a CNN, rather than a Dense NN: 
+    - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a 
+        forward pass to a CNN, rather than a Dense NN: 
         - weights are reused multiple times in forward pass we are convoluting.
         - In an MLP (Multi-Layer Perceptron), 784 features connect directly to neurons once.
             - MACs == model parameters since we pass them only one time.
@@ -471,7 +471,17 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
-## CNNs - PSO: ====================================================================================================================
+## =====================================================================================
+## PSO friendly Neural Networks Architectures ========================================== 
+
+ - Shallow networks / Low Parameter / Weight Count / Small number of neurons => Low Dimensionality, important for PSO 
+    => sensitive to parameter count - PSO performance drops super fast as D increases
+    => In backpropagation the size of the model is - overfitting discounted - a net positive
+ - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
+ - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
+ - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
+ 
+## CNNs - PSO: =========================================================================
 
 For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
  - 1) PSO => NN Architecture. This is part of NAS (Neural Architecture Search), a method used to programmatically determining NN architectures
@@ -481,6 +491,8 @@ For CNNs especially, but also generally speaking for NNs, a hybrid is used betwe
     - use PSO-hybrid to escape stagnation / local traps with small data => PSO affects weights but after they are already in a good place 
     - then use GD again to refine
  - 3) Use PSO to optimize only a small subset of parameters (for example: last fully connected layer)
+
+
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
@@ -539,10 +551,17 @@ improve the ability to escape local minima
  - The swarm converged on bad solution / local maximum
  - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
     - is the velocity being clamped / holded back by a limiter ?
- - Increasing N_WORKERS:
+
+ - **Increasing N_WORKERS**:
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
+    - In practice, increasing N_WORKERS is a net positive (both on time and accuracy), as long as:
+        - Data per worker doesnt get reduced (happens if data is already plentiful and convergence happens already before data runs out)
+            - Stable number of updates
+            - Still using INDEPENDENT_WORKER_DATA_PROCESSING=false 
+        - Using neighborhoods (so as to not dialute the direction)
+        - You can ensure true parallelism between the workers or at least this isnt computationaly too heavy
 
 ## Initialization of the population ======================================
 
@@ -600,7 +619,7 @@ improve the ability to escape local minima
 
     ```
 
- - ## Clamping Velocity:
+ - ## Clamping Velocity: ===================================================================================
 
     - Particles' velocities on each dimension are clamped to a maximum velocity Vmax. The velocity on a single dimension is limited to Vmax.
         - if(|V[i]|< Vmax) V[i] = sign(V[i]) * Vmax
@@ -617,7 +636,7 @@ improve the ability to escape local minima
     - On NNs set xmin=-1, xmax=+1  NN weights do not have a fixed natural range. But [−1,1] is the assumed  an assumed scale, beucase in this amplitude they get initializied)
     - In reality, if you don’t enforce bounds on weights, then choosing xmin/xmax is arbitrary
 
- - ## C1, C2 Accelaration Constants:    ===================================================================================
+ - ## C1, C2 Accelaration Constants: ===================================================================================
 
     - Comparison between the two: 
         - a relatively high value of c1 causes particles to extremely wander in the search space.
@@ -631,7 +650,7 @@ improve the ability to escape local minima
         - Set both to 2.0
     - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
     -
- - ## Invertia W:   ===================================================================================
+ - ## Invertia W:  ===================================================================================
     - Three ways of inertia mechanisms: 1) static, 2) change with iteration number (or with time), 3) adaptive inertia 
         - 1) It can be random static as well (randomly choosen but dtatic during the run)
         - 2) linearly-varying inertia weight (LVIW). Here time t == number of iterations, with T == the maximum number of iterations
@@ -688,7 +707,7 @@ improve the ability to escape local minima
     - In practice, (1) performs much better
 
 ## ==============================================================================================
-## Local Version of PSO => Neighborhood based (Communication Topology) - Theory
+## Local Version of PSO => Neighborhood based (Communication Topology) - Theory:
 
  - Increasing neighborhood size deteriorates performance, the worst of FIPS is on ALL topologies:    
     - The swarm behaves like a single mass + it becomes more prone to local minima => exploration decreases
@@ -751,7 +770,6 @@ improve the ability to escape local minima
         - Neighborhoodsize: 4
         - good in-between Ring vs All 
     - End Note: The best performance of all occurred in the selfless-square FIPS configuration. Selfless is good, because we are actually either way considering the self because of X (Pm - X, aka current position habbit)
-            
 
 - gBest vs pBest:
     - In gBest, neighborhood size means how many other particles you can choose among, and the more there are, the better the one you pick is likely to be. 
@@ -856,7 +874,7 @@ found a better region than the second or third best neighbors (they may not have
 
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
 
-## ==========================================================================
+## ========================================================================================
 ## Experimentation & Performance: =========================================================
 
  - Load 400000 messages / samples to Kafka Input topic (make the reperation number just high enough for this)

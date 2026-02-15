@@ -132,6 +132,8 @@
 
 	36) Close Worker / Execution on assumed hollistic convergence
 
+	37) Dynamic Enviroments / Dynamic PSO (there is a specific paper for this)
+
 ========================================================================================================================
 
 	Thesis Structure:

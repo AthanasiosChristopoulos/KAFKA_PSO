@@ -66,8 +66,10 @@ public class Dl4jModelFactory {
 			return createHarModel(workerId);
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-
+			// return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			// return createPendigitsModelTanh(workerId);
+			return createPendigitsModelSmaller(workerId);
+			// return createPendigitsModelSmaller_2(workerId);
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel(workerId);
 
@@ -914,6 +916,102 @@ public class Dl4jModelFactory {
 	// For Hidden Layer 2   => 128 * 128 + 128
 	// For Output Layer     => 128 * 5 + 5
 	// 19333 weights 
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createPendigitsModelTanh(int workerId) {
+		if(printModel) {
+			System.out.println("Using PenDigits Model");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)   // 16 
+						.nOut(128)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT) // 10 (digits 0..9)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createPendigitsModelSmaller(int workerId) {
+		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH)");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				// 16 -> 64
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)     // 16
+						.nOut(64)
+						.activation(Activation.TANH)
+						.build())
+				// 64 -> 64
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(64)
+						.activation(Activation.TANH)
+						.build())
+				// 64 -> 10
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(64)
+						.nOut(NEURAL_OUTPUT)   // 10
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createPendigitsModelSmaller_2(int workerId) {
+		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH, small)");
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				// 16 -> 32
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)
+						.nOut(32)
+						.activation(Activation.TANH)
+						.build())
+				// 32 -> 10
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(32)
+						.nOut(NEURAL_OUTPUT)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
 
 	// ======================================================================================================================
 	// WineQuality Dataset Model Architecture
