@@ -1,13 +1,8 @@
 package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.api.Layer;
-import org.deeplearning4j.util.ModelSerializer;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-
-import pso.Simulation;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Collection;
 
 public class Dl4jParamUtils {   
@@ -38,8 +30,9 @@ public class Dl4jParamUtils {
                                                     // INDArray.toFloatVector() allocates a fresh float[] copy every call.
         return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
                                                     // specific order chosen by DL4J
-    }
-
+    }   // saves parameters in this order:
+            // For CNNs: [biases, parameters]
+            // For FNNs: [weights, biases]
     //=====================================================================================================
     
     public static void updateModel(MultiLayerNetwork model, float[] flat) {

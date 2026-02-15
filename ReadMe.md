@@ -97,6 +97,7 @@ Standard PSO works this way:
 
 ## =====================================================================================================
 ## Project Architecture Description: ===================================================================
+
 This is my project for PSO, for my thesis. Its purpose is PSO training of Neural Networks used for dataset classification
     => mostly UCI / common datasets of significant number of samples / features 
     => mostly FNN models, but also trying out CNNs as well
@@ -490,7 +491,10 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
  - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
  - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
-  
+ - In very high-dimensional spaces, PSO’s performance often deteriorates due to the “curse of dimensionality.” The search space grows exponentially, and swarm communication becomes less effective. https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/
+    => When the number of dimensions increases, the search space grows exponentially, and good solutions become sparse, making optimization extremely hard.
+
+ 
 ## CNNs - PSO: =========================================================================
 
 For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:
@@ -562,7 +566,7 @@ improve the ability to escape local minima
  - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
     - is the velocity being clamped / holded back by a limiter ?
 
- - **Increasing N_WORKERS**:
+ - **Increasing N_WORKERS:**
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
@@ -605,7 +609,18 @@ improve the ability to escape local minima
     - WeightInit.RELU:
         - slightly larger scale
     - .weightInit(WeightInit.UNIFORM)   => [−0.05,0.05] / or more custom: .weightInit(new UniformDistribution(-1.0, 1.0))
-
+ - Caveat:
+    - Biases to neurons (both FNNs and CNNs have biases) are not randomized but always initialized to 0.
+        - Number of outputs == Number of Neurons 
+        - standard practice  
+            - symmetry breaking handled by weights (must break symmetry at initialization)
+                Symmetry: 
+                - two or more neurons behave identically / have the same weights, so the model can’t learn different features.
+                - In GD: both neurons receive the exact same gradient, so they update in exactly the same way
+                - Since weights are already random, neurons are already different, symmetry is already broken
+                - PSO itself breaks symmetry through particle and velocity randomization
+            - avoids introducing bias before learning (no prior preference for activation)
+            - 
 ## Population size / Number of particles: =============================
 
  - 20 - 50 number of particles
@@ -662,6 +677,7 @@ improve the ability to escape local minima
     - The limits for the two uniform distributions φ1 and φ2 (if c1 * U[0, 1], then c1 = φ1) are usually the same, the total weight is partitioned into two equal components. C1 => exploration, C2 => convergence
     
  - ## Invertia W:  ===================================================================================
+
     - Three ways of inertia mechanisms: 1) static, 2) change with iteration number (or with time), 3) adaptive inertia 
         - 1) It can be random static as well (randomly choosen but dtatic during the run)
         - 2) linearly-varying inertia weight (LVIW). Here time t == number of iterations, with T == the maximum number of iterations
@@ -674,6 +690,7 @@ improve the ability to escape local minima
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
 
     - ## Inertia Adaptation during execution: ===================================================================================
+
         - Linear logic, from 0.9 to 0.4 across the run
         - Fuzzy Logic / Controller considers:
             - Current gBest fitness: “Are we, hollistically, doing well right now?”
@@ -699,6 +716,7 @@ improve the ability to escape local minima
     - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
 
  - # Randomness Dimensionality (CLPSO - Page 2): ============================================================================ 
+
     ```java
     // 1) static randmoness per updateX / Statistically independent dimensions
     float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
@@ -989,3 +1007,4 @@ sudo pkill -9 -f java
 ## =========================================================================
 ## Extra Sources:
  - https://www.quora.com/Is-particle-swarm-optimization-an-appropriate-way-to-train-a-deep-convolutional-neural-network-for-image-recognition
+ - https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/

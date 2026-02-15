@@ -479,17 +479,18 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         int numWorkers = bufs.size();
         int len = bufs.get(0).length;
-        float[] avg = new float[len];
+        float[] average = new float[len];
 
         for (float[] arr : bufs) {
             for (int i = 0; i < len; i++) {
-                avg[i] += arr[i];
+                average[i] += arr[i];
             }
         }
+        
         for (int i = 0; i < len; i++) {
-            avg[i] /= numWorkers;
+            average[i] /= numWorkers;
         }
-        return avg;
+        return average;
     }
     
     //========================================================================================================================
