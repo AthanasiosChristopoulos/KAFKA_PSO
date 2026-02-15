@@ -894,12 +894,30 @@ def load_pendigits_data(base_path="../data"):
 
 # ===============================================================================
 
+def build_pendigits_model(input_dim=16, num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=(input_dim,)),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.SGD(learning_rate=0.05, momentum=0.9),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+# ===============================================================================
+
 # def build_pendigits_model(input_dim=16, num_classes=10):
 
 #     model = keras.Sequential([
 #         layers.Input(shape=(input_dim,)),
-#         layers.Dense(128, activation="relu"),
-#         layers.Dense(128, activation="relu"),
 #         layers.Dense(num_classes, activation="softmax"),
 #     ])
 
@@ -912,22 +930,6 @@ def load_pendigits_data(base_path="../data"):
 #     model.summary()
 #     return model
 
-
-def build_pendigits_model(input_dim=16, num_classes=10):
-
-    model = keras.Sequential([
-        layers.Input(shape=(input_dim,)),
-        layers.Dense(num_classes, activation="softmax"),
-    ])
-
-    model.compile(
-        optimizer=keras.optimizers.SGD(learning_rate=0.05, momentum=0.9),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
-
-    model.summary()
-    return model
 # ===============================================================================
 
 def run_pendigits():
@@ -953,6 +955,7 @@ def run_pendigits():
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
+    save_model_as_flat_txt(model)
 
 
 # ======================================================================
