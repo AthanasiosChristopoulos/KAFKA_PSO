@@ -24,6 +24,7 @@
     => reqularization penalty isnt included in a forward pass: probs = model.output(X, false); (this is inference mode)
         => would be added only if using DL4J's internal training loop.
  - Another way: Introducing randomness in the training process (Dropout)
+    - Stochastic => During training, randomly disables neurons
 
 ## Funnels / Valeys:    ===============================================================================================
 

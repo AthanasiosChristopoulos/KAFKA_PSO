@@ -492,7 +492,12 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - sigmoid (Range: [0, 1])
     - tanh (Range: [-1, 1])
     - ReLU (might be unstable)
- - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
+
+ - No randomness / state allowed: 
+    - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
+    - fitness(w)=random in that case, at least it wont be deterministic
+    - PSO needs to compare different solutions. These solutions need to be as reliable as possible
+    - Imagine a gBest / pBest happend because of randomness => randomness makes comparisons unreliable
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
 
  - In very high-dimensional spaces, PSO’s performance often deteriorates due to the “curse of dimensionality.” The search space grows, with a linear increase in the number of parameters / weights, and swarm communication becomes less effective.
@@ -510,13 +515,21 @@ hidden unit will always output a value close to either end of the activation fun
  - Fix: initialising weights in a small interval:
     - instead of:   w ∈ [-1, 1]
     - use:          w ∈ [-0.1, 0.1]
-    - That will help because constraining the CPSO to a small interval around zero is hypothesised to decrease the hidden unit saturation by producing a smaller net input signal
-    - z=w⋅x+b , descreasing w will not saturate z (it wont be too large), which is the input of the activation function
+    - That will help because constraining the PSO to a small interval around zero is hypothesised to decrease the hidden unit saturation by producing a smaller net input signal
+    - z = w⋅x + b , descreasing w will not saturate z (it wont be too large), which is the input of the activation function
     - PSO_0.5 => weights are constrained to [-0.5, +0.5] at all times (not only at init)
         - constraining of the weights should help avoid saturation
         - is essentially weight clamping
  - Dropout Layer can be problematic with PSO. Iassumes the fitness evaluation is reasonably stable (same weights same fitness no randomness):
 same weights → similar fitness.
+
+## Regularization: ===============================================================================================
+ 
+- reqularization penalty isnt included in a forward pass: probs = model.output(X, false); (this is inference mode)
+        => would be added only if using DL4J's internal training loop.
+        => need to add it explicitly
+ - Another way: Introducing randomness in the training process (Dropout) / randomness-based regularization?
+    - During training, randomly disables neurons. Is problematic on PSO because it needs to be stable / no random evaluations
 
 ## CNNs - PSO: =========================================================================
 

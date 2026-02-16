@@ -35,20 +35,20 @@ public class Dl4jModelFactory {
 			return createWineModel(workerId);
 
 		} else if ("mnist".equals(DATASET)) {
-			// return createMNISTModelMLP(workerId);
+			return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
 			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4MLP(workerId);
-			return createMNISTCnn_New_2(workerId);
+			// return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			// return createMNISTModelMLPSimple_2(workerId);
-			return createMNIST4Cnn(workerId);	// 70ms forward pass
+			return createMNISTModelMLPSimple_2(workerId);
+			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
@@ -411,16 +411,8 @@ public class Dl4jModelFactory {
 						.stride(2, 2)
 						.padding(0, 0)
 						.build())
-
-				// Dropout(0.5) -> DL4J uses "dropOut(keepProb)" so keepProb=0.5
-				// Best practice is to apply dropout on Dense layers, but this matches your placement conceptually.
-				.layer(4, new DropoutLayer.Builder()
-						.dropOut(0.5) // keep probability = 0.5
-						.build())
-
-				// Dense(250, sigmoid)
 				.layer(5, new DenseLayer.Builder()
-						.nOut(250)
+						.nOut(128)
 						.activation(Activation.SIGMOID)
 						.build())
 

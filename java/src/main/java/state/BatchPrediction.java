@@ -400,6 +400,8 @@ public class BatchPrediction {
             loss = LossFunction.average(sampleLosses);
         }
 
+        // Regularization =======================================================
+        
         if(!this.coordinator) {
             double l2 = 0.0;    // add regularization
             for (float w : ws.flatModel) {   // or your flatWeights array
