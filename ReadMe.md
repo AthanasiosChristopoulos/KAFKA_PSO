@@ -604,7 +604,10 @@ improve the ability to escape local minima
  - Particles initial position is very important, particles need to be scattered in intialiazation
     => this applies to both weights (position) and vectors. The random generation should be seeded by particleId
     => model.init() is where the weights get randomized, and it happens internally inside DL4J/ND4J
-        => Without specifying weightInit(...), DL4J uses its default weight initialization => internally decided "Xavier", "He", normal/uniform,
+        => Without specifying weightInit(...), DL4J uses its default weight initialization => internally decided "Xavier", "He", normal/uniform
+        => Xavier is already “small-ish”, and for many layers its typical magnitudes are around 0.05–0.15
+            => Xavier has a scale around 0.1–0.2 magnitude (depends on the layer)
+            => U(-a, a) , where a is: sqrt(6 / (fan_in + fan_out)) # fan_in = nIn, number of Inputs in the Layer
     => randomizeVelocity(int workerId, float sigma) is where the velocities gets randomized
  - Standard PSO the particles are initialized randomly using the uniform distribution which is
     not considered as the best choice

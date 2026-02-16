@@ -2,7 +2,8 @@
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
+# python3 -c "import tensorflow as tf; print(tf.__version__); print(tf.config.list_physical_devices('GPU'))"
 
 import numpy as np
 import pandas as pd
@@ -444,28 +445,28 @@ def load_mnist_data():
 
 # ===============================================================================
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10):
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Reshape((28, 28, 1)),
-        layers.Conv2D(8, 3, padding="same", use_bias=True),
-        layers.Activation("relu"),
-        layers.MaxPooling2D(),  # 28x28 -> 14x14
-        layers.Conv2D(16, 3, padding="same", use_bias=True),
-        layers.Activation("relu"),
-        layers.GlobalAveragePooling2D(),
-        layers.Dense(num_classes, activation="softmax"),
-    ])
+# def build_mnist_model(input_shape=(28, 28), num_classes=10):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+#         layers.Conv2D(8, 3, padding="same", use_bias=True),
+#         layers.Activation("relu"),
+#         layers.MaxPooling2D(),  # 28x28 -> 14x14
+#         layers.Conv2D(16, 3, padding="same", use_bias=True),
+#         layers.Activation("relu"),
+#         layers.GlobalAveragePooling2D(),
+#         layers.Dense(num_classes, activation="softmax"),
+#     ])
 
-    model.compile(
-        optimizer=keras.optimizers.Adam(1e-3),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(1e-3),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
 
-    model.summary()
-    print("Trainable params:", model.count_params())
-    return model
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
 
 # ===============================================================================
 
@@ -507,6 +508,48 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10):
 #     print("Trainable params:", model.count_params())
 
 #     return model
+
+# ===============================================================================
+# Best (From Geeks For Geeks):
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):   # 1e-3 is actually the classic default and usually a good starting point for MNIST/CNNs.
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+        layers.Conv2D(
+            filters=32,
+            kernel_size=(3, 3),
+            activation="relu",
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),     # for best accuracy comment out this layer
+        layers.Conv2D(
+            filters=64,
+            kernel_size=(3, 3),
+            activation="relu",
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+        layers.Dropout(0.5),
+        layers.Flatten(),
+        layers.Dense(250, activation="sigmoid"),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    # model.compile(
+    #     optimizer=keras.optimizers.Adam(learning_rate=lr),
+    #     loss="sparse_categorical_crossentropy",
+    #     metrics=["accuracy"],
+    # )
+    model.compile(
+        optimizer=keras.optimizers.Adam(),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+
+    return model
 
 # ===============================================================================
 
