@@ -497,7 +497,9 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
  - Saturation means => The neuron outputs values very close to the extremes of its activation function.
     - like on sigmoid a neuron constanly outputs 1 ... 
  - if multiple training patterns cause hidden units to output the same values, differentiation (between classes) becomes impossible
-    
+ - This doesnt happen in GD / Backprop:
+    - sees outputs are saturated, computes gradient
+    - adjusts weights to bring neurons back into useful range
  
 ## CNNs - PSO: =========================================================================
 
