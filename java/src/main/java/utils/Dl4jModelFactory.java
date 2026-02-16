@@ -36,12 +36,13 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModelMLP(workerId);
-			return createMNISTModelMLPSimple_1(workerId);
+			// return createMNISTModelMLPSimple_1(workerId);
 			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4MLP(workerId);
-			// return createMNISTCnn_New_2(workerId);
+			return createMNISTCnn_New_2(workerId);
+			// return createMNISTModelCNNHeavy(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
@@ -363,6 +364,74 @@ public class Dl4jModelFactory {
 						.build())
 
 				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNISTModelCNNHeavy(int workerId) {
+
+		int height = 28, width = 28, channels = 1;
+		int nOut = 10;
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(0, new ConvolutionLayer.Builder(3, 3)
+						.nIn(channels)
+						.stride(1, 1)
+						.padding(0, 0)
+						.nOut(32)
+						.activation(Activation.RELU)
+						.build())
+
+				// MaxPooling2D(pool=2x2, stride=2, valid)
+				.layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.padding(0, 0)
+						.build())
+
+				// Conv2D(filters=64, kernel=3x3, stride=1, padding=valid=0, relu)
+				.layer(2, new ConvolutionLayer.Builder(3, 3)
+						.stride(1, 1)
+						.padding(0, 0)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+
+				// MaxPooling2D(pool=2x2, stride=2, valid)
+				.layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.padding(0, 0)
+						.build())
+
+				// Dropout(0.5) -> DL4J uses "dropOut(keepProb)" so keepProb=0.5
+				// Best practice is to apply dropout on Dense layers, but this matches your placement conceptually.
+				.layer(4, new DropoutLayer.Builder()
+						.dropOut(0.5) // keep probability = 0.5
+						.build())
+
+				// Dense(250, sigmoid)
+				.layer(5, new DenseLayer.Builder()
+						.nOut(250)
+						.activation(Activation.SIGMOID)
+						.build())
+
+				// Output(10, softmax, MCXENT)
+				.layer(6, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nOut(nOut)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				// If you feed flattened 784 vectors, DL4J will reshape to 1x28x28
+				.setInputType(InputType.convolutionalFlat(height, width, channels))
 				.build();
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);

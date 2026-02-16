@@ -46,6 +46,9 @@ public class BatchPrediction {
     private final boolean isCoordinator;
 
     private static boolean checked = false;
+    private static double lambda = 1e-4;
+
+    private final WorkerStatic ws;
 
     private long start = System.nanoTime();
     private long end = System.nanoTime();
@@ -63,12 +66,15 @@ public class BatchPrediction {
 
     List<float[]> featureList = new ArrayList<>();
     List<Integer> labels = new ArrayList<>();
-    float[] probabilities = new float[NUM_CLASSES];;
+    float[] probabilities = new float[NUM_CLASSES];
 
-    // for Worker =======================================================================================================
+    private final boolean coordinator;
 
-    public BatchPrediction(MultiLayerNetwork model, CustomLogger logger) {
+    // for Worker (from WorkerStatic) =======================================================================================================
+
+    public BatchPrediction(MultiLayerNetwork model, CustomLogger logger, WorkerStatic ws) {
         this.model = model;
+        this.ws = ws;
         this.MODEL_IS_CNN = isCnnByFirstLayer(model);
         this.bestModel = null;
         this.logger = logger;
@@ -84,12 +90,14 @@ public class BatchPrediction {
         } else {
             Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
         }
+        this.coordinator = false;
     }
 
     // for Coordinator ==================================================================================================
 
     public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
         this.model = model;
+        this.ws = null;
         this.MODEL_IS_CNN = isCnnByFirstLayer(model);
         this.bestModel = bestModel;
         this.logger = logger;
@@ -105,6 +113,8 @@ public class BatchPrediction {
         } else {
             Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
         }
+
+        this.coordinator = true;
     }
 
     // ===========================================================================
@@ -127,7 +137,7 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public float[] callPredictionsBatch(List<DataMessage> batch, boolean coordinator) {
+    public float[] callPredictionsBatch(List<DataMessage> batch) {
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -389,7 +399,17 @@ public class BatchPrediction {
         } else {
             loss = LossFunction.average(sampleLosses);
         }
-        
+
+        if(!this.coordinator) {
+            double l2 = 0.0;    // add regularization
+            for (float w : ws.flatModel) {   // or your flatWeights array
+                l2 += w * w;
+            }
+
+            l2 /= ws.flatModel.length;
+            loss = loss + (float)(lambda * l2);
+        }
+
         // ===========================================================================================
         
         if (Float.isNaN(loss) || Float.isInfinite(loss)) {

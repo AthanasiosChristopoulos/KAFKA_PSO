@@ -69,7 +69,7 @@ public final class WorkerStatic {
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(workerId, this);
-        this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId)); 
+        this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId), this); 
     }
 }
 

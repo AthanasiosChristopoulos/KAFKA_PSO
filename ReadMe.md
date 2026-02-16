@@ -515,6 +515,8 @@ hidden unit will always output a value close to either end of the activation fun
     - PSO_0.5 => weights are constrained to [-0.5, +0.5] at all times (not only at init)
         - constraining of the weights should help avoid saturation
         - is essentially weight clamping
+ - Dropout Layer can be problematic with PSO. Iassumes the fitness evaluation is reasonably stable (same weights same fitness no randomness):
+same weights → similar fitness.
 
 ## CNNs - PSO: =========================================================================
 

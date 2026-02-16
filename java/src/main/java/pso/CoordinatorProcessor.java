@@ -214,7 +214,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 return;
             }
 
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, false);  // inference / evaluate every time all workers current models arrive
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);  // inference / evaluate every time all workers current models arrive
                                                                                 // monitor how training is going
             accuracy = accLoss[0];
             loss = accLoss[1];
