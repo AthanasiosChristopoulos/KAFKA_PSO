@@ -491,9 +491,13 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
  - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
  - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
- - In very high-dimensional spaces, PSO’s performance often deteriorates due to the “curse of dimensionality.” The search space grows exponentially, and swarm communication becomes less effective. https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/
+ - In very high-dimensional spaces, PSO’s performance often deteriorates due to the “curse of dimensionality.” The search space grows, with a linear increase in the number of parameters / weights, and swarm communication becomes less effective.
     => When the number of dimensions increases, the search space grows exponentially, and good solutions become sparse, making optimization extremely hard.
-
+ - This study hypothesises that PSO performs poorly on large NNs due to hidden unit saturation:
+ - Saturation means => The neuron outputs values very close to the extremes of its activation function.
+    - like on sigmoid a neuron constanly outputs 1 ... 
+ - if multiple training patterns cause hidden units to output the same values, differentiation (between classes) becomes impossible
+    
  
 ## CNNs - PSO: =========================================================================
 
@@ -621,7 +625,7 @@ improve the ability to escape local minima
                     => no need to worry about random initinalization of biases they are attached to the already assymetrical weights
                 - PSO itself breaks symmetry through particle and velocity randomization
             - avoids introducing bias before learning (no prior preference for activation)
-            - 
+            
 ## Population size / Number of particles: =============================
 
  - 20 - 50 number of particles

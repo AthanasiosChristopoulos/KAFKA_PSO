@@ -510,7 +510,6 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Flatten(),                              # 28*28 = 784
-
         layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
     ])
