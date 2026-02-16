@@ -53,6 +53,8 @@ public class PsoUpdater {
     public final String VMAX_CLAMPING_TYPE = cfg.VMAX_CLAMPING_TYPE;
 
     private final float WEIGHTS_INIT_SCALE = cfg.WEIGHTS_INIT_SCALE;
+    public final boolean WEIGHT_CLAMPING = cfg.WEIGHT_CLAMPING;
+    public final float WEIGHT_MAX_SCALE = cfg.WEIGHT_MAX_SCALE; 
 
     private CustomLogger logger;
     private float[] velocity; 
@@ -269,8 +271,17 @@ public class PsoUpdater {
             clipVelocityByNorm();
         }
 
-        for (int k = 0; k < dimensionality; k++) {
-            ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+        // for (int k = 0; k < dimensionality; k++) {
+        //     ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+        // }
+        if (WEIGHT_CLAMPING) {
+            for (int k = 0; k < dimensionality; k++) {
+                ws.flatModel[k] = clamp(ws.flatModel[k] + velocity[k], - WEIGHT_MAX_SCALE, WEIGHT_MAX_SCALE);
+            }
+        } else {
+            for (int k = 0; k < dimensionality; k++) {
+                ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+            }
         }
 
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
@@ -319,8 +330,18 @@ public class PsoUpdater {
 
             for (int k = 0; k < dimensionality; k++) {
                 velocity[k] = W_INERTIA_CURRENT * velocity[k];
-                ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+                // ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
+            if (WEIGHT_CLAMPING) {
+                for (int k = 0; k < dimensionality; k++) {
+                    ws.flatModel[k] = clamp(ws.flatModel[k] + velocity[k], - WEIGHT_MAX_SCALE, WEIGHT_MAX_SCALE);
+                }
+            } else {
+                for (int k = 0; k < dimensionality; k++) {
+                    ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+                }
+            }
+
             Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
             return this.velocity;
         }
@@ -482,8 +503,17 @@ public class PsoUpdater {
             clipVelocityByNorm();
         }
 
-        for (int k = 0; k < dimensionality; k++) {
-            ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+        // for (int k = 0; k < dimensionality; k++) {
+        //     ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+        // }
+        if (WEIGHT_CLAMPING) {
+            for (int k = 0; k < dimensionality; k++) {
+                ws.flatModel[k] = clamp(ws.flatModel[k] + velocity[k], - WEIGHT_MAX_SCALE, WEIGHT_MAX_SCALE);
+            }
+        } else {
+            for (int k = 0; k < dimensionality; k++) {
+                ws.flatModel[k] = ws.flatModel[k] + velocity[k];
+            }
         }
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
         

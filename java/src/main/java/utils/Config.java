@@ -86,6 +86,8 @@ public class Config {
     public final float C_END; 
 
     public final float WEIGHTS_INIT_SCALE; 
+    public final boolean WEIGHT_CLAMPING;
+    public final float WEIGHT_MAX_SCALE; 
 
     public Config() {
         
@@ -252,6 +254,8 @@ public class Config {
         this.C_END = Float.parseFloat(getenv(dotenv, "C_END", "2.5")); 
     
         this.WEIGHTS_INIT_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHTS_INIT_SCALE", "0.5"));
+        this.WEIGHT_CLAMPING = Boolean.parseBoolean(getenv(dotenv, "WEIGHT_CLAMPING", "true"));
+        this.WEIGHT_MAX_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHT_MAX_SCALE", "0.5"));
 
     } 
 
