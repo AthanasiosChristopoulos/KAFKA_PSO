@@ -1,7 +1,15 @@
 
-========================================================================================================================
+## ========================================================================================================================
+## Generall Aspects of this Thesis that need Improving / Expanding upon (and how they are combined with each other):
 
-	Important Tasks:
+ - PSO
+ - Neural Networks - Models Used for what datasets
+ - Kafka / Kafka Streams
+ - Filtering / Efficient Communication Protocol
+ - Federated Learning
+
+## ========================================================================================================================
+## Important Pending Tasks:
 	
 	1) Limit communication / Communication Efficiency:
 		Limit communication στο pBest_weights_topic pipeline:

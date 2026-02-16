@@ -550,6 +550,7 @@ CNNs cant be trained by PSO:
     - the CNNs purpose is to extract the high-frequency pattern / feature. PSO is stack at low frequency (which is by itself meaningless)
  - Cant add batchNormilization, which is really helpful on GD
  - generally speaking works better with more layers, which PSO doesnt like 
+ 
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
