@@ -38,7 +38,21 @@ def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes):
 
 # ======================================================================
 # Save model weights in flat format
-# ============= =========================================================
+# =======================================================================
+
+def save_all_trainable_as_flat_txt(model, path="model_weights_flat.txt"):
+    flat = []
+    for var in model.trainable_variables:
+        flat.extend(var.numpy().reshape(-1).astype("float32").tolist())
+
+    with open(path, "w") as f:
+        for v in flat:
+            f.write(f"{v}\n")
+
+    print(f"Saved {len(flat)} trainable params to {path}")
+    return flat
+
+# =======================================================================
 
 def save_model_as_flat_txt(model, path="model_weights_flat.txt"):
     flat = []
@@ -564,72 +578,69 @@ def load_mnist4_data(remap_labels=True):
 # ======================================================================
 # SIMPLER (smaller than before) / FASTER CNN for MNIST4
 
-# def build_mnist4_model(input_shape=(28, 28), num_classes=4):
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Reshape((28, 28, 1)),
-
-#         layers.Conv2D(8, 3, padding="same", use_bias=False),
-#         layers.BatchNormalization(),
-#         layers.Activation("relu"),
-#         layers.MaxPooling2D(),  # 28x28 -> 14x14
-
-#         layers.Conv2D(16, 3, padding="same", use_bias=False),
-#         layers.BatchNormalization(),
-#         layers.Activation("relu"),
-
-#         layers.GlobalAveragePooling2D(),
-#         layers.Dense(num_classes, activation="softmax"),
-#     ])
-
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(1e-3),
-#         loss="sparse_categorical_crossentropy",
-#         metrics=["accuracy"],
-#     )
-
-#     model.summary()
-#     print("Trainable params:", model.count_params())
-#     return model
-
-def build_mnist4_model(input_shape=(28, 28), num_classes=4, lr=1e-3):
-
+def build_mnist4_model(input_shape=(28, 28), num_classes=4):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
-        layers.Conv2D(
-            filters=8,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Conv2D(
-            filters=16,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Flatten(),
-        layers.Dense(32, activation="tanh", use_bias=True),
-        layers.Dense(num_classes, activation="softmax", use_bias=True),
+        layers.Conv2D(8, 3, padding="same", use_bias=False),
+        layers.Activation("relu"),
+        layers.MaxPooling2D(),  # 28x28 -> 14x14
+        layers.Conv2D(16, 3, padding="same", use_bias=False),
+        layers.Activation("relu"),
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(num_classes, activation="softmax"),
     ])
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        optimizer=keras.optimizers.Adam(1e-3),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
 
     model.summary()
     print("Trainable params:", model.count_params())
-
     return model
+
+# ======================================================================
+
+# def build_mnist4_model(input_shape=(28, 28), num_classes=4, lr=1e-3):
+
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+#         layers.Conv2D(
+#             filters=8,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Conv2D(
+#             filters=16,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Flatten(),
+#         layers.Dense(32, activation="tanh", use_bias=True),
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(learning_rate=lr),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+
+#     return model
 
 # ======================================================================
 # Run MNIST4
@@ -654,7 +665,7 @@ def run_mnist4(epochs=5, batch_size=128, max_train=None, max_test=None):
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
-    save_model_as_flat_txt(model)
+    save_all_trainable_as_flat_txt(model)
     return model, history
 
 

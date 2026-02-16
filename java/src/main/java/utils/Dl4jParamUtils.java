@@ -3,6 +3,7 @@ package utils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,8 +32,9 @@ public class Dl4jParamUtils {
         return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
                                                     // specific order chosen by DL4J
     }   // saves parameters in this order:
-            // For CNNs: [biases, parameters]
-            // For FNNs: [weights, biases]
+            // For CNNs (Convolutional Layer): [biases, parameters]
+            // For FNNs (Dense Layer): [weights, biases]: Usually its: [Layer0_weights, Layer0_biases, Layer1_weights, Layer1_biases, ... ]
+
     //=====================================================================================================
     
     public static void updateModel(MultiLayerNetwork model, float[] flat) {
@@ -40,6 +42,9 @@ public class Dl4jParamUtils {
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
     }
 
+    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    //     model.setParams(Nd4j.createFromArray(flat)); 
+    // }
     // public static void updateModel(MultiLayerNetwork model, float[] flat) { // Deserialize model, from a float[] to a MultiLayerNetwork model object
     //     if (flat.length != model.numParams()) {
     //         throw new IllegalArgumentException(

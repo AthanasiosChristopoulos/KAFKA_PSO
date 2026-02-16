@@ -617,7 +617,8 @@ improve the ability to escape local minima
                 Symmetry: 
                 - two or more neurons behave identically / have the same weights, so the model can’t learn different features.
                 - In GD: both neurons receive the exact same gradient, so they update in exactly the same way
-                - Since weights are already random, neurons are already different, symmetry is already broken
+                - Since weights are already random, neurons are already different / produce different gradients, symmetry is already broken
+                    => no need to worry about random initinalization of biases they are attached to the already assymetrical weights
                 - PSO itself breaks symmetry through particle and velocity randomization
             - avoids introducing bias before learning (no prior preference for activation)
             - 

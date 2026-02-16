@@ -36,7 +36,7 @@ public class Dl4jModelFactory {
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModelMLP(workerId);
 			return createMNISTModelMLPSimple_1(workerId);
-			// return createMNISTModelSimple_2(workerId);
+			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4MLP(workerId);
@@ -45,7 +45,8 @@ public class Dl4jModelFactory {
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNIST4Cnn(workerId);	// 70ms forward pass
+			return createMNISTModelMLPSimple_2(workerId);
+			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
@@ -256,7 +257,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTModelSimple_2(int workerId) {
+	public static MultiLayerNetwork createMNISTModelMLPSimple_2(int workerId) {
 		if (printModel) {
 			System.out.println("Using MNIST Ultra-Simple Model (no hidden / logistic regression)");
 		}

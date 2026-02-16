@@ -1,10 +1,12 @@
 package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 
 import state.*;
 
@@ -55,9 +57,14 @@ public final class WorkerStatic {
         this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
-        if(logger.isEnabled(2)) this.logger.log("Initial Model: " + 
-            Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
-        Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model");
+
+        if(logger.isEnabled(2)) {
+            this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
+            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model");
+            logger.log("Model with shape: ");
+            Map<String, INDArray> pt = model.paramTable();
+            pt.forEach((k, v) -> logger.log(k + " -> " + Arrays.toString(v.shape())));
+        }
 
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
         this.stats = new Stats();
@@ -65,3 +72,14 @@ public final class WorkerStatic {
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId)); 
     }
 }
+
+// paramTable(): =========================================================================================================
+// Counting of layers with numbers. All the Layers get a number, but some mght not have any params (they arent printing)
+// Essentially its says for the 3rd layer we have these params: 
+// 0: ConvolutionLayer (has params: 0_W, 0_b)
+// 1: ActivationLayer (no params)
+// 2: SubsamplingLayer (no params)
+// 3: ConvolutionLayer (has params: 3_W, 3_b)
+// 4: ActivationLayer (no params)
+// 5: GlobalPoolingLayer (no params)
+// 6: OutputLayer (has params: 6_W, 6_b)

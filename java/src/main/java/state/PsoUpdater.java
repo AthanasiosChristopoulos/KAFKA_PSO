@@ -272,6 +272,7 @@ public class PsoUpdater {
         }
 
         Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+        
         if(VMAX_CLAMPING_TYPE.equals("NORM")) {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
@@ -567,6 +568,7 @@ public class PsoUpdater {
     //================================================================================================
 
     public void randomizeVelocity(int workerId, float sigma) {
+
         Random random = new Random(workerId);
 
         for (int i = 0; i < dimensionality; i++) {
