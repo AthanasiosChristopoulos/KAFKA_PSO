@@ -47,14 +47,14 @@ public class Dl4jModelFactory {
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNISTModelMLPSimple_2(workerId);
+			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
 			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
 			// return createMNIST4Cnn_New_Simpler(workerId);
-			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+			return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
 		} else if ("susy".equals(DATASET)) {

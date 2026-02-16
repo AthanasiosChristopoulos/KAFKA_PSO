@@ -542,7 +542,14 @@ For CNNs especially, but also generally speaking for NNs, a hybrid is used betwe
     - then use GD again to refine
  - 3) Use PSO to optimize only a small subset of parameters (for example: last fully connected layer)
 
-
+CNNs cant be trained by PSO:
+ - CNNs have structured parameters => they are not independ like the parameters of FNNs
+ - spatial correlation
+ - the patterns of the filters they must learn are highly correlated. This means hierarchical learning of filters
+    - Neural networks learn low-frequency (simple - edges) patterns first, then high-frequency ones (complicated pattern - objects)
+    - the CNNs purpose is to extract the high-frequency pattern / feature. PSO is stack at low frequency (which is by itself meaningless)
+ - Cant add batchNormilization, which is really helpful on GD
+ - generally speaking works better with more layers, which PSO doesnt like 
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 

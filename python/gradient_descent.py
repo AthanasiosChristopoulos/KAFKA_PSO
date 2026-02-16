@@ -1241,7 +1241,7 @@ def load_cifar10_data(batch_size: int = 128, buffer_size: int = 50_000):
 
 # ======================================================================
 
-def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, lr=1e-3):
+def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
@@ -1255,12 +1255,12 @@ def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10, lr=1e-3):
 
         # Classifier head (MNIST-style)
         layers.Flatten(),                        # 8*8*64 = 4096
-        layers.Dense(128, activation="tanh"),     # analogous to Dense(32) in MNIST, but larger for CIFAR
+        layers.Dense(250, activation="tanh"),   
         layers.Dense(num_classes, activation="softmax"),
     ])
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        optimizer=keras.optimizers.Adam(),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )

@@ -16,7 +16,8 @@
 ## Regularization: ===============================================================================================
  
  - techniques that prevent your neural network from memorizing the training data => we need to prevet overfitting
-    
+ - overfitting can be viewed from the validation loss - validation loss and accuracy. This isnt training accuracy but it is accuracy coming from test samples.
+    => This runs in parallel during the training
  - it forces the network to learn general patterns
  - it sets penalties for large weights: Loss = data loss + λ * penalty(weights)
     => Weight Decay - Penalize Large weights
@@ -25,6 +26,14 @@
         => would be added only if using DL4J's internal training loop.
  - Another way: Introducing randomness in the training process (Dropout)
     - Stochastic => During training, randomly disables neurons
+
+## Layers: ===============================================================================================
+    - Dropout:
+        - Dropout is a regularization trick (Helps us achieve regularization):
+            During training, it randomly “turns off” a fraction of activations (50%)
+            this prevents the network from relying too much on any single neuron and helps reduce overfitting
+            Dropout(0.5) roughly means “keep 50% of units” during training (the other 50% are set to 0).
+            At inference time, dropout is disabled.
 
 ## Funnels / Valeys:    ===============================================================================================
 
@@ -44,7 +53,7 @@ CNNs have smoother valeys ?
 
 ## CNNs =========================================================================
  
-  - Dimensionality after conv layer:
+ - Dimensionality after conv layer:
         - output size = floor((N - F + 2 * P) / S) + 1
         - N = input size, F = Filter size (if 3,3 then F = 3), P = padding, S = Stride
         - .padding(0, 0) => P = 0
@@ -66,11 +75,9 @@ CNNs have smoother valeys ?
         => filter combines all 8 previous feature maps (feature fusion) together to detect more complex features.
         => Because meaningful patterns in images usually depend on combinations of simpler features, not each one alone.
         => Real patterns are combinations of primitives
-
- - Layers:
-    - Dropout:
-        - Dropout is a regularization trick (Helps us achieve regularization):
-            During training, it randomly “turns off” a fraction of activations (50%)
-            this prevents the network from relying too much on any single neuron and helps reduce overfitting
-            Dropout(0.5) roughly means “keep 50% of units” during training (the other 50% are set to 0).
-            At inference time, dropout is disabled.
+ 
+ - Why are CNNs generally (GD and PSO) harder to train:
+    - Vanishing gradients: gradients shrink exponentially as they propagate backward. This slows or even halts learning
+    - Deeper models introduce non-convex loss landscapes, volatile landscapes with: plateaus, sharp minima, saddle points
+        => sharp means that the landscape isnt "encouraging". It will tell you "you are going the wrong way" (high loss) when you are going the right way
+        => gradient descent also relies on loss results - it just treats them more efficiently
