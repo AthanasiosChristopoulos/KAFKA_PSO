@@ -33,9 +33,8 @@
 
 		- Fully Informed is outperforming Neighborhood best.
 
-		- προτεινομενο Δεδομενα + Μοντελλα για τεσταρισμα (μονο ενα ή πολλα) ? Ποια ειναι τα standards οτι δουλευει ?
-			- ποσα features ειναι expected to run ?
-			- expected model size / number of weights (ωστε να εχει νοημα το GM) ?
+		- expected model size / number of weights (ωστε να εχει νοημα το filtering) ? Να βαλω παραπανω weights ακιμα και εαν δεν χρειαζεται
+			=> PSO improves με dimensionality reduction 
 
 		- multiple classes case scenario ? Is it necessary to evaluate it ?
 			- multiple classes are not working in comparison to gradient descent, because we have no sense of direction other than randomly encountering a better position

@@ -38,8 +38,8 @@
 
 	2) Experimentation - Setup:
 		- Different models
-		- Different Loss Functions
-		- Different Data (θελει real data ?)
+		- Different Non - Differentiable Loss Functions
+		- Different Datasets
 		- Measure performance and latencies
 		- Experimentation Setup:
 			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
@@ -76,13 +76,7 @@
 			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
 			- What scientific differences did you add / remove / what parameters did you use ?
 	
-	12) Time / Accuracy Dependent constants (change the theory) => like simulated annealing
-			- Inertia W
-			- Social constants C1 and C2
-	
-	19) velocity initialiazation (magnitude) + velocity magnitude management (clamping)
-			- correct value for Vmax ?
-			- split into "exploration phase" and "exploration phase"
+	19) velocity initialiazation (magnitude)
 			
 	22) Do the diagrams / experimentation on (Measurement is taken when all training data has been consumed):
 		- Evaluate multiple workers scenario (x_g performance gets worse ?)
@@ -90,51 +84,46 @@
 		- Training Time - N workers	(φθινουσα σχεση)
 		- Communication is more costly as the size of the model increases
 
-	26) CNNs - Evaluate multiple classes scenario
-
-	27) Make normal batch processing + forward pass as efficient as possible to make the communication the primary cost
+	26) CNNs
 		
-	30) Ευρεση καλυτερων Datasets (πιο δυσκολα)
+	30) Ευρεση καλυτερων Datasets (πιο δυσκολα) - MLP datasets που actually χρειαζονται μεγαλυτερα μοντελλα
+		=> Maybe non IID Datasets
 
 	38) Add regularization manually after .output for weights
+
+	39) Different Non - Differentiable Loss Functions
+
+	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / foward passes)
+		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
 
 ========================================================================================================================
 
 	Backlog Tasks:
 	
-	1) GUI for:
+	1) ? GUI for:
 		- enviroment variables configuration 		
 		- monitoring training progress
 		- inference
 		- Finding a third party library GUI for defining a neural model architecture ?
 	
-	21) Instead of fully connected graph try neighbourhood topologies => you need to look at the theory
-
+	21) Implement neighbourhood topologies more efficiently:
+		=> Problem: With current protocols, if there are N Workers, there are N neighborhoods
+		=> Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
 	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
 
 	11) Add buffer as a statestore (on worker who is accumulating samples)
 
 	17) X_G state store - the global current position
 
-	27) Work with GPU
-
-	20) Partitioning of Non IID data if possible (this depends on the dataset):
-		- In datasets that dont provide this possibility just do Round Robin
-		- Otherwise you need to do it with keyed Records (decides to which partition in the kafka topic the Record goes to) and partitions
+	20) Find non IID datasets - Partitioning of Non IID data if possible (this depends on the dataset):
+		- Up to now just Round Robin
+		- Otherwise you need to do it with keyed Records
 
 	21) Use Vector class not float[] => important for calculations
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
-	35) Implement Neighborhoods:
-		- Multiple particles in a worker ? => more communication efficient
-		- Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
-			- you need to avoid broadcasting to all particles by re-keying and routing through a topic 
-				so that each particle only receives messages intended for it.
-
-	36) Close Worker / Execution on assumed hollistic convergence
-
-	37) Dynamic Enviroments / Dynamic PSO (there is a specific paper for this)
+	((37) Dynamic Enviroments / Dynamic PSO (there is a specific paper for this)))
 
 ========================================================================================================================
 

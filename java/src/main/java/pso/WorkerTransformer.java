@@ -170,10 +170,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             long idleNs = System.nanoTime() - t1.get();
+            
             if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS) && !ws.endedWorker) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
-                System.out.println("Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
+                System.out.println("[Worker" + workerId +"] closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
                 CoordinatorControl.getInstance().requestStop(workerId);
                 ws.endedWorker = true;
             }
