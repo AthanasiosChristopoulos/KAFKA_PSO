@@ -52,6 +52,8 @@ public class PsoUpdater {
     private final float VMAX_NORM;
     public final String VMAX_CLAMPING_TYPE = cfg.VMAX_CLAMPING_TYPE;
 
+    private final float WEIGHTS_INIT_SCALE = cfg.WEIGHTS_INIT_SCALE;
+
     private CustomLogger logger;
     private float[] velocity; 
     private float[] inertiaVec;
@@ -110,7 +112,7 @@ public class PsoUpdater {
         this.VMAX = this.VMAX_FACTOR * range;  // VMAX_FACTOR == the δ parameter (δ = VMAX_FACTOR)
         this.VMAX_NORM = (float)(Math.sqrt(dimensionality) * VMAX);
 
-        randomizeVelocity(workerId, 0.1f); //  0.1f this affects the magnitude of the initialized velocity
+        randomizeVelocity(workerId, WEIGHTS_INIT_SCALE * 0.1f); //  0.1f this affects the magnitude of the initialized velocity
                 // velocity is initialized uniquelly / seeded by workerId
 
         this.logger = CustomLogger.getWorkerInstance(workerId);

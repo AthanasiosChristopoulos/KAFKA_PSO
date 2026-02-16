@@ -85,6 +85,8 @@ public class Config {
     public final float C_START; 
     public final float C_END; 
 
+    public final float WEIGHTS_INIT_SCALE; 
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -248,6 +250,9 @@ public class Config {
         this.C2_END = Float.parseFloat(getenv(dotenv, "C2_END", "2.5")); 
         this.C_START = Float.parseFloat(getenv(dotenv, "C_START", "0.5")); 
         this.C_END = Float.parseFloat(getenv(dotenv, "C_END", "2.5")); 
+    
+        this.WEIGHTS_INIT_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHTS_INIT_SCALE", "0.5"));
+
     } 
 
     // ==================================================================================================================================

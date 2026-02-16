@@ -12,7 +12,7 @@ import org.nd4j.linalg.learning.config.Adam;
 
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
-
+import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 
 public class Dl4jModelFactory {
         
@@ -21,6 +21,7 @@ public class Dl4jModelFactory {
     public static final int NUM_FEATURES = cfg.NUM_FEATURES;
     public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
+    private static final float WEIGHTS_INIT_SCALE = cfg.WEIGHTS_INIT_SCALE;
 
 	public static final boolean printModel = false;
 
@@ -74,10 +75,10 @@ public class Dl4jModelFactory {
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
 			// return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-			// return createPendigitsModelTanh(workerId);
+			return createPendigitsModelTanh(workerId);
 			// return createPendigitsModelSmaller(workerId);
 			// return createPendigitsModelSmaller_2(workerId);
-			return createPendigitsModelSmaller_3(workerId);
+			// return createPendigitsModelSmaller_3(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			return createWineQualityModel(workerId);
@@ -1102,7 +1103,8 @@ public class Dl4jModelFactory {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
+				.weightInit(new UniformDistribution(-WEIGHTS_INIT_SCALE, WEIGHTS_INIT_SCALE)) 
+				// .weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)   // 16 
@@ -1123,6 +1125,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
+		// model.params().muli(WEIGHTS_INIT_SCALE);
 		return model;
 	}
 

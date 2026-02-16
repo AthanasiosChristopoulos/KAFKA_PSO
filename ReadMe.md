@@ -488,19 +488,34 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - local optima trap, 
     - but also the potential fluctuation of the velocities of particles such that the successive range of trials is bounded within a sub-plain of the whole search hyper-plain
 
- - Smooth Activation Functions => sigmoid, tanh (ReLU might be unstable)
+ - Smooth activation Functions (for dense layer neurons):
+    - sigmoid (Range: [0, 1])
+    - tanh (Range: [-1, 1])
+    - ReLU (might be unstable)
  - No BatchNorm layers and Dropout Layers (adds state, but each position should be stateless)
  - From tests, it has been determined in multiple cases that lowering the size of the NN doesnt lead to accuracy loss
+
  - In very high-dimensional spaces, PSO’s performance often deteriorates due to the “curse of dimensionality.” The search space grows, with a linear increase in the number of parameters / weights, and swarm communication becomes less effective.
     => When the number of dimensions increases, the search space grows exponentially, and good solutions become sparse, making optimization extremely hard.
- - This study hypothesises that PSO performs poorly on large NNs due to hidden unit saturation:
+ - Hypothesises that PSO performs poorly on large NNs due to hidden unit saturation:
  - Saturation means => The neuron outputs values very close to the extremes of its activation function.
     - like on sigmoid a neuron constanly outputs 1 ... 
  - if multiple training patterns cause hidden units to output the same values, differentiation (between classes) becomes impossible
+ - If the weights cause the resulting net input signal to always be a large positive or negative number, the
+hidden unit will always output a value close to either end of the activation function range.
+    => Reducing hidden units to this binary output state (two ends of the activation functions output) damages the overall information capacity of the NN, causing learning to be slow and inefficient
  - This doesnt happen in GD / Backprop:
     - sees outputs are saturated, computes gradient
-    - adjusts weights to bring neurons back into useful range
- 
+    - adjusts weights to bring neurons back into useful range => pushes weights to correct scale
+ - Fix: initialising weights in a small interval:
+    - instead of:   w ∈ [-1, 1]
+    - use:          w ∈ [-0.1, 0.1]
+    - That will help because constraining the CPSO to a small interval around zero is hypothesised to decrease the hidden unit saturation by producing a smaller net input signal
+    - z=w⋅x+b , descreasing w will not saturate z (it wont be too large), which is the input of the activation function
+    - PSO_0.5 => weights are constrained to [-0.5, +0.5] at all times (not only at init)
+        - constraining of the weights should help avoid saturation
+        - is essentially weight clamping
+
 ## CNNs - PSO: =========================================================================
 
 For CNNs especially, but also generally speaking for NNs, a hybrid is used between PSO and Gradient Descent:

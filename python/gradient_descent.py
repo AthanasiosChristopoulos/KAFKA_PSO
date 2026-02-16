@@ -444,6 +444,31 @@ def load_mnist_data():
 
 # ===============================================================================
 
+def build_mnist_model(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+        layers.Conv2D(8, 3, padding="same", use_bias=True),
+        layers.Activation("relu"),
+        layers.MaxPooling2D(),  # 28x28 -> 14x14
+        layers.Conv2D(16, 3, padding="same", use_bias=True),
+        layers.Activation("relu"),
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 # def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
 
 #     model = keras.Sequential([
@@ -506,28 +531,27 @@ def load_mnist_data():
 
 # ===============================================================================
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Flatten(),                              # 28*28 = 784
-        layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
-        layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
-    ])
+# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Flatten(),                              # 28*28 = 784
+#         layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
+#     ])
 
-    model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
-        loss="sparse_categorical_crossentropy",        # integer labels
-        metrics=["accuracy"],
-    )
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(learning_rate=lr),
+#         loss="sparse_categorical_crossentropy",        # integer labels
+#         metrics=["accuracy"],
+#     )
 
-    model.summary()
-    print("Trainable params:", model.count_params())
-    return model
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
 
 # ===============================================================================
 
 def run_mnist():
-    print("MNIST .....................................")
     X_train, y_train, X_test, y_test, class_names = load_mnist_data()
 
     model = build_mnist_model(input_shape=X_train.shape[1:])
@@ -540,7 +564,7 @@ def run_mnist():
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
-    save_model_as_flat_txt(model)
+    save_all_trainable_as_flat_txt(model)
 
 # ======================================================================
 # MNIST4 DATASET (use only classes 0..3 => classes in total, drop the others)
@@ -581,10 +605,10 @@ def build_mnist4_model(input_shape=(28, 28), num_classes=4):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
-        layers.Conv2D(8, 3, padding="same", use_bias=False),
+        layers.Conv2D(8, 3, padding="same", use_bias=True),
         layers.Activation("relu"),
         layers.MaxPooling2D(),  # 28x28 -> 14x14
-        layers.Conv2D(16, 3, padding="same", use_bias=False),
+        layers.Conv2D(16, 3, padding="same", use_bias=True),
         layers.Activation("relu"),
         layers.GlobalAveragePooling2D(),
         layers.Dense(num_classes, activation="softmax"),
@@ -1671,7 +1695,6 @@ def main():
     elif DATASET == "bank":
         run_bank()
     elif DATASET == "mnist":
-        print("MNIST .....................................")
         run_mnist()
     elif DATASET == "mnist4":
         run_mnist4()

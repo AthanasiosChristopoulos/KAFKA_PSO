@@ -23,7 +23,8 @@
 	- osd-bar=no
 
  - sudo apt install mesa-utils
- - sudo apt install brightnessctl (brightnessctl info / sudo brightnessctl set 100%)
+ - sudo apt install brightnessctl (brightnessctl info)
+ - sudo brightnessctl set 100%
 
 # Misc Commands: ======================================================================================
 
