@@ -283,8 +283,12 @@ public class PsoUpdater {
                 ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
         }
-
-        Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+        
+        if(cfg.USING_PRETRAINED_MODEL) {
+            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+        } else {
+            Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+        }
         
         if(VMAX_CLAMPING_TYPE.equals("NORM")) {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
@@ -342,7 +346,12 @@ public class PsoUpdater {
                 }
             }
 
-            Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+            if(cfg.USING_PRETRAINED_MODEL) {
+                Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+            } else {
+                Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+            }
+
             return this.velocity;
         }
 
@@ -515,8 +524,14 @@ public class PsoUpdater {
                 ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
         }
-        Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+                
+        if(cfg.USING_PRETRAINED_MODEL) {
+            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+        } else {
+            Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
+        }
         
+            
         if(VMAX_CLAMPING_TYPE.equals("NORM")) {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
                         "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 

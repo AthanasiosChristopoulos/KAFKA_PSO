@@ -3,7 +3,8 @@ package utils;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-
+import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
+import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
@@ -13,6 +14,15 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
+
+import org.deeplearning4j.zoo.ZooModel;
+import org.deeplearning4j.zoo.model.LeNet;
+import org.deeplearning4j.zoo.PretrainedType;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+
+import org.deeplearning4j.nn.transferlearning.TransferLearning;
+import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
+import org.nd4j.linalg.learning.config.NoOp;
 
 public class Dl4jModelFactory {
         
@@ -41,8 +51,9 @@ public class Dl4jModelFactory {
 			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
-			return createMNISTCnn_New_2(workerId);
+			// return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
+			return createMNIST_CNN_Pretrained(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
@@ -53,7 +64,7 @@ public class Dl4jModelFactory {
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
 			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			return createMNIST4Cnn_New_Simpler(workerId);
+			// return createMNIST4Cnn_New_Simpler(workerId);
 			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
@@ -107,6 +118,124 @@ public class Dl4jModelFactory {
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
+	}
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork pretrainedModel(int workerId) {
+		// 1) Load pretrained LeNet (MNIST 10-class)
+		ZooModel zoo = LeNet.builder()
+				.numClasses(10) // MNIST pretrained weights are for 10 classes
+				.build();
+
+		MultiLayerNetwork pretrained;
+		try {
+			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+		}
+
+		return pretrained;
+	}
+	
+	// ======================================================================================================================
+
+	// public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+	// 	// 1) Load pretrained LeNet (MNIST 10-class)
+	// 	ZooModel zoo = LeNet.builder()
+	// 			.numClasses(10) // MNIST pretrained weights are for 10 classes
+	// 			.build();
+
+	// 	MultiLayerNetwork pretrained;
+	// 	try {
+	// 		pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+	// 	} catch (Exception e) {
+	// 		throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+	// 	}
+
+	// 	// 2) Replace the output layer for YOUR NUM_CLASSES (MNIST4 or MNIST10)
+	// 	//    This keeps the conv feature extractor from the pretrained model,
+	// 	//    but resets the classifier head.
+	// 	FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+	// 			// optimizer not used by you (PSO), but required by the builder
+	// 			.build();
+
+	// 	String outputLayerName = pretrained.getLayerWiseConfigurations()
+	// 			.getConf(pretrained.getnLayers() - 1)
+	// 			.getLayer().getLayerName();
+
+	// 	// If layer names are null (common), DL4J uses internal names; easiest:
+	// 	// remove 1 layer from output and add a new output layer.
+	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+	// 			.fineTuneConfiguration(ftc)
+	// 			.removeLayersFromOutput(1)
+	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+	// 					.nOut(NUM_CLASSES)              // <-- your config value (4 or 10)
+	// 					.activation(Activation.SOFTMAX)
+	// 					.build())
+	// 			.build();
+
+	// 	// 3) Seed is irrelevant now (weights loaded), but you can keep reproducibility elsewhere.
+	// 	return tl;
+	// }
+
+
+	// public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+
+	// 	ZooModel zoo = LeNet.builder().numClasses(10).build();
+
+	// 	MultiLayerNetwork pretrained;
+	// 	try {
+	// 		pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+	// 	} catch (Exception e) {
+	// 		throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+	// 	}
+
+	// 	// Remove the last Dense(500->10) layer and replace it with Dense/Output(500->NUM_CLASSES)
+	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+	// 			.removeLayersFromOutput(1)   // removes dense_2
+	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+	// 					.nIn(500)            // <-- MUST be 500 (from summary)
+	// 					.nOut(NUM_CLASSES)   // 4 for MNIST4
+	// 					.activation(Activation.SOFTMAX)
+	// 					.build())
+	// 			.build();
+
+	// 	return tl;
+	// }
+
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+
+		// Pretrained Model ===========================================================
+		ZooModel zoo = LeNet.builder().numClasses(10).build();
+
+		MultiLayerNetwork pretrained;
+		try {
+			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+		}
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.removeLayersFromOutput(2)      // remove 2 layers
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(500)
+						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
+														// this depends on the methodology used to define activation layers. They can be embedded or
+														// be external (right afterwards) to dense layers
+						.build())
+				.build();
+
+		return tl;
 	}
 
 	// ======================================================================================================================
@@ -778,51 +907,6 @@ public class Dl4jModelFactory {
 				.layer(new DenseLayer.Builder()
 						.nOut(32)           	  
 						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(numClasses)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return model;
-	}
-
-	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using MNIST4 CNN");
-		}
-
-		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER) 
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(1)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(0, 0)        
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(64)
-						.stride(1, 1)
-						.padding(0, 0)           
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nOut(numClasses)

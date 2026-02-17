@@ -36,10 +36,16 @@ public class Dl4jParamUtils {
     }   // saves parameters in this order:
             // For CNNs (Convolutional Layer): [biases, parameters]
             // For FNNs (Dense Layer): [weights, biases]: Usually its: [Layer0_weights, Layer0_biases, Layer1_weights, Layer1_biases, ... ]
-   
-    public static float[] modelToFlatHead(MultiLayerNetwork model, int headStartLayerIdx) {
+
+    // public static float[] modelToFlatHead(MultiLayerNetwork model, int headStartLayerIdx) {
+    //     float[] full = model.params().toFloatVector();
+    //     int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
+    //     return Arrays.copyOfRange(full, start, full.length);
+    // }
+
+    public static float[] modelToFlatHead(MultiLayerNetwork model, int start) {
+
         float[] full = model.params().toFloatVector();
-        int start = ParamSlices.headStartOffset(model, headStartLayerIdx);
         return Arrays.copyOfRange(full, start, full.length);
     }
 
@@ -50,9 +56,9 @@ public class Dl4jParamUtils {
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
     }
     
-    public static void updateModelHead(MultiLayerNetwork model, int headStartLayerIdx, float[] headFlat) {
+    public static void updateModelHead(MultiLayerNetwork model, float[] headFlat, int start) {
         INDArray p = model.params(); // 1D view of the whole parameter buffer
-        int start = ParamSlices.headStartOffset(model, headStartLayerIdx);
+        // int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
         int end = (int) model.numParams();
 
         if (headFlat.length != (end - start)) {
@@ -381,7 +387,7 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static void saveModel(MultiLayerNetwork model, String name) {
+    public static void saveModel(MultiLayerNetwork model, String name, int idx) {
 
         File dir = new File("models"); // create Models Directory if it doesnt exist
         if (!dir.exists()) {
@@ -401,8 +407,15 @@ public class Dl4jParamUtils {
         // }
 
         // Save the model as a list =====================
+        
+        float[] flat;
 
-        float[] flat = modelToFlatList(model);
+        if(cfg.USING_PRETRAINED_MODEL) {
+            flat = modelToFlatHead(model, idx);
+        } else {
+            flat = modelToFlatList(model);
+        }
+
         String filenameFlat = "models/" + name + "-flat.txt";
 
         try {

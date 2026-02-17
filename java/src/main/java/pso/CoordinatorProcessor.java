@@ -100,6 +100,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private static final long WAIT_SLEEP_MS = 100;
     private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
 
+    private int headFlatIndex;
+
     // ================================================================================================================
 
 
@@ -132,7 +134,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
+
+        this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, cfg.HEAD_LAYER_IDX);
     }
+
+    // ================================================================================================================
 
     @Override
     public void init(ProcessorContext<String, WeightsMessage> context) {    // this is output (Kout, Vout)
@@ -193,7 +199,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
             float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
-            Dl4jParamUtils.updateModel(globalModel, avgWeights);
+            if(cfg.USING_PRETRAINED_MODEL) {
+                Dl4jParamUtils.updateModelHead(globalModel, avgWeights, this.headFlatIndex);
+            } else {
+                Dl4jParamUtils.updateModel(globalModel, avgWeights);
+            }
 
             // ======== evaluate accuracy of globalModel using BatchPrediction ========
             
@@ -226,7 +236,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             // update bestGlobalModelAccuracy + bestLoss ========================================================
 
             if(accuracy > bestGlobalModelAccuracy) {    
-                Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
+
+                if(cfg.USING_PRETRAINED_MODEL) {
+                    Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.headFlatIndex);
+                } else {
+                    Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
+                }
+
                 bestGlobalModelAccuracy = accuracy;
                 if (logger.isEnabled(1)) logger.log(taskInstance + 
                     ", New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
@@ -254,7 +270,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
             if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
-                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME);
+                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, headFlatIndex);
                 control.requestStopFinal();
                 return;
             }
@@ -515,7 +531,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         }
 
-        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME);         // save final solution
+        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.headFlatIndex);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 

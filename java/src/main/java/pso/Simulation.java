@@ -20,35 +20,45 @@ public class Simulation {
 
         // Test: =====================================================================
 
-        MultiLayerNetwork m = Dl4jModelFactory.createMNIST4Cnn(0);
-        float[] a = Dl4jParamUtils.modelToFlatList(m);
-        float[] b = a.clone();
-        b[0] += 0.123f;
-        Dl4jParamUtils.updateModel(m, b);
-        float[] c = Dl4jParamUtils.modelToFlatList(m);
-        System.out.println("b0 = " + b[0] + " c0 = " + c[0]);
-        System.out.println("equal = " + Arrays.equals(b, c));
+        // MultiLayerNetwork m = Dl4jModelFactory.createMNIST4Cnn(0);
+        // float[] a = Dl4jParamUtils.modelToFlatList(m);
+        // float[] b = a.clone();
+        // b[0] += 0.123f;
+        // Dl4jParamUtils.updateModel(m, b);
+        // float[] c = Dl4jParamUtils.modelToFlatList(m);
+        // System.out.println("b0 = " + b[0] + " c0 = " + c[0]);
+        // System.out.println("equal = " + Arrays.equals(b, c));
 
-        b[302] += 0.123f;
-        Dl4jParamUtils.updateModel(m, b);
-        float[] c1 = Dl4jParamUtils.modelToFlatList(m);
-        System.out.println("b302 = " + b[302] + " c302 = " + c1[302]);
-        System.out.println("equal = " + Arrays.equals(b, c1));
+        // b[302] += 0.123f;
+        // Dl4jParamUtils.updateModel(m, b);
+        // float[] c1 = Dl4jParamUtils.modelToFlatList(m);
+        // System.out.println("b302 = " + b[302] + " c302 = " + c1[302]);
+        // System.out.println("equal = " + Arrays.equals(b, c1));
 
-        // Stronger check: max absolute diff
-        float maxDiff = 0f;
-        int maxIdx = -1;
-        for (int i = 0; i < b.length; i++) {
-            float d = Math.abs(b[i] - c1[i]);
-            if (d > maxDiff) { maxDiff = d; maxIdx = i; }
-        }
-        System.out.println("maxDiff = " + maxDiff + " at idx = " + maxIdx);
+        // // Stronger check: max absolute diff
+        // float maxDiff = 0f;
+        // int maxIdx = -1;
+        // for (int i = 0; i < b.length; i++) {
+        //     float d = Math.abs(b[i] - c1[i]);
+        //     if (d > maxDiff) { maxDiff = d; maxIdx = i; }
+        // }
+        // System.out.println("maxDiff = " + maxDiff + " at idx = " + maxIdx);
 
-        // Optional: verify model output changed (sanity)
-        // Create a dummy MNIST-like input: shape [1,1,28,28]
-        INDArray x = Nd4j.rand(new long[]{1, 1, 28, 28});
-        INDArray y = m.output(x, false);
-        System.out.println("output shape: " + Arrays.toString(y.shape()));
+        // // Optional: verify model output changed (sanity)
+        // // Create a dummy MNIST-like input: shape [1,1,28,28]
+        // INDArray x = Nd4j.rand(new long[]{1, 1, 28, 28});
+        // INDArray y = m.output(x, false);
+        // System.out.println("output shape: " + Arrays.toString(y.shape()));
+
+        // =============================================================================================
+
+        // MultiLayerNetwork m = Dl4jModelFactory.pretrainedModel(0);
+        MultiLayerNetwork model = Dl4jModelFactory.createMNIST_CNN_Pretrained(0);
+
+        System.out.println("OK loaded:");
+        System.out.println(model.summary());
+
+        System.exit(0);
 
         // =============================================================================================
 

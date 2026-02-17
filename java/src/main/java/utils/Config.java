@@ -91,6 +91,9 @@ public class Config {
 
     public final boolean MEMORY_EFFICIENT;
 
+    public final int HEAD_LAYER_IDX; 
+    public final boolean USING_PRETRAINED_MODEL;
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -264,6 +267,9 @@ public class Config {
         this.WEIGHT_MAX_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHT_MAX_SCALE", "0.5"));
 
         this.MEMORY_EFFICIENT = Boolean.parseBoolean(getenv(dotenv, "MEMORY_EFFICIENT", "false"));
+
+        this.HEAD_LAYER_IDX = Integer.parseInt(getenv(dotenv, "HEAD_LAYER_IDX", "4"));
+        this.USING_PRETRAINED_MODEL = Boolean.parseBoolean(getenv(dotenv, "USING_PRETRAINED_MODEL", "false"));
 
     } 
 

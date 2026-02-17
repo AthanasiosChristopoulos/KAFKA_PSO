@@ -48,19 +48,32 @@ public final class WorkerStatic {
     public int countPartitionsFinished = 0;
     public double validAvgMs;
 
+    public int headStartLayerIdx;     // configured
+    public int headFlatIndex;       // computed from model
+    public int headDim;               // number of trainable params in head
+
     // ========================================================
 
     private WorkerStatic(int workerId) {
         
         this.workerId = workerId;
         this.model = Dl4jModelFactory.createModel(workerId);
-        this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+        
+        this.headStartLayerIdx = cfg.HEAD_LAYER_IDX; // add to Config
+        this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
+        this.headDim = (int) model.numParams() - headFlatIndex;
 
+        if(cfg.USING_PRETRAINED_MODEL) {
+            this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.headFlatIndex);
+        } else {
+            this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+        }
+        
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if(logger.isEnabled(2)) {
             this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
-            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model");
+            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.headFlatIndex);
             logger.log("Model with shape: ");
             Map<String, INDArray> pt = model.paramTable();
             pt.forEach((k, v) -> logger.log(k + " -> " + Arrays.toString(v.shape())));
