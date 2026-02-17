@@ -17,7 +17,10 @@ import java.util.Arrays;
 public class Simulation {
 
     public static void main(String[] args) throws Exception {
-
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            System.err.println("DEFAULT uncaught in " + t.getName());
+            e.printStackTrace();
+        });
         // Test: =====================================================================
 
         // MultiLayerNetwork m = Dl4jModelFactory.createMNIST4Cnn(0);
@@ -53,12 +56,12 @@ public class Simulation {
         // =============================================================================================
 
         // MultiLayerNetwork m = Dl4jModelFactory.pretrainedModel(0);
-        MultiLayerNetwork model = Dl4jModelFactory.createMNIST_CNN_Pretrained(0);
+        // MultiLayerNetwork model = Dl4jModelFactory.createMNIST_CNN_Pretrained(0);
 
-        System.out.println("OK loaded:");
-        System.out.println(model.summary());
+        // System.out.println("OK loaded:");
+        // System.out.println(model.summary());
 
-        System.exit(0);
+        // System.exit(0);
 
         // =============================================================================================
 
@@ -118,7 +121,12 @@ public class Simulation {
         java.nio.file.Files.walk(path)
             .sorted(java.util.Comparator.reverseOrder())
             .forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (Exception ignored) {}
+                try { 
+                    java.nio.file.Files.delete(p); 
+                } catch (Exception ignored) {
+
+                }
+
             });
     }
 }

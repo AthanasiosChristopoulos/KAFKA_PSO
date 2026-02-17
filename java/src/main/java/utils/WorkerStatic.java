@@ -57,16 +57,19 @@ public final class WorkerStatic {
     private WorkerStatic(int workerId) {
         
         this.workerId = workerId;
-        this.model = Dl4jModelFactory.createModel(workerId);
+        this.model = Dl4jModelFactory.createModel(workerId, false);
         
-        this.headStartLayerIdx = cfg.HEAD_LAYER_IDX; // add to Config
-        this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
-        this.headDim = (int) model.numParams() - headFlatIndex;
-
-        if(cfg.USING_PRETRAINED_MODEL) {
-            this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.headFlatIndex);
-        } else {
-            this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+        try {
+            this.headStartLayerIdx = cfg.HEAD_LAYER_IDX; // add to Config
+            this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
+            this.headDim = (int) model.numParams() - headFlatIndex;
+            if(cfg.USING_PRETRAINED_MODEL) {
+                this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.headFlatIndex);
+            } else {
+                this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
+            }
+        } catch(Exception e) {
+            e.printStackTrace();  
         }
         
         this.logger = CustomLogger.getWorkerInstance(workerId);

@@ -463,6 +463,7 @@ public class BatchPrediction {
 
         } catch (Exception e) {
             if (logger.isEnabled(2)) logger.log("Error in predictSingle: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }

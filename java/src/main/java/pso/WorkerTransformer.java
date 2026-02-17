@@ -697,6 +697,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         } catch (Exception e) {
             if (logger.isEnabled(2)) logger.log(taskInstance + 
                 ", [Convergence] error while reading pBest store: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
 

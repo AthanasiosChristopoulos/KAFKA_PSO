@@ -35,7 +35,7 @@ public class Dl4jModelFactory {
 
 	public static final boolean printModel = false;
 
-	public static MultiLayerNetwork createModel(int workerId) {
+	public static MultiLayerNetwork createModel(int workerId, boolean preTrained) {
 		// System.out.println("DATASET: " + DATASET);
 
 		if("iris".equals(DATASET)) {
@@ -53,7 +53,12 @@ public class Dl4jModelFactory {
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
-			return createMNIST_CNN_Pretrained(workerId);
+			
+			if(preTrained) {
+				return pretrainedModel();
+			} else {
+				return createMNIST_CNN_Pretrained(workerId);
+			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
@@ -122,7 +127,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModel(int workerId) {
+	public static MultiLayerNetwork pretrainedModel() {
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
 				.numClasses(10) // MNIST pretrained weights are for 10 classes
@@ -132,6 +137,7 @@ public class Dl4jModelFactory {
 		try {
 			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
 		}
 
@@ -213,6 +219,7 @@ public class Dl4jModelFactory {
 		try {
 			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
 		}
 

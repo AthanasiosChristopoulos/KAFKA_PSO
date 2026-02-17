@@ -210,6 +210,7 @@ public class Worker implements Runnable {
 
         } catch (Throwable e) {
             System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());
+            e.printStackTrace();
             streams.close();
         }
     }

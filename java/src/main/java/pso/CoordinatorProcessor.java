@@ -48,6 +48,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final MultiLayerNetwork globalModel; // x_g , current model
     private final MultiLayerNetwork bestGlobalModel; 
+    private MultiLayerNetwork preTrainedModel;
+
     private float accuracy = -1f;    
     private float loss = 10000f;
     private int nSamples = 0;
@@ -116,7 +118,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
-
+        if(cfg.USING_PRETRAINED_MODEL) this.preTrainedModel = Dl4jModelFactory.createModel(-1, true);
+        
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         this.testStoreName = testStoreName;
