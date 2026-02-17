@@ -116,6 +116,8 @@ The N Kafka Streams workers read from the Data Topic and train on their own loca
 this is how each worker adds to the parallelization of the processing of the training data. Each Worker trains on different partitions,
 i.e. different training data from other workers.
 
+Each Kafka Streams Instance is Java. This is why is uses DL4J for inference and generall data / Kafka record processing.
+
 The architecture is build to support two types of PSO:
     - classical PSO / best-of-neighboorhood 
     - fully informed PSO (FIPS)

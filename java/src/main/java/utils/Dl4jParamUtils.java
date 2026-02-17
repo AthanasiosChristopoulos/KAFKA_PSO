@@ -4,6 +4,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import java.util.Collection;
+import java.util.Arrays;
 
 public class Dl4jParamUtils {   
 
@@ -34,12 +36,32 @@ public class Dl4jParamUtils {
     }   // saves parameters in this order:
             // For CNNs (Convolutional Layer): [biases, parameters]
             // For FNNs (Dense Layer): [weights, biases]: Usually its: [Layer0_weights, Layer0_biases, Layer1_weights, Layer1_biases, ... ]
+   
+    public static float[] modelToFlatHead(MultiLayerNetwork model, int headStartLayerIdx) {
+        float[] full = model.params().toFloatVector();
+        int start = ParamSlices.headStartOffset(model, headStartLayerIdx);
+        return Arrays.copyOfRange(full, start, full.length);
+    }
 
     //=====================================================================================================
     
     public static void updateModel(MultiLayerNetwork model, float[] flat) {
         INDArray params = model.params();   // a pointer to the actual parameter buffer owned by that model
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
+    }
+    
+    public static void updateModelHead(MultiLayerNetwork model, int headStartLayerIdx, float[] headFlat) {
+        INDArray p = model.params(); // 1D view of the whole parameter buffer
+        int start = ParamSlices.headStartOffset(model, headStartLayerIdx);
+        int end = (int) model.numParams();
+
+        if (headFlat.length != (end - start)) {
+            throw new IllegalArgumentException("Head length mismatch. expected=" + (end-start) + " got=" + headFlat.length);
+        }
+
+        // assign only the head range
+        INDArray headView = p.get(NDArrayIndex.interval(start, end));
+        headView.assign(Nd4j.createFromArray(headFlat));
     }
 
     // public static void updateModel(MultiLayerNetwork model, float[] flat) {

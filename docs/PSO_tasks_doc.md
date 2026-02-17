@@ -104,6 +104,13 @@
 	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / foward passes)
 		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
 
+	43) PSO Tranfer Learning:
+		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
+		- Θα πρεπει να βρεις additional Layers + Non Differentiable Loss Functions, ωστε:
+			- το base model να μην δουλευει καλα
+			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
+			- συνηθως δεν πας να κανεις train from scratch
+
 ## ========================================================================================================================
 
 	Backlog Tasks:
@@ -133,6 +140,14 @@
 	
 	((37) Dynamic Enviroments / Dynamic PSO (there is a specific paper for this)))
 
+	41) Συγκριση η τελικη θα γινει με κατανεμημενο περιβαλλον στο training του gradient descent:
+		- οχι centralized, αλλα gradient descent. 
+		- Δηλαδη θελουμε να συγκρινουμε PSO vs gradient descent σε distributed περιβαλλον
+		- Δες parameter server (independent learning με merging των μοντελλων afterwards) => δεδομενα ειναι λιγοτερα για καθε worker
+		- Basically πρεπει να κανεις το federated learning στην python με gradient descent
+
+	42) Partition wizard stuff για να δωσεις περισσοτερο χωρο στο Ubuntu
+
 ## =====================================================================================================
 	Thesis Structure:
 		- Motivation, Table of Contents
@@ -154,35 +169,3 @@
 
 ## ================================================================================================
 ## Email:
-
-Καλησπερα,
-δυστηχως μετα απο προσπαθεια δεν καταφερα να βελτιωσω το accuracy στα Image Datasets με CNN μοντελλα σημαντικα (πριν η βελτιωση που μου ειχατε προτεινει ηταν στο MNIST4 (μονο 4 κλασσεις - το φτανω περιπου στο 90%) το οποιο αποδειχτηκε πολυ πιο απλο απο το CIFAR3). Αυτο ειναι επειδη το MNIST συγκεκριμενα ειναι οτι εξαιτιας της φησης του  μπορει να εκπαιδευτει και με Dense Layer - για αυτο εκτιμω μου δουλεψε η αρχικη βελτιωση.
-Τωρα για το MNIST, τα καλυτερα μου αποτελεσματα (στα οποια τους εχω δωσει πολυ χρονο, μερικες φορες και 8 λεπτα και παρα πολλα δεδομενα / Epochs) ηταν:
-	- Με MLP: ΜNIST => 60%, 
-	- Με CNN + Dense Layer: MNIST => 50%
-Για το CIFAR3 δεν εχω παρατηρησει ποτε να βελτιωνεται σημαντικα.
-
-Εχω κανει βελτιωσεις στο PSO που προτεινουν καποια papers και βλεπω σημαντικες αυξησεις στο accuracy στα datasets που τα εκπαιδευω με MLP, οποτε μου φαινεται λογικο οτι το προβλημα ειναι συγκεριμενα στην εκπαιδευση των CNNs.
-
-Θα ηθελα να δοκιμασω γενικα πιο δυσκολα datasets, αλλα νομιζω τα CNNs ειναι ισως πολυ δυσκολα για το PSO.
-
-Ευχαριστω πολυ,
-Αθανασιος Χριστοπουλος
-
-
-Καλησπέρα,
-
-Δυστυχώς, μετά από αρκετές δοκιμές δεν κατάφερα να βελτιώσω σημαντικά το accuracy στα image datasets χρησιμοποιώντας CNN μοντέλα. Η βελτίωση που μου είχατε προτείνει αρχικά στο MNIST4 (με μόνο 4 κλάσεις, όπου έφτασα περίπου στο 90%) φαίνεται ότι οφείλεται στο γεγονός ότι το συγκεκριμένο dataset είναι αρκετά απλό και μπορεί να εκπαιδευτεί ικανοποιητικά ακόμη και με Dense layers.
-
-Για το πλήρες MNIST dataset, τα καλύτερα αποτελέσματα που πέτυχα (αφιερώνοντας αρκετό χρόνο σε experiments, μέχρι και 8 λεπτά εκπαίδευσης με πολλά epochs) είναι:
-	Με MLP: MNIST → ~60% accuracy
-	Με CNN + Dense layer: MNIST → ~50% accuracy
-Δοκιμασα και το Fashion_MNIST και πηρα πολυ παρομοια αποτελεσματα με το MNIST.
-Για το CIFAR3 δεν έχω παρατηρήσει ποτέ ουσιαστική βελτίωση στο accuracy.
-
-Παράλληλα, έχω χρησιμοποιησει για το PSO διάφορες βελτιώσεις που προτείνονται σε διαφορα papers και βλέπω σημαντική αύξηση της απόδοσης σε datasets όπου χρησιμοποιώ MLP. Αυτό πιστευω οτι σημαινει ότι το βασικό πρόβλημα βρησκεται συγκεκριμένα στην εκπαίδευση των CNNs με PSO.
-
-Θα ήθελα να δοκιμάσω πιο απαιτητικά MLP datasets, αλλά εκτιμώ ότι τα CNNs είναι υπερβολικά δύσκολα για το PSO.
-
-Ευχαριστώ πολύ,
-Αθανάσιος Χριστόπουλος

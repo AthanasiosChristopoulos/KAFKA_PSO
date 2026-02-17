@@ -508,6 +508,45 @@ def load_mnist_data():
 #     print("Trainable params:", model.count_params())
 
 #     return model
+# ===============================================================================
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+        layers.Conv2D(
+            filters=8,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
+            activation="relu",
+            use_bias=True
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+        layers.Conv2D(
+            filters=16,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
+            activation="relu",
+            use_bias=True
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+        layers.Flatten(),
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+
+    return model
 
 # ===============================================================================
 # Best (From Geeks For Geeks):
@@ -553,27 +592,6 @@ def load_mnist_data():
 
 # ===============================================================================
 
-# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
-#     print("Using simple model")
-#     # Logistic regression (multinomial): flatten -> Dense(10, softmax)
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Flatten(),                          # 28*28 = 784
-#         layers.Dense(num_classes, activation="softmax", use_bias=True),
-#     ])
-
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(learning_rate=lr),
-#         loss="sparse_categorical_crossentropy",    # matches MCXENT for integer labels
-#         metrics=["accuracy"],
-#     )
-
-#     model.summary()
-#     print("Trainable params:", model.count_params())
-#     return model
-
-# ===============================================================================
-
 # def build_mnist_model(input_shape=(28, 28), num_classes=10):
 #     model = keras.Sequential([
 #         layers.Input(shape=input_shape),
@@ -592,22 +610,24 @@ def load_mnist_data():
 #     print("Trainable params:", model.count_params())
 #     return model
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10):
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Flatten(),                              # 28*28 = 784
-        layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
-    ])
+# ===============================================================================
 
-    model.compile(
-        optimizer=keras.optimizers.Adam(),
-        loss="sparse_categorical_crossentropy",        # integer labels
-        metrics=["accuracy"],
-    )
+# def build_mnist_model(input_shape=(28, 28), num_classes=10):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Flatten(),                              # 28*28 = 784
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
+#     ])
 
-    model.summary()
-    print("Trainable params:", model.count_params())
-    return model
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(),
+#         loss="sparse_categorical_crossentropy",        # integer labels
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
 
 # ===============================================================================
 
@@ -625,7 +645,7 @@ def run_mnist():
             monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5
         ),
     ]
-
+    save_all_trainable_as_flat_txt(model, "pre_model_weights_flat.txt")
 
     history = model.fit(X_train,y_train,validation_split=0.1,epochs=5,
                         batch_size=128,verbose=2,callbacks=callbacks)

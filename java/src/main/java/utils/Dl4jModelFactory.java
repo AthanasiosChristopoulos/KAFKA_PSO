@@ -53,7 +53,7 @@ public class Dl4jModelFactory {
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
 			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			// return createMNIST4Cnn_New_Simpler(workerId);
+			return createMNIST4Cnn_New_Simpler(workerId);
 			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
@@ -778,6 +778,51 @@ public class Dl4jModelFactory {
 				.layer(new DenseLayer.Builder()
 						.nOut(32)           	  
 						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(numClasses)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
+
+	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler(int workerId) {
+
+		if (printModel) {
+			System.out.println("Using MNIST4 CNN");
+		}
+
+		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER) 
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nIn(1)
+						.nOut(32)
+						.stride(1, 1)
+						.padding(0, 0)        
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)
+						.nOut(64)
+						.stride(1, 1)
+						.padding(0, 0)           
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+						.kernelSize(2, 2)
+						.stride(2, 2)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nOut(numClasses)
