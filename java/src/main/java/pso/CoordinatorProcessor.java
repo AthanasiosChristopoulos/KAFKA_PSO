@@ -119,7 +119,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
         if(cfg.USING_PRETRAINED_MODEL) this.preTrainedModel = Dl4jModelFactory.createModel(-1, true);
-        
+
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         this.testStoreName = testStoreName;
@@ -403,6 +403,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
+        
+        if(cfg.)
+        globalPredictor.callPredictionsBatch(evalBatch);
 
         return cachedTestSet;
     }
