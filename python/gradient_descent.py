@@ -470,44 +470,44 @@ def load_mnist_data():
 
 # ===============================================================================
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
+# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
 
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Reshape((28, 28, 1)),
-        layers.Conv2D(
-            filters=8,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Conv2D(
-            filters=16,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Flatten(),
-        layers.Dense(32, activation="tanh", use_bias=True),
-        layers.Dense(num_classes, activation="softmax", use_bias=True),
-    ])
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+#         layers.Conv2D(
+#             filters=8,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Conv2D(
+#             filters=16,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Flatten(),
+#         layers.Dense(32, activation="tanh", use_bias=True),
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),
+#     ])
 
-    model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(learning_rate=lr),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
 
-    model.summary()
-    print("Trainable params:", model.count_params())
+#     model.summary()
+#     print("Trainable params:", model.count_params())
 
-    return model
+#     return model
 
 # ===============================================================================
 # Best (From Geeks For Geeks):
@@ -574,23 +574,23 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
 
 # ===============================================================================
 
-# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Flatten(),                              # 28*28 = 784
-#         layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
-#         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
-#     ])
+def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Flatten(),                              # 28*28 = 784
+        layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
+        layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
+    ])
 
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(learning_rate=lr),
-#         loss="sparse_categorical_crossentropy",        # integer labels
-#         metrics=["accuracy"],
-#     )
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        loss="sparse_categorical_crossentropy",        # integer labels
+        metrics=["accuracy"],
+    )
 
-#     model.summary()
-#     print("Trainable params:", model.count_params())
-#     return model
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
 
 # ===============================================================================
 
@@ -600,7 +600,18 @@ def run_mnist():
     model = build_mnist_model(input_shape=X_train.shape[1:])
 
     print("\nTraining...")
-    history = model.fit(X_train,y_train,validation_split=0.1,epochs=5,batch_size=128,verbose=2,)
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_accuracy", patience=8, restore_best_weights=True
+        ),
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5
+        ),
+    ]
+
+
+    history = model.fit(X_train,y_train,validation_split=0.1,epochs=5,
+                        batch_size=128,verbose=2,callbacks=callbacks)
 
     print("\nEvaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)

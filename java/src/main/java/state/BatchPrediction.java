@@ -148,7 +148,7 @@ public class BatchPrediction {
         for (DataMessage msg : batch) {
             if (msg == null) continue;
 
-            float[] features = msg.features;
+            float[] features = msg.features;    // (NUM_FEATURES,)        
             if (features == null) {
                 if (logger.isEnabled(2)) logger.log("Null features in DataMessage");
                 continue;
@@ -160,7 +160,7 @@ public class BatchPrediction {
                 continue; // skip non-conforming record
             }
 
-            featureList.add(features);
+            featureList.add(features);  // of nSamples
             labels.add(msg.label);
         }
 
@@ -184,7 +184,8 @@ public class BatchPrediction {
             // doesnt seem to have a significant difference memory wise
             // choose this for better performance and simpler code
             // X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); happens on the CPU memory / host-side NDArray
-
+            
+            // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
                 if("cifar3".equals(DATASET)) {
 

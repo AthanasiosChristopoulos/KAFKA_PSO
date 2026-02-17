@@ -36,12 +36,12 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist".equals(DATASET)) {
 			// return createMNISTModelMLP(workerId);
+			// return createMNISTModelMLPSimple_0(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			// return createMNISTModelMLPSimple_2(workerId);
+			return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
-			// return createMNIST4MLP(workerId);
-			return createMNISTCnn_New_2(workerId);
+			// return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -226,6 +226,39 @@ public class Dl4jModelFactory {
 		// 1048576
 		// 1881444
 		//  940584
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNISTModelMLPSimple_0(int workerId) {
+		if(printModel) {
+			System.out.println("Using MNIST Model");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)
+						.nOut(64)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(32)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(32)
+						.nOut(NEURAL_OUTPUT)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return model;
+	}
 
 	// ======================================================================================================================
 

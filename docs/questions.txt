@@ -34,9 +34,10 @@
 		- Fully Informed is outperforming Neighborhood best.
 
 		- expected model size / number of weights (ωστε να εχει νοημα το filtering) ? Να βαλω παραπανω weights ακιμα και εαν δεν χρειαζεται
-			=> PSO improves με dimensionality reduction ... should i find ddatasets that can only work with large amount of weights ?
+			=> PSO improves με dimensionality reduction ... should i find datasets that can only work with large amount of weights ?
 			=> is 100k enough ? Goal => make weight messages costly
-
+			!!!Accuracy of PSO improves with dimensionality reduction!!!
+			
 		- σκεφτηκα για GM οτι μπορω να το χρησιμοποησω μονο για monitoring του Federated Average Model χωρις full synchronization, μονο 
 			partial synchronization of one worker, αλλα θα πρεπει να χρησιμοποιησω το FFT για dimensionality reduction και δεν ξερω αμα αξιζει
 			- this is a crazy amount of work for a Kafka Streams processor (we need to do this per record)
