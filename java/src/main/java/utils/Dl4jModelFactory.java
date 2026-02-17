@@ -38,10 +38,10 @@ public class Dl4jModelFactory {
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_0(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNISTModelMLPSimple_2(workerId);
+			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
-			// return createMNISTCnn_New_2(workerId);
+			return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -57,6 +57,11 @@ public class Dl4jModelFactory {
 			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
+		} else if ("fashion_mnist".equals(DATASET)) {
+			// return createMNISTModelMLPSimple_2(workerId);
+			// return createMNISTModelMLPSimple_1(workerId);
+			return createMNISTCnn_New_2(workerId);
+			
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX(workerId);
 			return createSUSYModel(workerId);
@@ -315,7 +320,7 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
 		return model;
-	}
+	}	// 784 * 10 + 10 = 7850 parameters	 
 
 	// ======================================================================================================================
 

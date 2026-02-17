@@ -83,7 +83,7 @@ public class BatchPrediction {
         EXPECTED_SIZE = cfg.TRAIN_SIZE;
 
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
-            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
             } else if ("cifar3".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
@@ -106,7 +106,7 @@ public class BatchPrediction {
         this.EXPECTED_SIZE = 500;
 
         if (MODEL_IS_CNN) {
-            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
             } else if ("cifar3".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
@@ -160,7 +160,7 @@ public class BatchPrediction {
                 continue; // skip non-conforming record
             }
 
-            featureList.add(features);  // of nSamples
+            featureList.add(features);  // of nSamples. (nSamples, NUM_FEATURES)
             labels.add(msg.label);
         }
 
@@ -171,6 +171,7 @@ public class BatchPrediction {
         }
 
         float[][] data = new float[nSamples][NUM_FEATURES];     // matrix of samples and features
+                        // (nSamples, NUM_FEATURES)
         for (int i = 0; i < nSamples; i++) {
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
@@ -190,18 +191,20 @@ public class BatchPrediction {
                 if("cifar3".equals(DATASET)) {
 
                     X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
+                        // (nSamples, 3072)
                     X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
+                        // (nSamples, 32, 32, 3)
 
-                    X = X4d.permute(0, 3, 1, 2); 
+                    X = X4d.permute(0, 3, 1, 2);    // (nSamples, 3, 32, 32)
 
                 } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
-                    X2d = Nd4j.create(data);          // [batch, 784]
-                    X = X2d.reshape(X2d.size(0), 1, 28, 28);
+                    X2d = Nd4j.create(data);          // (nSamples, 784)
+                    X = X2d.reshape(X2d.size(0), 1, 28, 28);    // (nSamples, 1, 28, 28)
                 }
 
             } else {    // Normal dataset (no image) + no CNN used 
-                X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+                X = Nd4j.create(data);                     // (nSamples, NUM_FEATURES)
             }
 
         } else {
@@ -224,7 +227,7 @@ public class BatchPrediction {
 
                 if (MODEL_IS_CNN) {
 
-                    if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+                    if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
 
                         // flatten 784 into 1x28x28
                         for (int j = 0; j < NUM_FEATURES; j++) {
@@ -265,8 +268,9 @@ public class BatchPrediction {
         }
         // ==============================================================================================================
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        probs = model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
                                                 // this is one forward pass per batch (has multiple samples)
+                                                // X is one of the different dimensionalities identified above
         end = System.nanoTime();
         // double min = probs.minNumber().doubleValue();
         // double max = probs.maxNumber().doubleValue();

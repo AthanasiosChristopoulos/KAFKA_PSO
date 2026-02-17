@@ -213,7 +213,7 @@ Input input-weights-topic:
  - 2) Update NUM_FEATURES and NUM_CLASSES in Config.java
  - 3) Define new createModel function in Dl4jModelFactory
  - 4) Append in data_producer.py the load_dataset() function an elif
- - 5) Create train and test Kafka Topics
+ - 5) Create train and test Kafka Topics and run data_producer.py 
 
  - Extra:
     - update in evaluate_model.py, by adding elifs to functions:
@@ -222,10 +222,9 @@ Input input-weights-topic:
             - build_keras_model()
             - evaluate_model()
 
-## New Dataset - Specifications: ================================================================================================
+## New Dataset - Specifications: ==================================================================
 
- - Given the specifications i need you to give me a link to where someone showcases his model and the dataset and 
-    that he has achieved a 90% accuracy on that Dataset.
+ - Given the specifications i need you to give me a link to where someone showcases his model and the dataset and that he has achieved a 90% accuracy on that Dataset.
 
  - Needs to be a relatively well known ML dataset.
  - Not too hard, but not as easy as iris, like it should achieve an accuracy of 90% on normal gradient descent with a simple dense NN on tensorflow
@@ -405,7 +404,7 @@ Iris => 150
         - Essentially the points in order form the pen trajectory
 
 
-### Pendigits-HALF: ===============================================================================================
+### Pendigits-HALF: ====================================================================
 
     - Load into Kafka with:
         - from file my-pendigits.tra, which after being class filtered, get 10992 samples
@@ -442,21 +441,27 @@ Dataset size => 11,000,000 samples, with 28 features
 
 On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, it is noisy and the classes overlap a lot.)
 
-### MNIST: ==========================================================================================================================
+### MNIST: ====================================================================
 
     - Grayscale images, very simple image dataset (means (28×28×1).)
         - When flattend there are only 784 features
         
-    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location
-
+    - Doesnt need a convolutional neural network, because digits are always centered and a pattern will always be at the same location. 
+        => MNIST is unusually “linear-friendly” (means it doesnt need CNN, it can be trained by MLP, which is linear): digits are centered, same size, same orientation
+        => Background is clean, it is single color
+        
     - Forward pass cost: CPU => 200ms / GPU => 30ms  
 
-### CIRAR10: ===================================================================================================
+### FASHION-MNIST: ====================================================================
+    - Train - Samples: 60000, Features => 28 x 28 x 1, 784 features flattend
+    - 10 classes, different types of clothing
+### CIRAR10: ========================================================================
 
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
 
-## ==========================================================================================================================
+## ==================================================================================
+
 ## CNNs - Image Datasets: ===================================================================================================
 
     - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a 
@@ -550,7 +555,14 @@ CNNs cant be trained by PSO:
     - the CNNs purpose is to extract the high-frequency pattern / feature. PSO is stack at low frequency (which is by itself meaningless)
  - Cant add batchNormilization, which is really helpful on GD
  - generally speaking works better with more layers, which PSO doesnt like 
- 
+
+CNNs are helped by a Dense Layer in the end:
+ - CNN part: feature extractor, Dense Layer => classifier using the features of the CNN
+ - Dense layer expresses interactions between features, more expressive classification boundary
+ - gives more linear influence on ouput
+ - CNN without Dense head is usually underpowered for classification
+ - For PSO specifically, Dense layers are the easiest part to optimize
+
 ## ===================================================================================
 ## Theory / PSO Paramaters ===========================================================
 
@@ -737,7 +749,7 @@ improve the ability to escape local minima
 
     - As originally developed, w often is decreased linearly from about 0.9 to 0.4 during a run.
 
-    - ## Inertia Adaptation during execution: ===================================================================================
+    - ## Inertia Adaptation during execution: ===================================================
 
         - Linear logic, from 0.9 to 0.4 across the run
         - Fuzzy Logic / Controller considers:
@@ -1054,5 +1066,6 @@ sudo pkill -9 -f java
 
 ## =========================================================================
 ## Extra Sources:
+
  - https://www.quora.com/Is-particle-swarm-optimization-an-appropriate-way-to-train-a-deep-convolutional-neural-network-for-image-recognition
  - https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/

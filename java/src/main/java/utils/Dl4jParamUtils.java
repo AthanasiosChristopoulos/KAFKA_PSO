@@ -396,7 +396,7 @@ public class Dl4jParamUtils {
                 }
             }
 
-            System.out.println("Saved flat weights to" + filenameFlat + ", with length=" + flat.length);
+            System.out.println("Saved flat weights to " + filenameFlat + ", with length=" + flat.length);
 
         } catch (IOException e) {
             e.printStackTrace();

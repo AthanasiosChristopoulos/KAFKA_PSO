@@ -68,6 +68,10 @@ if(DATASET == "mnist4"):
     NUMBER_OF_DATA_REPEATS = 17
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "fashion_mnist"):
+    NUMBER_OF_DATA_REPEATS = 7
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -251,6 +255,39 @@ def load_dataset():
         print("Test shape:", X_test.shape, "Labels:", y_test.shape)
 
         class_names = [str(i) for i in range(4)]
+
+        return X_train, y_train, X_test, y_test, class_names
+    
+    # ==================================================================================================
+
+    elif DATASET == "fashion_mnist":
+        
+        print("Loading from tf.keras.datasets.fashion_mnist")
+        (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
+
+        # Normalize to [0,1]
+        X_train = X_train.astype("float32") / 255.0
+        X_test  = X_test.astype("float32") / 255.0
+
+        # Optionally clip test size (same as you do for MNIST)
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+        print("Test shape:", X_test.shape, "Labels:", y_test.shape)
+
+        class_names = [
+            "T-shirt/top",
+            "Trouser",
+            "Pullover",
+            "Dress",
+            "Coat",
+            "Sandal",
+            "Shirt",
+            "Sneaker",
+            "Bag",
+            "Ankle boot"
+        ]
 
         return X_train, y_train, X_test, y_test, class_names
 
@@ -659,7 +696,7 @@ def main():
                 
                 for index in range(len(X_train)):
 
-                    if(DATASET in ("cifar3", "mnist", "mnist4")):
+                    if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
                         features = X_train[index].ravel().astype(np.float32)
                     else:
                         features = X_train[index]
@@ -694,7 +731,7 @@ def main():
                     
                     for index in range(len(X_test)):
 
-                        if(DATASET in ("cifar3", "mnist", "mnist4")):
+                        if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
                             features = X_test[index].ravel().astype(np.float32)
                         else:
                             features = X_test[index]
@@ -726,7 +763,7 @@ def main():
                     
                     for index in range(len(X_train)):
 
-                        if(DATASET in ("cifar3", "mnist", "mnist4")):
+                        if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
                             features = X_train[index].ravel().astype(np.float32)
                         else:
                             features = X_train[index]

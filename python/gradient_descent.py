@@ -574,16 +574,33 @@ def load_mnist_data():
 
 # ===============================================================================
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
+# def build_mnist_model(input_shape=(28, 28), num_classes=10):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Flatten(),                              # 28*28 = 784
+#         layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(),
+#         loss="sparse_categorical_crossentropy",        # integer labels
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Flatten(),                              # 28*28 = 784
-        layers.Dense(32, activation="tanh", use_bias=True),   # hidden layer
         layers.Dense(num_classes, activation="softmax", use_bias=True),  # output
     ])
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        optimizer=keras.optimizers.Adam(),
         loss="sparse_categorical_crossentropy",        # integer labels
         metrics=["accuracy"],
     )
@@ -1266,7 +1283,7 @@ def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10):
 
         # Classifier head (MNIST-style)
         layers.Flatten(),                        # 8*8*64 = 4096
-        layers.Dense(250, activation="tanh"),   
+        layers.Dense(128, activation="tanh"),   
         layers.Dense(num_classes, activation="softmax"),
     ])
 
@@ -1279,6 +1296,27 @@ def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10):
     model.summary()
     print("Trainable params:", model.count_params())
     return model
+
+# ======================================================================
+
+# def build_cifar10_model(input_shape=(32, 32, 3), num_classes=10):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Flatten(),  # 3072 features
+#         layers.Dense(512, activation="tanh"),          # PSO-friendly (smooth)
+#         layers.Dense(256, activation="tanh"),
+#         layers.Dense(num_classes, activation="softmax"),
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
 
 # ======================================================================
 
