@@ -29,7 +29,7 @@ public class PsoUpdater {
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
     public final boolean WEIGHTS_ON_UPDATEX = cfg.WEIGHTS_ON_UPDATEX;
-    
+
     public final boolean ACCELARATION_COEFF_TIME_VARYING = cfg.ACCELARATION_COEFF_TIME_VARYING;
     private float C1_START = cfg.C1_START; 
     private float C1_END = cfg.C1_END;

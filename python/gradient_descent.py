@@ -470,78 +470,36 @@ def load_mnist_data():
 
 # ===============================================================================
 
-# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
-
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Reshape((28, 28, 1)),
-#         layers.Conv2D(
-#             filters=8,
-#             kernel_size=(3, 3),
-#             strides=(1, 1),
-#             padding="valid",
-#             activation="relu",
-#             use_bias=True
-#         ),
-#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-#         layers.Conv2D(
-#             filters=16,
-#             kernel_size=(3, 3),
-#             strides=(1, 1),
-#             padding="valid",
-#             activation="relu",
-#             use_bias=True
-#         ),
-#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-#         layers.Flatten(),
-#         layers.Dense(32, activation="tanh", use_bias=True),
-#         layers.Dense(num_classes, activation="softmax", use_bias=True),
-#     ])
-
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(learning_rate=lr),
-#         loss="sparse_categorical_crossentropy",
-#         metrics=["accuracy"],
-#     )
-
-#     model.summary()
-#     print("Trainable params:", model.count_params())
-
-#     return model
-
-# ===============================================================================
-# Best (From Geeks For Geeks):
-
-def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):   # 1e-3 is actually the classic default and usually a good starting point for MNIST/CNNs.
+def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):
 
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
         layers.Conv2D(
-            filters=32,
+            filters=8,
             kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
             activation="relu",
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),     # for best accuracy comment out this layer
-        layers.Conv2D(
-            filters=64,
-            kernel_size=(3, 3),
-            activation="relu",
+            use_bias=True
         ),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Dropout(0.5),
+        layers.Conv2D(
+            filters=16,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding="valid",
+            activation="relu",
+            use_bias=True
+        ),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
         layers.Flatten(),
-        layers.Dense(250, activation="sigmoid"),
-        layers.Dense(num_classes, activation="softmax"),
+        layers.Dense(32, activation="tanh", use_bias=True),
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
-    # model.compile(
-    #     optimizer=keras.optimizers.Adam(learning_rate=lr),
-    #     loss="sparse_categorical_crossentropy",
-    #     metrics=["accuracy"],
-    # )
     model.compile(
-        optimizer=keras.optimizers.Adam(),
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
@@ -550,6 +508,48 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):   # 1e-3 i
     print("Trainable params:", model.count_params())
 
     return model
+
+# ===============================================================================
+# Best (From Geeks For Geeks):
+
+# def build_mnist_model(input_shape=(28, 28), num_classes=10, lr=1e-3):   # 1e-3 is actually the classic default and usually a good starting point for MNIST/CNNs.
+
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+#         layers.Conv2D(
+#             filters=32,
+#             kernel_size=(3, 3),
+#             activation="relu",
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),     # for best accuracy comment out this layer
+#         layers.Conv2D(
+#             filters=64,
+#             kernel_size=(3, 3),
+#             activation="relu",
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Dropout(0.5),
+#         layers.Flatten(),
+#         layers.Dense(250, activation="sigmoid"),
+#         layers.Dense(num_classes, activation="softmax"),
+#     ])
+
+#     # model.compile(
+#     #     optimizer=keras.optimizers.Adam(learning_rate=lr),
+#     #     loss="sparse_categorical_crossentropy",
+#     #     metrics=["accuracy"],
+#     # )
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+
+#     return model
 
 # ===============================================================================
 

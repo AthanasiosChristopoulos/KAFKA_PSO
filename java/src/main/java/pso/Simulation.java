@@ -93,8 +93,8 @@ public class Simulation {
             t.join();
         }
 
-        double elapsedTime = (System.nanoTime() - start) / 1_000_000_000.0;; 
-        System.out.printf("============= Training is over, ElapsedTime: %.3f =============%n", elapsedTime);
+        double elapsedTimeSec = (System.nanoTime() - start) / 1_000_000_000.0; // 10^9, so this is converting to seconds    
+        System.out.printf("============= Training is over, ElapsedTime: %.3f seconds =============%n", elapsedTimeSec);
 
         coordinatorThread.join(); // if finished every worker waits on the coordinator
         System.out.println("============== Coordinator stopped, stopping simulation ==============");

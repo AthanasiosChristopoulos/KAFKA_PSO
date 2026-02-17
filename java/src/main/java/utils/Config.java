@@ -89,6 +89,8 @@ public class Config {
     public final boolean WEIGHT_CLAMPING;
     public final float WEIGHT_MAX_SCALE; 
 
+    public final boolean MEMORY_EFFICIENT;
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -256,6 +258,8 @@ public class Config {
         this.WEIGHTS_INIT_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHTS_INIT_SCALE", "0.5"));
         this.WEIGHT_CLAMPING = Boolean.parseBoolean(getenv(dotenv, "WEIGHT_CLAMPING", "true"));
         this.WEIGHT_MAX_SCALE = Float.parseFloat(getenv(dotenv, "WEIGHT_MAX_SCALE", "0.5"));
+
+        this.MEMORY_EFFICIENT = Boolean.parseBoolean(getenv(dotenv, "MEMORY_EFFICIENT", "false"));
 
     } 
 

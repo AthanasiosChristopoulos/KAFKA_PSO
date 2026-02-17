@@ -34,6 +34,7 @@ public class BatchPrediction {
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
     private static final String COMBINE_LOSS = cfg.COMBINE_LOSS;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
+    public final boolean MEMORY_EFFICIENT = cfg.MEMORY_EFFICIENT;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -176,97 +177,91 @@ public class BatchPrediction {
 
 
         // Forward Pass Start ===============================================================================
+        if(!MEMORY_EFFICIENT) {
+            
+            // ==============================================================================================================
+            // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
+            // doesnt seem to have a significant difference memory wise
+            // choose this for better performance and simpler code
+            // X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); happens on the CPU memory / host-side NDArray
 
-        // ==============================================================================================================
-        // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
-        // doesnt seem to have a significant difference memory wise
-        // choose this for better performance and simpler code
-        // X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); happens on the CPU memory / host-side NDArray
+            if(MODEL_IS_CNN) {
+                if("cifar3".equals(DATASET)) {
 
-        if(MODEL_IS_CNN) {
-            if("cifar3".equals(DATASET)) {
+                    X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
+                    X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
 
-                X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
-                X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
+                    X = X4d.permute(0, 3, 1, 2); 
 
-                // if(checked == false) {
-                //     float r = X4d.getFloat(0, 0, 0, 0);
-                //     float g = X4d.getFloat(0, 0, 0, 1);
-                //     float b = X4d.getFloat(0, 0, 0, 2);
-                //     System.out.println("first pixel rgb = " + r + ", " + g + ", " + b);
-                //     checked = true;
-                // }
+                } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
-                // X = X4d.permute(0, 3, 1, 2).dup();        // rearange to => [batch, 3, 32, 32]
-                X = X4d.permute(0, 3, 1, 2); 
+                    X2d = Nd4j.create(data);          // [batch, 784]
+                    X = X2d.reshape(X2d.size(0), 1, 28, 28);
+                }
 
-            } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
-
-                X2d = Nd4j.create(data);          // [batch, 784]
-                X = X2d.reshape(X2d.size(0), 1, 28, 28);
+            } else {    // Normal dataset (no image) + no CNN used 
+                X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
             }
 
-        } else {    // Normal dataset (no image) + no CNN used 
-            X = Nd4j.create(data);                     // [batch, NUM_FEATURES]
+        } else {
+
+            // ==============================================================================================================
+            // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
+            // Often much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
+            // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
+
+            if (nSamples > EXPECTED_SIZE) {
+                if (logger.isEnabled(2)) logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+                System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
+
+                nSamples = EXPECTED_SIZE;
+            }
+
+            for (int i = 0; i < nSamples; i++) {
+
+                float[] features = featureList.get(i);
+
+                if (MODEL_IS_CNN) {
+
+                    if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
+
+                        // flatten 784 into 1x28x28
+                        for (int j = 0; j < NUM_FEATURES; j++) {
+                            int row = j / 28;
+                            int col = j % 28;
+                            Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
+                        }
+
+                    } else if ("cifar3".equals(DATASET)) {
+
+                        for (int j = 0; j < NUM_FEATURES; j++) {
+                            int channel = j / (32 * 32);
+                            int pixel = j % (32 * 32);
+                            int row = pixel / 32;
+                            int col = pixel % 32;
+
+                            Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+                        }
+                    }
+
+                } else {
+                    for (int j = 0; j < NUM_FEATURES; j++) {
+                        Xbuffer.putScalar(i, j, features[j]);
+                    }
+                }
+            }
+            
+            if (nSamples == EXPECTED_SIZE) {
+                X = Xbuffer;
+            } else {
+                X = Xbuffer.get(
+                    NDArrayIndex.interval(0, nSamples),
+                    NDArrayIndex.all(),
+                    NDArrayIndex.all(),
+                    NDArrayIndex.all()
+                );
+            }
         }
-
-        // ==============================================================================================================
-        // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
-        // Often much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
-        // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
-
-        // if (nSamples > EXPECTED_SIZE) {
-        //     if (logger.isEnabled(2)) logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
-        //     System.out.println("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
-
-        //     nSamples = EXPECTED_SIZE;
-        // }
-
-        // for (int i = 0; i < nSamples; i++) {
-
-        //     float[] features = featureList.get(i);
-
-        //     if (MODEL_IS_CNN) {
-
-        //         if ("mnist4".equals(DATASET) || "mnist".equals(DATASET)) {
-
-        //             // flatten 784 into 1x28x28
-        //             for (int j = 0; j < NUM_FEATURES; j++) {
-        //                 int row = j / 28;
-        //                 int col = j % 28;
-        //                 Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
-        //             }
-
-        //         } else if ("cifar3".equals(DATASET)) {
-
-        //             for (int j = 0; j < NUM_FEATURES; j++) {
-        //                 int channel = j / (32 * 32);
-        //                 int pixel = j % (32 * 32);
-        //                 int row = pixel / 32;
-        //                 int col = pixel % 32;
-
-        //                 Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
-        //             }
-        //         }
-
-        //     } else {
-        //         for (int j = 0; j < NUM_FEATURES; j++) {
-        //             Xbuffer.putScalar(i, j, features[j]);
-        //         }
-        //     }
-        // }
-        
-        // if (nSamples == EXPECTED_SIZE) {
-        //     X = Xbuffer;
-        // } else {
-        //     X = Xbuffer.get(
-        //         NDArrayIndex.interval(0, nSamples),
-        //         NDArrayIndex.all(),
-        //         NDArrayIndex.all(),
-        //         NDArrayIndex.all()
-        //     );
-        // }
-
         // ==============================================================================================================
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         probs = model.output(X, false);    // [batch, NUM_CLASSES] or [batch,1] if sigmoid. Here is where the memory transfer happens between CPU and GPU

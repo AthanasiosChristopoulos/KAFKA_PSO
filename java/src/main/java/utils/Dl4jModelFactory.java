@@ -35,26 +35,26 @@ public class Dl4jModelFactory {
 			return createWineModel(workerId);
 
 		} else if ("mnist".equals(DATASET)) {
-			return createMNISTModelMLP(workerId);
+			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
 			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTCnn(workerId);
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNIST4MLP(workerId);
-			// return createMNISTCnn_New_2(workerId);
+			return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// return createMNISTModelMLP(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			// return createMNISTModelMLPSimple_2(workerId);
+			return createMNISTModelMLPSimple_2(workerId);
 			// return createMNIST4Cnn(workerId);	// 70ms forward pass
 			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
 			// return createMNIST4MLP(workerId);
 			// return createMNIST4MLP_Reduced(workerId);
 			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
 			// return createMNIST4Cnn_New_Simpler(workerId);
-			return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
 		} else if ("susy".equals(DATASET)) {
@@ -90,12 +90,11 @@ public class Dl4jModelFactory {
 		} else if ("cifar3".equals(DATASET)) {
 			// return createCifar3Model_PSO_Simple(workerId);
 			// return createCifar3Model(workerId);
-			// return createLetterModel70K(workerId);
-			// return createCifar3Model_New(workerId);
+			return createCifar3Model_New(workerId);		// Recommended
 			// return createCifar3Model_New_Simpler(workerId);
 			// return createCifar3Model_New_Simpler_2(workerId);
 			// return createCifar3Model_New_Simpler_3(workerId);
-			return createCifar3Model_New_Simpler_4(workerId);
+			// return createCifar3Model_New_Simpler_4(workerId);
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -1495,7 +1494,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New(int workerId) {
+	public static MultiLayerNetwork createCifar3Model_New(int workerId) {	// Recommended
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
@@ -1505,7 +1504,6 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-
 				.layer(new ConvolutionLayer.Builder(3, 3) // 3 * 3 * 3 * 32 = 864
 						.nIn(3)
 						.nOut(32)
