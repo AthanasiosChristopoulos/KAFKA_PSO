@@ -13,7 +13,7 @@
         - old data fades out
     - Pattern B - Periodic Reset
 
-## Regularization: ===============================================================================================
+## Regularization: ========================================================================
  
  - techniques that prevent your neural network from memorizing the training data => we need to prevet overfitting
  - overfitting can be viewed from the validation loss - validation loss and accuracy. This isnt training accuracy but it is accuracy coming from test samples.
@@ -45,7 +45,7 @@ Dense Neural Networks have a loss landscape of sharp directions , many valeys, n
 
 CNNs have smoother valeys ? 
 
-## Different Types of Neural Networks: ================================================================================
+## Different Types of Neural Networks: ============================================
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
  - CNNs
  - RNNs

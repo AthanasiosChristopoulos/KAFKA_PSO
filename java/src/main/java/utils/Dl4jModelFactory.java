@@ -60,8 +60,11 @@ public class Dl4jModelFactory {
 		} else if ("fashion_mnist".equals(DATASET)) {
 			// return createMNISTModelMLPSimple_2(workerId);
 			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNISTCnn_New_2(workerId);
-			
+			return createMNIST4Cnn_New_Simpler(workerId);
+			// return createMNISTCnn_New_2(workerId);
+			// return createMNISTCnn(workerId);
+			// return createMNIST4Cnn_New(workerId);
+
 		} else if ("susy".equals(DATASET)) {
 			// return createSUSYModel_SOFTMAX(workerId);
 			return createSUSYModel(workerId);
@@ -95,11 +98,12 @@ public class Dl4jModelFactory {
 		} else if ("cifar3".equals(DATASET)) {
 			// return createCifar3Model_PSO_Simple(workerId);
 			// return createCifar3Model(workerId);
-			return createCifar3Model_New(workerId);		// Recommended
+			// return createCifar3Model_New(workerId);	
 			// return createCifar3Model_New_Simpler(workerId);
 			// return createCifar3Model_New_Simpler_2(workerId);
-			// return createCifar3Model_New_Simpler_3(workerId);
+			return createCifar3Model_New_Simpler_3(workerId);
 			// return createCifar3Model_New_Simpler_4(workerId);
+			// return createMNIST4Cnn_New_Simpler(workerId);
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
@@ -772,7 +776,7 @@ public class Dl4jModelFactory {
 						.stride(2, 2)
 						.build())
 				.layer(new DenseLayer.Builder()
-						.nOut(64)           	  
+						.nOut(32)           	  
 						.activation(Activation.RELU)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
@@ -1684,8 +1688,8 @@ public class Dl4jModelFactory {
 				.layer(new DenseLayer.Builder()
 						.nOut(32)
 						.activation(Activation.RELU)
+						
 						.build())
-
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
 						.nOut(NUM_CLASSES)             // = 3
 						.activation(Activation.SOFTMAX)
