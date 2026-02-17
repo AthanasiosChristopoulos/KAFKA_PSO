@@ -1069,3 +1069,9 @@ sudo pkill -9 -f java
 
  - https://www.quora.com/Is-particle-swarm-optimization-an-appropriate-way-to-train-a-deep-convolutional-neural-network-for-image-recognition
  - https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/
+
+
+
+## Transfer Learning ==============================================================
+ - MobileNetV2
+ - VGG16
