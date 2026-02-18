@@ -69,8 +69,10 @@ public final class WorkerStatic {
             this.headStartLayerIdx = pair.getSecond(); // add to Config
             this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
             this.headDim = (int) model.numParams() - headFlatIndex;
-            if(logger.isEnabled(2)) logger.log("Dims: headStartLayerIdx: " + this.headStartLayerIdx + ", headFlatIndex: " + this.headFlatIndex
-                + ", model.numParams(): " + model.numParams() + ", headDim: " + this.headDim);
+            if(logger.isEnabled(2)) logger.log("Model Dimensions => " + 
+                "headStartLayerIdx: " + this.headStartLayerIdx + ", headFlatIndex: " +
+                this.headFlatIndex + ", model.numParams(): " + model.numParams() + 
+                ", headDim: " + this.headDim);
                 
             if(cfg.USING_PRETRAINED_MODEL) {
                 this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.headFlatIndex);

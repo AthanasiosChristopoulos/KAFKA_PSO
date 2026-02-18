@@ -60,15 +60,12 @@ public class Dl4jModelFactory {
 			// model = createMNISTModelCNNHeavy(workerId);
 
 			if(preTrained) {
-				model = pretrainedModelLeNet();
+				model = pretrainedModelLeNet(); head_layer_idx = 8;
 				// model = pretrainedModelMNIST();
 			} else {
-				model = createMNIST_CNN_PretrainedLeNet(workerId);
-				head_layer_idx = 8;
-				// model = createMNIST_CNN_Pretrained_MNIST(workerId);
-				// head_layer_idx = 4;
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId);
-				// head_layer_idx = 3;
+				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId); head_layer_idx = 4;
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId); head_layer_idx = 3;
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  

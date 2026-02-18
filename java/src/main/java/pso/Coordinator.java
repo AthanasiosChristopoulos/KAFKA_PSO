@@ -26,6 +26,7 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.common.primitives.Pair;
 
 import java.time.Duration;
 import java.util.Properties;
@@ -62,6 +63,7 @@ public class Coordinator implements Runnable {
 
     private final MultiLayerNetwork globalModel;
     private final MultiLayerNetwork bestGlobalModel;
+    private MultiLayerNetwork preTrainedModel;
     private final BatchPrediction predictor;
 
     private long t0 = System.nanoTime();
@@ -74,16 +76,37 @@ public class Coordinator implements Runnable {
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
     private final String instanceTag = "Coordinator@" + instanceNo + "#" + Integer.toHexString(System.identityHashCode(this));
 
+    private Pair<MultiLayerNetwork, Integer> pair;
+    private int headFlatIndex;
+
     // ====================================================================================================================================
 
     public Coordinator() {
 
         this.logger = CustomLogger.getInstanceForCoordinator();
 
+        // Need to do the instancing here the transformers constructor runs many times from different tasks
         this.globalModel = Dl4jModelFactory.createModel(-1, false).getFirst();
         System.out.println("Model Summary ===========================================");
-        // System.out.println(this.globalModel.summary());
-        logger.log("Pretrained Model Summary ===========================================");
+        System.out.println(this.globalModel.summary());
+        if(logger.isEnabled(2)) logger.log("Model Summary ===========================================");
+        if(logger.isEnabled(2)) logger.log(this.globalModel.summary());
+
+        pair = Dl4jModelFactory.createModel(-1, true);    
+        int header_layer_idx = -1;  
+        if(cfg.USING_PRETRAINED_MODEL) {
+            pair = Dl4jModelFactory.createModel(-1, true);
+            this.preTrainedModel = pair.getFirst();
+            System.out.println("Pretrained Summary ===========================================");
+            System.out.println(this.preTrainedModel.summary());
+            if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
+            if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());
+
+            header_layer_idx = pair.getSecond();
+            this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, header_layer_idx); // HEAD_LAYER_IDX
+        }
+
+        System.out.println(this.globalModel.summary());
 
         this.bestGlobalModel = Dl4jModelFactory.createModel(-1, false).getFirst();
         this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
@@ -280,7 +303,8 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
 
-        localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, TEST_STORE));
+        localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, 
+                TEST_STORE, this.preTrainedModel, this.headFlatIndex));
 
         // Inference Task ==================================================================================================
         

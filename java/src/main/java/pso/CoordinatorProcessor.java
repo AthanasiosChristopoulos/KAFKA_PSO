@@ -108,29 +108,22 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     // ================================================================================================================
 
 
-    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, long t0, long t1, String testStoreName) {
-        
+    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, 
+            long t0, long t1, String testStoreName, MultiLayerNetwork preTrainedModel, int headFlatIndex) {
+        this.logger = CustomLogger.getInstanceForCoordinator();
+
         this.t0 = t0;
         this.t1 = t1;
 
         this.control = CoordinatorControl.getInstance();
 
-        this.logger = CustomLogger.getInstanceForCoordinator();
-
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
 
-        int header_layer_idx = -1;
         if(cfg.USING_PRETRAINED_MODEL) {
-            Pair<MultiLayerNetwork, Integer> pair = Dl4jModelFactory.createModel(-1, true);
-            this.preTrainedModel = pair.getFirst();
-            header_layer_idx = pair.getSecond();
-            this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, header_layer_idx); // HEAD_LAYER_IDX
+            this.preTrainedModel = preTrainedModel;
+            this.headFlatIndex = headFlatIndex;
         }
-        
-        System.out.println("Pretrained Model Summary ===========================================");
-        // System.out.println(this.preTrainedModel.summary());
-        logger.log("Pretrained Model Summary ===========================================");
 
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
@@ -569,6 +562,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
                 + " over " + evaluation_count + " batches" + ", average forwardPassMs: " 
                 + avgForwardPassMs);
+
+        this.logger.flush();
     }
 }
 

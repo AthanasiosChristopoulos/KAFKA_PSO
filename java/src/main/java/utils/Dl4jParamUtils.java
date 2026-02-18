@@ -62,7 +62,8 @@ public class Dl4jParamUtils {
         int end = (int) model.numParams();
 
         if (headFlat.length != (end - start)) {
-            throw new IllegalArgumentException("Head length mismatch. expected=" + (end-start) + " got=" + headFlat.length);
+            throw new IllegalArgumentException("Head length mismatch. expected = " + (end-start) 
+                + " got = " + headFlat.length + ", with start = " + start + ", and end = " + end);
         }
 
         // assign only the head range
