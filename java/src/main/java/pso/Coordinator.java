@@ -81,6 +81,8 @@ public class Coordinator implements Runnable {
         this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.globalModel = Dl4jModelFactory.createModel(-1, false);
+        System.out.println("Model Summary ===========================================");
+        System.out.println(this.globalModel.summary());
         this.bestGlobalModel = Dl4jModelFactory.createModel(-1, false);
         this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 

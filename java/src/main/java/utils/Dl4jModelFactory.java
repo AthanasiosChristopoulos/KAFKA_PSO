@@ -39,102 +39,107 @@ public class Dl4jModelFactory {
 
 	public static MultiLayerNetwork createModel(int workerId, boolean preTrained) {
 		// System.out.println("DATASET: " + DATASET);
+		MultiLayerNetwork model;
 
 		if("iris".equals(DATASET)) {
-			return createIrisModel(workerId);
+			model = createIrisModel(workerId);
 
 		} else if ("wine".equals(DATASET)) {
-			return createWineModel(workerId);
+			model = createWineModel(workerId);
 
 		} else if ("mnist".equals(DATASET)) {
-			// return createMNISTModelMLP(workerId);
-			// return createMNISTModelMLPSimple_0(workerId);
-			// return createMNISTModelMLPSimple_1(workerId);
-			// return createMNISTModelMLPSimple_2(workerId);
-			// return createMNISTCnn(workerId);
-			// return createMNIST4Cnn_New(workerId);
-			// return createMNISTCnn_New_2(workerId);
-			// return createMNISTModelCNNHeavy(workerId);
+			// model = createMNISTModelMLP(workerId);
+			// model = createMNISTModelMLPSimple_0(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNISTCnn(workerId);
+			// model = createMNIST4Cnn_New(workerId);
+			// model = createMNISTCnn_New_2(workerId);
+			// model = createMNISTModelCNNHeavy(workerId);
 
 			if(preTrained) {
-				// return pretrainedModelLeNet();
-				return pretrainedModelFashionMNIST();
+				model = pretrainedModelLeNet();
+				// model = pretrainedModelMNIST();
 			} else {
-				// return createMNIST_CNN_PretrainedLeNet(workerId);
-				return createMNIST_CNN_PretrainedFashionMNIST(workerId);
+				model = createMNIST_CNN_PretrainedLeNet(workerId);
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId);
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId);
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
-			// return createMNISTModelMLP(workerId);
-			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNISTModelMLPSimple_2(workerId);
-			// return createMNIST4Cnn(workerId);	// 70ms forward pass
-			// return createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
-			// return createMNIST4MLP(workerId);
-			// return createMNIST4MLP_Reduced(workerId);
-			// return createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			// return createMNIST4Cnn_New_Simpler(workerId);
-			// return createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+			// model = createMNISTModelMLP(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNIST4Cnn(workerId);	// 70ms forward pass
+			// model = createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
+			// model = createMNIST4MLP(workerId);
+			// model = createMNIST4MLP_Reduced(workerId);
+			// model = createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
+			// model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
 		} else if ("fashion_mnist".equals(DATASET)) {
-			// return createMNISTModelMLPSimple_2(workerId);
-			// return createMNISTModelMLPSimple_1(workerId);
-			return createMNIST4Cnn_New_Simpler(workerId);
-			// return createMNISTCnn_New_2(workerId);
-			// return createMNISTCnn(workerId);
-			// return createMNIST4Cnn_New(workerId);
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNISTCnn_New_2(workerId);
+			// model = createMNISTCnn(workerId);
+			// model = createMNIST4Cnn_New(workerId);
 
 		} else if ("susy".equals(DATASET)) {
-			// return createSUSYModel_SOFTMAX(workerId);
-			return createSUSYModel(workerId);
+			// model = createSUSYModel_SOFTMAX(workerId);
+			model = createSUSYModel(workerId);
 
 		} else if ("bank".equals(DATASET)) {
-			// return createBankModel(workerId);
-			return createBankModel40K(workerId);
+			// model = createBankModel(workerId);
+			model = createBankModel40K(workerId);
 
 		} else if ("adult".equals(DATASET)) {
-			return createAdultModel(workerId);
+			model = createAdultModel(workerId);
 
 		} else if ("covertype".equals(DATASET)) {
-			return createCovertypeModel(workerId);
+			model = createCovertypeModel(workerId);
 
 		} else if ("har".equals(DATASET)) {
-			return createHarModel(workerId);
+			model = createHarModel(workerId);
 
 		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			// return createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-			return createPendigitsModelTanh(workerId);
-			// return createPendigitsModelSmaller(workerId);
-			// return createPendigitsModelSmaller_2(workerId);
-			// return createPendigitsModelSmaller_3(workerId);
+			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			model = createPendigitsModelTanh(workerId);
+			// model = createPendigitsModelSmaller(workerId);
+			// model = createPendigitsModelSmaller_2(workerId);
+			// model = createPendigitsModelSmaller_3(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
-			return createWineQualityModel(workerId);
+			model = createWineQualityModel(workerId);
 
 		} else if ("letter".equals(DATASET)) {
-			return createLetterModel(workerId);
-			// return createLetterModel70K(workerId);
+			model = createLetterModel(workerId);
+			// model = createLetterModel70K(workerId);
 		} else if ("cifar3".equals(DATASET)) {
-			// return createCifar3Model_PSO_Simple(workerId);
-			// return createCifar3Model(workerId);
-			// return createCifar3Model_New(workerId);	
-			// return createCifar3Model_New_Simpler(workerId);
-			// return createCifar3Model_New_Simpler_2(workerId);
-			return createCifar3Model_New_Simpler_3(workerId);
-			// return createCifar3Model_New_Simpler_4(workerId);
-			// return createMNIST4Cnn_New_Simpler(workerId);
+			// model = createCifar3Model_PSO_Simple(workerId);
+			// model = createCifar3Model(workerId);
+			// model = createCifar3Model_New(workerId);	
+			// model = createCifar3Model_New_Simpler(workerId);
+			// model = createCifar3Model_New_Simpler_2(workerId);
+			model = createCifar3Model_New_Simpler_3(workerId);
+			// model = createCifar3Model_New_Simpler_4(workerId);
+			// model = createMNIST4Cnn_New_Simpler(workerId);
+
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
+		
+		return model;
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModelFashionMNIST() {
+	public static MultiLayerNetwork pretrainedModelMNIST() {
 		try {
 			// File f = new File("pretrained_models/fmnist_base_plus_head.h5");
-			File f = new File("pretrained_models/mnist_base_plus_head.h5");
+			File f = new File("pretrained_models/mnist_base_plus_head_v2.h5");
 			
 			if (!f.exists()) {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
@@ -154,9 +159,9 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	// public static MultiLayerNetwork createMNIST_CNN_PretrainedFashionMNIST(int workerId) {
+	// public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId) {
 
-	// 	MultiLayerNetwork pretrained = pretrainedModelFashionMNIST();
+	// 	MultiLayerNetwork pretrained = pretrainedModelMNIST();
 
 	// 	// We are going to replace the last TWO trainable layers: Dense(64) and Dense(10)
 	// 	int removeCount = removeCountForLastNTrainableLayers(pretrained, 2);
@@ -190,10 +195,10 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_PretrainedFashionMNIST(int workerId) {
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelFashionMNIST();
+		MultiLayerNetwork pretrained = pretrainedModelMNIST();
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -215,6 +220,37 @@ public class Dl4jModelFactory {
 						.nIn(64)
 						.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
 						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		return tl;
+	}
+	
+	// ===========================================================================================
+
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelMNIST();
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		// From summary
+		final int flattenDim = 32 * 5 * 5;  // 800
+		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(1) 
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(flattenDim)
+						.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
+						.activation(Activation.SOFTMAX)
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
 						.build())
 				.build();
 
@@ -305,7 +341,7 @@ public class Dl4jModelFactory {
 	// 	return tl;
 	// }
 
-	public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
+	public static MultiLayerNetwork  createMNIST_CNN_PretrainedLeNet(int workerId) {
 
 		// Pretrained Model ===========================================================
 		ZooModel zoo = LeNet.builder().numClasses(10).build();

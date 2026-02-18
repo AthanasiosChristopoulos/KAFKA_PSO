@@ -118,8 +118,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
-        if(cfg.USING_PRETRAINED_MODEL) this.preTrainedModel = Dl4jModelFactory.createModel(-1, true);
 
+        if(cfg.USING_PRETRAINED_MODEL) this.preTrainedModel = Dl4jModelFactory.createModel(-1, true);
+        System.out.println("Pretrained Model Summary ===========================================");
+        System.out.println(this.preTrainedModel.summary());
+        
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         this.testStoreName = testStoreName;

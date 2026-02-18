@@ -172,7 +172,7 @@ source ~/.venvs/dev/bin/activate	# do this for every project
 	- sudo mkdir -p /mnt/win_test
 	  sudo mount -o ro /dev/nvme0n1p3 /mnt/win_test
 
-	=============================================================================================================
+	===================================================================================
 	sudo apt update
 	sudo apt install ntfs-3g
 	sudo ntfsfix /dev/sda1

@@ -84,3 +84,8 @@ CNNs have smoother valeys ?
     - Deeper models introduce non-convex loss landscapes, volatile landscapes with: plateaus, sharp minima, saddle points
         => sharp means that the landscape isnt "encouraging". It will tell you "you are going the wrong way" (high loss) when you are going the right way
         => gradient descent also relies on loss results - it just treats them more efficiently
+
+## Transfer Learning ============================================================================
+ 
+ - A model trained on Task A learns general features that are useful for Task B
+    - For example a basic image model is trained on ImageNet (cats, dogs, cars, textures)   
