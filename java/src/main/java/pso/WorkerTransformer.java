@@ -772,7 +772,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
-        double totalElapsedTime = (System.nanoTime() - this.t0) / 1_000_000.0;
+        double totalElapsedTimeSec = (System.nanoTime() - this.t0) / 1_000_000_000.0;  // in Seconds
 
         if(lastOffset == 0) {   // if inactive Partition, means Worker terminated before starting to read that partition 
                                 // (worker reads the partitions with a limited degree of parallelism, not 40 at once)
@@ -802,7 +802,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     "=> per Communication: " + String.format("%.3f ms", avgMsCommunication) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
                     "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
-                    " Rate of Updates / Batches per ms: " + String.format("%.5f ms", count / totalElapsedTime) 
+                    " Rate of Updates / Batches per sec: " + String.format("%.5f sec", count / totalElapsedTimeSec)   // this is count_of_updates per seconds
+                        // Also equivalent with batches per second
             );
 
             ws.validAvgMs = avgMs;

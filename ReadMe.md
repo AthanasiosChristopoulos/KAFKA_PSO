@@ -1034,10 +1034,14 @@ found a better region than the second or third best neighbors (they may not have
             5) [CPU loss + accuracy loops]  
         GPU Overhead:
          - (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
-         - Another source of overhead are the N_WORKERS. They need to share the GPU. There are 6 CPU cores working in paralleland the GPU is only device (you would like N_WORKERS == N_DEVICES). GPU has Kernel launch queue, it can only launch a limited amount of Kernels. Many workers fight over the GPU, since every time its used one time.
-            - GPU can parallelize compute internally
-         -  The highway = thousands of parallel cores
-            vs The toll gate = kernel launch + memory transfer + sync
+         - Competition between N_WORKERS for the GPU. Another source of overhead are the N_WORKERS: 
+            Time:
+            - They need to share the GPU. There are 6 CPU cores working in paralleland the GPU is only device (you would like N_WORKERS == N_DEVICES). GPU has Kernel launch queue, it can only launch a limited amount of Kernels. Many workers fight over the GPU, since every time its used one time.
+            - GPU can parallelize compute internally => The highway = thousands of parallel GPU stuff
+            - The toll gate = kernel launch + memory transfer + sync => is triggered at the model.output => N_WORKER competition overhead is included in the forward pass.
+            Memory:
+            - If too many memory allocations happen between many N_WORKERS, then GPU will not have the time to clean (free) the memory each time (there is a delayed release if ot exlicitly freed). The allocating memory rate will become bigger than the cleaning memory rate as N_WORKERS increases (leading to a crash, because of Memory overflow).
+                - Keep in mind that those arrays might still be referenced, this is why they arent getting cleaned
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
             => On a simple NN, cpu is preferable
             => GPU is worth it if: ForwardPassTime >> Transfer + Sync cost

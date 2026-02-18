@@ -187,6 +187,7 @@ public class BatchPrediction {
             // doesnt seem to have a significant difference memory wise
             // choose this for better performance and simpler code
             // X2d = Nd4j.create(data); X = X2d.reshape(...); X = X4d.permute(...); happens on the CPU memory / host-side NDArray
+            // costs around 22 ms Predicition cost (mostly the forward pass, meaning the competion of the workers over the GPU) 
             
             // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
@@ -213,7 +214,7 @@ public class BatchPrediction {
 
             // ==============================================================================================================
             // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
-            // Often much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
+            // Much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
             // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
 
             if (nSamples > EXPECTED_SIZE) {
@@ -256,7 +257,17 @@ public class BatchPrediction {
                     }
                 }
             }
-            
+            // float[] xb = Xbuffer.data().asFloat();
+            // float before = Xbuffer.getFloat(0, 0, 0, 0);
+            // xb[0] = 123.456f;
+            // float after  = Xbuffer.getFloat(0, 0, 0, 0);
+
+            // System.out.println("before=" + before + " after=" + after);
+            // for (int i = 0; i < nSamples; i++) {
+            //     float[] features = featureList.get(i);  // length 784
+            //     System.arraycopy(features, 0, xb, i * NUM_FEATURES, NUM_FEATURES);
+            // }
+
             if (nSamples == EXPECTED_SIZE) {
                 X = Xbuffer;
             } else {
@@ -433,15 +444,16 @@ public class BatchPrediction {
         // probs.close();
         featureList.clear();
         labels.clear();
-        return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
 
-        // } finally {
-        //     if (probs != null) probs.close();
-        //     if (X != null) X.close();
-        //     if (argMax != null) argMax.close();
-        //     if (X2d != null) X2d.close();
-        //     if (X4d != null) X4d.close();
-        // }
+        if(!MEMORY_EFFICIENT) {
+            if (probs != null) probs.close();
+            if (X != null) X.close();
+            if (argMax != null) argMax.close();
+            if (X2d != null) X2d.close();
+            if (X4d != null) X4d.close();
+        }
+
+        return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
 
     }
 
