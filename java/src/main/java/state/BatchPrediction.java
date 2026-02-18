@@ -121,7 +121,9 @@ public class BatchPrediction {
     // ===========================================================================
 
     public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
+
         if(coordinatorInstance == null) {
+            
             coordinatorInstance = new BatchPrediction(model, bestModel, logger);
             return coordinatorInstance;
         } 

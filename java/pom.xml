@@ -102,6 +102,14 @@
 
     <!-- =================================================================-->
 
+	<dependency>
+		<groupId>org.deeplearning4j</groupId>
+		<artifactId>deeplearning4j-modelimport</artifactId>
+		<version>${dl4j.version}</version>
+	</dependency>
+
+    <!-- =================================================================-->
+
     <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>

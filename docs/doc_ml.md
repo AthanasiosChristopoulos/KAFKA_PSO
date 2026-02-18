@@ -57,7 +57,7 @@ CNNs have smoother valeys ?
         - output size = floor((N - F + 2 * P) / S) + 1
         - N = input size, F = Filter size (if 3,3 then F = 3), P = padding, S = Stride
         - .padding(0, 0) => P = 0
-        - padding(1,1) => "same", padding(0,0) => "valid"
+        - .padding(1,1) => "same", padding(0,0) => "valid"
 
  - Dimensionality after maxPooling layer:
         - out = floor((N − F + 2 * P) / S)​ + 1
@@ -69,11 +69,12 @@ CNNs have smoother valeys ?
         .stride(1, 1)
         .padding(0, 0))
     ```
-    This is 16 Filters of size 3 × 3 × 8 (NOT 3 × 3 × 1)
+    This is 16 Filters of size 3 × 3 × 8 (NOT 3 × 3 × 1):
         => Filters are not per channel
         => Each filter combines all 8 input channels together into one output.
             => Each filter in the second convolution layer must span ALL input channels
             => these are still 16 Filters, but their dimensionality is 3 x 3 x 8 (it must look at 8 previous feature maps at once)
+        => Number_of_parameters = (# Dimensionality of Filters) * (# Channels) * (# Next Layer Neurons)
         => filter combines all 8 previous feature maps (feature fusion) together to detect more complex features.
         => Because meaningful patterns in images usually depend on combinations of simpler features, not each one alone.
         => Real patterns are combinations of primitives

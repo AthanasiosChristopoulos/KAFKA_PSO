@@ -7,12 +7,14 @@ import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import java.io.File;
 
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.learning.config.Adam;
 
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 
 import org.deeplearning4j.zoo.ZooModel;
@@ -55,9 +57,11 @@ public class Dl4jModelFactory {
 			// return createMNISTModelCNNHeavy(workerId);
 
 			if(preTrained) {
-				return pretrainedModel();
+				// return pretrainedModelLeNet();
+				return pretrainedModelFashionMNIST();
 			} else {
-				return createMNIST_CNN_Pretrained(workerId);
+				// return createMNIST_CNN_PretrainedLeNet(workerId);
+				return createMNIST_CNN_PretrainedFashionMNIST(workerId);
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -127,7 +131,98 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModel() {
+	public static MultiLayerNetwork pretrainedModelFashionMNIST() {
+		try {
+			// File f = new File("pretrained_models/fmnist_base_plus_head.h5");
+			File f = new File("pretrained_models/mnist_base_plus_head.h5");
+			
+			if (!f.exists()) {
+				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
+			}
+
+			MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(
+					f.getAbsolutePath(),
+					false   // enforceTrainingConfig = false (not using Keras optimizer config)
+			);
+
+			return model;
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import Fashion-MNIST Keras .h5 model", e);
+		}
+	}
+
+	// ======================================================================================================================
+
+	// public static MultiLayerNetwork createMNIST_CNN_PretrainedFashionMNIST(int workerId) {
+
+	// 	MultiLayerNetwork pretrained = pretrainedModelFashionMNIST();
+
+	// 	// We are going to replace the last TWO trainable layers: Dense(64) and Dense(10)
+	// 	int removeCount = removeCountForLastNTrainableLayers(pretrained, 2);
+
+	// 	FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+	// 			.updater(new NoOp())   // PSO controls weights, not SGD
+	// 			.build();
+
+	// 	// After removing Dense(64) and Dense(10), the layer feeding the head is the Flatten output.
+	// 	// In your architecture: 28x28 -> conv valid -> pool -> conv valid -> pool -> flatten = 32*5*5 = 800
+	// 	// If your conv/pool settings match: 28->26->13->11->5 => channels 32 => 32*5*5 = 800
+	// 	final int flattenDim = 32 * 5 * 5;  // 800
+
+	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+	// 			.fineTuneConfiguration(ftc)
+	// 			.removeLayersFromOutput(removeCount)
+	// 			.addLayer(new DenseLayer.Builder()
+	// 					.nIn(flattenDim)
+	// 					.nOut(32)
+	// 					.activation(Activation.RELU) // or TANH for PSO smoothness
+	// 					.build())
+	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+	// 					.nIn(32)
+	// 					.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
+	// 					.activation(Activation.SOFTMAX)
+	// 					.build())
+	// 			.build();
+
+	// 	return tl;
+	// }
+
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork createMNIST_CNN_PretrainedFashionMNIST(int workerId) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelFashionMNIST();
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		// From summary
+		final int flattenDim = 32 * 5 * 5;  // 800
+		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(2)
+				.addLayer(new DenseLayer.Builder()
+						.nIn(flattenDim)
+						.nOut(64)
+						.activation(Activation.RELU) // or TANH for PSO smoothness
+						.build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(64)
+						.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		return tl;
+	}
+	// ======================================================================================================================
+
+	public static MultiLayerNetwork pretrainedModelLeNet() {
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
 				.numClasses(10) // MNIST pretrained weights are for 10 classes
@@ -146,7 +241,7 @@ public class Dl4jModelFactory {
 	
 	// ======================================================================================================================
 
-	// public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+	// public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
 	// 	// 1) Load pretrained LeNet (MNIST 10-class)
 	// 	ZooModel zoo = LeNet.builder()
 	// 			.numClasses(10) // MNIST pretrained weights are for 10 classes
@@ -186,7 +281,7 @@ public class Dl4jModelFactory {
 	// }
 
 
-	// public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+	// public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
 
 	// 	ZooModel zoo = LeNet.builder().numClasses(10).build();
 
@@ -210,7 +305,7 @@ public class Dl4jModelFactory {
 	// 	return tl;
 	// }
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained(int workerId) {
+	public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
 
 		// Pretrained Model ===========================================================
 		ZooModel zoo = LeNet.builder().numClasses(10).build();
