@@ -46,6 +46,7 @@ Dense Neural Networks have a loss landscape of sharp directions , many valeys, n
 CNNs have smoother valeys ? 
 
 ## Different Types of Neural Networks: ============================================
+
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
  - CNNs
  - RNNs
@@ -87,5 +88,14 @@ CNNs have smoother valeys ?
 
 ## Transfer Learning ============================================================================
  
- - A model trained on Task A learns general features that are useful for Task B
-    - For example a basic image model is trained on ImageNet (cats, dogs, cars, textures)   
+ Two Strategies:
+ - 1) Feature Extractor (the freeze base is a feature extractor):
+    - A model trained on Task A learns general features that are useful for Task B
+        - For example a basic image model is trained on ImageNet (cats, dogs, cars, textures)   
+    - keep pretrained conv layers fixed and only train the last classification layer
+        - [Conv base (frozen)] → [New Dense Head (trainable)]
+    - features need to be general (edges, corners, ...)
+
+ - 2) Fine-tuning:
+    - take the pretrained model, keep most layers frozen but unfreeze the last few layers 
+        - use small learning rate, this is only fine tuning

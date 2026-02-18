@@ -55,26 +55,10 @@ public class Simulation {
 
         // =============================================================================================
 
-        // MultiLayerNetwork m = Dl4jModelFactory.pretrainedModel();
-        // MultiLayerNetwork model = Dl4jModelFactory.pretrainedModelMNIST();
+        MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
-        // System.out.println("OK loaded:");
-        // System.out.println(model.summary());
-        // for (int i = 0; i < model.getnLayers(); i++) {
-        //     System.out.println(i + " " + model.getLayer(i).conf().getLayer().getClass().getSimpleName()
-        //         + " numParams=" + model.getLayer(i).numParams());
-        // }
-
-        // System.out.println("TOTAL numParams=" + model.numParams());
-        // MultiLayerNetwork model1 = Dl4jModelFactory.createMNIST_CNN_Pretrained_MNIST_Simpler(-1);
-
-        // System.out.println("OK loaded:");
-        // System.out.println(model1.summary());
-        // for (int i = 0; i < model1.getnLayers(); i++) {
-        //     System.out.println(i + " " + model1.getLayer(i).conf().getLayer().getClass().getSimpleName()
-        //         + " numParams=" + model1.getLayer(i).numParams());
-        // }
-        // System.out.println("TOTAL numParams=" + model1.numParams());
+        System.out.println("OK loaded:");
+        System.out.println(model.summary());
 
         // System.exit(0);
 

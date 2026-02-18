@@ -58,22 +58,33 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New(workerId);
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
-			String filename = "mnist_base_plus_head_v2.h5";
+
+			// pretrained =============================================================================================
+			// head_layer_idx = 8;	// LeNet
+			// String filename = "mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			String filename = "mnist_base_plus_head_v3.h5";	head_layer_idx = 6;	
+
 			if(preTrained) {
 				// 1)
-				// model = pretrainedModelLeNet(); head_layer_idx = 8;
+				model = pretrainedModelLeNet(); head_layer_idx = 8;
 				// 2) 
-				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); head_layer_idx = 4;
+				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); 
 				// 3) 
-				model = pretrainedModelMNIST(filename); head_layer_idx = 3;			
+				// model = pretrainedModelMNIST(filename); 		
+				// model = pretrainedModelMNIST(filename); 	
+
 			} else {
 				// 1)
-				// model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
+				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
 				// 2) 
-				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); head_layer_idx = 4;
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
 				// 3) 
-				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename); head_layer_idx = 4;
-				model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename); head_layer_idx = 3;
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -238,7 +249,7 @@ public class Dl4jModelFactory {
 	
 	// ===========================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName) {
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName);
@@ -250,13 +261,11 @@ public class Dl4jModelFactory {
 				.updater(new NoOp())   // <-- prevents optimizer assumptions
 				.build();
 
-		// From summary
-		final int flattenDim = 32 * 5 * 5;  // 800
 		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(1) 
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(flattenDim)
+						.nIn(inputDim)
 						.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
@@ -266,6 +275,7 @@ public class Dl4jModelFactory {
 
 		return tl;
 	}
+
 	// ======================================================================================================================
 
 	public static MultiLayerNetwork pretrainedModelLeNet() {

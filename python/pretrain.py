@@ -69,24 +69,69 @@ def build_fmnist_base_plus_head(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
+# def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+
+#         # Base CNN (feature extractor)
+#         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+#         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+#         layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+#         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+#         layers.Flatten(),
+
+#         # Optional base representation layer
+#         # layers.Dense(64, activation="relu", use_bias=True),
+
+#         # Head for Fashion-MNIST pretraining
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),
+#     ])
+
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(1e-3),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+#     print("Trainable params:", model.count_params())
+#     return model
+
+# ===============================================================================
+
 def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
+
+    # model = keras.Sequential([
+    #     layers.Input(shape=input_shape),
+    #     layers.Reshape((28, 28, 1)),
+
+    #     layers.Conv2D(16, 3, padding="same", use_bias=True),
+    #     layers.Activation("relu"),
+    #     layers.MaxPooling2D(),
+
+    #     layers.Conv2D(32, 3, padding="same", use_bias=True),
+    #     layers.Activation("relu"),
+
+    #     layers.GlobalAveragePooling2D(),
+
+    #     layers.Dense(num_classes, activation="softmax"),
+    # ])
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Base CNN (feature extractor)
-        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
-
-        layers.Flatten(),
-
-        # Optional base representation layer
-        # layers.Dense(64, activation="relu", use_bias=True),
-
-        # Head for Fashion-MNIST pretraining
+        # Head
+        layers.GlobalAveragePooling2D(),                         # -> (128,)
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -105,7 +150,7 @@ def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
 
 def train_and_export(
     out_dir="pretrained_model",
-    epochs=8,
+    epochs=4,
     batch_size=128
 ):
     if(DATASET == "fashion_mnist"):

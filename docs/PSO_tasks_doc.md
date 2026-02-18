@@ -46,12 +46,12 @@
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 
 
-	2) Experimentation - Setup:
+	2) Experimentation:
 		- Different models
 		- Different Non - Differentiable Loss Functions
 		- Different Datasets, Different sizes: INDEPENDENT_WORKER_DATA_PROCESSING true or false
 		- Measure performance and latencies
-		- Experimentation Setup:
+		- Explain the Experimentation Setup:
 			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
 				- Actually mention / analyse the specs
 				- Run on both highend and lowend devices 
@@ -60,10 +60,12 @@
 				- measurement methods (error definitions) 
 			
 		- Measure / Diagrams of:
+			- x: training samples / epochs / updatesX 	| y: loss / accuracy / F1 score	
+				- based on data you need to adjust parameters every time (find an automatic function for that)
+			- x: N_WORKERS 								| y: accuracy / time	
 			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
 			- how much time on average does it take you to process one record 
 				- this is supposed to be a streaming application: input_mbps < process_mbps
-			- x: Number of training samples - y: loss / accuracy / F1 score	
 			- Limit communication:
 				- Run without => identify latency
 				- Run with	  => makes training more efficient / faster
