@@ -386,7 +386,8 @@ public class BatchPrediction {
                 }
             }
         }
-
+        // end = System.nanoTime();    // this is where the forward pass reliably ends due to gathering the probs 
+        // too and having forced a stnc between the GPU and CPU
         // Combine Losses from Multiple Samples =======================================================
 
         if ("TOP_K".equals(COMBINE_LOSS)) {

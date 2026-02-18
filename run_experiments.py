@@ -176,6 +176,7 @@ def main():
     accs = [r["ACCURACY"] for r in results]
     plt.figure()
     plt.plot(xs, accs, marker="o")
+    plt.ylim(bottom=0)
     plt.xlabel("N_WORKERS")
     plt.ylabel("Accuracy")
     plt.title("Accuracy vs N_WORKERS")
@@ -188,6 +189,7 @@ def main():
     times = [r["TRAIN_TIME_SEC"] for r in results]
     plt.figure()
     plt.plot(xs, times, marker="o")
+    plt.ylim(bottom=0)
     plt.xlabel("N_WORKERS")
     plt.ylabel("Training Time (seconds)")
     plt.title("Training Time vs N_WORKERS")

@@ -58,14 +58,22 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New(workerId);
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
-
+			String filename = "mnist_base_plus_head_v2.h5";
 			if(preTrained) {
-				model = pretrainedModelLeNet(); head_layer_idx = 8;
-				// model = pretrainedModelMNIST();
+				// 1)
+				// model = pretrainedModelLeNet(); head_layer_idx = 8;
+				// 2) 
+				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); head_layer_idx = 4;
+				// 3) 
+				model = pretrainedModelMNIST(filename); head_layer_idx = 3;			
 			} else {
-				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
-				// model = createMNIST_CNN_Pretrained_MNIST(workerId); head_layer_idx = 4;
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId); head_layer_idx = 3;
+				// 1)
+				// model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
+				// 2) 
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); head_layer_idx = 4;
+				// 3) 
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename); head_layer_idx = 4;
+				model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename); head_layer_idx = 3;
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -138,10 +146,10 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModelMNIST() {
+	public static MultiLayerNetwork pretrainedModelMNIST(String fileName) {
 		try {
-			// File f = new File("pretrained_models/fmnist_base_plus_head.h5");
-			File f = new File("pretrained_models/mnist_base_plus_head_v2.h5");
+
+			File f = new File("pretrained_models/" + fileName);
 			
 			if (!f.exists()) {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
@@ -197,10 +205,10 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId) {
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId, String fileName) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST();
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName);
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -230,10 +238,10 @@ public class Dl4jModelFactory {
 	
 	// ===========================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId) {
+	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST();
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName);
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -359,6 +367,7 @@ public class Dl4jModelFactory {
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
 				.updater(new NoOp())   // <-- prevents optimizer assumptions
 				.build();
 

@@ -1,5 +1,5 @@
 
-## ========================================================================================================================
+## =========================================================================
 ## Generall Aspects of this Thesis that need Improving / Expanding upon (and how they are combined with each other):
 
  - PSO
@@ -8,13 +8,15 @@
  - Filtering / Efficient Communication Protocol
  - Federated Learning
 
-## ========================================================================================================================
+## =======================================================================================
 ## Important Pending Tasks:
 	
 	1) Limit communication / Communication Efficiency:
 		Limit communication στο pBest_weights_topic pipeline:
-			-> οταν το loss εχει αλλαξει significantly 
-	
+			-> Στειλε μονο οταν το loss εχει αλλαξει significantly 
+
+		- Αλλαζε το κατωφλι T του significant loss δυναμικα, στην αρχη να ειναι μικρο και μετα να αυξανεται.
+
 		Geometric Monitoring:
 			- Actuall GM:
 				- Synchronization necessary
@@ -47,7 +49,7 @@
 	2) Experimentation - Setup:
 		- Different models
 		- Different Non - Differentiable Loss Functions
-		- Different Datasets
+		- Different Datasets, Different sizes: INDEPENDENT_WORKER_DATA_PROCESSING true or false
 		- Measure performance and latencies
 		- Experimentation Setup:
 			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
@@ -56,6 +58,7 @@
 			- Use and test as many different:
 				- model / method parameters as possible
 				- measurement methods (error definitions) 
+			
 		- Measure / Diagrams of:
 			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
 			- how much time on average does it take you to process one record 
@@ -99,7 +102,7 @@
 
 	38) Add regularization manually after .output for weights
 
-	39) Different Non - Differentiable Loss Functions
+	39) Different Non - Differentiable Loss Functions. You need to find about 3 such functions and show that they are non differentiable
 
 	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / foward passes)
 		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
@@ -111,7 +114,9 @@
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
 
-## ========================================================================================================================
+	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
+
+## =======================================================================================
 
 	Backlog Tasks:
 	

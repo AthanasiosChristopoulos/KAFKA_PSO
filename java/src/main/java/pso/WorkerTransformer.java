@@ -772,6 +772,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (!buffer.isEmpty()) {
             buffer.clear();
         }
+        double totalElapsedTime = (System.nanoTime() - this.t0) / 1_000_000.0;
 
         if(lastOffset == 0) {   // if inactive Partition, means Worker terminated before starting to read that partition 
                                 // (worker reads the partitions with a limited degree of parallelism, not 40 at once)
@@ -793,14 +794,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             double avgMsCommunication = (sumElapsedNsCommunication / 1_000_000.0) / count; 
             double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
-
+            
             if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", average elapsed time Measurements: over " + count + " batches: " + "\n" +
                     "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
                     "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
                     "=> per Communication: " + String.format("%.3f ms", avgMsCommunication) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
-                    "   => per forwardPassMs: " + avgForwardPassMs + "\n"
+                    "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
+                    " Rate of Updates / Batches per ms: " + String.format("%.5f ms", count / totalElapsedTime) 
             );
 
             ws.validAvgMs = avgMs;
@@ -824,7 +826,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         logger.log("countPartitionsFinished: " + ws.countPartitionsFinished + 
-            ", numberOfTasks: " + ws.numberOfTasks);
+            ", numberOfTasks: " + ws.numberOfTasks + "\n");
 
         if(ws.countPartitionsFinished == ws.numberOfTasks - 5) {    // these 5 are not normal tasks
                         // there are always 5 extra control threads

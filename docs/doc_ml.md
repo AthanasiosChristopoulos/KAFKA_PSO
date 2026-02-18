@@ -1,4 +1,4 @@
-## Data Streaming / Data Pipeline: ===============================================================================================
+## Data Streaming / Data Pipeline: =============================================================
 
 - “We just keep feeding data and doing backprop forever.” => This almost never happens in practice
     => catastrophic forgetting of data already processed
@@ -35,7 +35,7 @@
             Dropout(0.5) roughly means “keep 50% of units” during training (the other 50% are set to 0).
             At inference time, dropout is disabled.
 
-## Funnels / Valeys:    ===============================================================================================
+## Funnels / Valeys: ==========================================================================
 
 The landscape of the neural networks is:
     - partially funnel-like locally

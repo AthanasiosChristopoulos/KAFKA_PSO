@@ -455,16 +455,17 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - Forward pass cost: CPU => 200ms / GPU => 30ms  
 
 ### FASHION-MNIST: ====================================================================
+
     - Train - Samples: 60000, Features => 28 x 28 x 1, 784 features flattend
     - 10 classes, different types of clothing
+
 ### CIRAR10: ========================================================================
 
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
 
-## ==================================================================================
-
-## CNNs - Image Datasets: ===================================================================================================
+## ================================================================================================
+## CNNs - Image Datasets: =========================================================================
 
     - Even if this seems a small number of parameters / weights, it is much more computationally expensive to apply a 
         forward pass to a CNN, rather than a Dense NN: 
@@ -1018,7 +1019,7 @@ found a better region than the second or third best neighbors (they may not have
 
         The GPU is capable of executing CNN forward pass faster than the CPU. 
         GPU is only used for DL4J stuff (wherever we are handling DL4J):
-            - INDArray probs = model.output(X, false);      # Primary use of the GPU, forward passes => convolutions, matrix multiplications
+            - INDArray probs = model.output(X, false);    
             1) [CPU parsing + copying]
             2) [CPU → GPU transfer] (Copies data from CPU RAM → GPU VRAM, this is a memory transfer)
                 => Memory copy overhead
@@ -1031,7 +1032,12 @@ found a better region than the second or third best neighbors (they may not have
                 => is enforced from commands like these which request probs / the result:  float[] flatProps = probs.data().asFloat();  
 
             5) [CPU loss + accuracy loops]  
-        (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
+        GPU Overhead:
+         - (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
+         - Another source of overhead are the N_WORKERS. They need to share the GPU. There are 6 CPU cores working in paralleland the GPU is only device (you would like N_WORKERS == N_DEVICES). GPU has Kernel launch queue, it can only launch a limited amount of Kernels. Many workers fight over the GPU, since every time its used one time.
+            - GPU can parallelize compute internally
+         -  The highway = thousands of parallel cores
+            vs The toll gate = kernel launch + memory transfer + sync
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
             => On a simple NN, cpu is preferable
             => GPU is worth it if: ForwardPassTime >> Transfer + Sync cost
