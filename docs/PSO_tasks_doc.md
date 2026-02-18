@@ -148,6 +148,8 @@
 
 	42) Partition wizard stuff για να δωσεις περισσοτερο χωρο στο Ubuntu
 
+	46) Fix nonexistent error logging. Set Index to wrong (HEAD_LAYER_IDX = 9)
+
 ## =====================================================================================================
 	Thesis Structure:
 		- Motivation, Table of Contents

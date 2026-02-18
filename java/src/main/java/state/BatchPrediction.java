@@ -138,7 +138,7 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public float[] callPredictionsBatch(List<DataMessage> batch) {
+    public float[] callPredictionsBatch(List<DataMessage> batch, MultiLayerNetwork arg_model) {
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -268,7 +268,7 @@ public class BatchPrediction {
         }
         // ==============================================================================================================
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        probs = arg_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
                                                 // this is one forward pass per batch (has multiple samples)
                                                 // X is one of the different dimensionalities identified above
         end = System.nanoTime();

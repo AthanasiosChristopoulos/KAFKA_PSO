@@ -55,13 +55,14 @@ public class Simulation {
 
         // =============================================================================================
 
-        // MultiLayerNetwork m = Dl4jModelFactory.pretrainedModel(0);
-        // MultiLayerNetwork model = Dl4jModelFactory.createMNIST_CNN_Pretrained(0);
+        // MultiLayerNetwork m = Dl4jModelFactory.pretrainedModel();
+        
+        MultiLayerNetwork model = Dl4jModelFactory.createMNIST_CNN_Pretrained(0);
 
-        // System.out.println("OK loaded:");
-        // System.out.println(model.summary());
+        System.out.println("OK loaded:");
+        System.out.println(model.summary());
 
-        // System.exit(0);
+        System.exit(0);
 
         // =============================================================================================
 

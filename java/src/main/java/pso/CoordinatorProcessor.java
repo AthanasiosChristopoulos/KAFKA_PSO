@@ -227,7 +227,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 return;
             }
 
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch);  // inference / evaluate every time all workers current models arrive
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel);  // inference / evaluate every time all workers current models arrive
                                                                                 // monitor how training is going
             accuracy = accLoss[0];
             loss = accLoss[1];
@@ -404,8 +404,22 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
-        if(cfg.)
-        globalPredictor.callPredictionsBatch(evalBatch);
+        if(cfg.USING_PRETRAINED_MODEL) {
+            float[] accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
+
+            accuracy = accLoss[0];
+            loss = accLoss[1];
+            nSamples = (int) accLoss[2];
+            nCorrect = (int) accLoss[3];
+
+            if (logger.isEnabled(2)) logger.log("Report on preTrained Model accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " loss: " + loss);
+
+            System.out.println("Report on preTrained Model: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " loss: " + loss);
+
+        }
+        
 
         return cachedTestSet;
     }

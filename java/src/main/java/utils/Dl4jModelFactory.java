@@ -53,7 +53,7 @@ public class Dl4jModelFactory {
 			// return createMNIST4Cnn_New(workerId);
 			// return createMNISTCnn_New_2(workerId);
 			// return createMNISTModelCNNHeavy(workerId);
-			
+
 			if(preTrained) {
 				return pretrainedModel();
 			} else {
@@ -239,6 +239,8 @@ public class Dl4jModelFactory {
 						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
 														// this depends on the methodology used to define activation layers. They can be embedded or
 														// be external (right afterwards) to dense layers
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
 						.build())
 				.build();
 
