@@ -6,6 +6,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.nd4j.common.primitives.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -119,10 +120,18 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.globalModel = globalModel;
         this.bestGlobalModel = bestGlobalModel;
 
-        if(cfg.USING_PRETRAINED_MODEL) this.preTrainedModel = Dl4jModelFactory.createModel(-1, true);
-        System.out.println("Pretrained Model Summary ===========================================");
-        System.out.println(this.preTrainedModel.summary());
+        int header_layer_idx = -1;
+        if(cfg.USING_PRETRAINED_MODEL) {
+            Pair<MultiLayerNetwork, Integer> pair = Dl4jModelFactory.createModel(-1, true);
+            this.preTrainedModel = pair.getFirst();
+            header_layer_idx = pair.getSecond();
+            this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, header_layer_idx); // HEAD_LAYER_IDX
+        }
         
+        System.out.println("Pretrained Model Summary ===========================================");
+        // System.out.println(this.preTrainedModel.summary());
+        logger.log("Pretrained Model Summary ===========================================");
+
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         this.testStoreName = testStoreName;
@@ -140,8 +149,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             
         this.consumer = new KafkaConsumer<>(consumerProps);
         this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
-
-        this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, cfg.HEAD_LAYER_IDX);
     }
 
     // ================================================================================================================

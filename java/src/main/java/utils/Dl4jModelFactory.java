@@ -25,6 +25,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.nd4j.linalg.learning.config.NoOp;
+import org.nd4j.common.primitives.Pair;
 
 public class Dl4jModelFactory {
         
@@ -37,9 +38,10 @@ public class Dl4jModelFactory {
 
 	public static final boolean printModel = false;
 
-	public static MultiLayerNetwork createModel(int workerId, boolean preTrained) {
+	public static Pair<MultiLayerNetwork, Integer> createModel(int workerId, boolean preTrained) {
 		// System.out.println("DATASET: " + DATASET);
 		MultiLayerNetwork model;
+		int head_layer_idx = -1;
 
 		if("iris".equals(DATASET)) {
 			model = createIrisModel(workerId);
@@ -62,8 +64,11 @@ public class Dl4jModelFactory {
 				// model = pretrainedModelMNIST();
 			} else {
 				model = createMNIST_CNN_PretrainedLeNet(workerId);
+				head_layer_idx = 8;
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId);
+				// head_layer_idx = 4;
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId);
+				// head_layer_idx = 3;
 			}
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
@@ -130,8 +135,8 @@ public class Dl4jModelFactory {
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
-		
-		return model;
+
+		return Pair.of(model, head_layer_idx);
 	}
 
 	// ======================================================================================================================

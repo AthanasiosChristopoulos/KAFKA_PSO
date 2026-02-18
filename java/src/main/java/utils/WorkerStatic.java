@@ -2,6 +2,7 @@ package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.common.primitives.Pair;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,10 +60,13 @@ public final class WorkerStatic {
         this.workerId = workerId;
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        this.model = Dl4jModelFactory.createModel(workerId, false);
-        
+        // this.model = Dl4jModelFactory.createModel(workerId, false);
+        Pair<MultiLayerNetwork, Integer> pair = Dl4jModelFactory.createModel(workerId, false);
+
+        this.model = pair.getFirst();        // the model
+
         try {
-            this.headStartLayerIdx = cfg.HEAD_LAYER_IDX; // add to Config
+            this.headStartLayerIdx = pair.getSecond(); // add to Config
             this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
             this.headDim = (int) model.numParams() - headFlatIndex;
             if(logger.isEnabled(2)) logger.log("Dims: headStartLayerIdx: " + this.headStartLayerIdx + ", headFlatIndex: " + this.headFlatIndex
