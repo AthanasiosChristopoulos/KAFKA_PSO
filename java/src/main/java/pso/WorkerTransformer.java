@@ -7,6 +7,7 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
+import org.bytedeco.opencv.opencv_core.Size;
 import org.apache.kafka.streams.state.KeyValueIterator;
 
 import java.util.*;
@@ -28,7 +29,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final int workerId;
 
     private static Config cfg = Config.getInstance();
-    private final int N_WORKERS = cfg.N_WORKERS;  
     private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
@@ -84,6 +84,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
+    private static int countForwardPassesStatic = 0;
     // =======================================================================
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
@@ -142,7 +143,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // Build neighbor list only if neighborhoods enabled
         if (ENABLE_NEIGHBORHOODS) {
-            this.neighborIds = computeNeighborIds(workerId, N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
+            this.neighborIds = computeNeighborIds(workerId, cfg.N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
+            if(logger.isEnabled(2)) logger.log("neighborIds: " + Arrays.toString(neighborIds)); 
             this.neighborKeys = new String[neighborIds.length];
             for (int i = 0; i < neighborIds.length; i++) {
                 neighborKeys[i] = "pBest" + neighborIds[i];     // if wieghtId - key isnt there then pBest weight gets filtered out
@@ -333,7 +335,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     " and accuracy: " + ws.stats.getBestAccuracy() + ", msgIndex = " + msgIndex);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
-            count++;
+            count++; ws.countForwardPasses++; countForwardPassesStatic++;
             return new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
         }
 
@@ -351,7 +353,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
-            count++;
+            count++; ws.countForwardPasses++; countForwardPassesStatic++;
             return new KeyValue<>("current_weights", msg);
         }
 
@@ -383,7 +385,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         sumElapsedNs += (System.nanoTime() - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
                                         // Doesnt trigger when we are collecting a batch
-        count++;
+        count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
         return null;
     }
@@ -397,16 +399,47 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
-    private static int[] computeNeighborIds(int workerId, int nWorkers, int ringRadious, boolean includeSelf,String topology) {
+    
+    private static int[] allWorkerIds(int workerId, int nWorkers, boolean includeSelf) {
+        if (nWorkers <= 0) return new int[0];
+
+        if (includeSelf) {
+            int[] ids = new int[nWorkers];
+            for (int i = 0; i < nWorkers; i++) ids[i] = i;  // 0 ... nWorkers - 1
+            return ids;
+        } else {    // here we need to explicitly exclude self. this is why nWorkers - 1
+            if (nWorkers == 1) return new int[0];
+            int[] ids = new int[nWorkers - 1];
+            int idx = 0;
+            for (int i = 0; i < nWorkers; i++) {
+                if (i == workerId) continue;
+                ids[idx++] = i;
+            }
+            return ids;
+        }
+    }
+
+    //=========================================================================================================================
+
+    private static int[] computeNeighborIds(int workerId, int nWorkers, int ringRadius, boolean includeSelf,String topology) {
         if (nWorkers <= 0) return new int[0];
 
         switch (topology) {
             case "square":
+                int minSquare = includeSelf ? 5 : 4;
+                if (nWorkers < minSquare) {
+                    return allWorkerIds(workerId, nWorkers, includeSelf);
+                }
                 return computeSquareNeighborIds(workerId, nWorkers, includeSelf);
 
             case "ring":
             default:
-                return computeRingNeighborIds(workerId, nWorkers, ringRadious, includeSelf);
+                int maxPossible = includeSelf ? nWorkers : (nWorkers - 1);
+                int requested = includeSelf ? (2 * ringRadius + 1) : (2 * ringRadius);
+                if (requested > maxPossible || nWorkers < cfg.NEIGHBORHOOD_SIZE) {
+                    return allWorkerIds(workerId, nWorkers, includeSelf);
+                }
+                return computeRingNeighborIds(workerId, nWorkers, ringRadius, includeSelf);
         }
     }
 
@@ -832,6 +865,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(ws.countPartitionsFinished == ws.numberOfTasks - 5) {    // these 5 are not normal tasks
                         // there are always 5 extra control threads
             if(logger.isEnabled(2)) logger.log("Final inActivePartitions: " + ws.inactivePartitions);
+            if(logger.isEnabled(2)) logger.log("Number of forward passes: " + 
+                ws.countForwardPasses + ", globally: " + countForwardPassesStatic);
+
             System.out.println("[Worker " + workerId + "] Average Elapsed Time per Batch: " +
                     String.format("%.3f ms", ws.validAvgMs) + ", InActivePartitions " + ws.inactivePartitions);
         }

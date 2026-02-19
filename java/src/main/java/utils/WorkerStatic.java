@@ -39,7 +39,8 @@ public final class WorkerStatic {
     public int numberOfTasks = 0;
     public int countPartitionsFinished = 0;
     public double validAvgMs;
-
+    public int countForwardPasses = 0;
+    
     public int start;     // configured
     public int headDim;               // number of trainable params in head
 
