@@ -285,7 +285,7 @@ public class PsoUpdater {
         }
         
         if(cfg.USING_PRETRAINED_MODEL) {
-            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.start);
         } else {
             Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
         }
@@ -347,7 +347,7 @@ public class PsoUpdater {
             }
 
             if(cfg.USING_PRETRAINED_MODEL) {
-                Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+                Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.start);
             } else {
                 Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
             }
@@ -526,7 +526,7 @@ public class PsoUpdater {
         }
                 
         if(cfg.USING_PRETRAINED_MODEL) {
-            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.headFlatIndex);
+            Dl4jParamUtils.updateModelHead(ws.model, ws.flatModel, ws.start);
         } else {
             Dl4jParamUtils.updateModel(ws.model, ws.flatModel);
         }

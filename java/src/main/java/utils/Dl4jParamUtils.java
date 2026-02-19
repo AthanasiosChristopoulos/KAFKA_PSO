@@ -29,7 +29,7 @@ public class Dl4jParamUtils {
     // Decode / Encode Model Number 1 (both of your methods include the biases as well.):
     // model.params() => both weights and biases (actually all other trainable parameters)
 
-    public static float[] modelToFlatList(MultiLayerNetwork model) {    // Serializa model into float[]
+    public static float[] modelToFlatList(PsoModel model) {    // Serializa model into float[]
                                                     // INDArray.toFloatVector() allocates a fresh float[] copy every call.
         return model.params().toFloatVector();      // model.params() returns one flat vector that contains every parameter in the model
                                                     // specific order chosen by DL4J
@@ -37,13 +37,13 @@ public class Dl4jParamUtils {
             // For CNNs (Convolutional Layer): [biases, parameters]
             // For FNNs (Dense Layer): [weights, biases]: Usually its: [Layer0_weights, Layer0_biases, Layer1_weights, Layer1_biases, ... ]
 
-    // public static float[] modelToFlatHead(MultiLayerNetwork model, int headStartLayerIdx) {
+    // public static float[] modelToFlatHead(PsoModel model, int headStartLayerIdx) {
     //     float[] full = model.params().toFloatVector();
     //     int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
     //     return Arrays.copyOfRange(full, start, full.length);
     // }
 
-    public static float[] modelToFlatHead(MultiLayerNetwork model, int start) {
+    public static float[] modelToFlatHead(PsoModel model, int start) {
 
         float[] full = model.params().toFloatVector();
         return Arrays.copyOfRange(full, start, full.length);
@@ -51,12 +51,12 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
     
-    public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    public static void updateModel(PsoModel model, float[] flat) {
         INDArray params = model.params();   // a pointer to the actual parameter buffer owned by that model
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
     }
     
-    public static void updateModelHead(MultiLayerNetwork model, float[] headFlat, int start) {
+    public static void updateModelHead(PsoModel model, float[] headFlat, int start) {
         INDArray p = model.params(); // 1D view of the whole parameter buffer
         // int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
         int end = (int) model.numParams();
@@ -68,26 +68,27 @@ public class Dl4jParamUtils {
 
         // assign only the head range
         INDArray headView = p.get(NDArrayIndex.interval(start, end));
-        headView.assign(Nd4j.createFromArray(headFlat));
+        // headView.assign(Nd4j.createFromArray(headFlat));
+        headView.data().setData(headFlat); 
     }
 
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    // public static void updateModel(PsoModel model, float[] flat) {
     //     model.setParams(Nd4j.createFromArray(flat)); 
     // }
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) { // Deserialize model, from a float[] to a MultiLayerNetwork model object
+    // public static void updateModel(PsoModel model, float[] flat) { // Deserialize model, from a float[] to a PsoModel model object
     //     if (flat.length != model.numParams()) {
     //         throw new IllegalArgumentException(
     //             "Expected " + model.numParams() + " params but got " + flat.length
     //         );
     //     }
     //     model.setParams(Nd4j.createFromArray(flat));    // model.setParams(flat) expects a vector in that exact same order as set by DL4J in the start
-    //                                                     // updateModel(...) mutates the existing MultiLayerNetwork object in place.
+    //                                                     // updateModel(...) mutates the existing PsoModel object in place.
     // }                                                   // DL4J provides the serialization convention
     // createFromArray => then every update step creates a new GPU buffer for params.
     //=====================================================================================================
     // Decode / Encode Model Number 2:
 
-    // public static float[] modelToFlatList(MultiLayerNetwork model) {
+    // public static float[] modelToFlatList(PsoModel model) {
 
     //     List<Float> flatList = new ArrayList<>();
 
@@ -123,7 +124,7 @@ public class Dl4jParamUtils {
     //     return flat;
     // }
     
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    // public static void updateModel(PsoModel model, float[] flat) {
     //     int idx = 0;
 
     //     for (int layerIdx = 0; layerIdx < model.getnLayers(); layerIdx++) {
@@ -162,7 +163,7 @@ public class Dl4jParamUtils {
 
     //==============================================================================================
 
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    // public static void updateModel(PsoModel model, float[] flat) {
     //     if (flat.length != model.numParams()) {
     //         throw new IllegalArgumentException(
     //             "Expected " + model.numParams() + " params but got " + flat.length
@@ -174,7 +175,7 @@ public class Dl4jParamUtils {
     //==============================================================================================
 
 
-    // public static void updateModel(MultiLayerNetwork model, float[] flat) {
+    // public static void updateModel(PsoModel model, float[] flat) {
 
     //     long expected = model.numParams();
     //     if (flat.length != expected) {
@@ -388,7 +389,7 @@ public class Dl4jParamUtils {
 
     //=====================================================================================================
 
-    public static void saveModel(MultiLayerNetwork model, String name, int idx) {
+    public static void saveModel(PsoModel model, String name, int idx) {
 
         File dir = new File("models"); // create Models Directory if it doesnt exist
         if (!dir.exists()) {

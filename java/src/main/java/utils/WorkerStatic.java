@@ -26,9 +26,8 @@ public final class WorkerStatic {
 
     public final int workerId;
 
-    public final MultiLayerNetwork model;
+    public final PsoModel model;
     public float[] flatModel;
-
     public float[] pBestWeights;
 
     public final Stats stats;
@@ -49,8 +48,7 @@ public final class WorkerStatic {
     public int countPartitionsFinished = 0;
     public double validAvgMs;
 
-    public int headStartLayerIdx;     // configured
-    public int headFlatIndex;       // computed from model
+    public int start;     // configured
     public int headDim;               // number of trainable params in head
 
     // ========================================================
@@ -61,21 +59,19 @@ public final class WorkerStatic {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         // this.model = Dl4jModelFactory.createModel(workerId, false);
-        Pair<MultiLayerNetwork, Integer> pair = Dl4jModelFactory.createModel(workerId, false);
+        Pair<PsoModel, Integer> pair = Dl4jModelFactory.createModel(workerId, false);
 
         this.model = pair.getFirst();        // the model
 
         try {
-            this.headStartLayerIdx = pair.getSecond(); // add to Config
-            this.headFlatIndex = ParamSlices.headFlatIndex(model, headStartLayerIdx);
-            this.headDim = (int) model.numParams() - headFlatIndex;
+            this.start = pair.getSecond(); // add to Config
+            this.headDim = (int) model.numParams() - start;
             if(logger.isEnabled(2)) logger.log("Model Dimensions => " + 
-                "headStartLayerIdx: " + this.headStartLayerIdx + ", headFlatIndex: " +
-                this.headFlatIndex + ", model.numParams(): " + model.numParams() + 
+                "start: " + this.start + ", model.numParams(): " + model.numParams() + 
                 ", headDim: " + this.headDim);
                 
             if(cfg.USING_PRETRAINED_MODEL) {
-                this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.headFlatIndex);
+                this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.start);
             } else {
                 this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
             }
@@ -85,7 +81,7 @@ public final class WorkerStatic {
         
         if(logger.isEnabled(2)) {
             this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
-            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.headFlatIndex);
+            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);
             logger.log("Model with shape: ");
             Map<String, INDArray> pt = model.paramTable();
             pt.forEach((k, v) -> logger.log(k + " -> " + Arrays.toString(v.shape())));

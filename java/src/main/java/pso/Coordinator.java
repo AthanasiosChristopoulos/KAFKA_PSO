@@ -61,9 +61,9 @@ public class Coordinator implements Runnable {
 
     private final CustomLogger logger;
 
-    private final MultiLayerNetwork globalModel;
-    private final MultiLayerNetwork bestGlobalModel;
-    private MultiLayerNetwork preTrainedModel;
+    private final PsoModel globalModel;
+    private final PsoModel bestGlobalModel;
+    private PsoModel preTrainedModel;
     private final BatchPrediction predictor;
 
     private long t0 = System.nanoTime();
@@ -76,8 +76,8 @@ public class Coordinator implements Runnable {
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
     private final String instanceTag = "Coordinator@" + instanceNo + "#" + Integer.toHexString(System.identityHashCode(this));
 
-    private Pair<MultiLayerNetwork, Integer> pair;
-    private int headFlatIndex;
+    private Pair<PsoModel, Integer> pair;
+    private int start;
 
     // ====================================================================================================================================
 
@@ -93,7 +93,7 @@ public class Coordinator implements Runnable {
         if(logger.isEnabled(2)) logger.log(this.globalModel.summary());
 
         pair = Dl4jModelFactory.createModel(-1, true);    
-        int header_layer_idx = -1;  
+        int start = -1;  
         if(cfg.USING_PRETRAINED_MODEL) {
             pair = Dl4jModelFactory.createModel(-1, true);
             this.preTrainedModel = pair.getFirst();
@@ -102,8 +102,7 @@ public class Coordinator implements Runnable {
             if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
             if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());
 
-            header_layer_idx = pair.getSecond();
-            this.headFlatIndex = ParamSlices.headFlatIndex(globalModel, header_layer_idx); // HEAD_LAYER_IDX
+            this.start = pair.getSecond();
         }
 
         System.out.println(this.globalModel.summary());
@@ -304,7 +303,7 @@ public class Coordinator implements Runnable {
         );
 
         localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, 
-                TEST_STORE, this.preTrainedModel, this.headFlatIndex));
+                TEST_STORE, this.preTrainedModel, this.start));
 
         // Inference Task ==================================================================================================
         

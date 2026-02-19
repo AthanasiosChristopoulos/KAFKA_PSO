@@ -38,10 +38,11 @@ public class Dl4jModelFactory {
 
 	public static final boolean printModel = false;
 
-	public static Pair<MultiLayerNetwork, Integer> createModel(int workerId, boolean preTrained) {
+	public static Pair<PsoModel, Integer> createModel(int workerId, boolean preTrained) {
 		// System.out.println("DATASET: " + DATASET);
-		MultiLayerNetwork model;
+		PsoModel model = null;
 		int head_layer_idx = -1;
+		Pair<PsoModel, Integer> pair = null;
 
 		if("iris".equals(DATASET)) {
 			model = createIrisModel(workerId);
@@ -76,7 +77,7 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
+				pair = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
 				// 3) 
@@ -169,13 +170,16 @@ public class Dl4jModelFactory {
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
-
-		return Pair.of(model, head_layer_idx);
+		if(pair == null) {
+			return Pair.of(model, head_layer_idx);
+		} else {
+			return pair;
+		}
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModelMNIST(String fileName) {
+	public static PsoModel pretrainedModelMNIST(String fileName) {
 		try {
 
 			File f = new File("pretrained_models/" + fileName);
@@ -189,7 +193,7 @@ public class Dl4jModelFactory {
 					false   // enforceTrainingConfig = false (not using Keras optimizer config)
 			);
 
-			return model;
+			return new PsoMultiLayerAdapter(model);
 
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to import Fashion-MNIST Keras .h5 model", e);
@@ -198,7 +202,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	// public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId) {
+	// public static PsoModel createMNIST_CNN_Pretrained_MNIST(int workerId) {
 
 	// 	MultiLayerNetwork pretrained = pretrainedModelMNIST();
 
@@ -234,10 +238,10 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST(int workerId, String fileName) {
+	public static PsoModel createMNIST_CNN_Pretrained_MNIST(int workerId, String fileName) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName);
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -247,7 +251,7 @@ public class Dl4jModelFactory {
 
 		// From summary
 		final int flattenDim = 32 * 5 * 5;  // 800
-		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+		MultiLayerNetwork model = new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(2)
 				.addLayer(new DenseLayer.Builder()
@@ -262,15 +266,15 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
-		return tl;
+		return new PsoMultiLayerAdapter(model);
 	}
 	
 	// ===========================================================================================
 
-	public static MultiLayerNetwork createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName, int inputDim) {
+	public static PsoModel createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName);
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -279,7 +283,7 @@ public class Dl4jModelFactory {
 				.updater(new NoOp())   // <-- prevents optimizer assumptions
 				.build();
 
-		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+		MultiLayerNetwork model = new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(1) 
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
@@ -291,31 +295,31 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
-		return tl;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork pretrainedModelLeNet() {
+	public static PsoModel pretrainedModelLeNet() {
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
 				.numClasses(10) // MNIST pretrained weights are for 10 classes
 				.build();
 
-		MultiLayerNetwork pretrained;
+		MultiLayerNetwork model;
 		try {
-			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+			model = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
 		}
 
-		return pretrained;
+		return new PsoMultiLayerAdapter(model);
 	}
 	
 	// ======================================================================================================================
 
-	// public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
+	// public static PsoModel createMNIST_CNN_PretrainedLeNet(int workerId) {
 	// 	// 1) Load pretrained LeNet (MNIST 10-class)
 	// 	ZooModel zoo = LeNet.builder()
 	// 			.numClasses(10) // MNIST pretrained weights are for 10 classes
@@ -355,7 +359,7 @@ public class Dl4jModelFactory {
 	// }
 
 
-	// public static MultiLayerNetwork createMNIST_CNN_PretrainedLeNet(int workerId) {
+	// public static PsoModel createMNIST_CNN_PretrainedLeNet(int workerId) {
 
 	// 	ZooModel zoo = LeNet.builder().numClasses(10).build();
 
@@ -379,19 +383,21 @@ public class Dl4jModelFactory {
 	// 	return tl;
 	// }
 
-	public static MultiLayerNetwork  createMNIST_CNN_PretrainedLeNet(int workerId) {
+	public static Pair<PsoModel, Integer> createMNIST_CNN_PretrainedLeNet(int workerId) {
 
 		// Pretrained Model ===========================================================
 		ZooModel zoo = LeNet.builder().numClasses(10).build();
 
-		MultiLayerNetwork pretrained;
+		MultiLayerNetwork base;
 		try {
-			pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+			base = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
 		}
 
+		int start = (int) base.numParams();
+		
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
@@ -400,7 +406,7 @@ public class Dl4jModelFactory {
 				.build();
 
 		// From your summary: last classifier layer had nIn=500
-		MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
+		MultiLayerNetwork model = new TransferLearning.Builder(base)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.removeLayersFromOutput(2)      // remove 2 layers
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
@@ -414,13 +420,13 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
-		return tl;
+		return Pair.of(new PsoMultiLayerAdapter(model), start);
 	}
 
 	// ======================================================================================================================
 	// Iris Dataset Model Architecture 
 
-	public static MultiLayerNetwork createIrisModel(int workerId) {
+	public static PsoModel createIrisModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Iris Model");
 		}
@@ -449,7 +455,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init(); // sets the random weights 
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	} 
 
 	// Number of weights in the network calculation:  
@@ -461,7 +467,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Wine Dataset Model Architecture 
 
-	public static MultiLayerNetwork createWineModel(int workerId) {
+	public static PsoModel createWineModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Wine Model");
 		}
@@ -489,7 +495,7 @@ public class Dl4jModelFactory {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        return model;
+        return new PsoMultiLayerAdapter(model);
 	} 
 
 	// Number of weights in the network calculation:  
@@ -501,7 +507,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// MNIST Dataset Model Architecture 
 
-	public static MultiLayerNetwork createMNISTModelMLP(int workerId) {
+	public static PsoModel createMNISTModelMLP(int workerId) {
 		if(printModel) {
 			System.out.println("Using MNIST Model");
 		}
@@ -529,7 +535,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Number of weights in the network calculation:  
@@ -546,7 +552,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTModelMLPSimple_0(int workerId) {
+	public static PsoModel createMNISTModelMLPSimple_0(int workerId) {
 		if(printModel) {
 			System.out.println("Using MNIST Model");
 		}
@@ -574,12 +580,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTModelMLPSimple_1(int workerId) {
+	public static PsoModel createMNISTModelMLPSimple_1(int workerId) {
 		if (printModel) {
 			System.out.println("Using MNIST Tiny MLP (1 hidden layer, PSO-friendly)");
 		}
@@ -603,12 +609,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTModelMLPSimple_2(int workerId) {
+	public static PsoModel createMNISTModelMLPSimple_2(int workerId) {
 		if (printModel) {
 			System.out.println("Using MNIST Ultra-Simple Model (no hidden / logistic regression)");
 		}
@@ -631,12 +637,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}	// 784 * 10 + 10 = 7850 parameters	 
 
 	// ======================================================================================================================
 
-    public static MultiLayerNetwork createMNIST4MLP(int workerId) {
+    public static PsoModel createMNIST4MLP(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123 + workerId)
@@ -662,7 +668,7 @@ public class Dl4jModelFactory {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        return model;
+        return new PsoMultiLayerAdapter(model);
     }
 	// Weight Calculation: 
 	// 784×128 + 128 = 100,480
@@ -672,7 +678,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTCnn_New_2(int workerId) {
+	public static PsoModel createMNISTCnn_New_2(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN (PSO-feasible)");
@@ -717,12 +723,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNISTModelCNNHeavy(int workerId) {
+	public static PsoModel createMNISTModelCNNHeavy(int workerId) {
 
 		int height = 28, width = 28, channels = 1;
 		int nOut = 10;
@@ -777,12 +783,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4MLP_Reduced(int workerId) {
+	public static PsoModel createMNIST4MLP_Reduced(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -807,7 +813,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// 784→64: 784×64 + 64 = 50,176 + 64 = 50,240
@@ -817,7 +823,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-    public static MultiLayerNetwork createMNISTCnn(int workerId) {
+    public static PsoModel createMNISTCnn(int workerId) {
 		if(printModel) {
 			System.out.println("Using CNN MNIST Model");
 		}
@@ -885,14 +891,14 @@ public class Dl4jModelFactory {
 			// Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
 			// Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more )
 
-        return model;
+        return new PsoMultiLayerAdapter(model);
     }
 
 	// ======================================================================================================================
 	// MNIST4CNN
 
 
-	public static MultiLayerNetwork createMNIST4Cnn(int workerId) {
+	public static PsoModel createMNIST4Cnn(int workerId) {
 		if (printModel) {
 				System.out.println("Using CNN MNIST4 Model");
 			}
@@ -937,14 +943,14 @@ public class Dl4jModelFactory {
 
 			MultiLayerNetwork model = new MultiLayerNetwork(conf);
 			model.init();
-			return model;
+			return new PsoMultiLayerAdapter(model);
 	}
 	
 	// Total = 80 + 1168 + 68 = 1316
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_Simple(int workerId) {
+	public static PsoModel createMNIST4Cnn_Simple(int workerId) {
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN SIMPLE");
 		}
@@ -980,12 +986,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_New(int workerId) {
+	public static PsoModel createMNIST4Cnn_New(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN");
@@ -1037,7 +1043,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Params => k * k = 3 * 3 = 9, conv = nOut*(k*k*nIn + bias)
@@ -1050,7 +1056,7 @@ public class Dl4jModelFactory {
 	// total 320 + 18496 + 36928 + 36928 = 92932 params
 	// Reported Dimensionality: 92932
 
-	public static MultiLayerNetwork createMNIST4Cnn_New_Simpler(int workerId) {
+	public static PsoModel createMNIST4Cnn_New_Simpler(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN");
@@ -1096,12 +1102,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createMNIST4Cnn_New_2(int workerId) {
+	public static PsoModel createMNIST4Cnn_New_2(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN (PSO-feasible)");
@@ -1148,7 +1154,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 	// Input Layer is always considered: 
 	// 9 * 1 (input) * 8 (output) + 8 = 80
@@ -1159,7 +1165,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 
-	public static MultiLayerNetwork createSUSYModel_SOFTMAX(int workerId) {
+	public static PsoModel createSUSYModel_SOFTMAX(int workerId) {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
@@ -1187,7 +1193,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Number of weights in the network calculation:  
@@ -1201,7 +1207,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
 
-	public static MultiLayerNetwork createSUSYModel(int workerId) {
+	public static PsoModel createSUSYModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using SUSY Model");
 		}
@@ -1229,13 +1235,13 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 	// Bank Dataset Model Architecture 
 
-	public static MultiLayerNetwork createBankModel(int workerId) {
+	public static PsoModel createBankModel(int workerId) {
 		int outputSize = 1;
 		if(printModel) {
 			System.out.println("Using BANK Model");
@@ -1266,7 +1272,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 	
 	// Number of weights in the network calculation:  
@@ -1278,7 +1284,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createBankModel40K(int workerId) {
+	public static PsoModel createBankModel40K(int workerId) {
 		int outputSize = 1; 
 		if(printModel) {
 			System.out.println("Using BANK Model");
@@ -1309,7 +1315,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 	
 	// Number of weights in the network calculation:  
@@ -1321,7 +1327,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createAdultModel(int workerId) {
+	public static PsoModel createAdultModel(int workerId) {
 
 		if(printModel) {
 			System.out.println("Using ADULT_INCOME Model");
@@ -1352,7 +1358,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Number of weights in the network calculation:
@@ -1365,7 +1371,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// COVERTYPE Dataset Model Architecture
 
-	public static MultiLayerNetwork createCovertypeModel(int workerId) {
+	public static PsoModel createCovertypeModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using Covertype Model");
 		}
@@ -1393,7 +1399,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Number of weights in the network calculation:
@@ -1409,7 +1415,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// HAR (UCI Human Activity Recognition) Dataset Model Architecture
 
-	public static MultiLayerNetwork createHarModel(int workerId) {
+	public static PsoModel createHarModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using HAR Model");
 		}
@@ -1437,7 +1443,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 
@@ -1459,7 +1465,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
 
-	public static MultiLayerNetwork createPendigitsModel(int workerId) {
+	public static PsoModel createPendigitsModel(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}
@@ -1487,7 +1493,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 
@@ -1506,7 +1512,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createPendigitsModelTanh(int workerId) {
+	public static PsoModel createPendigitsModelTanh(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}
@@ -1536,12 +1542,12 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
 		// model.params().muli(WEIGHTS_INIT_SCALE);
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createPendigitsModelSmaller(int workerId) {
+	public static PsoModel createPendigitsModelSmaller(int workerId) {
 		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH)");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -1570,12 +1576,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createPendigitsModelSmaller_2(int workerId) {	// single hidden layer
+	public static PsoModel createPendigitsModelSmaller_2(int workerId) {	// single hidden layer
 		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH, small)");
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -1596,12 +1602,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createPendigitsModelSmaller_3(int workerId) {	// no hidden layer just weights connecting input and output layer ...
+	public static PsoModel createPendigitsModelSmaller_3(int workerId) {	// no hidden layer just weights connecting input and output layer ...
 		if (printModel) System.out.println("Using PenDigits Ultra-Simple Model (no hidden)");
 
 		int nIn = 16;           
@@ -1621,13 +1627,13 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 	// WineQuality Dataset Model Architecture
 
-	public static MultiLayerNetwork createWineQualityModel(int workerId) {
+	public static PsoModel createWineQualityModel(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1655,7 +1661,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 
@@ -1675,7 +1681,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Letter
 
-	public static MultiLayerNetwork createLetterModel(int workerId) {
+	public static PsoModel createLetterModel(int workerId) {
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
@@ -1700,7 +1706,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// Layer 1: 16 → 256
@@ -1721,7 +1727,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// Letter 70k (bigger)
 
-	public static MultiLayerNetwork createLetterModel70K(int workerId) {
+	public static PsoModel createLetterModel70K(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1747,13 +1753,13 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 	// CIFAR3
 
-    public static MultiLayerNetwork createCifar3Model(int workerId) {
+    public static PsoModel createCifar3Model(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123 + workerId)
@@ -1795,12 +1801,12 @@ public class Dl4jModelFactory {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        return model;
+        return new PsoMultiLayerAdapter(model);
     }
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_PSO_Simple(int workerId) {
+	public static PsoModel createCifar3Model_PSO_Simple(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN SIMPLE (PSO): Conv8 -> LeakyReLU -> Pool -> GAP -> Softmax");
@@ -1838,13 +1844,13 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New(int workerId) {	// Recommended
+	public static PsoModel createCifar3Model_New(int workerId) {	// Recommended
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
@@ -1898,14 +1904,14 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 	// 896+18,496+36,928+65,600+195=122,115​
 	// Recorded Dimensionality of the output is: 122115. 45% accuracy
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler(int workerId) {
+	public static PsoModel createCifar3Model_New_Simpler(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
@@ -1953,14 +1959,14 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 	// 896+18,496+36,928+65,600+195=122,115​
 	// Recorded Dimensionality of the output is: 122115. 45% accuracy
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler_2(int workerId) {
+	public static PsoModel createCifar3Model_New_Simpler_2(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 SIMPLE A: Conv(32) -> MaxPool -> Dense(64 relu) -> Softmax(3)");
@@ -2008,12 +2014,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler_3(int workerId) {
+	public static PsoModel createCifar3Model_New_Simpler_3(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using CIFAR3 SIMPLE B: Conv(16)->Pool->Conv(32)->Pool->Dense(64)->Softmax(3)");
@@ -2063,12 +2069,12 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 
 	// ======================================================================================================================
 
-	public static MultiLayerNetwork createCifar3Model_New_Simpler_4(int workerId) {
+	public static PsoModel createCifar3Model_New_Simpler_4(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST4 CNN (PSO-feasible)");
@@ -2115,6 +2121,6 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		return model;
+		return new PsoMultiLayerAdapter(model);
 	}
 }

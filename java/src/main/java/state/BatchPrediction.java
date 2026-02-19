@@ -38,8 +38,8 @@ public class BatchPrediction {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final MultiLayerNetwork model;
-    private final MultiLayerNetwork bestModel;
+    private final PsoModel model;
+    private final PsoModel bestModel;
 
     private static BatchPrediction coordinatorInstance = null;
 
@@ -73,10 +73,10 @@ public class BatchPrediction {
 
     // for Worker (from WorkerStatic) =======================================================================================================
 
-    public BatchPrediction(MultiLayerNetwork model, CustomLogger logger, WorkerStatic ws) {
+    public BatchPrediction(PsoModel model, CustomLogger logger, WorkerStatic ws) {
         this.model = model;
         this.ws = ws;
-        this.MODEL_IS_CNN = isCnnByFirstLayer(model);
+        this.MODEL_IS_CNN = model.isCnn();
         this.bestModel = null;
         this.logger = logger;
         this.isCoordinator = false;
@@ -86,7 +86,8 @@ public class BatchPrediction {
             if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
             } else if ("cifar3".equals(DATASET)) {
-                Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
+                if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
+                else               Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
         } else {
             Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
@@ -96,10 +97,10 @@ public class BatchPrediction {
 
     // for Coordinator ==================================================================================================
 
-    public BatchPrediction(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
+    public BatchPrediction(PsoModel model, PsoModel bestModel, CustomLogger logger) {
         this.model = model;
         this.ws = null;
-        this.MODEL_IS_CNN = isCnnByFirstLayer(model);
+        this.MODEL_IS_CNN = model.isCnn();
         this.bestModel = bestModel;
         this.logger = logger;
         this.isCoordinator = true;
@@ -120,7 +121,7 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public static BatchPrediction getInstanceForCoordinator(MultiLayerNetwork model, MultiLayerNetwork bestModel, CustomLogger logger) {
+    public static BatchPrediction getInstanceForCoordinator(PsoModel model, PsoModel bestModel, CustomLogger logger) {
 
         if(coordinatorInstance == null) {
             
@@ -132,15 +133,7 @@ public class BatchPrediction {
 
     // ===========================================================================
 
-    public static boolean isCnnByFirstLayer(MultiLayerNetwork model) {
-
-        Layer l0 = model.getLayerWiseConfigurations().getConf(0).getLayer();
-        return (l0 instanceof ConvolutionLayer); 
-    }
-
-    // ===========================================================================
-
-    public float[] callPredictionsBatch(List<DataMessage> batch, MultiLayerNetwork arg_model) {
+    public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model) {
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -197,8 +190,11 @@ public class BatchPrediction {
                         // (nSamples, 3072)
                     X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
                         // (nSamples, 32, 32, 3)
-
-                    X = X4d.permute(0, 3, 1, 2);    // (nSamples, 3, 32, 32)
+                    if (argument_model.isNhWC()) {
+                        X = X4d;                             // keep NHWC
+                    } else {
+                        X = X4d.permute(0, 3, 1, 2);         // convert to NCHW
+                    }        // (nSamples, 3, 32, 32)
 
                 } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
@@ -281,7 +277,7 @@ public class BatchPrediction {
         }
         // ==============================================================================================================
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = arg_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
                                                 // this is one forward pass per batch (has multiple samples)
                                                 // X is one of the different dimensionalities identified above
         end = System.nanoTime();

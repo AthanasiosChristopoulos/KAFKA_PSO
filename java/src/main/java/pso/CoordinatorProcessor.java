@@ -47,9 +47,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
 
-    private final MultiLayerNetwork globalModel; // x_g , current model
-    private final MultiLayerNetwork bestGlobalModel; 
-    private MultiLayerNetwork preTrainedModel;
+    private final PsoModel globalModel; // x_g , current model
+    private final PsoModel bestGlobalModel; 
+    private PsoModel preTrainedModel;
 
     private float accuracy = -1f;    
     private float loss = 10000f;
@@ -81,7 +81,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private long t0;
     private long t1;
     private double lastActivitySeconds = 0.0;
-    private long start = System.nanoTime();
+    private long start_time = System.nanoTime();
     private long end = System.nanoTime();
     private long sumElapsedNs = 0;
     private int evaluation_count = 0;
@@ -103,13 +103,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private static final long WAIT_SLEEP_MS = 100;
     private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
 
-    private int headFlatIndex;
+    private int start;
 
     // ================================================================================================================
 
 
-    public CoordinatorProcessor(MultiLayerNetwork globalModel, MultiLayerNetwork bestGlobalModel, 
-            long t0, long t1, String testStoreName, MultiLayerNetwork preTrainedModel, int headFlatIndex) {
+    public CoordinatorProcessor(PsoModel globalModel, PsoModel bestGlobalModel, 
+            long t0, long t1, String testStoreName, PsoModel preTrainedModel, int start) {
         this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.t0 = t0;
@@ -122,7 +122,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         if(cfg.USING_PRETRAINED_MODEL) {
             this.preTrainedModel = preTrainedModel;
-            this.headFlatIndex = headFlatIndex;
+            this.start = start;
         }
 
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
@@ -161,7 +161,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     @Override
     public void process(Record<String, WeightsMessage> record) {
 
-        start = System.nanoTime();
+        start_time = System.nanoTime();
         updateTime();
 
         if (control.isStopRequested(-1)) {
@@ -206,7 +206,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
 
             if(cfg.USING_PRETRAINED_MODEL) {
-                Dl4jParamUtils.updateModelHead(globalModel, avgWeights, this.headFlatIndex);
+                Dl4jParamUtils.updateModelHead(globalModel, avgWeights, this.start);
             } else {
                 Dl4jParamUtils.updateModel(globalModel, avgWeights);
             }
@@ -244,7 +244,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             if(accuracy > bestGlobalModelAccuracy) {    
 
                 if(cfg.USING_PRETRAINED_MODEL) {
-                    Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.headFlatIndex);
+                    Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.start);
                 } else {
                     Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                 }
@@ -276,13 +276,13 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                         ", bestTrainingAccuracy: " + bestTrainingAccuracy);
 
             if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
-                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, headFlatIndex);
+                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
                 control.requestStopFinal();
                 return;
             }
 
             end = System.nanoTime();
-            sumElapsedNs += (end - start);
+            sumElapsedNs += (end - start_time);
             evaluation_count++;   
             
             control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
@@ -554,7 +554,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         }
 
-        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.headFlatIndex);         // save final solution
+        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / countForwardPass;
 
