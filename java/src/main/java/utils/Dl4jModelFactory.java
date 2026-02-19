@@ -144,9 +144,27 @@ public class Dl4jModelFactory {
 			// model = createCifar3Model_New(workerId);	
 			// model = createCifar3Model_New_Simpler(workerId);
 			// model = createCifar3Model_New_Simpler_2(workerId);
-			model = createCifar3Model_New_Simpler_3(workerId);
+			// model = createCifar3Model_New_Simpler_3(workerId);
 			// model = createCifar3Model_New_Simpler_4(workerId);
 			// model = createMNIST4Cnn_New_Simpler(workerId);
+
+			// pretrained =============================================================================================
+			// head_layer_idx = 8;	// LeNet
+			// String filename = "mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			String filename = "mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
+
+			if(preTrained) {
+				model = pretrainedModelMNIST(filename); 		
+
+			} else {
+
+				model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+
+			}
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
