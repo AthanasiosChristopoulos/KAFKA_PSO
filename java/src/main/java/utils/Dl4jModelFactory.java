@@ -14,6 +14,7 @@ import org.nd4j.linalg.learning.config.Adam;
 
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 
@@ -62,10 +63,9 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 			// head_layer_idx = 8;	// LeNet
-			// String filename = "mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "mnist_base_plus_head_v3.h5";	
-
+			// String filename = "pretrained_models/mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "pretrained_models/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			String filename = "pretrained_models/mnist_base_plus_head_v3.h5";	
 			if(preTrained) {
 				// 1)
 				model = pretrainedModelLeNet(); 
@@ -84,7 +84,7 @@ public class Dl4jModelFactory {
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+				model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
 
 			}
 
@@ -151,20 +151,20 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 			// head_layer_idx = 8;	// LeNet
-			// String filename = "mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
+			// String filename = "pretrained_models/mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "pretrained_models/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			String filename = "pretrained_models/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
 
 			if(preTrained) {
-				model = pretrainedModelMNIST(filename); 		
+				model = pretrainedModelMobileNetV2(filename); 		
 
 			} else {
 
-				model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
+				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
-
+				pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
 			}
 
 		} else {
@@ -177,12 +177,100 @@ public class Dl4jModelFactory {
 		}
 	}
 
+    // ===================================================================================================
+
+	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
+		try {
+			File f = new File(fileName);
+			if (!f.exists()) {
+				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
+			}
+
+			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(
+					f.getAbsolutePath(),
+					false
+			);
+
+			return new PsoGraphAdapter(base);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
+		}
+	}
+
+	// ===================================================================================================
+
+	public static Pair<PsoModel, Integer> createCifarFromMobileNetV2Base(int workerId, String kerasH5Path,
+			int numClasses) {
+		try {
+			// 1) Import Keras base (include_top=False)
+			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
+
+			// start = base params BEFORE adding head
+			int start = (int) base.numParams();
+
+			// 2) Freeze ALL layers in the base (feature extractor)
+			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+					.seed(123 + workerId)
+					.updater(new NoOp())        // PSO moves weights; no optimizer
+					.build();
+
+			// MobileNetV2 last conv block output (in Keras) commonly maps to this layer name in DL4J import
+			String featureLayer = "out_relu";
+
+			ComputationGraph model = new TransferLearning.GraphBuilder(base)
+					.fineTuneConfiguration(ftc)
+					.setFeatureExtractor(featureLayer) // freeze base up to here
+
+					// GAP: no trainable params
+					.addLayer("gap",
+							new GlobalPoolingLayer.Builder()
+									.poolingType(PoolingType.AVG)
+									// pool across spatial dims only; safe for NHWC imports too
+									.poolingDimensions(1, 2)
+									.build(),
+							featureLayer)
+
+					// output head (trainable)
+					.addLayer("new_output",
+							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+									// IMPORTANT: for MobileNetV2, channels=1280 after out_relu
+									.nIn(1280)
+									.nOut(numClasses)
+									.activation(Activation.SOFTMAX)
+									.weightInit(WeightInit.XAVIER)
+									.biasInit(0.0)
+									.build(),
+							"gap")
+
+					.setOutputs("new_output")
+					.build();
+
+			model.init();
+
+			// sanity: head size must be exactly 1280*numClasses + numClasses
+			int expectedHead = 1280 * numClasses + numClasses;
+			int actualHead = (int) model.numParams() - start;
+			if (actualHead != expectedHead) {
+				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +
+						" actual=" + actualHead + " start(base.numParams)=" + start + " tl.numParams=" + model.numParams());
+			}
+
+			// Wrap and return (NHWC = true for Keras imported models)
+			PsoModel wrapped = new PsoGraphAdapter(model);
+			return Pair.of(wrapped, start);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import and build transfer model from: " + kerasH5Path, e);
+		}
+	}
+
 	// ======================================================================================================================
 
 	public static PsoModel pretrainedModelMNIST(String fileName) {
 		try {
 
-			File f = new File("pretrained_models/" + fileName);
+			File f = new File(fileName);
 			
 			if (!f.exists()) {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());

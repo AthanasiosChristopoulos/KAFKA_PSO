@@ -110,7 +110,8 @@ public class BatchPrediction {
             if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
             } else if ("cifar3".equals(DATASET)) {
-                Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
+                if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
+                else Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
         } else {
             Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
@@ -243,7 +244,12 @@ public class BatchPrediction {
                             int row = pixel / 32;
                             int col = pixel % 32;
 
-                            Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+                            if (model.isNhWC()) {
+                                Xbuffer.putScalar(new int[]{i, row, col, channel}, features[j]);
+                            } else {
+                                Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+                            }
+                                
                         }
                     }
 
