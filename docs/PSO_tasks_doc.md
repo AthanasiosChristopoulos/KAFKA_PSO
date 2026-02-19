@@ -44,7 +44,9 @@
 				- Measure of distance με προηγουμενη κατασταση (αμα εχει αλλαξει significantly ή κατασταση)
 
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
-
+		
+	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / forward passes)
+		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
 
 	2) Experimentation:
 		- Different models
@@ -74,40 +76,8 @@
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
-		
-	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
-		- Improve code on Apache Kafka + Tensorflow:
-			- Parallelization (Threading / Instances):
-				- On Kafka Streams: Threading and more Kafka Streams instances
-				- Kafka Broker: More brokers
-				- Parallelize Inference (using an additional Kafka Streams Instance)
-				- How many workers / Kafka Streams instances per particle
-
-	6) Related Work + Research:
-		- Other attempts implementing PSO
-		- how does yours differ ?
-			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
-			- What scientific differences did you add / remove / what parameters did you use ?
-	
-	19) velocity initialiazation (magnitude)
-			
-	22) Do the diagrams / experimentation on (Measurement is taken when all training data has been consumed):
-		- Evaluate multiple workers scenario (x_g performance gets worse ?)
-		- Accuracy - N workers (αυξουσα σχεση)
-		- Training Time - N workers	(φθινουσα σχεση)
-		- Communication is more costly as the size of the model increases
-
-	26) CNNs
-		
-	30) Ευρεση καλυτερων Datasets (πιο δυσκολα) - MLP datasets που actually χρειαζονται μεγαλυτερα μοντελλα
-		=> Maybe non IID Datasets
-
-	38) Add regularization manually after .output for weights
 
 	39) Different Non - Differentiable Loss Functions. You need to find about 3 such functions and show that they are non differentiable
-
-	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / foward passes)
-		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
 
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
@@ -115,8 +85,6 @@
 			- το base model να μην δουλευει καλα
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
-
-	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
 
 ## =======================================================================================
 
@@ -128,6 +96,20 @@
 		- inference
 		- Finding a third party library GUI for defining a neural model architecture ?
 	
+	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
+		- Improve code on Apache Kafka + Tensorflow:
+		- Use / Learn about Parallelization (Threading / Instances):
+				- On Kafka Streams: Threading and more Kafka Streams instances
+				- Kafka Broker: More brokers
+	
+	6) Related Work + Research:
+		- Other attempts implementing PSO
+		- how does yours differ ?
+			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
+			- What scientific differences did you add / remove / what parameters did you use ?
+	
+	19) velocity initialiazation (magnitude)
+
 	21) Implement neighbourhood topologies more efficiently:
 		=> Problem: With current protocols, if there are N Workers, there are N neighborhoods
 		=> Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
@@ -156,6 +138,8 @@
 	42) Partition wizard stuff για να δωσεις περισσοτερο χωρο στο Ubuntu
 
 	46) Fix nonexistent error logging. Set Index to wrong (HEAD_LAYER_IDX = 9)
+
+	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
 
 ## =====================================================================================================
 	Thesis Structure:

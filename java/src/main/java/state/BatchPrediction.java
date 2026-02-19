@@ -323,6 +323,7 @@ public class BatchPrediction {
             //         NDArrayIndex.all()
             //     );
             // }
+
             if (nSamples == EXPECTED_SIZE) {
                 X = Xbuffer;
             } else {
@@ -489,7 +490,7 @@ public class BatchPrediction {
             loss = LossFunction.average(sampleLosses);
         }
 
-        // Regularization =======================================================
+        // Regularization Cost =======================================================
         
         if(!this.coordinator) {
             double l2 = 0.0;    // add regularization
