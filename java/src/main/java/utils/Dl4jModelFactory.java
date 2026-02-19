@@ -64,11 +64,11 @@ public class Dl4jModelFactory {
 			// head_layer_idx = 8;	// LeNet
 			// String filename = "mnist_base_plus_head.h5"; head_layer_idx = 3;
 			// String filename = "mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "mnist_base_plus_head_v3.h5";	head_layer_idx = 6;	
+			String filename = "mnist_base_plus_head_v3.h5";	
 
 			if(preTrained) {
 				// 1)
-				model = pretrainedModelLeNet(); head_layer_idx = 8;
+				model = pretrainedModelLeNet(); 
 				// 2) 
 				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); 
 				// 3) 
@@ -395,8 +395,6 @@ public class Dl4jModelFactory {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
 		}
-
-		int start = (int) base.numParams();
 		
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -405,10 +403,16 @@ public class Dl4jModelFactory {
 				.updater(new NoOp())   // <-- prevents optimizer assumptions
 				.build();
 
+		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(2)
+			.build();
+
+		int start = (int) truncated.numParams();
+
 		// From your summary: last classifier layer had nIn=500
-		MultiLayerNetwork model = new TransferLearning.Builder(base)
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
-				.removeLayersFromOutput(2)      // remove 2 layers
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(500)
 						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg

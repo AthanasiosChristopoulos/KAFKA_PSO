@@ -112,13 +112,13 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     // ====================================================================================================================
     
-    public WorkerTransformer(int workerId, long t0, AtomicLong t1) {
+    public WorkerTransformer(int workerId, long t0, AtomicLong t1, WorkerStatic ws) {
 
         this.workerId = workerId;
         this.t0 = t0;
         this.t1 = t1;
 
-        this.ws = WorkerStatic.get(workerId);
+        this.ws = ws;
         ws.numberOfTasks += 1;
 
         this.logger = CustomLogger.getWorkerInstance(workerId);

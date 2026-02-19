@@ -137,7 +137,7 @@ public class CustomLogger {
         try {
             logWriter.write(msg);
             logWriter.newLine();
-            // logWriter.flush();
+            logWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

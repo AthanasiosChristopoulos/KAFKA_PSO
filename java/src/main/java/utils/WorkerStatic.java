@@ -16,14 +16,6 @@ public final class WorkerStatic {
     private static Config cfg = Config.getInstance();
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
-    private static final ConcurrentHashMap<Integer, WorkerStatic> INSTANCES = new ConcurrentHashMap<>();
-
-    public static WorkerStatic get(int workerId) {
-        return INSTANCES.computeIfAbsent(workerId, WorkerStatic::new);
-    }
-
-    // ===================== SHARED STATE =====================
-
     public final int workerId;
 
     public final PsoModel model;
@@ -53,7 +45,7 @@ public final class WorkerStatic {
 
     // ========================================================
 
-    private WorkerStatic(int workerId) {
+    public WorkerStatic(int workerId) {
         
         this.workerId = workerId;
         this.logger = CustomLogger.getWorkerInstance(workerId);

@@ -76,7 +76,8 @@ public class Coordinator implements Runnable {
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
     private final String instanceTag = "Coordinator@" + instanceNo + "#" + Integer.toHexString(System.identityHashCode(this));
 
-    private Pair<PsoModel, Integer> pair;
+    private Pair<PsoModel, Integer> pair_best;
+
     private int start;
 
     // ====================================================================================================================================
@@ -92,22 +93,20 @@ public class Coordinator implements Runnable {
         if(logger.isEnabled(2)) logger.log("Model Summary ===========================================");
         if(logger.isEnabled(2)) logger.log(this.globalModel.summary());
 
-        pair = Dl4jModelFactory.createModel(-1, true);    
-        int start = -1;  
+        pair_best = Dl4jModelFactory.createModel(-1, false);
+        this.bestGlobalModel = pair_best.getFirst();
+        this.start = pair_best.getSecond();
+
         if(cfg.USING_PRETRAINED_MODEL) {
-            pair = Dl4jModelFactory.createModel(-1, true);
-            this.preTrainedModel = pair.getFirst();
+            this.preTrainedModel = Dl4jModelFactory.createModel(-1, true).getFirst();
             System.out.println("Pretrained Summary ===========================================");
             System.out.println(this.preTrainedModel.summary());
             if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
             if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());
-
-            this.start = pair.getSecond();
         }
 
         System.out.println(this.globalModel.summary());
 
-        this.bestGlobalModel = Dl4jModelFactory.createModel(-1, false).getFirst();
         this.predictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         System.out.println("Running on Dataset: " + DATASET + ", TEST_TOPIC: " + TEST_TOPIC);

@@ -52,6 +52,8 @@ public class Worker implements Runnable {
     private long t0 = System.nanoTime();
     private final AtomicLong t1  = new AtomicLong(t0);
 
+    private WorkerStatic ws;
+
     // =====================================================================================================
 
     public Worker(int workerId) {
@@ -73,7 +75,18 @@ public class Worker implements Runnable {
 
     @Override
     public void run() {
+        try {
+            runInternal();
+        } catch (Throwable t) {
+            System.err.println("[Worker " + workerId + "] FATAL in worker thread:");
+            t.printStackTrace();
+            CoordinatorControl.getInstance().requestStopFinal();
+        }
+    }
+    // ==========================================================================================
 
+    private void runInternal() throws Exception {
+        this.ws = new WorkerStatic(workerId);
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 
         Properties props = new Properties();
@@ -145,7 +158,7 @@ public class Worker implements Runnable {
         );
 
         KStream<String, WeightsMessage> dataStream = rawDataStream
-            .transform(() -> new WorkerTransformer(workerId, t0, t1))
+            .transform(() -> new WorkerTransformer(workerId, t0, t1, ws))
             .filter((k, v) -> v != null);
 
         KStream<String, WeightsMessage>[] branches = dataStream.branch(
@@ -174,45 +187,38 @@ public class Worker implements Runnable {
             streams.close();
         }));
 
-        try {
-            streams.start();
+        streams.start();
 
-            System.out.println("[Worker " + workerId + "] started.");
+        System.out.println("[Worker " + workerId + "] started.");
 
-            // if(workerId == 0 && DEBUG_KAFKA == true) {
-            if(DEBUG_KAFKA == true) {
-                System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
+        // if(workerId == 0 && DEBUG_KAFKA == true) {
+        if(DEBUG_KAFKA == true) {
+            System.out.println("[Worker " + workerId + "] Topology:\n" + topology.describe());
 
-                try { 
-                    Thread.sleep(1500); 
-                } catch (InterruptedException ignored) {
-                    System.out.println("Sleep failed");
-                }
-
-                for (ThreadMetadata tm : streams.localThreadsMetadata()) {
-                    System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
-
-                    for (TaskMetadata task : tm.activeTasks()) {
-                        System.out.println("  ACTIVE Task: " + task.taskId() + " partitions=" + task.topicPartitions());
-                    }
-
-                }
+            try { 
+                Thread.sleep(1500); 
+            } catch (InterruptedException ignored) {
+                System.out.println("Sleep failed");
             }
 
-            while (!control.isStopRequested(workerId)) {
-                Thread.sleep(50);  
+            for (ThreadMetadata tm : streams.localThreadsMetadata()) {
+                System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
+
+                for (TaskMetadata task : tm.activeTasks()) {
+                    System.out.println("  ACTIVE Task: " + task.taskId() + " partitions=" + task.topicPartitions());
+                }
+
             }
-            streams.close();
-
-            double seconds = (t1.get() - t0) / 1_000_000_000.0;     // t1 is updated at WorkerTransformer every time a new buffer has been processed
-            System.out.printf("[Worker %d] Elapsed time: %.3f seconds, exiting run()%n", workerId, seconds);
-
-
-        } catch (Throwable e) {
-            System.out.println("[Worker " + workerId + "] Error in KafkaStreams: " + e.getMessage());
-            e.printStackTrace();
-            streams.close();
         }
+
+        while (!control.isStopRequested(workerId)) {
+            Thread.sleep(50);  
+        }
+        streams.close();
+
+        double seconds = (t1.get() - t0) / 1_000_000_000.0;     // t1 is updated at WorkerTransformer every time a new buffer has been processed
+        System.out.printf("[Worker %d] Elapsed time: %.3f seconds, exiting run()%n", workerId, seconds);
+
     }
 }
 
