@@ -70,9 +70,18 @@ public class Worker implements Runnable {
     }
 
     // =====================================================================================================
-
     @Override
     public void run() {
+        try {
+            runInternal();
+        } catch (Throwable t) {
+            System.err.println("[Worker " + workerId + "] FATAL in worker thread:");
+            t.printStackTrace();
+            CoordinatorControl.getInstance().requestStopFinal();
+        }
+    }
+
+    private void runInternal() throws Exception {
 
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
 
