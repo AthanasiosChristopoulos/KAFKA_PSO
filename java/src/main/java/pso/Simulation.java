@@ -5,9 +5,29 @@ import java.util.List;
 import java.io.InputStream;
 import java.util.logging.LogManager;
 
+import org.deeplearning4j.nn.graph.ComputationGraph;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
+import org.deeplearning4j.nn.transferlearning.TransferLearning;
+import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
+
+import org.deeplearning4j.nn.weights.WeightInit;
+
+import org.deeplearning4j.nn.conf.layers.*;
+
+import org.deeplearning4j.zoo.ZooModel;
+import org.deeplearning4j.zoo.model.LeNet;
+import org.deeplearning4j.zoo.PretrainedType;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+
+import org.deeplearning4j.nn.transferlearning.TransferLearning;
+import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
+import org.nd4j.linalg.learning.config.NoOp;
+import org.nd4j.common.primitives.Pair;
 
 import utils.*; 
 
@@ -54,13 +74,24 @@ public class Simulation {
         // System.out.println("output shape: " + Arrays.toString(y.shape()));
 
         // =============================================================================================
+        // String fileName = "pretrained_models/mobilenetv3small_32x32.h5";
+        String fileName = "pretrained_models/mobilenetv2_base_32x32.h5";
 
-        MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst();
+        // MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
-        System.out.println("OK loaded:");
+        // System.out.println("OK loaded:");
+        // System.out.println(model.summary());
+        ComputationGraph model = createCifarFromMobileNetV2Base(-1, fileName, 10);
         System.out.println(model.summary());
+        System.out.println("numParams = " + model.numParams());
+        System.out.println("outputs = " + Arrays.toString(model.getConfiguration().getNetworkOutputs().toArray()));
+        // INDArray x = Nd4j.rand(new long[]{1, 3, 32, 32});   // NCHW (Number of samples, channels, height, width)
+        INDArray x = Nd4j.rand(new long[]{1, 32, 32, 3});   // NHWC (Number of samples, height, width, channels)
 
-        // System.exit(0);
+        INDArray y = model.outputSingle(false, x);
+        System.out.println("y shape = " + Arrays.toString(y.shape())); // expect [1, numClasses]
+
+        System.exit(0);
 
         // =============================================================================================
 
@@ -128,4 +159,53 @@ public class Simulation {
 
             });
     }
+
+    // ===================================================================================================
+
+    public static ComputationGraph createCifarFromMobileNetV2Base(
+        int workerId,
+        String kerasH5Path,
+        int numClasses) {
+        try {
+            // 1) Import Keras base (include_top=False)
+            ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
+
+            // 2) Freeze ALL layers in the base (feature extractor)
+            FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+                    .seed(123 + workerId)
+                    .updater(new NoOp())        // PSO will move weights; we don't want optimizers
+                    .build();
+
+            String featureLayer = "out_relu";
+
+            ComputationGraph tl = new TransferLearning.GraphBuilder(base)
+                    .fineTuneConfiguration(ftc)
+                    .setFeatureExtractor(featureLayer) // freezes everything up to this
+                    // Add a small head:
+                    .addLayer("gap",
+                            new GlobalPoolingLayer.Builder()
+                                    .poolingType(PoolingType.AVG)
+                                    .poolingDimensions(1, 2) // GlobalPoolingLayer can pool across spatial dimensions only, or across all dimensions depending on configuration (and with NHWC graphs, the defaults can bite).
+                                    .build(),
+                            featureLayer)
+                    .addLayer("new_output",
+                            new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+                                    .nIn(1280)
+                                    .nOut(numClasses)
+                                    .activation(Activation.SOFTMAX)
+                                    .weightInit(WeightInit.XAVIER)
+                                    .biasInit(0.0)
+                                    .build(),
+                            "gap")
+                    .setOutputs("new_output")
+                    .build();
+
+            tl.init();
+            return tl;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to import and build transfer model from: " + kerasH5Path, e);
+        }
+    }
+
 }

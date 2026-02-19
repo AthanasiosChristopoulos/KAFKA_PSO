@@ -28,6 +28,21 @@ def export_mobilenetv2_base(save_path="pretrained_model/mobilenetv2_base_32x32.h
 
 # ============================================================================================
 
+def export_mobilenetv3small_base(save_path="pretrained_model/mobilenetv3small_32x32.h5"):
+
+    base_model = tf.keras.applications.MobileNetV3Small(
+        input_shape=(32, 32, 3),
+        include_top=False,
+        weights="imagenet"
+    )
+    base_model.trainable = False
+    base_model.summary()
+
+    base_model.save(save_path)
+
+# ============================================================================================
+
 if __name__ == "__main__":
     
     export_mobilenetv2_base()
+    # export_mobilenetv3small_base()
