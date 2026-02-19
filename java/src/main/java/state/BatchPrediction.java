@@ -22,6 +22,14 @@ import org.deeplearning4j.nn.conf.layers.Layer;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.BatchNormalization;
+import org.nd4j.linalg.api.memory.MemoryWorkspace;
+import org.nd4j.linalg.api.memory.abstracts.Nd4jWorkspace;
+import org.nd4j.linalg.api.memory.conf.WorkspaceConfiguration;
+import org.nd4j.linalg.api.memory.enums.AllocationPolicy;
+import org.nd4j.linalg.api.memory.enums.LearningPolicy;
+import org.nd4j.linalg.api.memory.enums.ResetPolicy;
+import org.nd4j.linalg.api.memory.enums.SpillPolicy;
+import org.nd4j.linalg.api.memory.enums.MirroringPolicy;
 
 public class BatchPrediction {
 
@@ -71,6 +79,18 @@ public class BatchPrediction {
 
     private final boolean coordinator;
 
+    // Config tuned for stable reuse (no spilling, reuse buffers)
+    private static final WorkspaceConfiguration WS_CONF =
+            WorkspaceConfiguration.builder()
+                    .initialSize(0) // let it grow to what it needs once
+                    .overallocationLimit(2) // allow growth bursts
+                    .policyAllocation(AllocationPolicy.OVERALLOCATE)
+                    .policyLearning(LearningPolicy.FIRST_LOOP) // learn size on first loop
+                    .policyReset(ResetPolicy.ENDOFBUFFER_REACHED) // reuse within workspace scope
+                    .policySpill(SpillPolicy.EXTERNAL) // or SpillPolicy.REALLOCATE if EXTERNAL not desired
+                    .policyMirroring(MirroringPolicy.FULL) // safe default for CUDA
+                    .build();
+
     // for Worker (from WorkerStatic) =======================================================================================================
 
     public BatchPrediction(PsoModel model, CustomLogger logger, WorkerStatic ws) {
@@ -85,7 +105,7 @@ public class BatchPrediction {
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
             if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if ("cifar3".equals(DATASET)) {
+            } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else               Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
@@ -109,7 +129,7 @@ public class BatchPrediction {
         if (MODEL_IS_CNN) {
             if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if ("cifar3".equals(DATASET)) {
+            } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
@@ -132,6 +152,14 @@ public class BatchPrediction {
         return coordinatorInstance;
     }
 
+    // ===========================================================================
+
+    // public INDArray forwardOnce(PsoModel model, INDArray x) {
+    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+    //         // This guarantees "no workspace active", so outputOfLayersDetached won't throw
+    //         return model.output(x, false);
+    //     }
+    // }
     // ===========================================================================
 
     public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model) {
@@ -193,7 +221,7 @@ public class BatchPrediction {
             
             // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
-                if("cifar3".equals(DATASET)) {
+                if("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
 
                     X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
                         // (nSamples, 3072)
@@ -245,7 +273,7 @@ public class BatchPrediction {
                             Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
                         }
 
-                    } else if ("cifar3".equals(DATASET)) {
+                    } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
 
                         for (int j = 0; j < NUM_FEATURES; j++) {
                             // int channel = j / (32 * 32);
@@ -299,12 +327,12 @@ public class BatchPrediction {
                 X = Xbuffer;
             } else {
                 if (MODEL_IS_CNN) {
-                    if ("cifar3".equals(DATASET) && argument_model.isNhWC()) {
+                    if (("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) && argument_model.isNhWC()) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all());
-                    } else if ("cifar3".equals(DATASET)) {
+                    } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),
@@ -321,11 +349,15 @@ public class BatchPrediction {
             }
         }
         // ==============================================================================================================
+        
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
         // this is one forward pass per batch (has multiple samples), X is one of the different 
         // dimensionalities identified above. This allocates memory by it self
-        Nd4j.getExecutioner().commit(); 
+        
+        // probs = forwardOnce(argument_model, X);
+        // Nd4j.getExecutioner().commit(); 
+
         end = System.nanoTime();
         // double min = probs.minNumber().doubleValue();
         // double max = probs.maxNumber().doubleValue();
@@ -490,7 +522,7 @@ public class BatchPrediction {
 
         if(!MEMORY_EFFICIENT) {
             if (probs != null) probs.close();
-            if (X != null) X.close();
+            if (X != null && X != Xbuffer) X.close();
             if (argMax != null) argMax.close();
             if (X2d != null) X2d.close();
             if (X4d != null) X4d.close();

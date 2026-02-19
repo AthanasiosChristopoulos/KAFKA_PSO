@@ -75,8 +75,8 @@ public class Simulation {
 
         // =============================================================================================
         // String fileName = "pretrained_models/mobilenetv3small_32x32.h5";
-        String fileName = "pretrained_models/mobilenetv2_base_32x32.h5";
-
+        // String fileName = "pretrained_models/mobilenetv2_base_32x32.h5";
+        String filename = "pretrained_models/cifar10_base_plus_head_v1.h5";
         // MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
         // System.out.println("OK loaded:");
@@ -92,6 +92,10 @@ public class Simulation {
         // INDArray y = model.outputSingle(false, x);
         // System.out.println("y shape = " + Arrays.toString(y.shape())); // expect [1, numClasses]
 
+        // MultiLayerNetwork model = Dl4jModelFactory.pretrainedModelCIFAR(filename).asMultiLayerNetwork();
+        // System.out.println("OK loaded:");
+        // System.out.println(model.summary());
+        
         // System.exit(0);
 
         // =============================================================================================

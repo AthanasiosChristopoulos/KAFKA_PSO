@@ -60,6 +60,10 @@ if(DATASET == "cifar3"):
     NUMBER_OF_DATA_REPEATS = 27
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "cifar10"):
+    NUMBER_OF_DATA_REPEATS = 5
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 if(DATASET == "mnist"):
     NUMBER_OF_DATA_REPEATS = 7
     NUMBER_OF_DATA_REPEATS_TEST = 1
@@ -646,7 +650,42 @@ def load_dataset():
         evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
 
         return X_train, y_train, X_test, y_test, class_names
+    
+    # ==================================================================================================
+    # cifar10
 
+    elif DATASET == "cifar10":
+
+        classes = np.arange(10, dtype=np.int64)
+
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+        y_train = y_train.squeeze().astype(np.int64)
+        y_test  = y_test.squeeze().astype(np.int64)
+
+        X_train = x_train.astype(np.float32) / 255.0
+        X_test  = x_test.astype(np.float32) / 255.0
+
+        rng = np.random.default_rng(123)
+        idx = rng.permutation(len(X_train))
+        X_train, y_train = X_train[idx], y_train[idx]
+
+        idx = rng.permutation(len(X_test))
+        X_test, y_test = X_test[idx], y_test[idx]
+
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        class_names = [CIFAR10_NAMES[int(c)] for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"X_test : {X_test.shape},  y_test : {y_test.shape}")
+
+        evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+
+        return X_train, y_train, X_test, y_test, class_names
+    
     # ==================================================================================================
     # No datasets chosen / enviromental variable is wrong
 
@@ -696,7 +735,7 @@ def main():
                 
                 for index in range(len(X_train)):
 
-                    if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
+                    if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
                         features = X_train[index].ravel().astype(np.float32)
                         # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
                         # .ravel() in C-order flattens the last axis fastest
@@ -738,7 +777,7 @@ def main():
                     
                     for index in range(len(X_test)):
 
-                        if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
+                        if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
                             features = X_test[index].ravel().astype(np.float32)
                         else:
                             features = X_test[index]
@@ -770,7 +809,7 @@ def main():
                     
                     for index in range(len(X_train)):
 
-                        if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
+                        if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
                             features = X_train[index].ravel().astype(np.float32)
                         else:
                             features = X_train[index]

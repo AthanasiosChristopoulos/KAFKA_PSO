@@ -2,6 +2,11 @@ import tensorflow as tf
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
+import numpy as np
+from tensorflow import keras
+from tensorflow.keras import layers
+
+DATASET = "cifar10"
 
 def export_mobilenetv2_base(save_path="pretrained_model/mobilenetv2_base_32x32.h5"):
     # Feature extractor only (no classifier head)
@@ -40,9 +45,95 @@ def export_mobilenetv3small_base(save_path="pretrained_model/mobilenetv3small_32
 
     base_model.save(save_path)
 
-# ============================================================================================
+
+# ===============================================================================
+# Load Data
+
+def load_cifar10():
+    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+
+    # y is shape (N,1) -> make it (N,)
+    y_train = y_train.astype("int64").reshape(-1)
+    y_test  = y_test.astype("int64").reshape(-1)
+
+    # Normalize to [0,1]
+    x_train = x_train.astype("float32") / 255.0
+    x_test  = x_test.astype("float32") / 255.0
+
+    # shapes: (N, 32, 32, 3)
+    return x_train, y_train, x_test, y_test
+
+# ===============================================================================
+# Model (Simple CIFAR feature extractor + head)
+
+def build_cifar_base_plus_head(input_shape=(32, 32, 3), num_classes=10):    # this means NHWC (look at the order in shape input_shape=(32, 32, 3))
+    
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 32 -> 16
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 16 -> 8
+
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+
+        # Head
+        layers.GlobalAveragePooling2D(),                         # -> (128,)
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+# Train + Export
+
+def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
+    x_train, y_train, x_test, y_test = load_cifar10()
+    model = build_cifar_base_plus_head(input_shape=x_train.shape[1:], num_classes=10)
+    name_h5_file = "cifar10_base_plus_head_v1"
+
+    callbacks = [
+        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
+        keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
+    ]
+
+    history = model.fit(
+        x_train, y_train,
+        validation_split=0.1,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=2,
+        callbacks=callbacks
+    )
+
+    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+    print(f"CIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    # Save H5 for DL4J import
+    h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
+    model.save(h5_path)
+    print("Saved Keras H5:", h5_path)
+
+    return model, history
+
+# ===============================================================================
 
 if __name__ == "__main__":
     
-    export_mobilenetv2_base()
+    # export_mobilenetv2_base()
     # export_mobilenetv3small_base()
+    train_and_export()

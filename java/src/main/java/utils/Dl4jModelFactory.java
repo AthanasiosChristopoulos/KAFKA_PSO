@@ -73,7 +73,7 @@ public class Dl4jModelFactory {
 				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); 
 				// 3) 
 				// model = pretrainedModelMNIST(filename); 		
-				// model = pretrainedModelMNIST(filename); 	
+				model = pretrainedModelMNIST(filename); 	
 
 			} else {
 				// 1)
@@ -153,18 +153,31 @@ public class Dl4jModelFactory {
 			// head_layer_idx = 8;	// LeNet
 			// String filename = "pretrained_models/mnist_base_plus_head.h5"; head_layer_idx = 3;
 			// String filename = "pretrained_models/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "pretrained_models/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
+			// String filename = "pretrained_models/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
+			String filename = "pretrained_models/cifar10_base_plus_head_v1.h5";
 
 			if(preTrained) {
-				model = pretrainedModelMobileNetV2(filename); 		
-
+				// model = pretrainedModelMobileNetV2(filename); 		
+				model = pretrainedModelCIFAR(filename);
 			} else {
 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
-				pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				// pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler(workerId, filename, 128);
+			}
+
+		}  else if ("cifar10".equals(DATASET)) {
+
+			String filename = "pretrained_models/cifar10_base_plus_head_v1.h5";
+
+			if(preTrained) {
+				model = pretrainedModelCIFAR(filename);
+			} else {
+
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler(workerId, filename, 128);
 			}
 
 		} else {
@@ -174,6 +187,67 @@ public class Dl4jModelFactory {
 			return Pair.of(model, head_layer_idx);
 		} else {
 			return pair;
+		}
+	}
+
+	// ============================================================================
+
+	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler(
+			int workerId,
+			String fileName,
+			int inputDim
+	) {
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define updater etc.
+		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(1)
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(inputDim)           // for this TF model: 128
+						.nOut(NUM_CLASSES)       // your target classes
+						.activation(Activation.SOFTMAX)
+						.weightInit(WeightInit.XAVIER)
+						.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+
+    // ===================================================================================================
+
+	public static PsoModel pretrainedModelCIFAR(String fileName) {
+		try {
+			File f = new File(fileName);
+
+			if (!f.exists()) {
+				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
+			}
+
+			MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(
+					f.getAbsolutePath(),
+					false   // enforceTrainingConfig = false (ignore Keras optimizer config)
+			);
+
+			return new PsoMultiLayerAdapter(model, true);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import CIFAR-10 Keras .h5 model", e);
 		}
 	}
 
@@ -248,7 +322,7 @@ public class Dl4jModelFactory {
 
 			model.init();
 
-			// sanity: head size must be exactly 1280*numClasses + numClasses
+			// safety check: head size must be exactly 1280*numClasses + numClasses
 			int expectedHead = 1280 * numClasses + numClasses;
 			int actualHead = (int) model.numParams() - start;
 			if (actualHead != expectedHead) {

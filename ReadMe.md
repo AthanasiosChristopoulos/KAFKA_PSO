@@ -1042,6 +1042,15 @@ found a better region than the second or third best neighbors (they may not have
             Memory:
             - If too many memory allocations happen between many N_WORKERS, then GPU will not have the time to clean (free) the memory each time (there is a delayed release if ot exlicitly freed). The allocating memory rate will become bigger than the cleaning memory rate as N_WORKERS increases (leading to a crash, because of Memory overflow).
                 - Keep in mind that those arrays might still be referenced, this is why they arent getting cleaned
+            - On .output (forward pass), GPU needs to:
+                - allocate activation / intermediate tensors / NDArray => every intermediate / hidden layer each produces intermediate data. Expensive are:
+                    - depthwise conv outputs, batchnorm / activation outputs, ... (just hidden layers of the model)
+            - cuDNN convolution algorithms often require a “workspace” scratch buffer.
+
+        Memory Phenomenon:
+            - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
+            - ND4J uses a caching allocator on GPU: allocator growth / caching
+
         The forward pass cost is also determined by batch size, but this needs to be kept small for PSO not to run out of data.
             => On a simple NN, cpu is preferable
             => GPU is worth it if: ForwardPassTime >> Transfer + Sync cost
@@ -1074,6 +1083,13 @@ watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,te
 ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
 sudo pkill -2 java
 sudo pkill -9 -f java
+```
+
+# We see that docker writes inside /tmp/kafka-logs, which is inside the container not the host. Docker keeps the container filesystem, doesnt delete it.
+```bash
+docker exec -it broker sh -lc       # runs it as a shell inside the docker container   
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs'
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 ```
 
 ## =========================================================================

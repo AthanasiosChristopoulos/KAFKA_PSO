@@ -105,3 +105,7 @@ CNNs have smoother valeys ?
  - 2) Fine-tuning:
     - take the pretrained model, keep most layers frozen but unfreeze the last few layers 
         - use small learning rate, this is only fine tuning
+
+ - Improve performance:
+    - Choose a different pretrained model
+    - Unfreeze / Train more end Layers

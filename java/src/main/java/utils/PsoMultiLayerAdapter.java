@@ -5,8 +5,15 @@ import java.util.Map;
 
 public final class PsoMultiLayerAdapter implements PsoModel {
     private final MultiLayerNetwork model;
+    private boolean nhwc = false;
 
-    public PsoMultiLayerAdapter(MultiLayerNetwork model) { this.model = model; }
+    public PsoMultiLayerAdapter(MultiLayerNetwork model) { 
+        this.model = model; 
+    }
+    public PsoMultiLayerAdapter(MultiLayerNetwork model, boolean nhwc) { 
+        this.model = model; 
+        this.nhwc = nhwc;
+    }
 
     @Override public INDArray params() { return model.params(); }
 
@@ -44,7 +51,7 @@ public final class PsoMultiLayerAdapter implements PsoModel {
         return l0 instanceof org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
     }
 
-    @Override public boolean isNhWC() { return false; }
+    @Override public boolean isNhWC() { return nhwc; }
     
     @Override public INDArray output(INDArray X, boolean training) {
         return model.output(X, training);

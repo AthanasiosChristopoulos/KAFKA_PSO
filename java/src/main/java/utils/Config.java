@@ -167,6 +167,11 @@ public class Config {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR3", "3072"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR3", "3"));
 
+        } else if("cifar10".equals(this.DATASET)) {
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR10", "3072"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR10", "10"));
+            this.NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_CIFAR10", "250000"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + this.DATASET);   
         }
