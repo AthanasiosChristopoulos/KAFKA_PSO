@@ -43,6 +43,8 @@ public class Dl4jParamUtils {
     //     return Arrays.copyOfRange(full, start, full.length);
     // }
 
+    //=====================================================================================================
+
     public static float[] modelToFlatHead(PsoModel model, int start) {
 
         float[] full = model.params().toFloatVector();
@@ -50,14 +52,17 @@ public class Dl4jParamUtils {
     }
 
     //=====================================================================================================
-    
+    //=====================================================================================================
+
     public static void updateModel(PsoModel model, float[] flat) {
         INDArray params = model.params();   // a pointer to the actual parameter buffer owned by that model
         params.data().setData(flat);   // the model object doesn’t change identity, but its internal weights do.
     }
     
+    //=====================================================================================================
+
     public static void updateModelHead(PsoModel model, float[] headFlat, int start) {
-        
+
         INDArray p = model.params(); // 1D view of the whole parameter buffer
         // int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
         int end = (int) model.numParams();

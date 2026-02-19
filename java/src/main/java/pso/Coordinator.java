@@ -89,7 +89,7 @@ public class Coordinator implements Runnable {
         // Need to do the instancing here the transformers constructor runs many times from different tasks
         this.globalModel = Dl4jModelFactory.createModel(-1, false).getFirst();
         System.out.println("Model Summary ===========================================");
-        System.out.println(this.globalModel.summary());
+        // System.out.println(this.globalModel.summary());
         if(logger.isEnabled(2)) logger.log("Model Summary ===========================================");
         if(logger.isEnabled(2)) logger.log(this.globalModel.summary());
 
@@ -100,9 +100,9 @@ public class Coordinator implements Runnable {
         if(cfg.USING_PRETRAINED_MODEL) {
             this.preTrainedModel = Dl4jModelFactory.createModel(-1, true).getFirst();
             System.out.println("Pretrained Summary ===========================================");
-            System.out.println(this.preTrainedModel.summary());
-            if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
-            if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());
+            // System.out.println(this.preTrainedModel.summary());
+            // if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
+            // if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());
         }
 
         System.out.println(this.globalModel.summary());

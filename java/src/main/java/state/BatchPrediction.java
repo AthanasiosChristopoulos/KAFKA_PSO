@@ -173,6 +173,14 @@ public class BatchPrediction {
         }
 
 
+        // if (probs == null || probs.rank() != 2 || probs.size(0) != nSamples || probs.size(1) != NUM_CLASSES) {
+        //     if (probs != null) probs.close();
+        //     probs = Nd4j.create(nSamples, NUM_CLASSES);
+        // } else {
+        //     probs.assign(0.0); // reuse
+        // }
+
+
         // Forward Pass Start ===============================================================================
         if(!MEMORY_EFFICIENT) {
             
@@ -229,25 +237,32 @@ public class BatchPrediction {
 
                     if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
 
-                        // flatten 784 into 1x28x28
+                        // flatten 784 into 1x28x28 => is basically 2D
+                        // this is row-major mapping (C-order), meaning the columns change fastest
                         for (int j = 0; j < NUM_FEATURES; j++) {
-                            int row = j / 28;
-                            int col = j % 28;
+                            int row = j / 28;   // integer division
+                            int col = j % 28;   // change fastest
                             Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
                         }
 
                     } else if ("cifar3".equals(DATASET)) {
 
                         for (int j = 0; j < NUM_FEATURES; j++) {
-                            int channel = j / (32 * 32);
-                            int pixel = j % (32 * 32);
-                            int row = pixel / 32;
-                            int col = pixel % 32;
+                            // int channel = j / (32 * 32);
+                            // int pixel = j % (32 * 32);
+                            // int row = pixel / 32;
+                            // int col = pixel % 32;
+                            int pixel   = j / 3;     // 0..1023
+                            int channel = j % 3;     // 0..2, fastest changing, j changes ecery loop
+                            int row     = pixel / 32;
+                            int col     = pixel % 32;  // column changes every 3 loop (look at pixel)
 
-                            if (model.isNhWC()) {
+                            if (argument_model.isNhWC()) {
                                 Xbuffer.putScalar(new int[]{i, row, col, channel}, features[j]);
+                                // do ordering, as the data 
                             } else {
                                 Xbuffer.putScalar(new int[]{i, channel, row, col}, features[j]);
+                                // do ordering differently from input data
                             }
                                 
                         }
@@ -270,22 +285,47 @@ public class BatchPrediction {
             //     System.arraycopy(features, 0, xb, i * NUM_FEATURES, NUM_FEATURES);
             // }
 
+            // if (nSamples == EXPECTED_SIZE) {
+            //     X = Xbuffer;
+            // } else {
+            //     X = Xbuffer.get(
+            //         NDArrayIndex.interval(0, nSamples),
+            //         NDArrayIndex.all(),
+            //         NDArrayIndex.all(),
+            //         NDArrayIndex.all()
+            //     );
+            // }
             if (nSamples == EXPECTED_SIZE) {
                 X = Xbuffer;
             } else {
-                X = Xbuffer.get(
-                    NDArrayIndex.interval(0, nSamples),
-                    NDArrayIndex.all(),
-                    NDArrayIndex.all(),
-                    NDArrayIndex.all()
-                );
+                if (MODEL_IS_CNN) {
+                    if ("cifar3".equals(DATASET) && argument_model.isNhWC()) {
+                        X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all());
+                    } else if ("cifar3".equals(DATASET)) {
+                        X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all());
+                    } else { // MNIST NCHW
+                        X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all(),
+                                        NDArrayIndex.all());
+                    }
+                } else {
+                    X = Xbuffer.get(NDArrayIndex.interval(0, nSamples), NDArrayIndex.all());
+                }
             }
         }
         // ==============================================================================================================
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-                                                // this is one forward pass per batch (has multiple samples)
-                                                // X is one of the different dimensionalities identified above
+        // this is one forward pass per batch (has multiple samples), X is one of the different 
+        // dimensionalities identified above. This allocates memory by it self
+        Nd4j.getExecutioner().commit(); 
         end = System.nanoTime();
         // double min = probs.minNumber().doubleValue();
         // double max = probs.maxNumber().doubleValue();
@@ -328,7 +368,8 @@ public class BatchPrediction {
 
             if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
                 argMax = probs.argMax(1);   // max probability => this is what we are deciding
-                
+                Nd4j.getExecutioner().commit();
+
                 float[] flatProps = probs.data().asFloat();  // converd 2D [nSamples, classes] into flat array
                 
                 for (int i = 0; i < nSamples; i++) {

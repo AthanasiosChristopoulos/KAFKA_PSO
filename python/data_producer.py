@@ -698,6 +698,13 @@ def main():
 
                     if(DATASET in ("cifar3", "mnist", "mnist4", "fashion_mnist")):
                         features = X_train[index].ravel().astype(np.float32)
+                        # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
+                        # .ravel() in C-order flattens the last axis fastest
+                            # if its (32, 32, 3) => last axis is the channel axis, then the columns axis
+                            # if its (28, 28, 1) => this is row major, column axis change faster
+                        # (row, col, channel) with channel changing fastest
+                        # (0,0,0), (0,0,1), (0,0,2)
+                        # then next pixel (0,1,0), (0,1,1), (0,1,2)
                     else:
                         features = X_train[index]
 
