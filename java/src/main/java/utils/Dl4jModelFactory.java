@@ -76,7 +76,7 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 9;
+				model = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
 				// 3) 
