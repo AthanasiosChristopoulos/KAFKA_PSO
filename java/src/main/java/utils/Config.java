@@ -281,6 +281,7 @@ public class Config {
         this.USING_PRETRAINED_MODEL = false;
 
         this.REGULARIZER = getenv(dotenv, "REGULARIZER", "NONE");
+        
         if(this.REGULARIZER.equals("L2")) {
             this.LAMBDA_VALUE = 1e-2f;
         

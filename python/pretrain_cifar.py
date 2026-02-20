@@ -245,3 +245,10 @@ if __name__ == "__main__":
 
 
     # source ~/venvs/tf215/bin/activate
+
+# Ranking of overfiiting highest to lowest:
+# build_cifar_base_v3 (Flatten + Dense)
+# build_cifar_base (v1) (heavier conv stack + 128 features head)
+# build_cifar_base_v4 (heavier conv stack but GAP helps)
+# build_cifar_base_v2 (smallest; GAP; lowest capacity
+# MobileNetV2 / MobileNetV3Small (frozen base) => this provides with the least overfitting
