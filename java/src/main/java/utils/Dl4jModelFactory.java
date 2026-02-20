@@ -75,7 +75,7 @@ public class Dl4jModelFactory {
 				// model = pretrainedModelMNIST("fmnist_base_plus_head.h5"); 
 				// 3) 
 				// model = pretrainedModelMNIST(filename); 		
-				model = pretrainedModelMNIST(filename); 	
+				// model = pretrainedModelMNIST(filename); 	
 
 			} else {
 				// 1)
@@ -86,7 +86,7 @@ public class Dl4jModelFactory {
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
-				model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
 
 			}
 

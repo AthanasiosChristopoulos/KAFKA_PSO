@@ -157,6 +157,39 @@ def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
     return model
 
 # ===============================================================================
+
+def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # 32x32
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32 -> 16
+
+        # 16x16
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16 -> 8
+
+        # 8x8
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+
+        # No Flatten!
+        layers.GlobalAveragePooling2D(),  # -> (128,)
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
 # Train + Export
 
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
@@ -168,9 +201,12 @@ def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
     # model = build_cifar_base_v2(input_shape=x_train.shape[1:], num_classes=10)
     # name_h5_file = "cifar10_base_plus_head_v2"
 
-    model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
-    name_h5_file = "cifar10_base_plus_head_v3"
-    
+    # model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
+    # name_h5_file = "cifar10_base_plus_head_v3"
+
+    model = build_cifar_base_v4(input_shape=x_train.shape[1:], num_classes=10)
+    name_h5_file = "cifar10_base_plus_head_v4"
+
     callbacks = [
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
         keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),

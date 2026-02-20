@@ -495,6 +495,10 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - Conv1: MACs ≈ 28 × 28 × 16 × 9 = 112,896 MACs (3 X 3 = 9)
         - Conv2: MACs ≈ 14 × 14 × 32 × 144 = 903,168 MACs (3 X 3 X 16 = 144, since we have more)
 
+    - Specify the dense layers after a CNN either by:
+        - using both nIn and nOut at every Dense Layer
+        - using only nOut (its a dense layer nIn can be infered). Except for the first input, this needs to be specified in this case by:
+            - .setInputType(InputType.convolutionalFlat(height, width, channels))
 ## =====================================================================================
 ## PSO friendly Neural Networks Architectures ========================================== 
 
@@ -1152,7 +1156,8 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 
 
 ## Transfer Learning ==============================================================
- - Ranked from simplest to heaviest:
+
+Ranked from simplest to heaviest:
  - Tier 0:
     MobileNetV3Small
     MobileNetV2
@@ -1179,3 +1184,4 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
     - ResNet152
 
  - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
+ - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)

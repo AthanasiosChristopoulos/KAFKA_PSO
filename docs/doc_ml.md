@@ -87,10 +87,15 @@ CNNs have smoother valeys ?
         => gradient descent also relies on loss results - it just treats them more efficiently
 
  - CNNs may or may not have a final dense / ouputlayer classifier:
-    - If they dont, they are called fully convolutional. These are non classification models that just extract features (feature extractors). They dont need an input shape of the images, these are just the weights of the filters, not of the classifier.
+    - If they dont, they are called **fully convolutional**. These are non classification models that just extract features (feature extractors). They dont need an input shape of the images, these are just the weights of the filters, not of the classifier.
         - The input shape still needs to be big enough to survive MaxPooling layers (and generall dimensionality reduction)  
         - This is what is meant by include_top = False. The top is the classifier of the CNN. The weights have been already trained with this classifier and now the conv / filter weights will be distributed as pretrained without their classifier (to perform a new task) 
-    - If they do (include_top = True), the input / the image dimensionality needs to be defined for the network. Otherwise the number of weights / the structure of the dense layer cannot be determined
+    - If they do (**include_top = True**), the input / the image dimensionality needs to be defined for the network. Otherwise the number of weights / the structure of the dense layer cannot be determined
+
+    - Specify the dense layers after a CNN either by:
+        - using both nIn and nOut at every Dense Layer
+        - using only nOut (its a dense layer nIn can be infered). Except for the first input, this needs to be specified in this case by:
+            - .setInputType(InputType.convolutionalFlat(height, width, channels))
 
 ## Transfer Learning ============================================================================
  
