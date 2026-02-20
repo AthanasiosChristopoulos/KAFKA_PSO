@@ -37,6 +37,7 @@ dos2unix run_streams.sh
 
 ## ===========================================================================
 ## Git: ======================================================================
+
 ```bash
 
 git clone https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
@@ -637,6 +638,7 @@ improve the ability to escape local minima
     - is the velocity being clamped / holded back by a limiter ?
 
  - **Increasing N_WORKERS:**
+
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
@@ -774,7 +776,7 @@ improve the ability to escape local minima
             - Output: Δw (change in inertia weight)
             - Fuzzy: responds gradually to trends, does soft decisions (doesnt change inertia too much)
         
- - # Constriction factor: ===================================================================================================
+ - # Constriction factor: ===================================================================
 
     - Problem: There is no mathematical **guarantee convergence**. We need quaranteed convergence
         - Convergence should happen naturally but there is no quarantee.
@@ -1150,5 +1152,30 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 
 
 ## Transfer Learning ==============================================================
- - MobileNetV2
- - VGG16
+ - Ranked from simplest to heaviest:
+ - Tier 0:
+    MobileNetV3Small
+    MobileNetV2
+    EfficientNetB0
+    NASNetMobile
+ - Tier 1:
+    MobileNetV3Large
+    EfficientNetB1
+    ResNet50 (or ResNet50V2)
+ - Tier 2:
+    ResNet101
+    InceptionV3
+    Xception
+    DenseNet121
+ - Tier 3: heavy 
+    - DenseNet169 / DenseNet201
+    - EfficientNetB2 / B3
+    - InceptionResNetV2
+
+ - Tier 4: don’t run on a laptop” 
+    - VGG16 / VGG19 (huge activations + tons of parameters; also slow)
+    - EfficientNetB4–B7
+    - NASNetLarge
+    - ResNet152
+
+ - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...

@@ -46,7 +46,7 @@
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 		
 	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / forward passes)
-		- communication here isnt data record reading, but weightmessges exchanged between coordinator and worker
+		- communication here isnt data record reading, but weightmessages exchanged between coordinator and worker
 
 	2) Experimentation:
 		- Different models
@@ -76,8 +76,6 @@
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
-
-	39) Different Non - Differentiable Loss Functions. You need to find about 3 such functions and show that they are non differentiable
 
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
@@ -142,7 +140,9 @@
 	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
 
 ## =====================================================================================================
+
 	Thesis Structure:
+
 		- Motivation, Table of Contents
 		- Related Work / Thesis Contribution
 		- Introduction (Theoretical Background)
@@ -153,12 +153,26 @@
 				=> many things, like the sharing and updating of gBest, can be easily done on the same device.
 				=> that isnt the case with federated, communication is costly 
 			- Functional and Non Functional Requirements
+			- Different Non - Differentiable Loss Functions. You need to demonstrate about 3 such functions and show that they are non differentiable and the performance while using them.
 			
 		- Experimental Evaluation:
 			- Run it locally 
 			- Run it on a server
 			
 		- Future Work
+
+## ================================================================================================
+ - Generall Plan for now (5-43:36):
+	- 5 Datasets:
+		- iris (winequality - has 6500 samples)
+		- susy
+		- pendigits
+		- MNIST 	(and / or MNIST4)
+		- CIFAR4 	(and / or CIFAR)
+	- On them try out:
+		- baseline (no filtering)
+		- with filter
+	- 3 Non-Differential Functions
 
 ## ================================================================================================
 ## Email:
