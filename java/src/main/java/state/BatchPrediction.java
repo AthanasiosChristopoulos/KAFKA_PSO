@@ -55,7 +55,6 @@ public class BatchPrediction {
     private final boolean isCoordinator;
 
     private static boolean checked = false;
-    private static double lambda = 1e-4;
 
     private final WorkerStatic ws;
 
@@ -90,6 +89,8 @@ public class BatchPrediction {
                     .policySpill(SpillPolicy.EXTERNAL) // or SpillPolicy.REALLOCATE if EXTERNAL not desired
                     .policyMirroring(MirroringPolicy.FULL) // safe default for CUDA
                     .build();
+
+    public float[] slopeLambdas;
 
     // for Worker (from WorkerStatic) =======================================================================================================
 
@@ -490,15 +491,28 @@ public class BatchPrediction {
         }
 
         // Regularization Cost =======================================================
-        
-        if(!this.coordinator) {
-            double l2 = 0.0;    // add regularization
-            for (float w : ws.flatModel) {   // or your flatWeights array
-                l2 += w * w;
-            }
+    
+        if (!this.coordinator) {
 
-            l2 /= ws.flatModel.length;
-            loss = loss + (float)(lambda * l2);
+            if ("L2".equals(cfg.REGULARIZER)) {
+                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.l2Penalty(ws.flatModel));
+
+            } else if ("GROUP_LASSO".equals(cfg.REGULARIZER) && argument_model.asMultiLayerNetwork() != null) {
+                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.groupLassoNeuronPenalty(argument_model.asMultiLayerNetwork(), true));
+                // or groupLassoFromFlatGroups(ws.flatModel, groups) if you predefine neuron groups
+
+            }  else if ("SLOPE".equals(cfg.REGULARIZER)) {
+
+                if (slopeLambdas == null || slopeLambdas.length != ws.flatModel.length) {
+                    slopeLambdas = LossFunction.makeSlopeLambdasGeometric(ws.flatModel.length,
+                        1e-3f,0.995f);  // 0.995f means a slow decay, but it must be smaller than 1
+                }
+
+                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.slopePenalty(ws.flatModel, slopeLambdas));
+            
+            } else if ("NONE".equals(cfg.REGULARIZER)) {
+                // ...
+            }
         }
 
         // ===========================================================================================

@@ -39,7 +39,7 @@ public final class PsoMultiLayerAdapter implements PsoModel {
         return 1;
     }
 
-    @Override public MultiLayerNetwork asMultiLayerNetwork(){ return model; }
+    @Override public MultiLayerNetwork asMultiLayerNetwork() { return model; }
 
     @Override public String summary() { return model.summary(); }
 

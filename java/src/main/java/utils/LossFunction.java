@@ -2,6 +2,10 @@ package utils;
 
 import java.util.Arrays;
 
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.deeplearning4j.nn.api.Layer;
+
 
 public class LossFunction {
 
@@ -14,7 +18,10 @@ public class LossFunction {
 
     public static float compute_loss(float[] probs, int label) {
         
-        if ("L2".equals(LOSS_FUNCTION)) {
+        if ("MAE".equals(LOSS_FUNCTION) || "TOP_K".equals(cfg.COMBINE_LOSS)) {
+            return compute_loss_MAE(probs, label);    
+
+        } else if ("L2".equals(LOSS_FUNCTION)) {
             return compute_loss_MSE(probs, label);
 
         } else if ("CROSS_ENTROPY".equals(LOSS_FUNCTION)) {
@@ -22,9 +29,6 @@ public class LossFunction {
 
         } else if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
             return compute_loss_zero_one(probs, label);
-
-        } else if ("MAE".equals(LOSS_FUNCTION)) {
-            return compute_loss_MAE(probs, label);
         }
 
         System.out.println("No valid loss function selected");
@@ -160,15 +164,15 @@ public class LossFunction {
     // MAE / L1 loss between probs and one-hot target
 
     public static float compute_loss_MAE(float[] probs, int label) {
-
         if (probs == null || probs.length == 0) return -1f;
 
         float sum = 0f;
         int C = probs.length;
+        float[] target = new float[probs.length];
+        target[label] = 1f;     // on hot label encoding
 
         for (int c = 0; c < C; c++) {
-            float t = (c == label) ? 1f : 0f;   // on hot label encoding
-            float d = probs[c] - t;
+            float d = target[c] - probs[c];
             sum += Math.abs(d);
         }
 
@@ -196,7 +200,6 @@ public class LossFunction {
         if (sampleLosses == null || sampleLosses.length == 0) return 0f;
 
         float s = sum(sampleLosses);
-        if (Float.isInfinite(s)) return s; // propagate infinity
         return s / sampleLosses.length;
     }
 
@@ -220,4 +223,107 @@ public class LossFunction {
         return sum / k_edited;
     }
     
+    // ==================================================================================
+    // Regularization - Weight Penalty Score
+    // ==================================================================================
+    // L2 - Penalty:
+
+    public static double l2Penalty(float[] w) {
+        if (w == null || w.length == 0) return 0.0;
+        double s = 0.0;
+
+        for (float v : w) {
+            s += (double)v * (double)v;
+        }
+        return s / (double)w.length;
+    }
+
+    // ==================================================================================
+    // Group-Lasso Penalty:
+
+    public static double groupLassoNeuronPenalty(MultiLayerNetwork model, boolean includeBias) {
+
+        double penalty = 0.0;
+
+        for (int li = 0; li < model.getnLayers(); li++) {   // per Layer iterate
+            
+            Layer layer = model.getLayer(li);
+            if (layer == null) continue;
+
+            if (!layer.paramTable().containsKey("W")) continue; // if no weight
+
+            INDArray W = layer.getParam("W");      // [nIn, nOut], these are all the weights of one layer
+            if (W == null) continue;                        // [weight_inputs, neurons]
+
+            INDArray b = null;
+            if (includeBias && layer.paramTable().containsKey("b")) {
+                b = layer.getParam("b");           // [nOut] or [1, nOut]
+            }
+
+            int nOut = (int) W.size(1);
+
+            for (int j = 0; j < nOut; j++) {    // loop all the neurons
+
+                INDArray col = W.getColumn(j);  // per one neuron, select all the incoming weights
+                                                // col[nIn] (has the dimensionality of the inputs)
+                double sumSq = col.mul(col).sumNumber().doubleValue();
+                            // multiple all weights with themselves and then add them together (sumNumber)
+                if (b != null) {
+                    double bj = b.getDouble(j);
+                    sumSq += bj * bj;
+                }
+
+                penalty += Math.sqrt(sumSq);       // ||group||_2
+            }
+        }
+
+        return penalty;
+    }
+
+    // ==================================================================================
+    // slope Penalty 
+
+    public static double slopePenalty(float[] w, float[] lambdas) {
+
+        if (w == null || w.length == 0) return 0.0;
+
+        int d = w.length;
+        if (lambdas == null || lambdas.length < d) {
+            throw new IllegalArgumentException("SLOPE lambdas length must be >= #weights (need " + d + ")");
+        }
+
+        float[] weights_abs = new float[d];
+        for (int i = 0; i < d; i++) {
+            float v = w[i];
+            weights_abs[i] = (v >= 0f) ? v : -v;
+        }
+
+        Arrays.sort(weights_abs); // ascending
+
+        double pen = 0.0;
+        int j = 0;      // lambda_1 applies to largest |w|
+
+        for (int idx = d - 1; idx >= 0; idx--) {
+            pen += (double) lambdas[j] * (double) weights_abs[idx];
+            j++;
+        }
+
+        return pen;
+    }
+    
+    // =============================================================================================
+    // Based on geometric decay λj​=λ1​αj−1,  0<α≤1
+    
+    public static float[] makeSlopeLambdasGeometric(int d, float lambda1, float alpha) {
+        if (d <= 0) return new float[0];
+        if (alpha <= 0f || alpha > 1f) throw new IllegalArgumentException("alpha must be in (0, 1].");
+
+        float[] l = new float[d];
+        float cur = lambda1;
+        for (int j = 0; j < d; j++) {
+            l[j] = cur;
+            cur *= alpha;
+        }
+        return l;
+    }
 }

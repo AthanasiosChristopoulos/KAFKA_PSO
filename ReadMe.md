@@ -97,10 +97,14 @@ Standard PSO works this way:
 
 ## Non DIfferentiable Loss Functions: =======================================================
  - Review - Ranking:
-    - ZERO_ONE is too discrete. Losses out on information
+    - ZERO_ONE is too discrete. Losses out on information.
+    - MAE is middle, continious probability p depended, but it doesnt reward confidence as well as CE its not the ideal function
     - MAE
     - ZERO_ONE < MAE < TOP-K < CROSS_ENTROPY (standard)
-    
+ - Smoothness / a dense signal is important because you want PSO to detect loss differences when weights change, even a little. 
+ - If its a discrete signal, then PSO gets no gradient like guidance, weights change and loss remains the same flat (not informative, doesnt give a direction)
+
+
 ## =====================================================================================================
 ## Project Architecture Description: ===================================================================
 

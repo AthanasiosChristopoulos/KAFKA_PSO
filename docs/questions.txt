@@ -58,6 +58,8 @@
 		- Απο μονη του η αυξηση των N_WORKERS ειναι προβληματικη εκτος εαν data per worker μεινουν σταθερα.
 			- Kafka Record Processing performance affects accuracy / convergence behavior
 
+		- Σωστα εκανα το TOP KyFan ?
+		
 	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

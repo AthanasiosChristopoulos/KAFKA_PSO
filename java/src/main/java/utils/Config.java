@@ -94,6 +94,9 @@ public class Config {
     public final int HEAD_LAYER_IDX; 
     public boolean USING_PRETRAINED_MODEL;
 
+    public final String REGULARIZER;
+    public final float LAMBDA_VALUE; 
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -276,6 +279,21 @@ public class Config {
         this.HEAD_LAYER_IDX = Integer.parseInt(getenv(dotenv, "HEAD_LAYER_IDX", "4"));
         // this.USING_PRETRAINED_MODEL = Boolean.parseBoolean(getenv(dotenv, "USING_PRETRAINED_MODEL", "false"));
         this.USING_PRETRAINED_MODEL = false;
+
+        this.REGULARIZER = getenv(dotenv, "REGULARIZER", "NONE");
+        if(this.REGULARIZER.equals("L2")) {
+            this.LAMBDA_VALUE = 1e-2f;
+        
+        } else if (this.REGULARIZER.equals("GROUP_LASSO")) {
+            this.LAMBDA_VALUE = 1e-3f;    // or 1e-5f
+        
+        } else if (this.REGULARIZER.equals("SLOPE")) {
+            this.LAMBDA_VALUE = 1e-3f;     // smaller because scale is large
+
+        } else {
+            this.LAMBDA_VALUE = 0;
+        }
+
     } 
 
     // ==================================================================================================================================
