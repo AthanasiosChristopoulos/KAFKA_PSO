@@ -1,14 +1,12 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
 
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_wine
 from tensorflow.keras.datasets import mnist
 from sklearn.metrics import accuracy_score
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers

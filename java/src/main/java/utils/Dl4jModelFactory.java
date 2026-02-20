@@ -63,9 +63,9 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 			// head_layer_idx = 8;	// LeNet
-			// String filename = "pretrained_models/mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "pretrained_models/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "pretrained_models/mnist_base_plus_head_v3.h5";	
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			String filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";	
 			if(preTrained) {
 				// 1)
 				model = pretrainedModelLeNet(); 
@@ -151,10 +151,10 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 			// head_layer_idx = 8;	// LeNet
-			// String filename = "pretrained_models/mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "pretrained_models/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			// String filename = "pretrained_models/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
-			String filename = "pretrained_models/cifar10_base_plus_head_v1.h5";
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5"; head_layer_idx = 3;
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
+			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
+			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
 
 			if(preTrained) {
 				// model = pretrainedModelMobileNetV2(filename); 		
@@ -166,18 +166,21 @@ public class Dl4jModelFactory {
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
 				// pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler(workerId, filename, 128);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
+					// this is pretrained for cifar10, but can still use it for cifar 3
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
 
-			String filename = "pretrained_models/cifar10_base_plus_head_v1.h5";
+			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
+			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
 
 			if(preTrained) {
 				model = pretrainedModelCIFAR(filename);
 			} else {
+				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
 
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler(workerId, filename, 128);
 			}
 
 		} else {
@@ -192,7 +195,70 @@ public class Dl4jModelFactory {
 
 	// ============================================================================
 
-	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler(
+	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(
+			int workerId, String fileName, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define updater etc.
+		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.build();
+
+		// MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+		// 	.fineTuneConfiguration(ftc)
+		// 	.removeLayersFromOutput(2)
+		// 	.build();
+
+		// int start = (int) truncated.numParams();
+
+		// MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+		// 		.fineTuneConfiguration(ftc)
+		// 		.addLayer(new DenseLayer.Builder()
+		// 				.nIn(inputDim)
+		// 				.nOut(64)
+		// 				.activation(Activation.RELU) // or TANH for PSO smoothness
+		// 				.build())
+		// 		.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+		// 				.nIn(64)           		// for this TF model: 128
+		// 				.nOut(NUM_CLASSES)       	// your target classes
+		// 				.activation(Activation.SOFTMAX)
+		// 				.weightInit(WeightInit.XAVIER)
+		// 				.biasInit(0.0)
+		// 				.build())
+		// 		.build();
+
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(1)
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(64)           		// for this TF model: 128
+						.nOut(NUM_CLASSES)       	// your target classes
+						.activation(Activation.SOFTMAX)
+						.weightInit(WeightInit.XAVIER)
+						.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+	// dense (DenseLayer)                   256,64     16,448        W:{256,64}, b:{64}   
+	// dense_1 (DenseLayer)                 64,10      650           W:{64,10}, b:{10} 
+	   
+	// ============================================================================
+
+	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(
 			int workerId,
 			String fileName,
 			int inputDim

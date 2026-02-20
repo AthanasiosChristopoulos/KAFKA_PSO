@@ -1,10 +1,10 @@
-import tensorflow as tf
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
+import tensorflow as tf
 import numpy as np
 from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.keras import layers, models
 
 DATASET = "cifar10"
 
@@ -66,7 +66,7 @@ def load_cifar10():
 # ===============================================================================
 # Model (Simple CIFAR feature extractor + head)
 
-def build_cifar_base_plus_head(input_shape=(32, 32, 3), num_classes=10):    # this means NHWC (look at the order in shape input_shape=(32, 32, 3))
+def build_cifar_base(input_shape=(32, 32, 3), num_classes=10):    # this means NHWC (look at the order in shape input_shape=(32, 32, 3))
     
     model = keras.Sequential([
         layers.Input(shape=input_shape),
@@ -97,13 +97,80 @@ def build_cifar_base_plus_head(input_shape=(32, 32, 3), num_classes=10):    # th
     return model
 
 # ===============================================================================
+
+def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32->16
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16->8
+
+        layers.Conv2D(feat_dim, 3, padding="same", activation="relu", use_bias=True),
+
+        layers.GlobalAveragePooling2D(),          # -> (feat_dim,)
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
+def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32->16
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16->8
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 8->4
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 4->2
+
+        layers.Flatten(),        # 2*2*64 = 256
+        layers.Dense(64, activation="relu", use_bias=True),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
 # Train + Export
 
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
     x_train, y_train, x_test, y_test = load_cifar10()
-    model = build_cifar_base_plus_head(input_shape=x_train.shape[1:], num_classes=10)
-    name_h5_file = "cifar10_base_plus_head_v1"
 
+    # model = build_cifar_base(input_shape=x_train.shape[1:], num_classes=10)
+    # name_h5_file = "cifar10_base_plus_head_v1"
+
+    # model = build_cifar_base_v2(input_shape=x_train.shape[1:], num_classes=10)
+    # name_h5_file = "cifar10_base_plus_head_v2"
+
+    model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
+    name_h5_file = "cifar10_base_plus_head_v3"
+    
     callbacks = [
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
         keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
@@ -137,3 +204,6 @@ if __name__ == "__main__":
     # export_mobilenetv2_base()
     # export_mobilenetv3small_base()
     train_and_export()
+
+
+    # source ~/venvs/tf215/bin/activate

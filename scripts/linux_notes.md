@@ -111,13 +111,13 @@ git config --list
 pip install numpy --break-system-packages
 pip install pandas --break-system-packages
 pip install scikit-learn --break-system-packages
-pip install tensorflow --break-system-packages
 pip install kafka-python --break-system-packages
 pip install python-dotenv --break-system-packages
 pip install matplotlib --break-system-packages
 PYTHONHTTPSVERIFY=1 python3 -m pip install pyswarms --user --default-timeout=120 --break-system-packages
+# pip install tensorflow --break-system-packages you probably want the below one. This installs GPU capability as well
 pip install "tensorflow[and-cuda]" --break-system-packages
-
+	# test with python -c "import tensorflow as tf; print(tf.__version__); print(tf.config.list_physical_devices('GPU'))" if GPU is working 
 # Check for installation location:
 python3 -c "import pyswarms, inspect, os; print('pyswarms:', os.path.dirname(pyswarms.__file__))"
 # It will be in /home/ds123f15/.local/lib/python3.12/site-packages/

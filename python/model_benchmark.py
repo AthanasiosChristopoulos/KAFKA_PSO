@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0" 
 import time
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO, 2 = WARNING, 3 = ERROR
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0" 
-
 BATCH_SIZE = 100
 N_WARMUP = 30
 N_RUNS = 200
