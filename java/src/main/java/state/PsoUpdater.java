@@ -120,7 +120,7 @@ public class PsoUpdater {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (5 * TRAIN_SIZE);
+            MAX_PSO_UPDATES = NUM_SAMPLES / (TRAIN_SIZE);
         } else {
             MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * TRAIN_SIZE);
         }

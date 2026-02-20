@@ -62,6 +62,16 @@ fi
 
 export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
+# export MAVEN_OPTS="\
+# -Xms512M -Xmx1G \
+# -Dorg.bytedeco.javacpp.maxbytes=1000M \
+# -Dorg.bytedeco.javacpp.maxphysicalbytes=6G"
+
+export JAVA_TOOL_OPTIONS="\
+-Xms512M -Xmx1G \
+-Dorg.bytedeco.javacpp.maxbytes=1000M \
+-Dorg.bytedeco.javacpp.maxphysicalbytes=3000M"
+
 # mvn -q -DskipTests clean compile exec:java
 # mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
 
@@ -71,6 +81,13 @@ export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 # java -jar target/iris-streams-1.0.0.jar    
 
 # mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE clean compile exec:java  # this ND4J_PROFILE .env variables select pom.xml P = profile
+
 mvn -q -e -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
 
 # mvn -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
+
+# mvn -q -e -DskipTests \
+#   -Dexec.mainClass=pso.Simulation \
+#   -Dexec.jvmArgs="-Xms512M -Xmx1G -Dorg.bytedeco.javacpp.maxbytes=1000M -Dorg.bytedeco.javacpp.maxphysicalbytes=6G" \
+#   -P$ND4J_PROFILE \
+#   compile exec:java

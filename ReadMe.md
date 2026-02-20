@@ -101,6 +101,7 @@ Standard PSO works this way:
 This is my project for PSO, for my thesis. Its purpose is PSO training of Neural Networks used for dataset classification
     => mostly UCI / common datasets of significant number of samples / features 
     => mostly FNN models, but also trying out CNNs as well
+    => having the ability to define / use non differentiable functions
 
 The project is build on top of Kafka, Kafka Streams and Python Consumer and Producers. The Kafka service is running on Docker. 
 These are the topics that run on Kafka:
@@ -725,7 +726,7 @@ improve the ability to escape local minima
     - On NNs set xmin=-1, xmax=+1  NN weights do not have a fixed natural range. But [−1,1] is the assumed  an assumed scale, beucase in this amplitude they get initializied)
     - In reality, if you don’t enforce bounds on weights, then choosing xmin/xmax is arbitrary
 
- - ## C1, C2 Accelaration Constants: ===================================================================================
+ - ## C1, C2 Accelaration Constants: ==========================================
 
     - Comparison between the two: 
         - a relatively high value of c1 causes particles to extremely wander in the search space.
@@ -778,7 +779,7 @@ improve the ability to escape local minima
             =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
     - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
 
- - # Randomness Dimensionality (CLPSO - Page 2): ============================================================================ 
+ - # Randomness Dimensionality (CLPSO - Page 2): =================================================== 
 
     ```java
     // 1) static randmoness per updateX / Statistically independent dimensions
@@ -1065,6 +1066,44 @@ found a better region than the second or third best neighbors (they may not have
         
         - nvidia-smi -l 1
         - <code>nvidia-smi -q</code>  // see gpu specs
+        
+# DL4J Memory Management: ==========================================================
+DL4J has 3 different memory spaces:
+
+ - CPU RAM (both ON-HEAP and OFF-HEAP are on CPU RAM):
+    - JVM Heap ON-HEAP (Java Memory - still technically native memory)
+        => Controlled by    - Xms (how much memory does JVM Heap get at start) 
+                            - Xmx (JVM Heap memory limit)
+        => Not used for INDArray tensors
+        => on heap - off heap matters only for CPU RAM
+
+    - ND4J OFF-HEAP (native CPU memory) - managed by DL4J not JVM - JavaCPP allocations:
+        => Controlled by -Dorg.bytedeco.javacpp.maxbytes
+        => Used mainly for INDArray tensors
+    
+ - GPU VRAM:   
+        => Controlled by -Dorg.bytedeco.javacpp.maxbytes
+            - ND4J off-heap size ≈ GPU memory usable 
+        => ND4J mirrors OFF-HEAP buffers to GPU
+            - This means that on CPU => GPU communication, NDArray Buffers are exchanged off heap (copied from CPU off-heap to GPU. If CPU off-heap is limited, then GPU VRAM is limited in the same way)
+        => ND4J CUDA uses JavaCPP (bytedeco) to allocate native memory and manage CUDA resources.
+            - JavaCPP (bytedeco) is the bridge between Java and native code (code of the CPU)
+            - this is generally necessary when not on JVM / on Heap. The RAM is managed natively by C.
+            - JavaCPP will try to keep native allocations it tracks under this budget (mostly host /off-heap), but CUDA/ND4J can still reserve/hold VRAM via its own pools/caches and via CUDA/cuDNN (this is what is reported by nvidia-smi).
+
+ - Reasons why limiter doesnt work and it will keep on allocating:
+    - You cant limit what the GPU is doing beyond the tensor allocations:
+        - Dorg.bytedeco.javacpp.maxbytes ONLY limits ND4J-managed tensor memory pools (the stuff backing your INDArrays and workspaces)
+        - All the other GPU memory (CUDA context, cuDNN (fastest algorithm - takes up a large buffer. For a huge model like MobileNetV2, this might be up to 500MB), convolution workspaces, kernels, caching allocator, etc.) is NOT limited by that flag.
+             => these memory allocations are used for the actuall convolution, not the memory transfer
+    - You cant controll CUDA / GPU caching 
+
+ - 1)  -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
+            - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
+
+ - 2) -Dorg.bytedeco.javacpp.maxphysicalbytes => total physical memory footprint of the process
+        => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra
+        => also influnces GPU allocations to a greater degree
         
 # htop Alternatives for GPU: ==========================================================
 

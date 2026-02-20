@@ -157,29 +157,32 @@ public class Dl4jModelFactory {
 			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
 
 			if(preTrained) {
-				// model = pretrainedModelMobileNetV2(filename); 		
-				model = pretrainedModelCIFAR(filename);
+				model = pretrainedModelMobileNetV2(filename); 		
+				// model = pretrainedModelCIFAR(filename);
 			} else {
 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
-				// pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
+				pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
 					// this is pretrained for cifar10, but can still use it for cifar 3
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
 
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
-			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
-
+			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
+			String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+			
 			if(preTrained) {
-				model = pretrainedModelCIFAR(filename);
+				// model = pretrainedModelCIFAR(filename);
+				model = pretrainedModelMobileNetV2(filename); 		
 			} else {
 				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
+				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
+				pair = createCifarFromMobileNetV2Base(workerId, filename, 10);
 
 			}
 
@@ -255,7 +258,7 @@ public class Dl4jModelFactory {
 	}
 	// dense (DenseLayer)                   256,64     16,448        W:{256,64}, b:{64}   
 	// dense_1 (DenseLayer)                 64,10      650           W:{64,10}, b:{10} 
-	   
+
 	// ============================================================================
 
 	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(

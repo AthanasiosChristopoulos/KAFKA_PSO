@@ -835,7 +835,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     "=> per Communication: " + String.format("%.3f ms", avgMsCommunication) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
                     "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
-                    " Rate of Updates / Batches per sec: " + String.format("%.5f sec", count / totalElapsedTimeSec)   // this is count_of_updates per seconds
+                    "Rate of Updates / Batches per sec: " + String.format("%.5f sec", count / totalElapsedTimeSec)   // this is count_of_updates per seconds
                         // Also equivalent with batches per second
             );
 
