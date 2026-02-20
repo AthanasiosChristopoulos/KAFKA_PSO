@@ -85,6 +85,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
     private static int countForwardPassesStatic = 0;
+
     // =======================================================================
 
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
@@ -124,7 +125,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + " WorkerTransformer started");
+        if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + 
+        " WorkerTransformer started");
 
         this.velocity =  new float[ws.pBestWeights.length];
 

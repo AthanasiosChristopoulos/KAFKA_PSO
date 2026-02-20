@@ -208,7 +208,6 @@ public class BatchPrediction {
         //     probs.assign(0.0); // reuse
         // }
 
-
         // Forward Pass Start ===============================================================================
         if(!MEMORY_EFFICIENT) {
             
@@ -408,7 +407,7 @@ public class BatchPrediction {
                 for (int i = 0; i < nSamples; i++) {
 
                     int pred = argMax.getInt(i);
-                    int label = labels.get(i);
+                    int label = labels.get(i);  // labels = integers of 0, ... , C
                     if (pred == label) nCorrect++;
 
                     int base = i * NUM_CLASSES; 

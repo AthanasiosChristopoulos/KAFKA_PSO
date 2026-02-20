@@ -19,6 +19,12 @@ public class LossFunction {
 
         } else if ("CROSS_ENTROPY".equals(LOSS_FUNCTION)) {
             return compute_loss_CE(probs, label);
+
+        } else if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
+            return compute_loss_zero_one(probs, label);
+
+        } else if ("MAE".equals(LOSS_FUNCTION)) {
+            return compute_loss_MAE(probs, label);
         }
 
         System.out.println("No valid loss function selected");
@@ -27,8 +33,53 @@ public class LossFunction {
 
     // =============================================================================================
 
-    public static float compute_loss(float probs, int label) {
-        return compute_loss_binary_CE(probs, label);
+    public static float compute_loss(float prob, int label) {
+
+        if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
+            return compute_loss_zero_one_binary(prob, label);
+        
+        } else if("MAE".equals(LOSS_FUNCTION)) {
+            return compute_loss_MAE_binary(prob, label);
+
+        } else {
+            return compute_loss_CE_binary(prob, label);
+        
+        }
+    }
+
+    // =============================================================================================
+
+    public static float compute_loss_zero_one_binary(float prob, int label) {
+        int pred = (prob >= 0.5f) ? 1 : 0;
+        return (pred == label) ? 0f : 1f;
+    }
+
+    // =============================================================================================
+
+    public static float compute_loss_MAE_binary(float prob, int label) {
+        return Math.abs(prob - (float)label);
+    }
+
+    // =============================================================================================
+
+    public static float compute_loss_CE_binary(float probs, int label) {  // binary cross entropy
+
+        if (probs < 1e-7f) probs = 1e-7f;
+        if (probs > 1f - 1e-7f) probs = 1f - 1e-7f;
+
+        float loss = (float)(- (label * Math.log(probs) + (1 - label) * Math.log(1f - probs))); // Binary Cross Entropy Loss Function
+
+        if (Float.isInfinite(loss)) {
+            System.out.println("Sigmoid loss is Inf");
+            return -1f;
+        }
+
+        if (Float.isNaN(loss)) {
+            System.out.println("Sigmoid loss is NaN");
+            return -1f;
+        }
+
+        return loss;
     }
 
     // =============================================================================================
@@ -72,28 +123,6 @@ public class LossFunction {
 
     // =============================================================================================
 
-    public static float compute_loss_binary_CE(float probs, int label) {  // binary cross entropy
-
-        if (probs < 1e-7f) probs = 1e-7f;
-        if (probs > 1f - 1e-7f) probs = 1f - 1e-7f;
-
-        float loss = (float)(- (label * Math.log(probs) + (1 - label) * Math.log(1f - probs))); // Binary Cross Entropy Loss Function
-
-        if (Float.isInfinite(loss)) {
-            System.out.println("Sigmoid loss is Inf");
-            return -1f;
-        }
-
-        if (Float.isNaN(loss)) {
-            System.out.println("Sigmoid loss is NaN");
-            return -1f;
-        }
-
-        return loss;
-    }
-
-    // =============================================================================================
-
     public static float compute_loss_CE(float[] probs, int label) {
         
         float eps = 0.0000001f;            
@@ -107,10 +136,44 @@ public class LossFunction {
     }
     
     // =============================================================================================
+    // ZERO_ONE:
 
-    // public static float compute_loss_residual(float[] probs, int label) {
-        
-    // }
+    public static float compute_loss_zero_one(float[] probs, int label) {
+
+        if (probs == null || probs.length == 0) return -1f;
+
+        int pred = 0;
+        float best = probs[0];
+
+        for (int c = 1; c < probs.length; c++) {    // compute y* = pred = argmax_c(p_c)
+            float v = probs[c];
+            if (v > best) {
+                best = v;
+                pred = c;
+            }
+        }
+
+        return (pred == label) ? 0f : 1f;
+    }
+
+    // =============================================================================================
+    // MAE / L1 loss between probs and one-hot target
+
+    public static float compute_loss_MAE(float[] probs, int label) {
+
+        if (probs == null || probs.length == 0) return -1f;
+
+        float sum = 0f;
+        int C = probs.length;
+
+        for (int c = 0; c < C; c++) {
+            float t = (c == label) ? 1f : 0f;   // on hot label encoding
+            float d = probs[c] - t;
+            sum += Math.abs(d);
+        }
+
+        return sum / C;
+    }
 
     // =============================================================================================
     // =============================================================================================

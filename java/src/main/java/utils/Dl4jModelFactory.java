@@ -52,6 +52,8 @@ public class Dl4jModelFactory {
 			model = createWineModel(workerId);
 
 		} else if ("mnist".equals(DATASET)) {
+			cfg.USING_PRETRAINED_MODEL = true;
+
 			// model = createMNISTModelMLP(workerId);
 			// model = createMNISTModelMLPSimple_0(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
@@ -140,6 +142,8 @@ public class Dl4jModelFactory {
 			model = createLetterModel(workerId);
 			// model = createLetterModel70K(workerId);
 		} else if ("cifar3".equals(DATASET)) {
+			cfg.USING_PRETRAINED_MODEL = true;
+
 			// model = createCifar3Model_PSO_Simple(workerId);
 			// model = createCifar3Model(workerId);
 			// model = createCifar3Model_New(workerId);	
@@ -171,7 +175,7 @@ public class Dl4jModelFactory {
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
-
+			cfg.USING_PRETRAINED_MODEL = true;
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
 			String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
@@ -550,8 +554,8 @@ public class Dl4jModelFactory {
 	
 	// ======================================================================================================================
 
-	// public static PsoModel createMNIST_CNN_PretrainedLeNet(int workerId) {
-	// 	// 1) Load pretrained LeNet (MNIST 10-class)
+	// public static PsoModel createMNIS T_CNN_PretrainedLeNet(int workerId) {
+	// 	// 1) Load pretrained LeNet (MNIST  10-class)
 	// 	ZooModel zoo = LeNet.builder()
 	// 			.numClasses(10) // MNIST pretrained weights are for 10 classes
 	// 			.build();

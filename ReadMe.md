@@ -95,6 +95,12 @@ Standard PSO works this way:
     xid= xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
+## Non DIfferentiable Loss Functions: =======================================================
+ - Review - Ranking:
+    - ZERO_ONE is too discrete. Losses out on information
+    - MAE
+    - ZERO_ONE < MAE < TOP-K < CROSS_ENTROPY (standard)
+    
 ## =====================================================================================================
 ## Project Architecture Description: ===================================================================
 
@@ -532,7 +538,7 @@ hidden unit will always output a value close to either end of the activation fun
  - Dropout Layer can be problematic with PSO. Iassumes the fitness evaluation is reasonably stable (same weights same fitness no randomness):
 same weights → similar fitness.
 
-## Regularization: ===============================================================================================
+## Regularization: ============================================================================
  
 - reqularization penalty isnt included in a forward pass: probs = model.output(X, false); (this is inference mode)
         => would be added only if using DL4J's internal training loop.
@@ -1104,7 +1110,7 @@ DL4J has 3 different memory spaces:
  - 2) -Dorg.bytedeco.javacpp.maxphysicalbytes => total physical memory footprint of the process
         => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra
         => also influnces GPU allocations to a greater degree
-        
+
 # htop Alternatives for GPU: ==========================================================
 
 ```bash
