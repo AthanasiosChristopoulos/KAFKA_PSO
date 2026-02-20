@@ -499,6 +499,7 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - using both nIn and nOut at every Dense Layer
         - using only nOut (its a dense layer nIn can be infered). Except for the first input, this needs to be specified in this case by:
             - .setInputType(InputType.convolutionalFlat(height, width, channels))
+
 ## =====================================================================================
 ## PSO friendly Neural Networks Architectures ========================================== 
 
@@ -1159,19 +1160,23 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 
 Ranked from simplest to heaviest:
  - Tier 0:
+    LesNet
     MobileNetV3Small
     MobileNetV2
     EfficientNetB0
     NASNetMobile
+
  - Tier 1:
     MobileNetV3Large
     EfficientNetB1
     ResNet50 (or ResNet50V2)
+
  - Tier 2:
     ResNet101
     InceptionV3
     Xception
     DenseNet121
+
  - Tier 3: heavy 
     - DenseNet169 / DenseNet201
     - EfficientNetB2 / B3
@@ -1183,5 +1188,8 @@ Ranked from simplest to heaviest:
     - NASNetLarge
     - ResNet152
 
+ - For DL4J:
+ LeNet → SimpleCNN → TextGenerationLSTM → FaceNetNN4Small2 → Darknet19 → TinyYOLO → AlexNet → VGG16 → VGG19 → ResNet50 → InceptionResNetV1
+ 
  - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
  - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)

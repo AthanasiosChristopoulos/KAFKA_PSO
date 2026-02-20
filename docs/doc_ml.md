@@ -28,6 +28,7 @@
     - Stochastic => During training, randomly disables neurons
 
 ## Layers: ===============================================================================================
+
     - Dropout:
         - Dropout is a regularization trick (Helps us achieve regularization):
             During training, it randomly “turns off” a fraction of activations (50%)
@@ -45,12 +46,14 @@ Dense Neural Networks have a loss landscape of sharp directions , many valeys, n
 
 CNNs have smoother valeys ? 
 
+## Overfitting ====================================================================
+- Overfitting increases with:
+    - Model capacity
 ## Different Types of Neural Networks: ============================================
 
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
  - CNNs
  - RNNs
-
 
 ## CNNs =========================================================================
  

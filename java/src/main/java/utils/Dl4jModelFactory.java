@@ -68,6 +68,7 @@ public class Dl4jModelFactory {
 			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5"; head_layer_idx = 3;
 			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
 			String filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";	
+
 			if(preTrained) {
 				// 1)
 				model = pretrainedModelLeNet(); 
@@ -79,7 +80,9 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				pair = createMNIST_CNN_PretrainedLeNet(workerId); head_layer_idx = 8;
+				pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
+				// pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
+
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
 				// 3) 
@@ -185,14 +188,15 @@ public class Dl4jModelFactory {
 				model = pretrainedModelMobileNetV2(filename); 		
 			} else {
 				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
-				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
-				pair = createCifarFromMobileNetV2Base(workerId, filename, 10);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
+				// pair = createCifarFromMobileNetV2Base(workerId, filename, 10);
 
 			}
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
 		}
+
 		if(pair == null) {
 			return Pair.of(model, head_layer_idx);
 		} else {
@@ -535,7 +539,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel pretrainedModelLeNet() {
+	public static PsoModel pretrainedModelLeNet() {	// has MNIST weights / was trained on mnist
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
 				.numClasses(10) // MNIST pretrained weights are for 10 classes
@@ -554,71 +558,7 @@ public class Dl4jModelFactory {
 	
 	// ======================================================================================================================
 
-	// public static PsoModel createMNIS T_CNN_PretrainedLeNet(int workerId) {
-	// 	// 1) Load pretrained LeNet (MNIST  10-class)
-	// 	ZooModel zoo = LeNet.builder()
-	// 			.numClasses(10) // MNIST pretrained weights are for 10 classes
-	// 			.build();
-
-	// 	MultiLayerNetwork pretrained;
-	// 	try {
-	// 		pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
-	// 	} catch (Exception e) {
-	// 		throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
-	// 	}
-
-	// 	// 2) Replace the output layer for YOUR NUM_CLASSES (MNIST4 or MNIST10)
-	// 	//    This keeps the conv feature extractor from the pretrained model,
-	// 	//    but resets the classifier head.
-	// 	FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-	// 			// optimizer not used by you (PSO), but required by the builder
-	// 			.build();
-
-	// 	String outputLayerName = pretrained.getLayerWiseConfigurations()
-	// 			.getConf(pretrained.getnLayers() - 1)
-	// 			.getLayer().getLayerName();
-
-	// 	// If layer names are null (common), DL4J uses internal names; easiest:
-	// 	// remove 1 layer from output and add a new output layer.
-	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
-	// 			.fineTuneConfiguration(ftc)
-	// 			.removeLayersFromOutput(1)
-	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-	// 					.nOut(NUM_CLASSES)              // <-- your config value (4 or 10)
-	// 					.activation(Activation.SOFTMAX)
-	// 					.build())
-	// 			.build();
-
-	// 	// 3) Seed is irrelevant now (weights loaded), but you can keep reproducibility elsewhere.
-	// 	return tl;
-	// }
-
-
-	// public static PsoModel createMNIST_CNN_PretrainedLeNet(int workerId) {
-
-	// 	ZooModel zoo = LeNet.builder().numClasses(10).build();
-
-	// 	MultiLayerNetwork pretrained;
-	// 	try {
-	// 		pretrained = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
-	// 	} catch (Exception e) {
-	// 		throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
-	// 	}
-
-	// 	// Remove the last Dense(500->10) layer and replace it with Dense/Output(500->NUM_CLASSES)
-	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
-	// 			.removeLayersFromOutput(1)   // removes dense_2
-	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-	// 					.nIn(500)            // <-- MUST be 500 (from summary)
-	// 					.nOut(NUM_CLASSES)   // 4 for MNIST4
-	// 					.activation(Activation.SOFTMAX)
-	// 					.build())
-	// 			.build();
-
-	// 	return tl;
-	// }
-
-	public static Pair<PsoModel, Integer> createMNIST_CNN_PretrainedLeNet(int workerId) {
+	public static Pair<PsoModel, Integer> createMNIST_CNN_PretrainedLeNet_v1(int workerId) {
 
 		// Pretrained Model ===========================================================
 		ZooModel zoo = LeNet.builder().numClasses(10).build();
@@ -640,7 +580,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(2)
+			.removeLayersFromOutput(2)	// its 2 because for some reason the activation layers counts as well
 			.build();
 
 		int start = (int) truncated.numParams();
@@ -650,6 +590,58 @@ public class Dl4jModelFactory {
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(500)
+						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
+														// this depends on the methodology used to define activation layers. They can be embedded or
+														// be external (right afterwards) to dense layers
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model), start);
+	}
+
+	// ======================================================================================================================
+
+	public static Pair<PsoModel, Integer> createMNIST_CNN_PretrainedLeNet_v2(int workerId) {
+
+		// Pretrained Model ===========================================================
+		ZooModel zoo = LeNet.builder().numClasses(10).build();
+
+		MultiLayerNetwork base;
+		try {
+			base = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+		}
+		
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(5)
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)
+				.addLayer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+					.name("maxpool2")
+					.kernelSize(2, 2)
+					.stride(2, 2)
+					.build())
+				.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG).build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(50)
 						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
 						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
 														// this depends on the methodology used to define activation layers. They can be embedded or

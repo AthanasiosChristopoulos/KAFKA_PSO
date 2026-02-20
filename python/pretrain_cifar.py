@@ -119,6 +119,7 @@ def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
+
     model.summary()
     print("Trainable params:", model.count_params())
     return model
@@ -126,6 +127,7 @@ def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
 # ===============================================================================
 
 def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
@@ -201,11 +203,11 @@ def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
     # model = build_cifar_base_v2(input_shape=x_train.shape[1:], num_classes=10)
     # name_h5_file = "cifar10_base_plus_head_v2"
 
-    # model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
-    # name_h5_file = "cifar10_base_plus_head_v3"
+    model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
+    name_h5_file = "cifar10_base_plus_head_v3"
 
-    model = build_cifar_base_v4(input_shape=x_train.shape[1:], num_classes=10)
-    name_h5_file = "cifar10_base_plus_head_v4"
+    # model = build_cifar_base_v4(input_shape=x_train.shape[1:], num_classes=10)
+    # name_h5_file = "cifar10_base_plus_head_v4"
 
     callbacks = [
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
