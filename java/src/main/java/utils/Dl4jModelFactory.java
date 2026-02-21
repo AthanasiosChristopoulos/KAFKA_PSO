@@ -51,7 +51,47 @@ public class Dl4jModelFactory {
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
 
+		} else if ("fashion_mnist".equals(DATASET)) {
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNISTCnn_New_2(workerId);
+			// model = createMNISTCnn(workerId);
+			// model = createMNIST4Cnn_New(workerId);
+
+		} else if ("susy".equals(DATASET)) {
+			// model = createSUSYModel_SOFTMAX(workerId);
+			model = createSUSYModel(workerId);
+
+		} else if ("bank".equals(DATASET)) {
+			// model = createBankModel(workerId);
+			model = createBankModel40K(workerId);
+
+		} else if ("adult".equals(DATASET)) {
+			model = createAdultModel(workerId);
+
+		} else if ("covertype".equals(DATASET)) {
+			model = createCovertypeModel(workerId);
+
+		} else if ("har".equals(DATASET)) {
+			model = createHarModel(workerId);
+
+		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
+			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			model = createPendigitsModelTanh(workerId);
+			// model = createPendigitsModelSmaller(workerId);
+			// model = createPendigitsModelSmaller_2(workerId);
+			// model = createPendigitsModelSmaller_3(workerId);
+
+		} else if ("winequality".equals(DATASET)) {
+			model = createWineQualityModel(workerId);
+
+		} else if ("letter".equals(DATASET)) {
+			model = createLetterModel(workerId);
+			// model = createLetterModel70K(workerId);
+
 		} else if ("mnist".equals(DATASET)) {
+
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			// model = createMNISTModelMLP(workerId);
@@ -106,45 +146,8 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
-		} else if ("fashion_mnist".equals(DATASET)) {
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			model = createMNIST4Cnn_New_Simpler(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST4Cnn_New(workerId);
-
-		} else if ("susy".equals(DATASET)) {
-			// model = createSUSYModel_SOFTMAX(workerId);
-			model = createSUSYModel(workerId);
-
-		} else if ("bank".equals(DATASET)) {
-			// model = createBankModel(workerId);
-			model = createBankModel40K(workerId);
-
-		} else if ("adult".equals(DATASET)) {
-			model = createAdultModel(workerId);
-
-		} else if ("covertype".equals(DATASET)) {
-			model = createCovertypeModel(workerId);
-
-		} else if ("har".equals(DATASET)) {
-			model = createHarModel(workerId);
-
-		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
-			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-			model = createPendigitsModelTanh(workerId);
-			// model = createPendigitsModelSmaller(workerId);
-			// model = createPendigitsModelSmaller_2(workerId);
-			// model = createPendigitsModelSmaller_3(workerId);
-
-		} else if ("winequality".equals(DATASET)) {
-			model = createWineQualityModel(workerId);
-
-		} else if ("letter".equals(DATASET)) {
-			model = createLetterModel(workerId);
-			// model = createLetterModel70K(workerId);
 		} else if ("cifar3".equals(DATASET)) {
+
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			// model = createCifar3Model_PSO_Simple(workerId);
@@ -157,38 +160,32 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_Simpler(workerId);
 
 			// pretrained =============================================================================================
-			// head_layer_idx = 8;	// LeNet
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";	head_layer_idx = 6;	
-			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
+			String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
+			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 
 			if(preTrained) {
-				model = pretrainedModelMobileNetV2(filename); 		
-				// model = pretrainedModelCIFAR(filename);
-			} else {
-
-				// model = createMNIST_CNN_Pretrained_MNIST(workerId, filename);
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
-				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+				model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
+				// model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
+			} else { 
 				pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
+				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					// this is pretrained for cifar10, but can still use it for cifar 3
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
 			cfg.USING_PRETRAINED_MODEL = true;
+			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
-			String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-			
+			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+
 			if(preTrained) {
-				// model = pretrainedModelCIFAR(filename);
-				model = pretrainedModelMobileNetV2(filename); 		
+				model = pretrainedModelCIFAR(filename);
+				// model = pretrainedModelMobileNetV2(filename); 		
 			} else {
-				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(workerId, filename, 128);
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
 				// pair = createCifarFromMobileNetV2Base(workerId, filename, 10);
 
 			}
@@ -269,11 +266,8 @@ public class Dl4jModelFactory {
 
 	// ============================================================================
 
-	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1(
-			int workerId,
-			String fileName,
-			int inputDim
-	) {
+	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(int workerId, String fileName, int inputDim) {
+
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
 
@@ -1387,12 +1381,14 @@ public class Dl4jModelFactory {
 		model.init();
 		return new PsoMultiLayerAdapter(model);
 	}
+
 	// Input Layer is always considered: 
 	// 9 * 1 (input) * 8 (output) + 8 = 80
 	// 9 * 8 (input) * 16 + 16 = 1168
 	// 32 * 5 x 5 x 16 + 32= 12832
 	// 32 * 4 + 4 = 132
 	// 80 + 1168 + 12832 + 132 = 14212 trainable parameters
+
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 

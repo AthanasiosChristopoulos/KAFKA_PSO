@@ -221,6 +221,16 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
     )
     return model
 
+    # Paramater calculations:
+    # (3 * 3 * 1 + 1) * 32 = 896
+    # (3 * 3 * 32 + 1) * 32 = 9,248
+    # (3 * 3 * 32 + 1) * 64 = 18,496
+    # (3⋅3⋅64+1)⋅64 = 36,928    
+    # (3⋅3⋅64+1)⋅128 = 73,856
+    # (3⋅3⋅128+1)⋅128 = 147,584
+    # (128+1)⋅10 = 1290, Not dependend from the image dimensionality because of the GlobalPooling Layer
+    # Total​=896+9,248+18,496+36,928+73,856+147,584+1,290=288,298​​
+    
 # ===============================================================================
 # Train + Export
 
@@ -256,17 +266,23 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
     x_train, y_train, x_test, y_test = load_cifar10()
 
-    model = build_cifar_base(input_shape=x_train.shape[1:], num_classes=10)
-    name_h5_file = "cifar10_base_plus_head_v1"
+    version = "v4"
 
-    # model = build_cifar_base_v2(input_shape=x_train.shape[1:], num_classes=10)
-    # name_h5_file = "cifar10_base_plus_head_v2"
+    if(version == "v1"):
+        model = build_cifar_base(input_shape=x_train.shape[1:], num_classes=10)
+        name_h5_file = "cifar10_base_plus_head_v1"
+    elif(version == "v2"):
+        model = build_cifar_base_v2(input_shape=x_train.shape[1:], num_classes=10)
+        name_h5_file = "cifar10_base_plus_head_v2"
+    elif(version == "v3"):
+        model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
+        name_h5_file = "cifar10_base_plus_head_v3"
 
-    # model = build_cifar_base_v3(input_shape=x_train.shape[1:], num_classes=10)
-    # name_h5_file = "cifar10_base_plus_head_v3"
+    elif(version == "v4"):
+        model = build_cifar_base_v4(input_shape=x_train.shape[1:], num_classes=10)
+        name_h5_file = "cifar10_base_plus_head_v4"
 
-    # model = build_cifar_base_v4(input_shape=x_train.shape[1:], num_classes=10)
-    # name_h5_file = "cifar10_base_plus_head_v4"
+
 
     os.makedirs(out_dir, exist_ok=True)
     h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")

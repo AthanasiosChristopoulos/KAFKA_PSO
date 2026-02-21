@@ -88,6 +88,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     // =======================================================================
 
+    public KeyValue<String, WeightsMessage> out = null;
+
     private final Set<Integer> seenPartitions = ConcurrentHashMap.newKeySet();
     private long lastOffset = 0;
     private double eps = 1e-12;
@@ -217,7 +219,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (buffer.size() < TRAIN_SIZE) {   // if not completed the batch, just return
             return null;                    // bufferSize is always: 100.0
         }
-        
+        out = null;
+
         start = System.nanoTime();
         startPredict = System.nanoTime();
 
@@ -268,6 +271,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // =========================================================================================================
         // Update to next position, Using the State Store ===================================================================
+
         startUpdateX = System.nanoTime();
 
         if (FULLY_INFORMED == true) {
@@ -305,6 +309,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Send pBest or current weights ===================================================================
 
         // Filtering: is the loss significant enough to be reported ?
+
         startCommunication = System.nanoTime();
         boolean significant_diff = true;
 
@@ -337,14 +342,14 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     " and accuracy: " + ws.stats.getBestAccuracy() + ", msgIndex = " + msgIndex);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
-            count++; ws.countForwardPasses++; countForwardPassesStatic++;
-            return new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
+
+            out = new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
         }
 
         // =========================================================================================================
         // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset ws.batchesRead
 
-        if (ws.batchesRead >= N_BATCHES) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
+        if (out == null && ws.batchesRead >= N_BATCHES) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
                 ", Sending current weights ...");
@@ -355,8 +360,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
-            count++; ws.countForwardPasses++; countForwardPassesStatic++;
-            return new KeyValue<>("current_weights", msg);
+            
+            out = new KeyValue<>("current_weights", msg);
         }
 
         sumElapsedNsCommunication += (System.nanoTime() - startCommunication);
@@ -364,7 +369,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // =========================================================================================================
         // Logging and Time
 
-        updateTime();   // is updated  every time a new buffer has been processed
+        updateTime();   // is updated  every time a new buffer has been processed. Need this for tracking lastActivity and overall activity time
         
         if (logger.isEnabled(0)) logger.log(taskInstance + 
                 ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
@@ -373,6 +378,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT));  
         // * 100 is for the user, just scale it upwards 
                 
+        // =========================================================================================================
+        // Check Convergence
 
         if(STOP_ON_CONVERGENCE && checkConvergence(true, false)) {
             consecutiveConvergence++;
@@ -385,11 +392,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             consecutiveConvergence = 0;
         }
 
+
         sumElapsedNs += (System.nanoTime() - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
                                         // Doesnt trigger when we are collecting a batch
         count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
-        return null;
+        return out;
     }
 
     //=========================================================================================================================

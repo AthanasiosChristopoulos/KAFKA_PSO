@@ -2,6 +2,7 @@ package utils;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.common.primitives.Pair;
 
 import java.util.Arrays;
@@ -84,6 +85,13 @@ public final class WorkerStatic {
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(workerId, this);
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId), this); 
+
+        if(logger.isEnabled(2)) logger.log("ND4J backend: " + Nd4j.getBackend().getClass().getName());
+        if(logger.isEnabled(2)) logger.log("Affinity: " + Nd4j.getAffinityManager().getClass().getName());
+        if(logger.isEnabled(2)) logger.log("Params buffer class: " + model.params().data().getClass().getName());
+        if(logger.isEnabled(2)) logger.log("Params is on device? " + model.params().isAttached());
+            // isAttached() == false ⇒ it is not currently attached to a specific device / not resident on device right now, at the moment you printed it.
+
     }
 }
 

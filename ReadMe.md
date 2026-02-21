@@ -83,6 +83,7 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
+
 ## Related Work: =============================================
 
 PySwarm:
@@ -1050,20 +1051,43 @@ found a better region than the second or third best neighbors (they may not have
                 => is enforced from commands like these which request probs / the result:  float[] flatProps = probs.data().asFloat();  
 
             5) [CPU loss + accuracy loops]  
-        GPU Overhead:
+
+        ## GPU Overhead:
+
          - (2) + (4) are overhead (+ GPU scheduling / Kernel launch). If the forward pass cost is small either way, then its not worth it to use GPU, it will end up costing more time. This happens specifically on the Dense NNs where CPU is prefered. For CNNs, gpu is confirmed.
          - Competition between N_WORKERS for the GPU. Another source of overhead are the N_WORKERS: 
-            Time:
+
+            ## Time:
             - They need to share the GPU. There are 6 CPU cores working in paralleland the GPU is only device (you would like N_WORKERS == N_DEVICES). GPU has Kernel launch queue, it can only launch a limited amount of Kernels. Many workers fight over the GPU, since every time its used one time.
             - GPU can parallelize compute internally => The highway = thousands of parallel GPU stuff
             - The toll gate = kernel launch + memory transfer + sync => is triggered at the model.output => N_WORKER competition overhead is included in the forward pass.
-            Memory:
-            - If too many memory allocations happen between many N_WORKERS, then GPU will not have the time to clean (free) the memory each time (there is a delayed release if ot exlicitly freed). The allocating memory rate will become bigger than the cleaning memory rate as N_WORKERS increases (leading to a crash, because of Memory overflow).
-                - Keep in mind that those arrays might still be referenced, this is why they arent getting cleaned
-            - On .output (forward pass), GPU needs to:
+
+            ## Memory:
+            - Whatever has to do with DL4J can live in the GPU
+            - If too many memory allocations happen between many N_WORKERS, then GPU will not have the time to clean (free) the memory each time (there is a delayed release if excplicitly freed). The allocating memory rate will become bigger than the cleaning memory rate as N_WORKERS increases (leading to a crash, because of Memory overflow).
+                - Those arrays might still be referenced, this is why they arent getting cleaned
+            - **Real Memory Expense:** On .output (forward pass), GPU needs to:
                 - allocate activation / intermediate tensors / NDArray => every intermediate / hidden layer each produces intermediate data. Expensive are:
                     - depthwise conv outputs, batchnorm / activation outputs, ... (just hidden layers of the model)
+
+                - activations are the output tensors of a layer (they are the transformed versions of the input for each layer):
+                    => input: (batch, 32, 32, 3) => Layer: Conv2D(32) => (batch, 32, 32, 32)
+                    => This is why batch size matters for memory. This entire activation (dimensionality wise) needs to be saved for each layer
+                    => During training, we must keep activations because of backpropagation (to calculate gradients you need the forward outputs of each layer)
+                        => stored during forward pass, reused during backward pass
+                    => So real VRAM use may be closer to 2 × activations, because of gradients for each activation and other temporary buffers
             - cuDNN convolution algorithms often require a “workspace” scratch buffer.
+
+            While training, parameters + optimizer (Adam / PSO (velocity)) state + activations live in memory (RAM / VRAM). If using GPU, the variables/weights are usually placed on the GPU (VRAM) so computation stays on-device.
+            - model.params() points to CUDA memory
+            - setData(float[]) uploads to GPU
+            - INDArray is “CUDA-capable” => means it can be bound / copied to the gpu
+
+            - Model size memory consumption:
+                - float32 = 4 bytes/param
+                - Size ≈ 288,298 × 4 = 1,153,192 bytes ≈ 1.15 MB
+                - this also gets a * 4 because of other parametes like gradients, Adam stuff => 4 × 1.10 MiB = ~4.4 MiB
+                - This is negligable to the memory consumed by the activations (intermediate data / feature maps)
 
         Memory Phenomenon:
             - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
@@ -1077,12 +1101,9 @@ found a better region than the second or third best neighbors (they may not have
             - No contribution for serialization / Kafka messages
             - This means me may be able to afford bigger models or batches, but the primary bottleneck will still be Kafka / CPU Scheduling
             - CUDA just does faster tensor math, convolutions, matrix multiplications
-        GPU gets more benefit from increased batch size
 
-        ND4J the “backend” (CPU vs CUDA) applies to everything ND4J does, not just model.output(...).
+        GPU gets more benefit from increased batch size
         
-        - nvidia-smi -l 1
-        - <code>nvidia-smi -q</code>  // see gpu specs
         
 # DL4J Memory Management: ==========================================================
 DL4J has 3 different memory spaces:
@@ -1101,19 +1122,21 @@ DL4J has 3 different memory spaces:
  - GPU VRAM:   
         => Controlled by -Dorg.bytedeco.javacpp.maxbytes
             - ND4J off-heap size ≈ GPU memory usable 
+            - The underlying ND4J arrays are off-heap, and with the CUDA backend they are (effectively) backed by GPU memory for GPU execution.
         => ND4J mirrors OFF-HEAP buffers to GPU
-            - This means that on CPU => GPU communication, NDArray Buffers are exchanged off heap (copied from CPU off-heap to GPU. If CPU off-heap is limited, then GPU VRAM is limited in the same way)
+            - This means that on CPU => GPU communication, NDArray Buffers are exchanged off heap (copied from CPU off-heap to GPU. If CPU off-heap is limited, then GPU VRAM is limited in the same way) => ff-heap allocations are “mapped” to GPU memory
         => ND4J CUDA uses JavaCPP (bytedeco) to allocate native memory and manage CUDA resources.
             - JavaCPP (bytedeco) is the bridge between Java and native code (code of the CPU)
             - this is generally necessary when not on JVM / on Heap. The RAM is managed natively by C.
             - JavaCPP will try to keep native allocations it tracks under this budget (mostly host /off-heap), but CUDA/ND4J can still reserve/hold VRAM via its own pools/caches and via CUDA/cuDNN (this is what is reported by nvidia-smi).
+        => It is possible to use HOST-only memory with a CUDA backend, but its not recommended for performance
 
  - Reasons why limiter doesnt work and it will keep on allocating:
     - You cant limit what the GPU is doing beyond the tensor allocations:
         - Dorg.bytedeco.javacpp.maxbytes ONLY limits ND4J-managed tensor memory pools (the stuff backing your INDArrays and workspaces)
         - All the other GPU memory (CUDA context, cuDNN (fastest algorithm - takes up a large buffer. For a huge model like MobileNetV2, this might be up to 500MB), convolution workspaces, kernels, caching allocator, etc.) is NOT limited by that flag.
              => these memory allocations are used for the actuall convolution, not the memory transfer
-    - You cant controll CUDA / GPU caching 
+    - You cant control CUDA / GPU caching 
 
  - 1)  -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
             - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
@@ -1193,3 +1216,5 @@ Ranked from simplest to heaviest:
  
  - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
  - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)
+
+

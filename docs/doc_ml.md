@@ -36,6 +36,12 @@
             Dropout(0.5) roughly means “keep 50% of units” during training (the other 50% are set to 0).
             At inference time, dropout is disabled.
 
+    - Pooling Layers:
+        - GlobalAveragePooling2D => Reduce dimensionality to (H,W,C) → (C).
+            - this replaces Flatten(). Flatten is better for percision, but will increase massively the number of parameters in the classification layer
+        - MaxPooling / AveragePooling => Reduce (H, W) dimensionality in half
+        These layers have no parameters, they always do the same thing (fixed reduction)
+        
 ## Funnels / Valeys: ==========================================================================
 
 The landscape of the neural networks is:
@@ -78,6 +84,7 @@ CNNs have smoother valeys ?
         .stride(1, 1)
         .padding(0, 0))
     ```
+
     This is 16 Filters of size 3 × 3 × 8 (NOT 3 × 3 × 1):
         => Filters are not per channel
         => Each filter combines all 8 input channels together into one output.
@@ -122,3 +129,143 @@ CNNs have smoother valeys ?
  - Improve performance:
     - Choose a different pretrained model
     - Unfreeze / Train more end Layers
+
+## Activation Test Run: =========================================================================
+How much memory do activations cost ?
+
+CIFAR Model Activation Memory (Batch Size = 100, float32 = 4 bytes)
+
+------------------------------------------------------------
+INPUT
+------------------------------------------------------------
+Shape: (100, 32, 32, 3)
+
+Elements:
+100 * 32 * 32 * 3 = 307,200 => these are 307,200 numbers ... Each of them is a float32, it costs 4 Bytes each number
+
+Memory:
+307,200 * 4 = 1,228,800 bytes ≈ 1.17 MB
+
+------------------------------------------------------------
+CONV BLOCK 1
+------------------------------------------------------------
+
+Conv1 Output
+Shape: (100, 32, 32, 32)
+
+Elements:
+100 * 32 * 32 * 32 = 3,276,800
+
+Memory:
+≈ 12.5 MB
+
+
+Conv2 Output
+Shape: (100, 32, 32, 32)
+
+Elements:
+3,276,800
+
+Memory:
+≈ 12.5 MB
+
+
+MaxPool Output
+Shape: (100, 16, 16, 32)
+
+Elements:
+100 * 16 * 16 * 32 = 819,200
+
+Memory:
+≈ 3.1 MB
+
+
+------------------------------------------------------------
+CONV BLOCK 2
+------------------------------------------------------------
+
+Conv3 Output
+Shape: (100, 16, 16, 64)
+
+Elements:
+100 * 16 * 16 * 64 = 1,638,400
+
+Memory:
+≈ 6.25 MB
+
+
+Conv4 Output
+Shape: (100, 16, 16, 64)
+
+Elements:
+1,638,400
+
+Memory:
+≈ 6.25 MB
+
+
+MaxPool Output
+Shape: (100, 8, 8, 64)
+
+Elements:
+100 * 8 * 8 * 64 = 409,600
+
+Memory:
+≈ 1.56 MB
+
+
+------------------------------------------------------------
+CONV BLOCK 3
+------------------------------------------------------------
+
+Conv5 Output
+Shape: (100, 8, 8, 128)
+
+Elements:
+100 * 8 * 8 * 128 = 819,200
+
+Memory:
+≈ 3.13 MB
+
+
+Conv6 Output
+Shape: (100, 8, 8, 128)
+
+Elements:
+819,200
+
+Memory:
+≈ 3.13 MB
+
+
+------------------------------------------------------------
+GLOBAL AVERAGE POOLING (GAP)
+------------------------------------------------------------
+
+Output Shape: (100, 128)
+
+Elements:
+100 * 128 = 12,800
+
+Memory:
+≈ 0.05 MB
+
+
+------------------------------------------------------------
+TOTAL ACTIVATION MEMORY (FORWARD PASS)
+------------------------------------------------------------
+
+Input      :  1.17 MB
+Conv1      : 12.50 MB
+Conv2      : 12.50 MB
+Pool1      :  3.10 MB
+Conv3      :  6.25 MB
+Conv4      :  6.25 MB
+Pool2      :  1.56 MB
+Conv5      :  3.13 MB
+Conv6      :  3.13 MB
+GAP        :  0.05 MB
+
+--------------------------------
+TOTAL ≈ 49.6 MB
+--------------------------------
