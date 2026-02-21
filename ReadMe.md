@@ -1082,9 +1082,16 @@ found a better region than the second or third best neighbors (they may not have
                     => Lifetime of Activations: After forward pass + backward pass → they are released / overwritten
                         => Training: intermediates must be kept for backward pass → big persistent “activation stash”
                         => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
+            
+            ## NVIDIA cuDNN (DNN = Deep Neural Network):
 
+            CUDA Deep Neural Network library
             - cuDNN convolution algorithms often require a “workspace” scratch buffer.
                 => use .cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE) to try and use smallest amount of memory
+                => highly optimized GPU library
+            - DL4J models this by giving certain layers an internal field commonly named helper.
+            - If a layer can use an accelerated backend implementation (like cuDNN), DL4J will create a helper object for it.
+            
             While training, parameters + optimizer (Adam / PSO (velocity)) state + activations live in memory (RAM / VRAM). If using GPU, the variables/weights are usually placed on the GPU (VRAM) so computation stays on-device.
             - model.params() points to CUDA memory
             - setData(float[]) uploads to GPU

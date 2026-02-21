@@ -2,7 +2,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>pso</groupId>
@@ -13,75 +12,12 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
 
+    <!-- DL4J / ND4J -->
     <dl4j.version>1.0.0-M2.1</dl4j.version>
 
-    <!-- default backend = CPU -->
-    <nd4j.backend>nd4j-native-platform</nd4j.backend>
-
-    <!-- CUDA preset -->
+    <!-- Bytedeco CUDA preset version you are already using -->
     <bytedeco.cuda.version>11.6-8.3-1.5.7</bytedeco.cuda.version>
   </properties>
-
-  <!-- ========================================================= -->
-  <!-- PROFILES -->
-  <!-- ========================================================= -->
-
-  <profiles>
-
-    <!-- ================= CPU ================= -->
-    <profile>
-      <id>cpu</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-
-      <properties>
-        <nd4j.backend>nd4j-native-platform</nd4j.backend>
-      </properties>
-    </profile>
-
-
-    <!-- ================= GPU ================= -->
-    <profile>
-      <id>gpu</id>
-
-      <properties>
-        <nd4j.backend>nd4j-cuda-11.6-platform</nd4j.backend>
-      </properties>
-
-      <dependencies>
-
-        <!-- ND4J CUDA backend -->
-        <dependency>
-          <groupId>org.nd4j</groupId>
-          <artifactId>nd4j-cuda-11.6-platform</artifactId>
-          <version>${dl4j.version}</version>
-        </dependency>
-
-        <!-- cuDNN native bindings -->
-        <dependency>
-          <groupId>org.nd4j</groupId>
-          <artifactId>nd4j-cuda-11.6</artifactId>
-          <version>${dl4j.version}</version>
-          <classifier>linux-x86_64-cudnn</classifier>
-        </dependency>
-
-        <!-- Bytedeco CUDA presets -->
-
-        <dependency>
-          <groupId>org.bytedeco</groupId>
-          <artifactId>cuda-platform-redist</artifactId>
-          <version>${bytedeco.cuda.version}</version>
-        </dependency>
-
-      </dependencies>
-    </profile>
-
-  </profiles>
-
-  <!-- ========================================================= -->
-  <!-- COMMON DEPENDENCIES -->
-  <!-- ========================================================= -->
 
   <dependencies>
 
@@ -117,11 +53,32 @@
       <version>${dl4j.version}</version>
     </dependency>
 
-    <!-- ND4J backend (selected via profile property) -->
+    <!-- ND4J CUDA backend (GPU) -->
     <dependency>
       <groupId>org.nd4j</groupId>
-      <artifactId>${nd4j.backend}</artifactId>
+      <artifactId>nd4j-cuda-11.6-platform</artifactId>
       <version>${dl4j.version}</version>
+    </dependency>
+
+    <!-- Enable cuDNN natives for ND4J on Linux (x86_64) -->
+    <dependency>
+      <groupId>org.nd4j</groupId>
+      <artifactId>nd4j-cuda-11.6</artifactId>
+      <version>${dl4j.version}</version>
+      <classifier>linux-x86_64-cudnn</classifier>
+    </dependency>
+
+    <!-- Bytedeco CUDA preset classes + natives -->
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>cuda-platform</artifactId>
+      <version>${bytedeco.cuda.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>cuda-platform-redist</artifactId>
+      <version>${bytedeco.cuda.version}</version>
     </dependency>
 
     <!-- JSON / utils -->
@@ -142,19 +99,8 @@
       <artifactId>java-dotenv</artifactId>
       <version>5.2.2</version>
     </dependency>
-      <!-- Wont work otherwise -->
-
-    <dependency>
-        <groupId>org.bytedeco</groupId>
-        <artifactId>cuda-platform</artifactId>
-        <version>${bytedeco.cuda.version}</version>
-    </dependency>
 
   </dependencies>
-
-  <!-- ========================================================= -->
-  <!-- BUILD -->
-  <!-- ========================================================= -->
 
   <build>
     <plugins>
@@ -175,7 +121,9 @@
         <executions>
           <execution>
             <phase>package</phase>
-            <goals><goal>shade</goal></goals>
+            <goals>
+              <goal>shade</goal>
+            </goals>
             <configuration>
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>

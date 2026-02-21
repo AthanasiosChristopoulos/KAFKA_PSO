@@ -2,6 +2,7 @@ package utils;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.WorkspaceMode;
+import org.deeplearning4j.nn.conf.CNN2DFormat;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -155,34 +156,35 @@ public class Dl4jModelFactory {
 			// model = createCifar3Model_New_Simpler(workerId);
 			// model = createCifar3Model_New_Simpler_2(workerId);
 			// model = createCifar3Model_New_Simpler_3(workerId);
-			model = createCifar3Model_New_Simpler_4(workerId);
+			// model = createCifar3Model_New_Simpler_4(workerId);
 			// model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = buildCifarNCHW(3);
 
 			// pretrained =============================================================================================
 
-			// cfg.USING_PRETRAINED_MODEL = true;
+			cfg.USING_PRETRAINED_MODEL = true;
 
-			// String choose_model;
-			// // choose_model = "mobileNet";
-			// choose_model = "v1_v4";
+			String choose_model;
+			// choose_model = "mobileNet";
+			choose_model = "v1_v4";
 
-			// if(choose_model.equals("v1_v4")) {
-			// 	String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+			if(choose_model.equals("v1_v4")) {
+				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 
-			// 	if(preTrained) {
-			// 		model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
-			// 	} else { 
-			// 		pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-			// 		// this is pretrained for cifar10, but can still use it for cifar 3
-			// 	}
-			// } else if(choose_model.equals("mobileNet")) {
-			// 	String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-			// 	if(preTrained) {
-			// 		model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
-			// 	} else { 
-			// 		pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-			// 	}
-			// }
+				if(preTrained) {
+					model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
+				} else { 
+					pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					// this is pretrained for cifar10, but can still use it for cifar 3
+				}
+			} else if(choose_model.equals("mobileNet")) {
+				String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+				if(preTrained) {
+					model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
+				} else { 
+					pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				}
+			}
 
 		}  else if ("cifar10".equals(DATASET)) {
 			cfg.USING_PRETRAINED_MODEL = true;
@@ -311,7 +313,7 @@ public class Dl4jModelFactory {
 				.build();
 
 		model.init(); 
-		Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
+		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
         // OPTIONAL DEBUG: print AlgoMode config to prove it's applied
         for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
@@ -418,7 +420,7 @@ public class Dl4jModelFactory {
 					.build();
 
 			model.init();
-			Dl4jParamUtils.printLayerHelpers(model);
+			// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 
 			// safety check: head size must be exactly 1280*numClasses + numClasses
 			int expectedHead = 1280 * numClasses + numClasses;
@@ -2382,7 +2384,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
-		Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
+		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
 		return new PsoMultiLayerAdapter(model);
 	}
 }
