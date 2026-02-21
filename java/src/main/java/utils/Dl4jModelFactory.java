@@ -160,16 +160,16 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_Simpler(workerId);
 
 			// pretrained =============================================================================================
-			String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
-			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 
 			if(preTrained) {
-				model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
-				// model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
+				// model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
+				model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
 			} else { 
-				pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+				// pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					// this is pretrained for cifar10, but can still use it for cifar 3
 			}
 

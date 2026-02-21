@@ -24,7 +24,7 @@ public class PsoUpdater {
     private final float C1 = cfg.C1;
     private final float C2 = cfg.C2;
     private final int N_WORKERS = cfg.N_WORKERS;
-    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
+    private final int BATCH_SIZE = cfg.BATCH_SIZE;
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
@@ -120,9 +120,9 @@ public class PsoUpdater {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (3 * TRAIN_SIZE);
+            MAX_PSO_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);
         } else {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * TRAIN_SIZE);
+            MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * BATCH_SIZE);
         }
         C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
 

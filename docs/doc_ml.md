@@ -269,3 +269,6 @@ GAP        :  0.05 MB
 --------------------------------
 TOTAL ≈ 49.6 MB
 --------------------------------
+
+This is more close to: 2 * Activations, because of gradients wrt activations, temporary buffers (cuDNN workspaces)
+    => Total: 2 * 49.6 MB = 100MB

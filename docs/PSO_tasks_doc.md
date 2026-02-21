@@ -71,7 +71,7 @@
 			- Limit communication:
 				- Run without => identify latency
 				- Run with	  => makes training more efficient / faster
-			- This is affected by Model Size (Number of Weights - NN?K) / Number of workers / TRAIN_SIZE / FULLY_INFORMED (PROTOCOL used) / Loss Function:
+			- This is affected by Model Size (Number of Weights - NN?K) / Number of workers / BATCH_SIZE / FULLY_INFORMED (PROTOCOL used) / Loss Function:
 				- How much time until reached DESIRED_ACCURACY (Training Time) ?
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?

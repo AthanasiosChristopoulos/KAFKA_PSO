@@ -29,7 +29,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final int workerId;
 
     private static Config cfg = Config.getInstance();
-    private final int TRAIN_SIZE = cfg.TRAIN_SIZE;
+    private final int BATCH_SIZE = cfg.BATCH_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean FILTER_ENABLED = cfg.FILTER_ENABLED;
@@ -216,7 +216,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         buffer.add(value);
 
-        if (buffer.size() < TRAIN_SIZE) {   // if not completed the batch, just return
+        if (buffer.size() < BATCH_SIZE) {   // if not completed the batch, just return
             return null;                    // bufferSize is always: 100.0
         }
         out = null;

@@ -155,7 +155,7 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
         - (2) Each WORKER does:
                 
             Repeat this for N_BATCHES:
-                => evaluate the current position using a batch of data (TRAIN_SIZE) and a loss function (non differentiable):
+                => evaluate the current position using a batch of data (BATCH_SIZE) and a loss function (non differentiable):
                 => if this is a personal best loss, update pBest (personal best weights - model).
                     => communicate also the pBest to PBEST_WEIGHTS_TOPIC, where the coordinator (gBest) or everyone will read it (fully informed)
 
@@ -1066,6 +1066,7 @@ found a better region than the second or third best neighbors (they may not have
             - Whatever has to do with DL4J can live in the GPU
             - If too many memory allocations happen between many N_WORKERS, then GPU will not have the time to clean (free) the memory each time (there is a delayed release if excplicitly freed). The allocating memory rate will become bigger than the cleaning memory rate as N_WORKERS increases (leading to a crash, because of Memory overflow).
                 - Those arrays might still be referenced, this is why they arent getting cleaned
+
             - **Real Memory Expense:** On .output (forward pass), GPU needs to:
                 - allocate activation / intermediate tensors / NDArray => every intermediate / hidden layer each produces intermediate data. Expensive are:
                     - depthwise conv outputs, batchnorm / activation outputs, ... (just hidden layers of the model)
@@ -1076,6 +1077,12 @@ found a better region than the second or third best neighbors (they may not have
                     => During training, we must keep activations because of backpropagation (to calculate gradients you need the forward outputs of each layer)
                         => stored during forward pass, reused during backward pass
                     => So real VRAM use may be closer to 2 × activations, because of gradients for each activation and other temporary buffers
+                    => For CNNs: Activations dominate memory, not parameters
+                        => MobileNetV2 has only ~14MB weights, but during training it may require hundreds of MB or even GB VRAM
+                    => Lifetime of Activations: After forward pass + backward pass → they are released / overwritten
+                        => Training: intermediates must be kept for backward pass → big persistent “activation stash”
+                        => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
+
             - cuDNN convolution algorithms often require a “workspace” scratch buffer.
 
             While training, parameters + optimizer (Adam / PSO (velocity)) state + activations live in memory (RAM / VRAM). If using GPU, the variables/weights are usually placed on the GPU (VRAM) so computation stays on-device.
@@ -1088,6 +1095,9 @@ found a better region than the second or third best neighbors (they may not have
                 - Size ≈ 288,298 × 4 = 1,153,192 bytes ≈ 1.15 MB
                 - this also gets a * 4 because of other parametes like gradients, Adam stuff => 4 × 1.10 MiB = ~4.4 MiB
                 - This is negligable to the memory consumed by the activations (intermediate data / feature maps)
+
+            There is a baseline VRAM “floor” that doesn’t go away:
+            CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)
 
         Memory Phenomenon:
             - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
@@ -1145,6 +1155,12 @@ DL4J has 3 different memory spaces:
         => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra
         => also influnces GPU allocations to a greater degree
 
+## ND4J workspaces =================================================================================
+
+ - ND4J workspace as a reusable arena of memory
+ - First time accessing the memory in the work space: it grows to whatever size you need.
+ - After that: allocations inside the workspace are basically “bump pointer” allocations (fast).
+ - Recycling workspace: When the workspace scope ends, all temporary arrays are considered invalid and the same memory is reused next iteration.
 # htop Alternatives for GPU: ==========================================================
 
 ```bash

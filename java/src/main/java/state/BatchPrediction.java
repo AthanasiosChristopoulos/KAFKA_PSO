@@ -91,17 +91,18 @@ public class BatchPrediction {
                     .build();
 
     public float[] slopeLambdas;
-
+    public int workerId = -1;
     // for Worker (from WorkerStatic) =======================================================================================================
 
     public BatchPrediction(PsoModel model, CustomLogger logger, WorkerStatic ws) {
         this.model = model;
         this.ws = ws;
+        this.workerId = ws.workerId;
         this.MODEL_IS_CNN = model.isCnn();
         this.bestModel = null;
         this.logger = logger;
         this.isCoordinator = false;
-        EXPECTED_SIZE = cfg.TRAIN_SIZE;
+        EXPECTED_SIZE = cfg.BATCH_SIZE;
 
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
             if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
@@ -121,6 +122,7 @@ public class BatchPrediction {
     public BatchPrediction(PsoModel model, PsoModel bestModel, CustomLogger logger) {
         this.model = model;
         this.ws = null;
+
         this.MODEL_IS_CNN = model.isCnn();
         this.bestModel = bestModel;
         this.logger = logger;
@@ -153,6 +155,28 @@ public class BatchPrediction {
         return coordinatorInstance;
     }
 
+    // ===========================================================================
+
+    // public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
+    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
+    //             .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS")) {
+
+    //         INDArray y = model.output(x, false);
+
+    //         // y is allocated in workspace; if you need it after ws closes:
+    //         INDArray yDetached = y.detach(); // safe copy out of workspace
+    //         Nd4j.getExecutioner().commit();
+    //         return yDetached;
+    //     }
+    // }
+
+    public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
+        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+            INDArray y = model.output(x, false);
+            Nd4j.getExecutioner().commit();
+            return y;
+        }
+    }
     // ===========================================================================
 
     // public INDArray forwardOnce(PsoModel model, INDArray x) {
@@ -353,6 +377,9 @@ public class BatchPrediction {
         
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        // probs = outputWithWorkspace(argument_model, X); 
+        
         // this is one forward pass per batch (has multiple samples), X is one of the different 
         // dimensionalities identified above. This allocates memory by it self
         

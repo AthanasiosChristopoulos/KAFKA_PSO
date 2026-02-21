@@ -25,7 +25,7 @@ public class Config {
     public final String PREDICTION_OUTPUT_TOPIC;
 
     public final int N_WORKERS;
-    public final int TRAIN_SIZE;
+    public final int BATCH_SIZE;
     public final int TEST_SIZE;
     public final int N_BATCHES;
     public final float DESIRED_ACCURACY;
@@ -194,7 +194,7 @@ public class Config {
         this.N_WORKERS = Integer.parseInt(getenv(dotenv, "N_WORKERS", "5"));
         System.out.println("N_WORKERS: " + N_WORKERS);
 
-        this.TRAIN_SIZE = Integer.parseInt(getenv(dotenv, "TRAIN_SIZE", "30"));
+        this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
         this.TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
         this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
