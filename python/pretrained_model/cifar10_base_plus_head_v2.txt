@@ -1,0 +1,67 @@
+Logging training output to: pretrained_model/cifar10_base_plus_head_v2.log
+Will save model to: pretrained_model/cifar10_base_plus_head_v2.h5
+
+Epoch 1/30
+352/352 - 8s - 22ms/step - accuracy: 0.2698 - loss: 1.9223 - val_accuracy: 0.3406 - val_loss: 1.7507 - learning_rate: 0.0010
+Epoch 2/30
+352/352 - 1s - 4ms/step - accuracy: 0.3569 - loss: 1.7174 - val_accuracy: 0.3886 - val_loss: 1.6410 - learning_rate: 0.0010
+Epoch 3/30
+352/352 - 1s - 4ms/step - accuracy: 0.3942 - loss: 1.6438 - val_accuracy: 0.4032 - val_loss: 1.6068 - learning_rate: 0.0010
+Epoch 4/30
+352/352 - 1s - 4ms/step - accuracy: 0.4222 - loss: 1.5783 - val_accuracy: 0.4158 - val_loss: 1.5553 - learning_rate: 0.0010
+Epoch 5/30
+352/352 - 3s - 7ms/step - accuracy: 0.4435 - loss: 1.5297 - val_accuracy: 0.4464 - val_loss: 1.4912 - learning_rate: 0.0010
+Epoch 6/30
+352/352 - 1s - 4ms/step - accuracy: 0.4628 - loss: 1.4808 - val_accuracy: 0.4652 - val_loss: 1.4402 - learning_rate: 0.0010
+Epoch 7/30
+352/352 - 1s - 4ms/step - accuracy: 0.4808 - loss: 1.4362 - val_accuracy: 0.4760 - val_loss: 1.4358 - learning_rate: 0.0010
+Epoch 8/30
+352/352 - 1s - 4ms/step - accuracy: 0.4924 - loss: 1.4029 - val_accuracy: 0.4848 - val_loss: 1.4328 - learning_rate: 0.0010
+Epoch 9/30
+352/352 - 1s - 4ms/step - accuracy: 0.5048 - loss: 1.3730 - val_accuracy: 0.5116 - val_loss: 1.3526 - learning_rate: 0.0010
+Epoch 10/30
+352/352 - 1s - 4ms/step - accuracy: 0.5177 - loss: 1.3391 - val_accuracy: 0.5008 - val_loss: 1.3573 - learning_rate: 0.0010
+Epoch 11/30
+352/352 - 1s - 4ms/step - accuracy: 0.5260 - loss: 1.3204 - val_accuracy: 0.5382 - val_loss: 1.2819 - learning_rate: 0.0010
+Epoch 12/30
+352/352 - 1s - 4ms/step - accuracy: 0.5358 - loss: 1.2904 - val_accuracy: 0.5390 - val_loss: 1.2751 - learning_rate: 0.0010
+Epoch 13/30
+352/352 - 1s - 4ms/step - accuracy: 0.5479 - loss: 1.2619 - val_accuracy: 0.5350 - val_loss: 1.2954 - learning_rate: 0.0010
+Epoch 14/30
+352/352 - 1s - 4ms/step - accuracy: 0.5536 - loss: 1.2447 - val_accuracy: 0.5664 - val_loss: 1.2204 - learning_rate: 0.0010
+Epoch 15/30
+352/352 - 1s - 4ms/step - accuracy: 0.5604 - loss: 1.2290 - val_accuracy: 0.5662 - val_loss: 1.2243 - learning_rate: 0.0010
+Epoch 16/30
+352/352 - 1s - 4ms/step - accuracy: 0.5708 - loss: 1.2079 - val_accuracy: 0.5688 - val_loss: 1.2019 - learning_rate: 0.0010
+Epoch 17/30
+352/352 - 1s - 4ms/step - accuracy: 0.5750 - loss: 1.1857 - val_accuracy: 0.5636 - val_loss: 1.2139 - learning_rate: 0.0010
+Epoch 18/30
+352/352 - 1s - 4ms/step - accuracy: 0.5810 - loss: 1.1739 - val_accuracy: 0.5946 - val_loss: 1.1512 - learning_rate: 0.0010
+Epoch 19/30
+352/352 - 1s - 4ms/step - accuracy: 0.5868 - loss: 1.1612 - val_accuracy: 0.5934 - val_loss: 1.1594 - learning_rate: 0.0010
+Epoch 20/30
+352/352 - 1s - 4ms/step - accuracy: 0.5959 - loss: 1.1393 - val_accuracy: 0.5988 - val_loss: 1.1429 - learning_rate: 0.0010
+Epoch 21/30
+352/352 - 1s - 4ms/step - accuracy: 0.6004 - loss: 1.1269 - val_accuracy: 0.5966 - val_loss: 1.1276 - learning_rate: 0.0010
+Epoch 22/30
+352/352 - 1s - 4ms/step - accuracy: 0.6074 - loss: 1.1146 - val_accuracy: 0.5792 - val_loss: 1.1811 - learning_rate: 0.0010
+Epoch 23/30
+352/352 - 1s - 4ms/step - accuracy: 0.6114 - loss: 1.1026 - val_accuracy: 0.6156 - val_loss: 1.0925 - learning_rate: 0.0010
+Epoch 24/30
+352/352 - 1s - 4ms/step - accuracy: 0.6153 - loss: 1.0874 - val_accuracy: 0.6132 - val_loss: 1.0935 - learning_rate: 0.0010
+Epoch 25/30
+352/352 - 1s - 4ms/step - accuracy: 0.6203 - loss: 1.0713 - val_accuracy: 0.6258 - val_loss: 1.0664 - learning_rate: 0.0010
+Epoch 26/30
+352/352 - 3s - 7ms/step - accuracy: 0.6252 - loss: 1.0655 - val_accuracy: 0.6064 - val_loss: 1.1180 - learning_rate: 0.0010
+Epoch 27/30
+352/352 - 1s - 4ms/step - accuracy: 0.6258 - loss: 1.0547 - val_accuracy: 0.6282 - val_loss: 1.0644 - learning_rate: 0.0010
+Epoch 28/30
+352/352 - 1s - 4ms/step - accuracy: 0.6314 - loss: 1.0483 - val_accuracy: 0.6386 - val_loss: 1.0404 - learning_rate: 0.0010
+Epoch 29/30
+352/352 - 1s - 4ms/step - accuracy: 0.6368 - loss: 1.0349 - val_accuracy: 0.6504 - val_loss: 1.0222 - learning_rate: 0.0010
+Epoch 30/30
+352/352 - 1s - 4ms/step - accuracy: 0.6383 - loss: 1.0255 - val_accuracy: 0.6416 - val_loss: 1.0244 - learning_rate: 0.0010
+
+CIFAR-10 test acc: 0.6362, loss: 1.0304
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+Saved Keras H5: pretrained_model/cifar10_base_plus_head_v2.h5

@@ -47,11 +47,13 @@ Dense Neural Networks have a loss landscape of sharp directions , many valeys, n
 CNNs have smoother valeys ? 
 
 ## Overfitting ====================================================================
+
 - Overfitting increases with:
     - Model capacity => number of trainable parameters and how easily it can memorize / size of model
     - Dense Layers: This means multiple Dense Layers, especially those with Flatten after a conv layer, connected to conv layers
         - fully-connected layers are very good at memorizing training examples
     - Multiple conv layers can have the same effect
+
 ## Different Types of Neural Networks: ============================================
 
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
