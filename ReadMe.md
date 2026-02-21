@@ -1084,7 +1084,7 @@ found a better region than the second or third best neighbors (they may not have
                         => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
 
             - cuDNN convolution algorithms often require a “workspace” scratch buffer.
-
+                => use .cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE) to try and use smallest amount of memory
             While training, parameters + optimizer (Adam / PSO (velocity)) state + activations live in memory (RAM / VRAM). If using GPU, the variables/weights are usually placed on the GPU (VRAM) so computation stays on-device.
             - model.params() points to CUDA memory
             - setData(float[]) uploads to GPU
@@ -1116,6 +1116,7 @@ found a better region than the second or third best neighbors (they may not have
         
         
 # DL4J Memory Management: ==========================================================
+
 DL4J has 3 different memory spaces:
 
  - CPU RAM (both ON-HEAP and OFF-HEAP are on CPU RAM):
@@ -1158,9 +1159,15 @@ DL4J has 3 different memory spaces:
 ## ND4J workspaces =================================================================================
 
  - ND4J workspace as a reusable arena of memory
+    - it prioritizes reuse of memory
+    - Arena means: they reuse a big chunk of memory by resetting it at the end of a scope/iteration
  - First time accessing the memory in the work space: it grows to whatever size you need.
  - After that: allocations inside the workspace are basically “bump pointer” allocations (fast).
  - Recycling workspace: When the workspace scope ends, all temporary arrays are considered invalid and the same memory is reused next iteration.
+    => at the end of the workspace loop, all INDArrays' memory content is invalidated.
+ - Arrays allocated in a workspace are only valid while that workspace is open. When the workspace closes/reset happens, that memory can be reused/overwritten.
+ - You can do what you need within a workspace (or spaces), and if you want to get an INDArray out of it (i.e. to move result out of the workspace), you just call INDArray.detach()
+
 # htop Alternatives for GPU: ==========================================================
 
 ```bash

@@ -170,9 +170,20 @@ public class BatchPrediction {
     //     }
     // }
 
+    // public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
+    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+    //         INDArray y = model.output(x, false);
+    //         Nd4j.getExecutioner().commit();
+    //         return y;
+    //     }
+    // }
+
     public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
-        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
+                .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS")) {
+
             INDArray y = model.output(x, false);
+
             Nd4j.getExecutioner().commit();
             return y;
         }
@@ -382,7 +393,8 @@ public class BatchPrediction {
         
         // this is one forward pass per batch (has multiple samples), X is one of the different 
         // dimensionalities identified above. This allocates memory by it self
-        
+        // model.output(X,false) is the core inference forward pass.
+
         // probs = forwardOnce(argument_model, X);
         // Nd4j.getExecutioner().commit(); 
 

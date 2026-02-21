@@ -1,6 +1,7 @@
 package utils;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.WorkspaceMode;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -160,17 +161,27 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_Simpler(workerId);
 
 			// pretrained =============================================================================================
-			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
-			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 
-			if(preTrained) {
-				// model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
-				model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
-			} else { 
-				// pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+			String choose_model;
+			// choose_model = "mobileNet";
+			choose_model = "v1_v4";
+
+			if(choose_model.equals("v1_v4")) {
+				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+
+				if(preTrained) {
+					model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
+				} else { 
+					pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					// this is pretrained for cifar10, but can still use it for cifar 3
+				}
+			} else if(choose_model.equals("mobileNet")) {
+				String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+				if(preTrained) {
+					model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
+				} else { 
+					pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+				}
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
@@ -277,11 +288,14 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+				.inferenceWorkspaceMode(WorkspaceMode.SINGLE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
 			.removeLayersFromOutput(1)
+			
 			.build();
 
 		int start = (int) truncated.numParams();
@@ -358,6 +372,8 @@ public class Dl4jModelFactory {
 			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 					.seed(123 + workerId)
 					.updater(new NoOp())        // PSO moves weights; no optimizer
+					.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+					.inferenceWorkspaceMode(WorkspaceMode.SINGLE)
 					.build();
 
 			// MobileNetV2 last conv block output (in Keras) commonly maps to this layer name in DL4J import
