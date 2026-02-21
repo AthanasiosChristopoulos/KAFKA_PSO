@@ -28,6 +28,8 @@ import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.nd4j.linalg.learning.config.NoOp;
 import org.nd4j.common.primitives.Pair;
+import org.bytedeco.cuda.global.cudart;
+import org.bytedeco.cuda.global.cudnn;
 
 import utils.*; 
 
@@ -105,7 +107,7 @@ public class Simulation {
         // System.out.println(model.summary());
         
         // System.exit(0);
-
+        printCudaCudnnVersions();
         // =============================================================================================
 
         var baseStateDir = java.nio.file.Path.of("/tmp/kstreams/");
@@ -123,6 +125,7 @@ public class Simulation {
 
         System.out.println("ND4J backend: " + Nd4j.getBackend().getClass().getName());
         System.out.println("ND4J ops: " + Nd4j.getExecutioner().getClass().getName());
+        System.out.println("Data type: " + Nd4j.dataType());
 
         Coordinator coordinator = new Coordinator();
         Thread coordinatorThread = new Thread(coordinator, "coordinator");  // the coordinator starts first and then the workers
@@ -173,4 +176,22 @@ public class Simulation {
             });
     }
 
+    // ===================================================================================================
+
+    public static void printCudaCudnnVersions() {
+        try {
+            int[] v = new int[1];
+            int rc = cudart.cudaRuntimeGetVersion(v);
+            System.out.println("CUDA runtime: rc=" + rc + " version=" + v[0]);
+        } catch (Throwable t) {
+            System.out.println("CUDA runtime not available: " + t);
+        }
+
+        try {
+            long v = cudnn.cudnnGetVersion();
+            System.out.println("cuDNN version: " + v);
+        } catch (Throwable t) {
+            System.out.println("cuDNN not available: " + t);
+        }
+    }
 }

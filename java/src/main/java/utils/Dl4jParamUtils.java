@@ -1,9 +1,11 @@
 package utils;
 
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-
+import org.deeplearning4j.nn.api.Layer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import java.lang.reflect.Field;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import java.io.File;
@@ -448,4 +450,102 @@ public class Dl4jParamUtils {
 
     }
 
+    // =====================================================================================================
+
+    public static void printLayerHelpers(ComputationGraph g) {
+        // 1) Warmup input (adjust H,W to your model!)
+        INDArray x = Nd4j.rand(new long[]{1, 224, 224, 3});
+
+        // 2) Warmup forward pass so helpers initialize
+        g.output(false, x);
+        Nd4j.getExecutioner().commit();
+
+        System.out.println("=== Layer helper check (ComputationGraph) ===");
+        for (Layer l : g.getLayers()) {
+            Object helper = tryGetHelper(l);
+            String helperName = (helper == null ? "null" : helper.getClass().getName());
+            System.out.printf("%-45s helper=%s%n",
+                    l.conf().getLayer().getLayerName(),
+                    helperName);
+        }
+
+        x.close();
+    }
+
+    // =====================================================================================================
+
+    private static Object tryGetHelper(Layer l) {
+        // Walk class hierarchy to find a field called "helper"
+        Class<?> c = l.getClass();
+        while (c != null) {
+            try {
+                Field f = c.getDeclaredField("helper");
+                f.setAccessible(true);
+                return f.get(l);
+            } catch (NoSuchFieldException e) {
+                c = c.getSuperclass();
+            } catch (Throwable t) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    // =====================================================================================================
+
+    // public static void printLayerHelpers(MultiLayerNetwork net, long[] inputShape) {
+    //     // Example for CIFAR NCHW: new long[]{1, 3, 32, 32}
+    //     // Example for MNIST NCHW: new long[]{1, 1, 28, 28}
+    //     INDArray x = Nd4j.rand(inputShape);
+
+    //     net.output(x, false);
+    //     Nd4j.getExecutioner().commit();
+
+    //     System.out.println("=== Layer helper check (MultiLayerNetwork) ===");
+    //     for (Layer l : net.getLayers()) {
+    //         Object helper = tryGetHelper(l);
+    //         String helperName = (helper == null ? "null" : helper.getClass().getName());
+    //         System.out.printf("%-45s helper=%s%n",
+    //                 l.conf().getLayer().getLayerName(),
+    //                 helperName);
+    //     }
+
+    //     x.close();
+    // }
+
+    public static void printLayerHelpers(MultiLayerNetwork net, long[] inputShape) {
+        INDArray x = Nd4j.rand(inputShape);
+
+        net.output(x, false);
+        Nd4j.getExecutioner().commit();
+
+        System.out.println("=== Layer helper check (MultiLayerNetwork) ===");
+        for (org.deeplearning4j.nn.api.Layer layer : net.getLayers()) {
+            Object helper = null;
+            String foundIn = null;
+
+            Class<?> c = layer.getClass();
+            while (c != null) {
+                try {
+                    Field f = c.getDeclaredField("helper");
+                    f.setAccessible(true);
+                    helper = f.get(layer);
+                    foundIn = c.getName();
+                    break;
+                } catch (NoSuchFieldException e) {
+                    c = c.getSuperclass();
+                } catch (Throwable t) {
+                    break;
+                }
+            }
+
+            String helperName = (helper == null ? "null" : helper.getClass().getName());
+            System.out.printf("%-35s helper=%s (field in %s)%n",
+                    layer.conf().getLayer().getLayerName(),
+                    helperName,
+                    (foundIn == null ? "-" : foundIn));
+        }
+
+        x.close();
+    }
 }

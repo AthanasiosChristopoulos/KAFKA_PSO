@@ -1,7 +1,8 @@
 #!/bin/bash
 
 cd ./java
-# mvn -q -DskipTests clean  => deletes target
+mvn -q -DskipTests clean  
+# mvn -P$ND4J_PROFILE clean compile
 
 delete=2
 set -a           # auto-export all variables
@@ -84,7 +85,8 @@ export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
 # mvn -q -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE clean compile exec:java  # this ND4J_PROFILE .env variables select pom.xml P = profile
 
-mvn -q -e -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
+# mvn -q -e -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
+mvn -q -e -DskipTests -Dexec.mainClass=pso.Simulation compile exec:java  
 
 # mvn -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  
 

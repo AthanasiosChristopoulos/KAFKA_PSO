@@ -149,40 +149,40 @@ public class Dl4jModelFactory {
 
 		} else if ("cifar3".equals(DATASET)) {
 
-			cfg.USING_PRETRAINED_MODEL = true;
-
 			// model = createCifar3Model_PSO_Simple(workerId);
 			// model = createCifar3Model(workerId);
 			// model = createCifar3Model_New(workerId);	
 			// model = createCifar3Model_New_Simpler(workerId);
 			// model = createCifar3Model_New_Simpler_2(workerId);
 			// model = createCifar3Model_New_Simpler_3(workerId);
-			// model = createCifar3Model_New_Simpler_4(workerId);
+			model = createCifar3Model_New_Simpler_4(workerId);
 			// model = createMNIST4Cnn_New_Simpler(workerId);
 
 			// pretrained =============================================================================================
 
-			String choose_model;
-			// choose_model = "mobileNet";
-			choose_model = "v1_v4";
+			// cfg.USING_PRETRAINED_MODEL = true;
 
-			if(choose_model.equals("v1_v4")) {
-				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+			// String choose_model;
+			// // choose_model = "mobileNet";
+			// choose_model = "v1_v4";
 
-				if(preTrained) {
-					model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
-				} else { 
-					pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-					// this is pretrained for cifar10, but can still use it for cifar 3
-				}
-			} else if(choose_model.equals("mobileNet")) {
-				String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-				if(preTrained) {
-					model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
-				} else { 
-					pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
-				}
-			}
+			// if(choose_model.equals("v1_v4")) {
+			// 	String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+
+			// 	if(preTrained) {
+			// 		model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
+			// 	} else { 
+			// 		pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+			// 		// this is pretrained for cifar10, but can still use it for cifar 3
+			// 	}
+			// } else if(choose_model.equals("mobileNet")) {
+			// 	String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+			// 	if(preTrained) {
+			// 		model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
+			// 	} else { 
+			// 		pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+			// 	}
+			// }
 
 		}  else if ("cifar10".equals(DATASET)) {
 			cfg.USING_PRETRAINED_MODEL = true;
@@ -289,13 +289,12 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.updater(new NoOp())
 				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.inferenceWorkspaceMode(WorkspaceMode.SINGLE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
 			.removeLayersFromOutput(1)
-			
 			.build();
 
 		int start = (int) truncated.numParams();
@@ -311,6 +310,17 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
+		model.init(); 
+		Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
+		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
+        // OPTIONAL DEBUG: print AlgoMode config to prove it's applied
+        for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
+            Layer conf = l.conf().getLayer();
+            if (conf instanceof ConvolutionLayer) {
+                System.out.println(conf.getLayerName() + " algoMode = " +
+                        ((ConvolutionLayer) conf).getCudnnAlgoMode());
+            }
+        }
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
@@ -373,7 +383,7 @@ public class Dl4jModelFactory {
 					.seed(123 + workerId)
 					.updater(new NoOp())        // PSO moves weights; no optimizer
 					.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-					.inferenceWorkspaceMode(WorkspaceMode.SINGLE)
+					.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 					.build();
 
 			// MobileNetV2 last conv block output (in Keras) commonly maps to this layer name in DL4J import
@@ -408,6 +418,7 @@ public class Dl4jModelFactory {
 					.build();
 
 			model.init();
+			Dl4jParamUtils.printLayerHelpers(model);
 
 			// safety check: head size must be exactly 1280*numClasses + numClasses
 			int expectedHead = 1280 * numClasses + numClasses;
@@ -416,7 +427,14 @@ public class Dl4jModelFactory {
 				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +
 						" actual=" + actualHead + " start(base.numParams)=" + start + " tl.numParams=" + model.numParams());
 			}
-
+			// OPTIONAL DEBUG: print AlgoMode config to prove it's applied
+			for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
+				Layer conf = l.conf().getLayer();
+				if (conf instanceof ConvolutionLayer) {
+					System.out.println(conf.getLayerName() + " algoMode=" +
+							((ConvolutionLayer) conf).getCudnnAlgoMode());
+				}
+			}
 			// Wrap and return (NHWC = true for Keras imported models)
 			PsoModel wrapped = new PsoGraphAdapter(model);
 			return Pair.of(wrapped, start);
@@ -2364,6 +2382,7 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);
 		model.init();
+		Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
 		return new PsoMultiLayerAdapter(model);
 	}
 }
