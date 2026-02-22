@@ -3,7 +3,9 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"      # Logging Level: 0 = all, 1 = INFO
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"   
 import tensorflow as tf
 from tensorflow.keras import layers, models
-DATASET="MNIST"
+
+# DATASET="MNIST"
+DATASET="CIFAR"
 
 if (DATASET == "CIFAR"):
     # ------------------------------------------------------------
@@ -60,12 +62,14 @@ if (DATASET == "CIFAR"):
         x_train, y_train,
         validation_split=0.1,
         epochs=20,
-        batch_size=128,
+        batch_size=5000,
         callbacks=callbacks,
     )
 
     test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
     print("Test accuracy (frozen base):", test_acc)
+
+# ======================================================================================================
 
 elif(DATASET == "MNIST"):
 

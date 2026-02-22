@@ -157,6 +157,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             this.neighborIds = null;
             this.neighborKeys = null;
         }
+
+        logger.log("taskInstance: " + taskInstance + ", Thread.currentThread().getName(): " + Thread.currentThread().getName());
     }
 
     //=========================================================================================================================

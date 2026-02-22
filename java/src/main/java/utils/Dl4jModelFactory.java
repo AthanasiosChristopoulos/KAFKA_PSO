@@ -165,8 +165,8 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			String choose_model;
-			choose_model = "mobileNet";
-			// choose_model = "v1_v4";
+			// choose_model = "mobileNet";
+			choose_model = "v1_v4";
 
 			if(choose_model.equals("v1_v4")) {
 				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
@@ -301,9 +301,10 @@ public class Dl4jModelFactory {
 			.build();
 
 		int start = (int) truncated.numParams();
-
+		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
+				// .setFeatureExtractor(7)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES)       // your target classes
@@ -418,8 +419,8 @@ public class Dl4jModelFactory {
 					.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 					.build();
 
-			// MobileNetV2 last conv block output (in Keras) commonly maps to this layer name in DL4J import
-			String featureLayer = "out_relu";
+			// This is the name of the last output layer of MobileNet. Check model.summary (it also indicates if layer has been frozen or not)
+			String featureLayer = "out_relu";	
 
 			ComputationGraph model = new TransferLearning.GraphBuilder(base)
 					.fineTuneConfiguration(ftc)
@@ -550,6 +551,7 @@ public class Dl4jModelFactory {
 		final int flattenDim = 32 * 5 * 5;  // 800
 		MultiLayerNetwork model = new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
+				// .setFeatureExtractor(featureLayer) // freeze base up to here
 				.removeLayersFromOutput(2)
 				.addLayer(new DenseLayer.Builder()
 						.nIn(flattenDim)

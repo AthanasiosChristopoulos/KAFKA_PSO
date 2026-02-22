@@ -27,6 +27,8 @@ Library  | What it is                                     | Imports
     - the library allocates once, and then reuses the same buffers over and over.
     - Arena means: they reuse a big chunk of memory by resetting it at the end of a scope/iteration
  - First time accessing the memory in the work space: it grows to whatever size you need.
+   => on early iterations it may grow the workspace until it has seen the “worst” case and then keep that memory for reuse.
+   => depends on the parameters: AllocationPolicy.OVERALLOCATE, overallocationLimit(2)
  - After that: allocations inside the workspace are basically “bump pointer” allocations (fast).
  - Recycling workspace: When the workspace scope ends, all temporary arrays are considered invalid and the same memory is reused next iteration.
     => at the end of the workspace loop, all INDArrays' memory content is invalidated.

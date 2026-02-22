@@ -53,6 +53,7 @@ public class Worker implements Runnable {
     private final AtomicLong t1  = new AtomicLong(t0);
 
     private WorkerStatic ws;
+    private CustomLogger logger;
 
     // =====================================================================================================
 
@@ -69,6 +70,8 @@ public class Worker implements Runnable {
         }
 
         this.control = CoordinatorControl.getInstance();
+        this.logger = CustomLogger.getWorkerInstance(workerId);
+
     }
 
     // =====================================================================================================
@@ -86,8 +89,10 @@ public class Worker implements Runnable {
     // ==========================================================================================
 
     private void runInternal() throws Exception {
+        
         this.ws = new WorkerStatic(workerId);
-        System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID);
+        System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID + ", Thread: " + Thread.currentThread().getName());
+        logger.log("[Worker " + workerId + "] with RUN_ID = " + RUN_ID + ", Thread: " + Thread.currentThread().getName());
 
         Properties props = new Properties();
         String applicationID;

@@ -1082,7 +1082,9 @@ found a better region than the second or third best neighbors (they may not have
                     => Lifetime of Activations: After forward pass + backward pass → they are released / overwritten
                         => Training: intermediates must be kept for backward pass → big persistent “activation stash”
                         => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
-
+                    => Freezing layers should stop memory being spent on activations for backpropagation (it doesnt)
+                        => gradients are not computed/propagated for them ⇒ you shouldn’t need to retain their intermediate activations for backward.
+                        
             - Memory floor: 
                 There is a baseline VRAM “floor” that doesn’t go away:
                  - CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)
