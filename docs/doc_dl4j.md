@@ -20,7 +20,7 @@ Library  | What it is                                     | Imports
  - Evaluation won’t give you the full probs array for every sample, because it’s designed to aggregate results, not return raw outputs.  
     - similar to output, but gives an overall ACC / AUC / F1 / ... score (from all batches reduced)
 
-## CL$J workspaces =================================================================================
+## DL4J workspaces =================================================================================
 
  - ND4J workspace as a reusable arena of memory
     - it prioritizes reuse of memory
@@ -39,7 +39,6 @@ Without workspaces:
 With workspaces:
    allocate once → reuse → reuse → reuse → ...
 
-
 🔹 WorkspaceMode.SEPARATE
     Training uses separate workspaces for forward and backward pass
     Slightly slower
@@ -55,7 +54,16 @@ With workspaces:
     .trainingWorkspaceMode(WorkspaceMode.ENABLED)
     .inferenceWorkspaceMode(WorkspaceMode.ENABLED)  // use this for inference only
 
-On output():
+ - Every different model instance takes up its own workspace / memory and leaves this allocated (no matter what). 
+    - doesnt get unallocated
+    - DL4J/ND4J allocates a bunch of GPU memory the first time a model does a forward pass, and that memory stays attached to that model/backend for reuse.
+        => This isnt workspace memory (destroyAllWorkspacesForCurrentThread wont affect it)
+        => Here, fast conv algorithms allocate large temporary memory buffers once (the first time .output was executed)
+        => activation buffers for largest batch
+        => Memory allocated per model is persistent after first output
+## On output(): ============================================================================================================
 
  - Runs forward pass inside a workspace
  - Then DETACHES the result before returning it
+ - During a forward pass DL4J creates (inside workspaces)
+ - workspace size grows to max needed size and then stays allocated. It is reused, not freed.

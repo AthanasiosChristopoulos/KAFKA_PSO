@@ -57,4 +57,7 @@ public final class PsoMultiLayerAdapter implements PsoModel {
         return model.output(X, training);
     }
 
+    @Override public void close() {
+        model.close(); // if available in your DL4J version
+    }
 }

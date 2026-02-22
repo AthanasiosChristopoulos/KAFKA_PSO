@@ -49,4 +49,10 @@ public final class PsoGraphAdapter implements PsoModel {
     @Override public INDArray output(INDArray X, boolean training) {
         return model.outputSingle(training, X);
     }
+
+    @Override public void close() {
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        model.close(); 
+        model.clear();
+    }
 }

@@ -314,6 +314,7 @@ public class Dl4jModelFactory {
 				.build();
 
 		model.init(); 
+	
 		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
         // for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
@@ -350,6 +351,23 @@ public class Dl4jModelFactory {
 
     // ===================================================================================================
 
+// 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
+// 		try {
+// 			File f = new File(fileName);
+// 			if (!f.exists()) {
+// 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
+// 			}
+
+// 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(
+// 					f.getAbsolutePath(),
+// 					false
+// 			);
+// 			return new PsoGraphAdapter(base);
+
+// 		} catch (Exception e) {
+// 			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
+// 		}
+// 	}
 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
 		try {
 			File f = new File(fileName);
@@ -357,18 +375,30 @@ public class Dl4jModelFactory {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
 			}
 
+			// 1) Import base Keras model (already initialized with weights)
 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(
 					f.getAbsolutePath(),
 					false
 			);
 
-			return new PsoGraphAdapter(base);
+			// 2) Build a FineTuneConfiguration with NO inference workspace
+			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+					.updater(new NoOp())   // no optimizer
+					.inferenceWorkspaceMode(WorkspaceMode.NONE)  
+					.build();
+
+			// 3) Rebuild graph with that configuration
+			ComputationGraph model = new TransferLearning.GraphBuilder(base)
+					.fineTuneConfiguration(ftc)
+					.build();
+
+			// 4) Wrap it
+			return new PsoGraphAdapter(model);
 
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
 		}
 	}
-
 	// ===================================================================================================
 
 	public static Pair<PsoModel, Integer> createCifarFromMobileNetV2Base(int workerId, String kerasH5Path,

@@ -14,7 +14,8 @@ public interface PsoModel {
 
     default MultiLayerNetwork asMultiLayerNetwork() { return null; }
     default ComputationGraph asComputationGraph() { return null; }
-
+    default void close() { /* no-op by default */ }
+    
     String summary();
     Map<String, INDArray> paramTable();
 
@@ -22,5 +23,7 @@ public interface PsoModel {
     boolean isNhWC(); 
 
     INDArray output(INDArray X, boolean training);
+
+
 
 }

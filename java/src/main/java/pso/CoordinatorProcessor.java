@@ -7,6 +7,8 @@ import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.nd4j.common.primitives.Pair;
+import org.nd4j.linalg.api.memory.MemoryWorkspace;
+import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -408,8 +410,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
         if(cfg.USING_PRETRAINED_MODEL) {
-            float[] accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
-
+            float[] accLoss;
+            try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+                accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
+            }
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
@@ -421,6 +425,12 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             System.out.println("Report on preTrained Model: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss);
 
+            preTrainedModel.close();
+            preTrainedModel.params().close();
+            preTrainedModel = null;
+            System.gc();
+            System.runFinalization();
+            Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }
         
 

@@ -3,7 +3,14 @@ import org.bytedeco.javacpp.SizeTPointer;
 import static org.bytedeco.cuda.global.cudart.*;
 
 public class GpuMem {
+
+
     public static void log(String tag){
+
+        if(1 == 1) {
+            return;
+        }
+
         SizeTPointer free = new SizeTPointer(1);
         SizeTPointer total = new SizeTPointer(1);
 
@@ -27,5 +34,7 @@ public class GpuMem {
 
         free.close();
         total.close();
+
+
     }
 }
