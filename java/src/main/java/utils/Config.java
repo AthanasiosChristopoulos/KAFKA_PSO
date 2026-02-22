@@ -26,6 +26,7 @@ public class Config {
 
     public final int N_WORKERS;
     public final int BATCH_SIZE;
+    public final int TEST_BATCH_SIZE;
     public final int TEST_SIZE;
     public final int N_BATCHES;
     public final float DESIRED_ACCURACY;
@@ -170,6 +171,10 @@ public class Config {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR3", "3072"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR3", "3"));
 
+        }  else if("cifar5".equals(this.DATASET)) {
+            this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR5", "3072"));
+            this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR5", "5"));
+
         } else if("cifar10".equals(this.DATASET)) {
             this.NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR10", "3072"));
             this.NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR10", "10"));
@@ -195,6 +200,8 @@ public class Config {
         System.out.println("N_WORKERS: " + N_WORKERS);
 
         this.BATCH_SIZE = Integer.parseInt(getenv(dotenv, "BATCH_SIZE", "30"));
+        this.TEST_BATCH_SIZE = Integer.parseInt(getenv(dotenv, "TEST_BATCH_SIZE", "30"));
+
         this.TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
         this.DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
         this.SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");

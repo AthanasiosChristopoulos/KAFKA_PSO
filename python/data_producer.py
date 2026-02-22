@@ -58,6 +58,10 @@ if(DATASET == "cifar3"):
     NUMBER_OF_DATA_REPEATS = 27
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
+if(DATASET == "cifar5"):
+    NUMBER_OF_DATA_REPEATS = 16
+    NUMBER_OF_DATA_REPEATS_TEST = 1
+
 if(DATASET == "cifar10"):
     NUMBER_OF_DATA_REPEATS = 5
     NUMBER_OF_DATA_REPEATS_TEST = 1
@@ -73,6 +77,8 @@ if(DATASET == "mnist4"):
 if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
     NUMBER_OF_DATA_REPEATS_TEST = 1
+
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "mnist", "mnist4", "fashion_mnist")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -650,6 +656,53 @@ def load_dataset():
         return X_train, y_train, X_test, y_test, class_names
     
     # ==================================================================================================
+    # cifar5
+
+    elif DATASET == "cifar5":
+
+        classes = (0,1,2, 3, 4)
+
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+            # X_train: (15000, 32, 32, 3), y_train: (15000,). This means 15000 * 27 = 40 * 10^4
+
+        y_train = y_train.squeeze().astype(np.int64)  # (N,)
+        y_test  = y_test.squeeze().astype(np.int64)
+
+        classes = np.array(classes, dtype=np.int64)
+
+        train_mask = np.isin(y_train, classes)
+        test_mask  = np.isin(y_test, classes)
+
+        X_train = x_train[train_mask].astype(np.float32) / 255.0
+        y_train = y_train[train_mask]
+        X_test  = x_test[test_mask].astype(np.float32) / 255.0
+        y_test  = y_test[test_mask]
+
+        remap = {int(c): i for i, c in enumerate(classes.tolist())}
+        y_train = np.vectorize(remap.get)(y_train).astype(np.int64)
+        y_test  = np.vectorize(remap.get)(y_test).astype(np.int64)
+
+        rng = np.random.default_rng(123)
+        idx = rng.permutation(len(X_train))
+        X_train, y_train = X_train[idx], y_train[idx]
+
+        idx = rng.permutation(len(X_test))
+        X_test, y_test = X_test[idx], y_test[idx]
+
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        class_names = [CIFAR10_NAMES[int(c)] for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"X_test : {X_test.shape},  y_test : {y_test.shape}")
+
+        evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+
+        return X_train, y_train, X_test, y_test, class_names
+    
+    # ==================================================================================================
     # cifar10
 
     elif DATASET == "cifar10":
@@ -732,8 +785,8 @@ def main():
             while data_repeats < NUMBER_OF_DATA_REPEATS:
                 
                 for index in range(len(X_train)):
-
-                    if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
+                    
+                    if(DATASET in CNN_DATASETS):
                         features = X_train[index].ravel().astype(np.float32)
                         # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
                         # .ravel() in C-order flattens the last axis fastest
@@ -775,7 +828,7 @@ def main():
                     
                     for index in range(len(X_test)):
 
-                        if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
+                        if(DATASET in CNN_DATASETS):
                             features = X_test[index].ravel().astype(np.float32)
                         else:
                             features = X_test[index]
@@ -807,7 +860,7 @@ def main():
                     
                     for index in range(len(X_train)):
 
-                        if(DATASET in ("cifar3", "cifar10", "mnist", "mnist4", "fashion_mnist")):
+                        if(DATASET in CNN_DATASETS):
                             features = X_train[index].ravel().astype(np.float32)
                         else:
                             features = X_train[index]

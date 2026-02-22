@@ -148,7 +148,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 
-		} else if ("cifar3".equals(DATASET)) {
+		} else if (DATASET.contains("cifar")) {
 
 			// model = createCifar3Model_PSO_Simple(workerId);
 			// model = createCifar3Model(workerId);
@@ -184,24 +184,6 @@ public class Dl4jModelFactory {
 				} else { 
 					pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
 				}
-			}
-
-		}  else if ("cifar10".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
-			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
-			String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
-
-			if(preTrained) {
-				model = pretrainedModelCIFAR(filename);
-				// model = pretrainedModelMobileNetV2(filename); 		
-			} else {
-				pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-				// pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(workerId, filename, 256);
-				// pair = createCifarFromMobileNetV2Base(workerId, filename, 10);
-
 			}
 
 		} else {
@@ -292,7 +274,7 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.updater(new NoOp())
 				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.inferenceWorkspaceMode(WorkspaceMode.NONE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
@@ -304,7 +286,7 @@ public class Dl4jModelFactory {
 		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
-				// .setFeatureExtractor(7)
+				.setFeatureExtractor(7)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES)       // your target classes

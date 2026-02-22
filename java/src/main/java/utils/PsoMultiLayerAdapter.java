@@ -2,6 +2,10 @@ package utils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import java.util.Map;
+import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
+import org.deeplearning4j.nn.conf.layers.Layer;
+import org.deeplearning4j.nn.conf.layers.misc.FrozenLayer;
+import org.deeplearning4j.nn.conf.layers.wrapper.BaseWrapperLayer;
 
 public final class PsoMultiLayerAdapter implements PsoModel {
     private final MultiLayerNetwork model;
@@ -46,9 +50,20 @@ public final class PsoMultiLayerAdapter implements PsoModel {
     @Override public Map<String, INDArray> paramTable() { return model.paramTable(); }
 
     @Override public boolean isCnn() {
-        org.deeplearning4j.nn.conf.layers.Layer l0 =
-            model.getLayerWiseConfigurations().getConf(0).getLayer();
-        return l0 instanceof org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
+        Layer l = model.getLayerWiseConfigurations().getConf(0).getLayer();
+        while (true) {
+            if (l instanceof FrozenLayer) {
+                l = ((FrozenLayer) l).getLayer();
+                continue;
+            }
+            if (l instanceof BaseWrapperLayer) { 
+                l = ((BaseWrapperLayer) l).getUnderlying();
+                continue;
+            }
+            break;
+        }
+
+        return (l instanceof ConvolutionLayer); // if found a conv layer then it cnn
     }
 
     @Override public boolean isNhWC() { return nhwc; }

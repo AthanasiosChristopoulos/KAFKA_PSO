@@ -107,6 +107,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private int start;
 
+    private int evalCursor = 0;                       // rolling start index into store
+    private int cachedStoreSize = -1;                 // optional: track size changes
+
     // ================================================================================================================
 
 
@@ -218,19 +221,45 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             List<DataMessage> evalBatch;
 
             if (TEST_SIZE == -1) {
-                evalBatch = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
+                List<DataMessage> full = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
+                if (full == null || full.isEmpty()) {
+                    if (logger.isEnabled(2)) logger.log(taskInstance + ", Cannot evaluate, Test set is null/empty.");
+                    return;
+                }
 
+                int total = full.size();
+                int batchSize = Math.min(cfg.TEST_BATCH_SIZE, total);
+                if (evalCursor >= total) evalCursor = 0;
+                int end = evalCursor + batchSize;
+
+                if (end <= total) {
+                    evalBatch = full.subList(evalCursor, end);
+                } else {
+                    List<DataMessage> tmp = new ArrayList<>(batchSize);
+                    tmp.addAll(full.subList(evalCursor, total));
+                    tmp.addAll(full.subList(0, end % total));
+                    evalBatch = tmp;
+                }
+
+                evalCursor = (evalCursor + batchSize) % total;
             } else {
 
                 evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
                 logConsumerOffsets();   
             }
 
-            if (evalBatch == null || evalBatch.isEmpty()) {
-                if (logger.isEnabled(2)) logger.log(taskInstance + 
-                        ", Cannot evaluate, Test set is null/empty.");
-                return;
-            }
+            // if (TEST_SIZE == -1) {
+            //     evalBatch = readNextBatchFromStore(cfg.TEST_BATCH_SIZE);
+            // } else {
+            //     // If you still want the Kafka-consumer path, keep it.
+            //     // But for your state-store path, this is the rolling batch solution.
+            //     evalBatch = readExactlyTestSizeBatch(Math.min(TEST_SIZE, cfg.TEST_BATCH_SIZE));
+            // }
+            // if (evalBatch == null || evalBatch.isEmpty()) {
+            //     if (logger.isEnabled(2)) logger.log(taskInstance + 
+            //             ", Cannot evaluate, Test set is null/empty.");
+            //     return;
+            // }
 
             float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel);  // inference / evaluate every time all workers current models arrive
                                                                                 // monitor how training is going
@@ -355,88 +384,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         return evalBatch;
     }
 
-    //=========================================================================================================================
-
-    private List<DataMessage> loadAndCacheTestSet(int minRows) {
-
-        if (cachedTestSet != null) return cachedTestSet;    // if already cached, just return the cache
-
-        if (logger.isEnabled(2)) logger.log("Waiting on loadAndCacheTestSet");
-
-        // wait until State Store has enough rows
-        for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
-            int sz = approximateStoreSize();
-
-            if (sz >= minRows) {
-                if (logger.isEnabled(2)) logger.log("Breaking sleeping, estimated size is: " + 
-                    sz + ", with minRows: " + minRows);
-                break;
-            };
-
-            try {
-                Thread.sleep(WAIT_SLEEP_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                if (logger.isEnabled(2)) logger.log(taskInstance + 
-                        " interrupted while waiting for testStore");
-                return null;
-            }
-        }
-
-        // load all rows from store
-        List<DataMessage> all = new ArrayList<>(1000);
-        try (var it = testStore.all()) {    // the testStore
-            while (it.hasNext()) {
-                var kv = it.next();
-                ValueAndTimestamp<DataMessage> vat = kv.value;
-                if (vat != null && vat.value() != null) {
-                    all.add(vat.value());
-                }
-            }
-        }
-
-        cachedTestSet = Collections.unmodifiableList(all);
-
-        updateTime();
-
-        if (logger.isEnabled(2)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + 
-                ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
-        for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-            if (logger.isEnabled(2)) logger.log(taskInstance + 
-                    ", TEST[" + i + "]: " + cachedTestSet.get(i));
-        }
-
-        if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
-        System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
-        
-        if(cfg.USING_PRETRAINED_MODEL) {
-            float[] accLoss;
-            try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
-                accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
-            }
-            accuracy = accLoss[0];
-            loss = accLoss[1];
-            nSamples = (int) accLoss[2];
-            nCorrect = (int) accLoss[3];
-
-            if (logger.isEnabled(2)) logger.log("Report on preTrained Model accuracy: " + accuracy + ", with nSamples: " + nSamples +
-                        ", nCorrect: " + nCorrect + " loss: " + loss);
-
-            System.out.println("Report on preTrained Model: " + accuracy + ", with nSamples: " + nSamples +
-                        ", nCorrect: " + nCorrect + " loss: " + loss);
-
-            preTrainedModel.close();
-            preTrainedModel.params().close();
-            preTrainedModel = null;
-            System.gc();
-            System.runFinalization();
-            Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
-        }
-        
-
-        return cachedTestSet;
-    }
-
     // ===============================================================================================
 
     private int approximateStoreSize() {
@@ -491,6 +438,169 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         return false;
     }
+
+    //=========================================================================================================================
+
+    private List<DataMessage> loadAndCacheTestSet(int minRows) {
+
+        if (cachedTestSet != null) return cachedTestSet;    // if already cached, just return the cache
+
+        if (logger.isEnabled(2)) logger.log("Waiting on loadAndCacheTestSet");
+
+        // wait until State Store has enough rows
+        for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
+            int sz = approximateStoreSize();
+
+            if (sz >= minRows) {
+                if (logger.isEnabled(2)) logger.log("Breaking sleeping, estimated size is: " + 
+                    sz + ", with minRows: " + minRows);
+                break;
+            };
+
+            try {
+                Thread.sleep(WAIT_SLEEP_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                        " interrupted while waiting for testStore");
+                return null;
+            }
+        }
+
+        // load all rows from store
+        List<DataMessage> all = new ArrayList<>(1000);
+        try (var it = testStore.all()) {    // the testStore
+            while (it.hasNext()) {
+                var kv = it.next();
+                ValueAndTimestamp<DataMessage> vat = kv.value;
+                if (vat != null && vat.value() != null) {
+                    all.add(vat.value());
+                }
+            }
+        }
+
+        cachedTestSet = Collections.unmodifiableList(all);
+
+        updateTime();
+
+        if (logger.isEnabled(2)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + 
+                ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
+        for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
+            if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", TEST[" + i + "]: " + cachedTestSet.get(i));
+        }
+
+        if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
+        System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
+        
+        if(false && cfg.USING_PRETRAINED_MODEL) {
+            float[] accLoss;
+            try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
+                accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
+            }
+            accuracy = accLoss[0];
+            loss = accLoss[1];
+            nSamples = (int) accLoss[2];
+            nCorrect = (int) accLoss[3];
+
+            if (logger.isEnabled(2)) logger.log("Report on preTrained Model accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " loss: " + loss);
+
+            System.out.println("Report on preTrained Model: " + accuracy + ", with nSamples: " + nSamples +
+                        ", nCorrect: " + nCorrect + " loss: " + loss);
+
+            preTrainedModel.close();
+            preTrainedModel.params().close();
+            preTrainedModel = null;
+            System.gc();
+            System.runFinalization();
+            Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
+        }
+        
+
+        return cachedTestSet;
+    }
+
+    //=========================================================================================================================
+
+    // private List<DataMessage> readNextBatchFromStore(int batchSize) {
+
+    //     // Wait until store has at least batchSize rows (or at least something)
+    //     for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
+    //         int sz = approximateStoreSize();
+    //         if (sz >= Math.min(batchSize, MIN_TEST_ROWS)) {  // MIN_TEST_ROWS is your existing constant
+    //             break;
+    //         }
+    //         try { Thread.sleep(WAIT_SLEEP_MS); }
+    //         catch (InterruptedException e) { Thread.currentThread().interrupt(); return null; }
+    //     }
+
+    //     int storeSize = approximateStoreSize();
+    //     if (storeSize <= 0) return null;
+
+    //     // If store size changed a lot, keep cursor in range
+    //     if (evalCursor >= storeSize) evalCursor = 0;
+
+    //     // We will take [evalCursor, evalCursor + batchSize)
+    //     // wrapping around at storeSize.
+    //     int toTake = Math.min(batchSize, storeSize);
+
+    //     // If you care about deterministic order, use sampleIndex ordering.
+    //     // We'll do a 2-pass scan that collects the needed indices without loading everything.
+
+    //     int startIdx = evalCursor;
+    //     int endExclusive = evalCursor + toTake;
+
+    //     List<DataMessage> out = new ArrayList<>(toTake);
+
+    //     // Pass 1: collect from startIdx to storeSize-1
+    //     int wantFrom1 = Math.min(toTake, storeSize - startIdx);
+    //     if (wantFrom1 > 0) {
+    //         collectBySortedIndexRange(out, startIdx, startIdx + wantFrom1);
+    //     }
+
+    //     // Pass 2: wrap around: collect from 0 to remaining-1
+    //     int remaining = toTake - out.size();
+    //     if (remaining > 0) {
+    //         collectBySortedIndexRange(out, 0, remaining);
+    //     }
+
+    //     // Advance cursor for next time
+    //     evalCursor = (evalCursor + toTake) % storeSize;
+
+    //     return out;
+    // }
+
+    // //=========================================================================================================================
+
+    // private void collectBySortedIndexRange(List<DataMessage> out, int startInclusive, int endExclusive) {
+
+    //     // We need elements in order of sampleIndex.
+    //     // We do this by collecting all keys/samplesIndex pairs, sorting, then reading only those in range.
+    //     // If you have a better store key (like sampleIndex as key), we can make this O(batch) instead.
+
+    //     List<DataMessage> tmp = new ArrayList<>();
+
+    //     try (var it = testStore.all()) {
+    //         while (it.hasNext()) {
+    //             var kv = it.next();
+    //             var vat = kv.value;
+    //             if (vat == null || vat.value() == null) continue;
+    //             tmp.add(vat.value());
+    //         }
+    //     }
+
+    //     // Sort deterministically by sampleIndex (you already have it)
+    //     tmp.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
+
+    //     int n = tmp.size();
+    //     int s = Math.max(0, Math.min(startInclusive, n));
+    //     int e = Math.max(0, Math.min(endExclusive, n));
+
+    //     for (int i = s; i < e; i++) {
+    //         out.add(tmp.get(i));
+    //     }
+    // }
 
     //=========================================================================================================================
 

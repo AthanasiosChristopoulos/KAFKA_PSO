@@ -46,7 +46,7 @@
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 		
 	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / forward passes)
-		- communication here isnt data record reading, but weightmessages exchanged between coordinator and worker
+		- communication here isnt data record reading, but weight messages exchanged between coordinator and worker
 
 	2) Experimentation:
 		- Different models

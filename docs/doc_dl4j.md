@@ -63,9 +63,13 @@ With workspaces:
         => Here, fast conv algorithms allocate large temporary memory buffers once (the first time .output was executed)
         => activation buffers for largest batch
         => Memory allocated per model is persistent after first output
+
 ## On output(): ============================================================================================================
 
  - Runs forward pass inside a workspace
+   => wrapping MultiLayerNetwork.output() in your own workspace is not compatible with that internal check. of outputOfLayerDetached()
  - Then DETACHES the result before returning it
- - During a forward pass DL4J creates (inside workspaces)
+ - During a forward pass DL4J creates a workspaces
+   => we already do workspaces and the other associated optimizations for you inside of ComputationGraph and MultiLayerNetwork.
  - workspace size grows to max needed size and then stays allocated. It is reused, not freed.
+ - When set (like your WorkspaceMode.SINGLE), DL4J will allocate and reuse internal workspaces for activations / intermediates during forward pass.

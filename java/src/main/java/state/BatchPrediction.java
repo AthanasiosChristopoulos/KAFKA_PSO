@@ -92,6 +92,7 @@ public class BatchPrediction {
 
     public float[] slopeLambdas;
     public int workerId = -1;
+
     // for Worker (from WorkerStatic) =======================================================================================================
 
     public BatchPrediction(PsoModel model, CustomLogger logger, WorkerStatic ws) {
@@ -105,9 +106,9 @@ public class BatchPrediction {
         EXPECTED_SIZE = cfg.BATCH_SIZE;
 
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
-            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
+            if (DATASET.contains("mnist")) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
+            } else if (DATASET.contains("cifar")) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else               Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
@@ -130,9 +131,9 @@ public class BatchPrediction {
         this.EXPECTED_SIZE = 500;
 
         if (MODEL_IS_CNN) {
-            if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
+            if (DATASET.contains("mnist")) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
+            } else if (DATASET.contains("cifar")) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
@@ -209,6 +210,7 @@ public class BatchPrediction {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
             return null;
         }
+        logger.log("batch size of: " + batch.size());
 
         for (DataMessage msg : batch) {
             if (msg == null) continue;
@@ -261,7 +263,7 @@ public class BatchPrediction {
             
             // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
-                if("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
+                if(DATASET.contains("cifar")) {
 
                     X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
                         // (nSamples, 3072)
@@ -270,8 +272,11 @@ public class BatchPrediction {
                     if (argument_model.isNhWC()) {
                         X = X4d;                             // keep NHWC
                     } else {
+
                         X = X4d.permute(0, 3, 1, 2);         // convert to NCHW
+
                     }        // (nSamples, 3, 32, 32)
+
 
                 } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
@@ -303,7 +308,7 @@ public class BatchPrediction {
 
                 if (MODEL_IS_CNN) {
 
-                    if ("mnist4".equals(DATASET) || "mnist".equals(DATASET) || "fashion_mnist".equals(DATASET)) {
+                    if (DATASET.contains("mnist")) {
 
                         // flatten 784 into 1x28x28 => is basically 2D
                         // this is row-major mapping (C-order), meaning the columns change fastest
@@ -313,7 +318,7 @@ public class BatchPrediction {
                             Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
                         }
 
-                    } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
+                    } else if (DATASET.contains("cifar")) {
 
                         for (int j = 0; j < NUM_FEATURES; j++) {
                             // int channel = j / (32 * 32);
@@ -368,12 +373,12 @@ public class BatchPrediction {
                 X = Xbuffer;
             } else {
                 if (MODEL_IS_CNN) {
-                    if (("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) && argument_model.isNhWC()) {
+                    if ((DATASET.contains("cifar")) && argument_model.isNhWC()) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all());
-                    } else if ("cifar3".equals(DATASET) || "cifar10".equals(DATASET)) {
+                    } else if (DATASET.contains("cifar")) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),
@@ -393,11 +398,20 @@ public class BatchPrediction {
         // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() + "] BEFORE FORWARD");
         GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
 
+        // Evaluate input shape ========================================================
+        // long[] xShape = X.shape();       
+        // System.out.println("[Worker " + workerId + "] X.rank=" + X.rank() +
+        //         " shape=" + Arrays.toString(xShape) +
+        //         " order=" + X.ordering() +
+        //         " stride=" + Arrays.toString(X.stride()) +
+        //         " isView=" + X.isView() +
+        //         " dataType=" + X.dataType());
+
         // ==============================================================================================================
-        
+
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        // probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-        probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // probs = outputWithWorkspace(argument_model, X); 
         Nd4j.getExecutioner().commit();
 
@@ -408,7 +422,7 @@ public class BatchPrediction {
         // probs = forwardOnce(argument_model, X);
         // Nd4j.getExecutioner().commit(); 
         
-        Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
+        // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         // Nd4j.getMemoryManager().purgeCaches();
 
         end = System.nanoTime();
