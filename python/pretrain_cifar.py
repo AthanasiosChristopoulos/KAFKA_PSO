@@ -264,6 +264,7 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
 #     return model, history
 
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=5000):
+    
     x_train, y_train, x_test, y_test = load_cifar10()
 
     version = "v4"

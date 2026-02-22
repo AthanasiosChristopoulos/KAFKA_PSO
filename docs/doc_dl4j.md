@@ -78,8 +78,17 @@ With workspaces:
  - On output(X, false) // false stands fro training false. This should mean activations arent kept for backprop (hopefully) 
 vs model.feedForward(X, false); feedForward returns activations per layer (a list/map). That is “explicit activation storage”:
 
+During a forward pass, DL4J still has to compute layer outputs. Those activations exist at least transiently, and on GPU they usually require temporary buffers (cuDNN workspaces + intermediate arrays).   => this means that activations need to be allocated either way
+   => idea with two buffers is possible only if your network is a simple chain / an MLP
+   => wont work for mobileNet
+
+The question is whether they’re:
+   kept (stored for backprop), or
+   thrown away immediately after use (inference-style)
+
 ✅ output(x,false) = “give me a detached output; therefore no workspace must be open”
 ✅ output(x,false, ws) = “put output into this workspace; it’s allowed for a workspace to be open”
+
 
 
 

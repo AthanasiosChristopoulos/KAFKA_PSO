@@ -121,7 +121,7 @@ CNNs have smoother valeys ?
     - keep pretrained conv layers fixed and only train the last classification layer
         - [Conv base (frozen)] → [New Dense Head (trainable)]
     - features need to be general (edges, corners, ...)
-
+    - We may need to put many desne layers, because even if in theory, having extracted the high level features classification should be asy (one dense / classificatiobn layer), MobileNet doesnt output perfectly separable features. They are distorted / noisy
  - 2) Fine-tuning:
     - take the pretrained model, keep most layers frozen but unfreeze the last few layers 
         - use small learning rate, this is only fine tuning
@@ -129,6 +129,20 @@ CNNs have smoother valeys ?
  - Improve performance:
     - Choose a different pretrained model
     - Unfreeze / Train more end Layers
+
+ - Not freezing the underlying model:
+    - You may do this in case there is a new to adapt to a new dimensionality: 224×224 images => 32×32 images
+    - This is problematic when early convolutions downsample too aggressively
+    - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
+        => those features arent perfectly separable, need more complex classification layers
+
+
+
+
+
+
+
+
 
 ## Activation Test Run: =========================================================================
 How much memory do activations cost ?
