@@ -24,20 +24,6 @@
 
 	- Experimentation: ==========================================================================================
 
-		- Are the Datasets I have chosen ok ?
-			- susy isnt working cleanly (it receives poor (80%) accuracy on normal gradient descent) and i prefer pendigits dataset:
-				- Clearly showcases that this works, there is significant improvement in the accuracy, because there are multiply
-				- Pendigits (10 classes) vs Pendigits-Half (5 classes) => 90%
-				- These datasets have a lower amount of samples ... i have to repeat them multiple times (like 40 times) so i can split them in partitions
-			- Should i find Harder, non-CNN Datasets ? With more classes (hard) ?
-
-		- Fully Informed is outperforming Neighborhood best.
-
-		- expected model size / number of weights (ωστε να εχει νοημα το filtering) ? Να βαλω παραπανω weights ακιμα και εαν δεν χρειαζεται
-			=> PSO improves με dimensionality reduction ... should i find datasets that can only work with large amount of weights ?
-			=> is 100k enough ? Goal => make weight messages costly
-			!!!Accuracy of PSO improves with dimensionality reduction!!!
-			
 		- σκεφτηκα για GM οτι μπορω να το χρησιμοποησω μονο για monitoring του Federated Average Model χωρις full synchronization, μονο 
 			partial synchronization of one worker, αλλα θα πρεπει να χρησιμοποιησω το FFT για dimensionality reduction και δεν ξερω αμα αξιζει
 			- this is a crazy amount of work for a Kafka Streams processor (we need to do this per record)
@@ -46,20 +32,14 @@
 			με remote communication protocol, to communication θα ειναι πιο costly ? Γιατι αυτην την στιγμη το processing of data + forward pass ειναι 
 			το bottleneck.
 				=> Async protocol, αρα δεν παιζει
+						
+		- Σωστα εκανα τα non differential functions ? Το λεω γιατι ειναι εκτος της ιδια της συναρτησης δεν επιρεαζουν directly την loss συναρτηση
 		
-		- Is testStore ok ? only 500 samples, and cycle this every time ... before it was a Kafka Consumer ...
+		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own mdels and then leave last 
+			layer to be trained "non differentiably" or i can get models rom the internet that are more specific to our problem (same dimensionality 
+			=> same dataset trained on). Is there a preference between these options ? 
 
-		- Θελω convergence (inertia → 0, velocities → 0). This leads to a natural end of training. 
-			=> Ομως αμα θελουμε streaming enviroment / constant training ?
-				=> Βασικα γενικα eventually θα κανουμε converge ουτος ή αλλως αρα streaming env δεν παιζει
-			=> Streaming / federated systems want continuous operation (federated inherently streaming ?)
-			=> Maybe reset (gBest, pBest, W_INERTIA) pso after a time window or after Coordinator detects significant accuracy drop ?
-					
-		- Απο μονη του η αυξηση των N_WORKERS ειναι προβληματικη εκτος εαν data per worker μεινουν σταθερα.
-			- Kafka Record Processing performance affects accuracy / convergence behavior
 
-		- Σωστα εκανα το TOP KyFan ?
-		
 	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

@@ -139,6 +139,10 @@
 
 	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
 
+	51) Get ONXX - Pytorch - Cifar - 32 x 32 x 3 models
+
+	52) End-to-end propagation delay (what you probably want)
+	
 ## =====================================================================================================
 
 	Thesis Structure:

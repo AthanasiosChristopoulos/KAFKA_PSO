@@ -31,32 +31,18 @@ DATASET="CIFAR"
 #         include_top=False,
 #         weights="imagenet",
 #     )
-#     base_model.trainable = False
+#     base_model.trainable = True
 
 #     # ------------------------------------------------------------
 #     # 3) Add pooling + dense head
 #     # ------------------------------------------------------------
-#     # inputs = layers.Input(shape=(32, 32, 3))
-#     # x = base_model(inputs, training=False)     # IMPORTANT: keep BN in inference mode
-#     # x = layers.GlobalAveragePooling2D()(x)
-#     # x = layers.Dropout(0.2)(x)                # optional
-#     # outputs = layers.Dense(10, activation="softmax")(x)
-
-#     # model = models.Model(inputs, outputs)
 #     inputs = layers.Input(shape=(32, 32, 3))
-#     x = base_model(inputs, training=False)     # keep BN in inference mode
-
-#     x = layers.Flatten()(x)
-
-#     # Dense layer 1 (hidden)
-#     x = layers.Dense(512, activation="relu")(x)
-#     x = layers.Dropout(0.3)(x)                # optional, helps with overfitting
-
-#     # Dense layer 2 (classifier)
+#     x = base_model(inputs, training=False)     # IMPORTANT: keep BN in inference mode
+#     x = layers.GlobalAveragePooling2D()(x)
+#     x = layers.Dropout(0.2)(x)                # optional
 #     outputs = layers.Dense(10, activation="softmax")(x)
 
 #     model = models.Model(inputs, outputs)
-
 
 #     # ------------------------------------------------------------
 #     # 4) Train only the head
@@ -78,7 +64,7 @@ DATASET="CIFAR"
 #         x_train, y_train,
 #         validation_split=0.1,
 #         epochs=20,
-#         batch_size=5000,
+#         batch_size=128,
 #         callbacks=callbacks,
 #     )
 
@@ -161,7 +147,6 @@ DATASET="CIFAR"
 # ======================================================================================================
 
 
-
 if(DATASET == "CIFAR"):
 
     BATCH_SIZE = 32
@@ -172,26 +157,18 @@ if(DATASET == "CIFAR"):
 
     tf.random.set_seed(SEED)
 
-    # -----------------------------
-    # Step 1: Load CIFAR-10
-    # -----------------------------
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
-    # x_* are uint8 [0..255], y_* are shape (N,1)
 
-    # -----------------------------
-    # Step 2: tf.data pipeline (resize + preprocess + one-hot)
-    # -----------------------------
     def preprocess(image, label):
-        # image: uint8 [0..255]
         image = tf.cast(image, tf.float32)
         image = tf.image.resize(image, IMG_SIZE, method="bilinear")
-        image = preprocess_input(image)  # -> float32 in [-1, 1]
-        label = tf.one_hot(tf.cast(label[0], tf.int32), NUM_CLASSES)
+        image = preprocess_input(image)  # -> float32 in [-1, 1], basically normalize
+        label = tf.one_hot(tf.cast(label[0], tf.int32), NUM_CLASSES)    # 3  → [0,0,0,1,0,0,0,0,0,0] one hot lavel encoders
         return image, label
 
     train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_ds = train_ds.shuffle(50000, seed=SEED, reshuffle_each_iteration=True)
-    train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+    train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)        # Applies preprocessing function to each sample in the tensor
     train_ds = train_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
     test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test))
@@ -211,7 +188,7 @@ if(DATASET == "CIFAR"):
         include_top=False,
         input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
     )
-    base_model.trainable = False  # frozen feature extractor
+    base_model.trainable = False  # frozen feature extractor. You can do this because you reshaped / preprocess_input the input
 
     # -----------------------------
     # Step 4: Build model head + compile
@@ -236,17 +213,12 @@ if(DATASET == "CIFAR"):
     # Step 5: Train
     # -----------------------------
     early_stop = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
-    checkpoint = ModelCheckpoint(
-        "mobilenetv2_cifar10.keras",  # recommended format over .h5
-        monitor="val_loss",
-        save_best_only=True
-    )
 
     history = model.fit(
         train_ds,
         validation_data=test_ds,
         epochs=EPOCHS,
-        callbacks=[early_stop, checkpoint],
+        callbacks=[early_stop],
         verbose=2
     )
 

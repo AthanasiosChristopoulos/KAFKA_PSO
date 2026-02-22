@@ -320,7 +320,7 @@ public class Dl4jModelFactory {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
 			}
 
-			MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(
+			MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(	// these are Keras .h5 files (only in Keras)
 					f.getAbsolutePath(),
 					false   // enforceTrainingConfig = false (ignore Keras optimizer config)
 			);

@@ -13,6 +13,7 @@
         - old data fades out
     - Pattern B - Periodic Reset
 
+
 ## Regularization: ========================================================================
  
  - techniques that prevent your neural network from memorizing the training data => we need to prevet overfitting
@@ -66,6 +67,28 @@ CNNs have smoother valeys ?
  - CNNs
  - RNNs
 
+## Tensorflow Callbacks: ==========================================================
+
+This is stuff you put as arguments to fit.
+
+ - Early Stopping:
+If the validation loss stops improving for 3 epochs in a row (patience), stop training and go back to the best weights we saw (restore_best_weights = True).
+This helps to tackle, Training loss always increasing, but validation loss eventually stops improving or gets worse (overfitting)
+
+```python
+early_stop = EarlyStopping(
+    monitor="val_loss",
+    patience=3,
+    restore_best_weights=True
+)
+
+checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the model to disk. (in case PC dies / crashes)
+    "mobilenetv2_cifar10.keras",
+    monitor="val_loss",
+    save_best_only=True
+)
+
+```
 ## CNNs =========================================================================
  
  - Dimensionality after conv layer:
@@ -122,6 +145,8 @@ CNNs have smoother valeys ?
         - [Conv base (frozen)] → [New Dense Head (trainable)]
     - features need to be general (edges, corners, ...)
     - We may need to put many desne layers, because even if in theory, having extracted the high level features classification should be asy (one dense / classificatiobn layer), MobileNet doesnt output perfectly separable features. They are distorted / noisy
+        => Be careful, dense layers tend to overfit
+
  - 2) Fine-tuning:
     - take the pretrained model, keep most layers frozen but unfreeze the last few layers 
         - use small learning rate, this is only fine tuning
@@ -135,8 +160,6 @@ CNNs have smoother valeys ?
     - This is problematic when early convolutions downsample too aggressively
     - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
         => those features arent perfectly separable, need more complex classification layers
-
-
 
 
 

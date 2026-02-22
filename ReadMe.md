@@ -984,6 +984,10 @@ found a better region than the second or third best neighbors (they may not have
         - 2_1 and 6 are directly used for PSO (pBest / gBest weight messages). 
             - We can choose not to send them if the loss of the new model wasnt significantly improved 
 
+    - CPU time spent in communication related work:
+            - Time spent serializing/deserializing, copying bytes, updating the store, etc.
+            - this is overhead time
+
 ## Non Functional Requirements: =========================================================
 
 	- θελουμε καλο accuracy γρηγορα (trade off) δηλαδη τα δεδομενα πρεπει να επεξεργαζονται γρηγορα για να ειναι streaming περιβαλλον
@@ -1084,7 +1088,7 @@ found a better region than the second or third best neighbors (they may not have
                         => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
                     => Freezing layers should stop memory being spent on activations for backpropagation (it doesnt)
                         => gradients are not computed/propagated for them ⇒ you shouldn’t need to retain their intermediate activations for backward.
-                        
+
             - Memory floor: 
                 There is a baseline VRAM “floor” that doesn’t go away:
                  - CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)

@@ -114,6 +114,7 @@ pip install scikit-learn --break-system-packages
 pip install kafka-python --break-system-packages
 pip install python-dotenv --break-system-packages
 pip install matplotlib --break-system-packages
+pip install torch --break-system-packages
 PYTHONHTTPSVERIFY=1 python3 -m pip install pyswarms --user --default-timeout=120 --break-system-packages
 # pip install tensorflow --break-system-packages you probably want the below one. This installs GPU capability as well
 pip install "tensorflow[and-cuda]" --break-system-packages

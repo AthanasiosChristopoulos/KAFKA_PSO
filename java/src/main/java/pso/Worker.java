@@ -16,12 +16,13 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.Serde;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.Properties;
-
+import java.util.Map;
 import utils.*;
 import state.*;
 import message.data_message.*; 
@@ -89,7 +90,7 @@ public class Worker implements Runnable {
     // ==========================================================================================
 
     private void runInternal() throws Exception {
-        
+
         this.ws = new WorkerStatic(workerId);
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID + ", Thread: " + Thread.currentThread().getName());
         logger.log("[Worker " + workerId + "] with RUN_ID = " + RUN_ID + ", Thread: " + Thread.currentThread().getName());
@@ -173,6 +174,35 @@ public class Worker implements Runnable {
 
         branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+        // ==================================================================================
+
+        Map<MetricName, ? extends Metric> metrics = streams.metrics();
+
+        // Example: print a few producer metrics every 5s
+        new Thread(() -> {
+            while (!control.isStopRequested(workerId)) {
+                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+
+                for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
+                    MetricName name = e.getKey();
+                    if (!"producer-metrics".equals(name.group())) continue;
+
+                    String n = name.name();
+                    if (n.equals("outgoing-byte-rate") ||
+                        n.equals("request-latency-avg") ||
+                        n.equals("record-send-rate") ||
+                        n.equals("batch-size-avg") ||
+                        n.equals("record-size-avg") ||
+                        n.equals("compression-rate-avg") ||
+                        n.equals("bufferpool-wait-time-total")) {
+
+                        System.out.println("[Worker " + workerId + "] " + name.group() + "." + n + " = " + e.getValue().metricValue());
+                    }
+                }
+            }
+        }).start();
+        // ==================================================================================
 
         // =====================================================================================================
 
