@@ -165,8 +165,8 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			String choose_model;
-			// choose_model = "mobileNet";
-			choose_model = "v1_v4";
+			choose_model = "mobileNet";
+			// choose_model = "v1_v4";
 
 			if(choose_model.equals("v1_v4")) {
 				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
@@ -187,6 +187,7 @@ public class Dl4jModelFactory {
 			}
 
 		}  else if ("cifar10".equals(DATASET)) {
+
 			cfg.USING_PRETRAINED_MODEL = true;
 			// String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
 			// String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
@@ -315,14 +316,13 @@ public class Dl4jModelFactory {
 		model.init(); 
 		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
-        // OPTIONAL DEBUG: print AlgoMode config to prove it's applied
-        for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
-            Layer conf = l.conf().getLayer();
-            if (conf instanceof ConvolutionLayer) {
-                System.out.println(conf.getLayerName() + " algoMode = " +
-                        ((ConvolutionLayer) conf).getCudnnAlgoMode());
-            }
-        }
+        // for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
+        //     Layer conf = l.conf().getLayer();
+        //     if (conf instanceof ConvolutionLayer) {
+        //         System.out.println(conf.getLayerName() + " algoMode = " +
+        //                 ((ConvolutionLayer) conf).getCudnnAlgoMode());
+        //     }
+        // }
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
@@ -429,17 +429,15 @@ public class Dl4jModelFactory {
 				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +
 						" actual=" + actualHead + " start(base.numParams)=" + start + " tl.numParams=" + model.numParams());
 			}
-			// OPTIONAL DEBUG: print AlgoMode config to prove it's applied
-			for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
-				Layer conf = l.conf().getLayer();
-				if (conf instanceof ConvolutionLayer) {
-					System.out.println(conf.getLayerName() + " algoMode=" +
-							((ConvolutionLayer) conf).getCudnnAlgoMode());
-				}
-			}
-			// Wrap and return (NHWC = true for Keras imported models)
-			PsoModel wrapped = new PsoGraphAdapter(model);
-			return Pair.of(wrapped, start);
+			// for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
+			// 	Layer conf = l.conf().getLayer();
+			// 	if (conf instanceof ConvolutionLayer) {
+			// 		System.out.println(conf.getLayerName() + " algoMode=" +
+			// 				((ConvolutionLayer) conf).getCudnnAlgoMode());
+			// 	}
+			// }
+
+			return Pair.of(new PsoGraphAdapter(model), start);
 
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to import and build transfer model from: " + kerasH5Path, e);
@@ -2181,6 +2179,7 @@ public class Dl4jModelFactory {
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()

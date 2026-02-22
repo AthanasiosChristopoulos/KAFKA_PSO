@@ -137,7 +137,9 @@ public class Simulation {
 
         List<Thread> workerThreads = new ArrayList<>();
 
-
+        // Thread.sleep(100000000);     // 1277 MiB are loaded into VRAM before the workers even start. This is so all the CUDA/cuDNN code can be brought to memory
+                                        // 1GB of allocations for Buffers
+                                        
         for (int i = 0; i < numWorkers; i++) {
             Worker worker = new Worker(i);
             Thread workerThread = new Thread(worker, "worker-thread-" + i);

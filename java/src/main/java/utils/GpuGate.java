@@ -14,14 +14,14 @@ public class GpuGate {
         try {
             GPU_SEMAPHORE.acquire();
             acquired = true;
-            System.out.println("[Worker " + workerId + "] aqcuired GPU");
+            // System.out.println("[Worker " + workerId + "] aqcuired GPU");
             INDArray y = model.output(x, false);
 
             // Important: make sure GPU kernels finish before we "release"
             // otherwise the next worker can pile on while GPU is still busy.
             Nd4j.getExecutioner().commit();
 
-            System.out.println("[Worker " + workerId + "] leaving GPU");
+            // System.out.println("[Worker " + workerId + "] leaving GPU");
 
             return y;
         } catch (InterruptedException e) {

@@ -199,6 +199,7 @@ public class BatchPrediction {
     // ===========================================================================
 
     public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model) {
+        GpuMem.log("[Worker " + workerId + "] START");
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -384,24 +385,29 @@ public class BatchPrediction {
                 }
             }
         }
+        GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
+
+
         // ==============================================================================================================
         
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        // probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // probs = outputWithWorkspace(argument_model, X); 
-        
+        Nd4j.getExecutioner().commit();
+
         // this is one forward pass per batch (has multiple samples), X is one of the different 
         // dimensionalities identified above. This allocates memory by it self
         // model.output(X,false) is the core inference forward pass.
 
         // probs = forwardOnce(argument_model, X);
         // Nd4j.getExecutioner().commit(); 
-
+        Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         end = System.nanoTime();
         // double min = probs.minNumber().doubleValue();
         // double max = probs.maxNumber().doubleValue();
         // System.out.println("probs min/max = " + min + " / " + max);
+        GpuMem.log("[Worker " + workerId + "] AFTER FORWARD");
 
         // Forward Pass End ===============================================================================
 
@@ -580,6 +586,8 @@ public class BatchPrediction {
             if (X2d != null) X2d.close();
             if (X4d != null) X4d.close();
         }
+
+        GpuMem.log("[Worker " + workerId + "] AFTER CLOSE");
 
         return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
 

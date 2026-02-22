@@ -1082,7 +1082,12 @@ found a better region than the second or third best neighbors (they may not have
                     => Lifetime of Activations: After forward pass + backward pass → they are released / overwritten
                         => Training: intermediates must be kept for backward pass → big persistent “activation stash”
                         => Inference: intermediates are temporary, they can be reused/freed immediately after each layer / each forward pass 
-            
+
+            - Memory floor: 
+                There is a baseline VRAM “floor” that doesn’t go away:
+                 - CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)
+                 -loads libraries, allocate internal state and caches => This memory stays allocated until the process exits. The cuda code is loaded in the GPU
+
             ## NVIDIA cuDNN (DNN = Deep Neural Network):
 
             CUDA Deep Neural Network library
@@ -1091,7 +1096,7 @@ found a better region than the second or third best neighbors (they may not have
                 => highly optimized GPU library
             - DL4J models this by giving certain layers an internal field commonly named helper.
             - If a layer can use an accelerated backend implementation (like cuDNN), DL4J will create a helper object for it.
-            
+
             While training, parameters + optimizer (Adam / PSO (velocity)) state + activations live in memory (RAM / VRAM). If using GPU, the variables/weights are usually placed on the GPU (VRAM) so computation stays on-device.
             - model.params() points to CUDA memory
             - setData(float[]) uploads to GPU
@@ -1103,8 +1108,6 @@ found a better region than the second or third best neighbors (they may not have
                 - this also gets a * 4 because of other parametes like gradients, Adam stuff => 4 × 1.10 MiB = ~4.4 MiB
                 - This is negligable to the memory consumed by the activations (intermediate data / feature maps)
 
-            There is a baseline VRAM “floor” that doesn’t go away:
-            CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)
 
         Memory Phenomenon:
             - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
@@ -1162,18 +1165,6 @@ DL4J has 3 different memory spaces:
  - 2) -Dorg.bytedeco.javacpp.maxphysicalbytes => total physical memory footprint of the process
         => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra
         => also influnces GPU allocations to a greater degree
-
-## ND4J workspaces =================================================================================
-
- - ND4J workspace as a reusable arena of memory
-    - it prioritizes reuse of memory
-    - Arena means: they reuse a big chunk of memory by resetting it at the end of a scope/iteration
- - First time accessing the memory in the work space: it grows to whatever size you need.
- - After that: allocations inside the workspace are basically “bump pointer” allocations (fast).
- - Recycling workspace: When the workspace scope ends, all temporary arrays are considered invalid and the same memory is reused next iteration.
-    => at the end of the workspace loop, all INDArrays' memory content is invalidated.
- - Arrays allocated in a workspace are only valid while that workspace is open. When the workspace closes/reset happens, that memory can be reused/overwritten.
- - You can do what you need within a workspace (or spaces), and if you want to get an INDArray out of it (i.e. to move result out of the workspace), you just call INDArray.detach()
 
 # htop Alternatives for GPU: ==========================================================
 
