@@ -165,8 +165,8 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			String choose_model;
-			// choose_model = "mobileNet";
-			choose_model = "v1_v4";
+			choose_model = "mobileNet";
+			// choose_model = "v1_v4";
 
 			if(choose_model.equals("v1_v4")) {
 				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
@@ -182,7 +182,7 @@ public class Dl4jModelFactory {
 				if(preTrained) {
 					model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
 				} else { 
-					pair = createCifarFromMobileNetV2Base(workerId, filename, 3);
+					pair = createCifarFromMobileNetV2Base(workerId, filename);
 				}
 			}
 
@@ -286,7 +286,7 @@ public class Dl4jModelFactory {
 		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
-				.setFeatureExtractor(7)
+				.setFeatureExtractor(7)	// look at model.summary()
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES)       // your target classes
@@ -384,8 +384,7 @@ public class Dl4jModelFactory {
 	}
 	// ===================================================================================================
 
-	public static Pair<PsoModel, Integer> createCifarFromMobileNetV2Base(int workerId, String kerasH5Path,
-			int numClasses) {
+	public static Pair<PsoModel, Integer> createCifarFromMobileNetV2Base(int workerId, String kerasH5Path) {
 		try {
 			// 1) Import Keras base (include_top=False)
 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
@@ -422,7 +421,7 @@ public class Dl4jModelFactory {
 							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 									// IMPORTANT: for MobileNetV2, channels=1280 after out_relu
 									.nIn(1280)
-									.nOut(numClasses)
+									.nOut(NUM_CLASSES)
 									.activation(Activation.SOFTMAX)
 									.weightInit(WeightInit.XAVIER)
 									.biasInit(0.0)
@@ -436,7 +435,7 @@ public class Dl4jModelFactory {
 			// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 
 			// safety check: head size must be exactly 1280*numClasses + numClasses
-			int expectedHead = 1280 * numClasses + numClasses;
+			int expectedHead = 1280 * NUM_CLASSES + NUM_CLASSES;
 			int actualHead = (int) model.numParams() - start;
 			if (actualHead != expectedHead) {
 				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +

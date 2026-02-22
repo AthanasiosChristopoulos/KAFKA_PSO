@@ -71,5 +71,21 @@ With workspaces:
  - Then DETACHES the result before returning it
  - During a forward pass DL4J creates a workspaces
    => we already do workspaces and the other associated optimizations for you inside of ComputationGraph and MultiLayerNetwork.
+   => DL4J opens workspaces internally
+   => The MultiLayerNetwork forward pass code literally opens/uses workspaces
  - workspace size grows to max needed size and then stays allocated. It is reused, not freed.
  - When set (like your WorkspaceMode.SINGLE), DL4J will allocate and reuse internal workspaces for activations / intermediates during forward pass.
+ - On output(X, false) // false stands fro training false. This should mean activations arent kept for backprop (hopefully) 
+vs model.feedForward(X, false); feedForward returns activations per layer (a list/map). That is “explicit activation storage”:
+
+✅ output(x,false) = “give me a detached output; therefore no workspace must be open”
+✅ output(x,false, ws) = “put output into this workspace; it’s allowed for a workspace to be open”
+
+
+
+If there are exactly one workspace per thread, then:
+```java
+destroyWorkspace(wsRef) // targets one specific workspace instance.
+destroyAllWorkspacesForCurrentThread() // nukes every workspace that the workspace manager
+```
+These two do the same

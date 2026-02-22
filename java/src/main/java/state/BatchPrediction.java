@@ -78,17 +78,30 @@ public class BatchPrediction {
 
     private final boolean coordinator;
 
+    private transient MemoryWorkspace inferenceWsObj;
+    private transient String wsName;
     // Config tuned for stable reuse (no spilling, reuse buffers)
+    // private static final WorkspaceConfiguration WS_CONF =
+    //         WorkspaceConfiguration.builder()
+    //                 .initialSize(0) // let it grow to what it needs once
+    //                 .overallocationLimit(2) // allow growth bursts
+    //                 .policyAllocation(AllocationPolicy.OVERALLOCATE)
+    //                 .policyLearning(LearningPolicy.FIRST_LOOP) // learn size on first loop
+    //                 .policyReset(ResetPolicy.ENDOFBUFFER_REACHED) // reuse within workspace scope
+    //                 .policySpill(SpillPolicy.EXTERNAL) // or SpillPolicy.REALLOCATE if EXTERNAL not desired
+    //                 .policyMirroring(MirroringPolicy.FULL) // safe default for CUDA
+    //                 .build();
+
     private static final WorkspaceConfiguration WS_CONF =
-            WorkspaceConfiguration.builder()
-                    .initialSize(0) // let it grow to what it needs once
-                    .overallocationLimit(2) // allow growth bursts
-                    .policyAllocation(AllocationPolicy.OVERALLOCATE)
-                    .policyLearning(LearningPolicy.FIRST_LOOP) // learn size on first loop
-                    .policyReset(ResetPolicy.ENDOFBUFFER_REACHED) // reuse within workspace scope
-                    .policySpill(SpillPolicy.EXTERNAL) // or SpillPolicy.REALLOCATE if EXTERNAL not desired
-                    .policyMirroring(MirroringPolicy.FULL) // safe default for CUDA
-                    .build();
+        WorkspaceConfiguration.builder()
+            .initialSize(0)
+            .overallocationLimit(0) // <--- key: no overalloc bursts
+            .policyAllocation(AllocationPolicy.STRICT) // <--- key: don't overallocate
+            .policyLearning(LearningPolicy.NONE) // <--- key: don't keep learning new bigger sizes
+            .policyReset(ResetPolicy.ENDOFBUFFER_REACHED)
+            .policySpill(SpillPolicy.REALLOCATE)
+            .policyMirroring(MirroringPolicy.FULL)
+            .build();
 
     public float[] slopeLambdas;
     public int workerId = -1;
@@ -116,6 +129,7 @@ public class BatchPrediction {
             Xbuffer = Nd4j.create(EXPECTED_SIZE, NUM_FEATURES);
         }
         this.coordinator = false;
+        wsName = "INFERENCE_WS_" + workerId;
     }
 
     // for Coordinator ==================================================================================================
@@ -142,6 +156,7 @@ public class BatchPrediction {
         }
 
         this.coordinator = true;
+        wsName = "INFERENCE_WS_" + workerId;
     }
 
     // ===========================================================================
@@ -172,24 +187,67 @@ public class BatchPrediction {
     // }
 
     // public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
-    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
-    //         INDArray y = model.output(x, false);
+    //     INDArray y;
+    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
+    //             .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS")) {
+
+    //         y = model.output(x, false);
+
     //         Nd4j.getExecutioner().commit();
-    //         return y;
+            
     //     }
+    //     return y;
     // }
 
+    // public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
+    //     // Open a workspace scope yourself...
+    //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
+    //             .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS_" + this.workerId)) {
+
+    //         // IMPORTANT: pass ws INTO output(...), don't call output(x,false) directly
+    //         INDArray y = model.asMultiLayerNetwork().output(x, false, ws);
+    //         Nd4j.getExecutioner().commit();
+    //         // probs = y;
+    //         return y.detach(); // valid ONLY while ws is still open
+    //     }
+    // }
     public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
-        INDArray y;
-        try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
-                .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS")) {
+        MemoryWorkspace ws = null;
+        try (MemoryWorkspace w = Nd4j.getWorkspaceManager()
+                .getAndActivateWorkspace(WS_CONF, wsName)) {
 
-            y = model.output(x, false);
-
+            ws = w; // keep reference to the same object
+            INDArray y = model.asMultiLayerNetwork().output(x, false, w);
             Nd4j.getExecutioner().commit();
-            
+            return y.detach();
+
+        } finally {
+            // ws is now CLOSED (try-with-resources already ran close())
+            if (ws != null && GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 2000) {
+                System.out.println("Reducing Memory: destroying workspace " + wsName);
+                Nd4j.getWorkspaceManager().destroyWorkspace(ws);
+            }
         }
-        return y;
+    }
+    // ===========================================================================
+
+    private MemoryWorkspace getInferenceWsObj() {
+        if (wsName == null) wsName = "INFERENCE_WS_" + workerId;
+        // activate to create it, then close right away so it's not active
+        MemoryWorkspace ws = Nd4j.getWorkspaceManager().getAndActivateWorkspace(WS_CONF, wsName);
+        ws.close();
+        inferenceWsObj = ws;
+        return inferenceWsObj;
+    }
+    // ===========================================================================
+
+    public void maybeDestroyInferenceWorkspaceIfLowMem() {
+        if (GpuMem.freeMb() < 1200) {
+            System.out.println("Reducing Memory");
+            MemoryWorkspace ws = getInferenceWsObj();
+            Nd4j.getWorkspaceManager().destroyWorkspace(ws);
+            inferenceWsObj = null; // will recreate later
+        }
     }
     // ===========================================================================
 
@@ -410,8 +468,8 @@ public class BatchPrediction {
         // ==============================================================================================================
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        // probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // probs = outputWithWorkspace(argument_model, X); 
         Nd4j.getExecutioner().commit();
 
@@ -425,7 +483,21 @@ public class BatchPrediction {
         // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         // Nd4j.getMemoryManager().purgeCaches();
 
+        if (GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500) {
+            System.out.println("Reducing Memory: Destroying workspaces");
+            Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
+        }
+
         end = System.nanoTime();
+
+        // maybeDestroyInferenceWorkspaceIfLowMem();
+        // double used = GpuMem.usedMb();
+        // if (used > 2800) { // pick a threshold
+        //     System.out.println("Release the workspace");
+        //     // Nd4j.getWorkspaceManager().destroyWorkspace("INFERENCE_WS");
+        //     MemoryWorkspace toDestroy = Nd4j.getWorkspaceManager().getWorkspaceForCurrentThread("INFERENCE_WS_" + workerId);
+        //     Nd4j.getWorkspaceManager().destroyWorkspace(toDestroy);
+        // }
         // double min = probs.minNumber().doubleValue();
         // double max = probs.maxNumber().doubleValue();
         // System.out.println("probs min/max = " + min + " / " + max);
@@ -469,6 +541,7 @@ public class BatchPrediction {
         } else {
 
             if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
+                
                 argMax = probs.argMax(1);   // max probability => this is what we are deciding
                 Nd4j.getExecutioner().commit();
 

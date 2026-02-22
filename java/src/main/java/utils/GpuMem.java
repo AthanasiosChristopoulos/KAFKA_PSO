@@ -34,7 +34,45 @@ public class GpuMem {
 
         free.close();
         total.close();
+    }
 
+    // =================================================================================
+    
+    public static double usedMb() {
+        SizeTPointer free = new SizeTPointer(1);
+        SizeTPointer total = new SizeTPointer(1);
 
+        int rc = cudaMemGetInfo(free, total);
+        if (rc != 0) return -1;
+
+        long freeB = free.get();
+        long totalB = total.get();
+        long usedB = totalB - freeB;
+
+        free.close();
+        total.close();
+        return usedB / 1024.0 / 1024.0;
+    }
+
+    // =================================================================================
+
+    public static double freeMb() {
+        SizeTPointer free = new SizeTPointer(1);
+        SizeTPointer total = new SizeTPointer(1);
+
+        int rc = cudaMemGetInfo(free, total);
+        if (rc != 0) {
+            System.out.println("cudaMemGetInfo failed rc=" + rc);
+            free.close();
+            total.close();
+            return -1;
+        }
+
+        long freeB = free.get();
+
+        free.close();
+        total.close();
+
+        return freeB / 1024.0 / 1024.0;
     }
 }
