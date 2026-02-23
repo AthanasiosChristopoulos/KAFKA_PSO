@@ -82,7 +82,7 @@ By default, Kafka Streams uses a record cache in front of the state store:
 But when caching is disabled:
  - emit on each update, means the down code will execute
 
-============================================================================
+## ============================================================================
 ## KTable vs GlobalKTable:
 
 Each Kafka Streams Instance must have the same application ID to be considered the same application
@@ -124,7 +124,7 @@ builder.stream(...).transform(() -> new BatchingTransformer(...), "gBestStore") 
 
 ```
 
-============================================================================
+## ============================================================================
 ## Kafka Streams - Instances - Threads - Tasks:
 
 - Hierarchy:
@@ -158,7 +158,7 @@ Kafka Streams groups the topology into sub-topologies:
      - Repartition topics
      - Merges
 
-============================================================================
+## ============================================================================
 ## Higher Level Functions:
 
  - aggregate:
@@ -172,3 +172,49 @@ Kafka Streams groups the topology into sub-topologies:
         }
     )
     ```
+## Metrics =======================================================================================
+
+These are Kafka Streams metrics. streams.metrics() returns metrics for the entire KafkaStreams instance in that JVM:
+    => This means all the internal consumers or producers Streams creates.
+    => internal Kafka Producers get created when there is a .to(TOPIC_NAME) in the Kafka Streams code and there is writing to a topic
+    => you cant measure time from the transformer. This isnt sending the object, this is just creating and returning it to the Kafka producer, who is actually going to send it.
+
+ - request-latency-avg:
+     - Average time for a Kafka Streams producer request to complete.
+     - Includes: time waiting in client, network RTT, broker processing, and waiting for acknowledgements (depends on acks).
+     - Interpretation: If this goes up, the broker/network is slower or you’re producing big batches or the broker is overloaded.
+
+ - bufferpool-wait-time-total:
+    - Cumulative time that producer threads spent blocked waiting for producer buffer memory (in case its already filled up).
+    - This blocking happens when the producer has a bounded memory pool (buffer.memory). If it’s full (because broker/network can’t keep up), producer threads block waiting for free space. If this is >0 and growing fast, your pipeline is backpressured by producing => communication is the bottleneck
+    - If this is 0, then there is no comminication bottleneck (there is no waiting for communication, just send it immidiately)
+        => there is no communication pressure
+
+ - outgoing-byte-rate:
+     - Rate of bytes sent by the producer over the network (usually bytes/sec).
+     - How “heavy” your producing is. Decreasing model size and filtering should reduce this.
+
+ - record-send-rate:
+     - Records / sec successfully sent by the producer.
+     - record-send-rate = 0.3 records / sec
+
+Kafka Streams Batches:
+ - batch-size-avg => size of batch in bytes 
+    - batch-size-max, is the biggest batch you ever sent. If batch-size-avg == batch-size-max then LINGERING == 0, batch size = 1
+ - records-per-request-avg => number of records per batch in average
+ - record-queue-time-avg [ms] => Depends on much linger.ms is, how long there is a wait specifically because of batch accumulations
+    - is 0 if linger.ms is 0 as well
+
+## ============================================================================
+## What a Kafka produce request is / Kafka Streams Batching:
+
+ - The Kafka producer batches records internally and periodically sends a network request to a broker leader.
+ - That request may contain many records:
+    - buffers (queues) records in memory, groups them into batches, and then sends produce requests containing those batches.
+
+ - Kafka producer batching policy:
+    Kafka Streams keeps appending records to the current batch for that partition until one of these conditions triggers send:
+    - A) batch.size threshold reached (bytes)
+    - B) linger.ms timeout expires => the batch can be sent even if not full
+    - C) Pressure-driven behavior (buffer.memory & backpressure) => high congestion may send more quickly
+

@@ -54,6 +54,7 @@ public class Config {
 
     public final float SIGNIFICANT_LOSS_DIFF;
     public final boolean FILTER_ENABLED;
+    public final int PBEST_DEBOUNCE_MS;
 
     public final int SAMPLING_CONSTANT;
 
@@ -237,6 +238,7 @@ public class Config {
         this.VMAX_CLAMPING_TYPE = getenv(dotenv, "VMAX_CLAMPING_TYPE", "DIM");
 
         this.FILTER_ENABLED = Boolean.parseBoolean(getenv(dotenv, "FILTER_ENABLED", "false"));
+        this.PBEST_DEBOUNCE_MS = Integer.parseInt(getenv(dotenv, "PBEST_DEBOUNCE_MS", "100"));
         if(FILTER_ENABLED == false) {
             this.SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));

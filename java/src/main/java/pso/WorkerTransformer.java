@@ -111,6 +111,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private int consecutiveConvergence = 0;
     private static final int CONSECUTIVE_CONVERGENCE_REQUIRED = 6;
 
+    private volatile WeightsMessage pendingPBestMsg = null;
+    private long lastPBestForwardMs = 0;
+
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t1, WorkerStatic ws) {
@@ -185,6 +188,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
         });
 
+        // if(FILTER_ENABLED) {
+        //     context.schedule(Duration.ofMillis(20), PunctuationType.WALL_CLOCK_TIME, ts -> {
+        //         flushPendingPBest();
+        //     });
+        // }
     }
 
     //=========================================================================================================================
@@ -341,7 +349,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
 
-            out = new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
+            if(FILTER_ENABLED) {
+                ws.pBestCandidateCount++;
+                pendingPBestMsg = msg;
+            } else {
+                out = new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
+            }
         }
 
         // =========================================================================================================
@@ -393,6 +406,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                                         // Doesnt trigger when we are collecting a batch
         count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
+        flushPendingPBest();    // this may send the actuall pBest
+        
         return out;
     }
 
@@ -802,6 +817,30 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             return converged;
     }
+    //=========================================================================================================================
+
+    private void flushPendingPBest() {
+
+        if (pendingPBestMsg == null) return;
+
+        long nowMs = System.currentTimeMillis();
+        if (nowMs - lastPBestForwardMs < cfg.PBEST_DEBOUNCE_MS) return;
+
+        // Snapshot & clear (latest-wins)
+        WeightsMessage msg = pendingPBestMsg;
+
+        pendingPBestMsg = null;
+        lastPBestForwardMs = nowMs;
+
+        // This is the actual emission downstream from the Transformer
+        ws.pBestForwardedCount++;
+        context.forward(keyName, msg);
+
+        if (logger.isEnabled(1)) {
+            logger.log(taskInstance + " [DebounceFlush] forwarded pBest key=" + keyName +
+                    " msgIndex=" + msg.msgIndex + " loss=" + msg.loss + " acc=" + msg.accuracy);
+        }
+    }
 
     //=========================================================================================================================
 
@@ -859,6 +898,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }            
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
+    
+            if (logger.isEnabled(2)) logger.log("pBestCandidateCount: "+ ws.pBestCandidateCount + ", pBestForwardedCount: " + ws.pBestForwardedCount);
 
             ws.printedReport = true;
         }

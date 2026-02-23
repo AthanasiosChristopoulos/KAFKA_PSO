@@ -969,6 +969,7 @@ found a better region than the second or third best neighbors (they may not have
     - This effected increases with population size, increasing N_WORKERS generally should help exploration, but in this case, due to the increased central pull, its harming it
     - This is why with increased neighborhood size we get stronger smaller exploration
 
+## ================================================================================================
 ## Communication: =================================================================================
 
 Kafka / Kafka Streams => this is a non centralized enviroment. This is why these should be considered 
@@ -990,7 +991,7 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
     
     - Filtering effects overhead and sometimes delay
         => Delay will be affected only in case of congsetion    
-        
+
     - Given the Kafka Topology, we can influence only the communication pipelines 2_1, 2_2 and 6:
         - 2_2 is the federated learning pipeline. It is used to extract the average model, but this doesnt actively partiticipate in PSO.
             - This should be selected as the users preference, since through this form of communication the progression of the algorithm is reported (CLI)
@@ -998,28 +999,9 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
         - 2_1 and 6 are directly used for PSO (pBest / gBest weight messages). 
             - We can choose not to send them if the loss of the new model wasnt significantly improved 
 
-## Metrics =======================================================================================
+    - Batch pBest Messages / Records not accumulatitevely, but replacingly ....
 
-These are Kafka Streams metrics. streams.metrics() returns metrics for the entire KafkaStreams instance in that JVM:
-    => This means all the internal consumers or producers Streams creates.
-    => internal Kafka Producers get created when there is a .to(TOPIC_NAME) in the Kafka Streams code and there is writing to a topic
-    => you cant measure time from the transformer. This isnt sending the object, this is just creating and returning it to the Kafka producer, who is actually going to send it.
-
- - request-latency-avg:
-     - Average time (usually in milliseconds) for a produce request (Kafka Streams instance is both the consumer and the producer) to complete.
-     - Includes: time waiting in client, network RTT, broker processing, and waiting for acknowledgements (depends on acks).
-     - Interpretation: If this goes up, the broker/network is slower or you’re producing big batches or the broker is overloaded.
-
- - bufferpool-wait-time-total:
-    - Cumulative time that producer threads spent blocked waiting for producer buffer memory (its already filled up).
-    - This blocking happens when the producer has a bounded memory pool (buffer.memory). If it’s full (because broker/network can’t keep up), producer threads block waiting for free space. If this is >0 and growing fast, your pipeline is backpressured by producing => communication is the bottleneck
-
- - outgoing-byte-rate:
-     - Rate of bytes sent by the producer over the network (usually bytes/sec).
-     - How “heavy” your producing is. Decreasing model size and filtering should reduce this.
-
- - record-send-rate:
-     - Records / sec successfully sent by the producer.
+         - i need to take advantage of this batching policy stuff to improve my filtering ... this is only possible if i am able to, instead of accumulationg records ion a batch, to replace them / update them before sending the batch ... so the the actual batch size would be 1 but you eould get the benefits from batching => for my app this makes sense ... there is no rason to send 3 pBest records at the same time i noly keep the most recent one:
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================

@@ -80,7 +80,6 @@ PySwarms (Python Library) gives you a way to train models without gradients, usi
                 => stores also each particle’s pBest.
             => sends x_i_new to the workers / particles
 
-
 ----------------------------------
 
 ## Alternative 2: Distributed, data parallel PSO Protocol:

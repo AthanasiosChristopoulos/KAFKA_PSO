@@ -130,6 +130,7 @@ public class Coordinator implements Runnable {
         baseProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         baseProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5MB
+        baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0);
 
         // MAIN instance props
         Properties mainProps = new Properties();

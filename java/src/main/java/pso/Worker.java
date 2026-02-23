@@ -8,7 +8,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.GlobalKTable;
-
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
@@ -20,7 +20,8 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
-
+import java.util.Set;
+import java.util.HashSet;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.Properties;
@@ -120,7 +121,11 @@ public class Worker implements Runnable {
         // props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0
         props.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5 MB
-        
+        props.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0);
+        // props.put("statestore.cache.max.bytes", 50 * 1024 * 1024L); // e.g. 50MB
+        // props.put("statestore.cache.max.bytes", 0L);
+        // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0); // e.g. flush every 100ms
+
         if(INDEPENDENT_WORKER_DATA_PROCESSING) {
             props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 10 * 60 * 1000); // 10 minutes
             props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);
@@ -174,8 +179,26 @@ public class Worker implements Runnable {
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 
-        branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
-        branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+        if(false && cfg.FILTER_ENABLED) {
+
+            KStream<String, WeightsMessage> pBestStream = branches[0]
+                .peek((k,v) -> System.out.println("PBEST IN  key = " + k + " msgIndex = " + v.msgIndex));
+
+            KTable<String, WeightsMessage> pBestLatest = pBestStream
+                .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
+                .reduce((oldV, newV) -> newV, Materialized.as("pbest-latest-store"));
+
+            pBestLatest.toStream()
+                .peek((k,v) -> System.out.println("PBEST OUT key = " + k + " msgIndex = " + v.msgIndex))
+                .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+            branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
+        } else {
+            
+            branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+            branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+        }
 
         // =====================================================================================================
         // =====================================================================================================
@@ -198,7 +221,8 @@ public class Worker implements Runnable {
 
         streams.start();
         startMetricsLogger(streams); 
-
+        // dumpProducerMetricNamesOnce(streams);
+        startBatchingProofLogger(streams);
         System.out.println("[Worker " + workerId + "] started.");
 
         // if(workerId == 0 && DEBUG_KAFKA == true) {
@@ -232,6 +256,9 @@ public class Worker implements Runnable {
     }
 
     //====================================================================================================================
+    //====================================================================================================================
+    //====================================================================================================================
+    //====================================================================================================================
 
     private void startMetricsLogger(KafkaStreams streams) {
         final Map<MetricName, ? extends Metric> metrics = streams.metrics();
@@ -240,35 +267,78 @@ public class Worker implements Runnable {
             while (!control.isStopRequested(workerId)) {
                 try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
 
-                double reqLatAvg = Double.NaN;
-                double outByteRate = Double.NaN;
-                double sendRate = Double.NaN;
-                double bufferWaitTotal = Double.NaN;
+                // =========================
+                // Producer metrics (filter affects PBEST producing -> these may change)
+                // =========================
+                double prodReqLatAvg = Double.NaN;
+                double prodOutByteRate = Double.NaN;
+                double prodRecordSendRate = Double.NaN;
+                double prodBufferWaitTotal = Double.NaN; // "time lost" due to backpressure (if any)
+
+                // =========================
+                // Consumer metrics for GlobalKTable consumer only (best-effort by client-id tag)
+                // =========================
+                Agg gFetchLatencyAvg = new Agg(AggMode.AVG);
+                Agg gFetchRate = new Agg(AggMode.SUM);
+                Agg gBytesConsumedRate = new Agg(AggMode.SUM);
+                Agg gRecordsConsumedRate = new Agg(AggMode.SUM);
+                Agg gPollLatencyAvg = new Agg(AggMode.AVG);
+                Agg gRecordsLagMax = new Agg(AggMode.MAX);  // may not exist
 
                 for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
-                    MetricName name = e.getKey();
-                    if (!"producer-metrics".equals(name.group())) continue;
+                    MetricName mn = e.getKey();
 
-                    String n = name.name();
-                    Object v = e.getValue().metricValue();
-                    if (!(v instanceof Number)) continue;
+                    Object vObj = e.getValue().metricValue();
+                    if (!(vObj instanceof Number)) continue;
+                    double v = ((Number) vObj).doubleValue();
 
-                    double dv = ((Number) v).doubleValue();
+                    final String group = mn.group();
+                    final String name = mn.name();
 
-                    switch (n) {
-                        case "request-latency-avg": reqLatAvg = dv; break;
-                        case "outgoing-byte-rate": outByteRate = dv; break;
-                        case "record-send-rate": sendRate = dv; break;
-                        case "bufferpool-wait-time-total": bufferWaitTotal = dv; break;
-                        default: break;
+                    // -------- Producer metrics (global for this KafkaStreams instance) --------
+                    if ("producer-metrics".equals(group)) {
+                        switch (name) {
+                            case "request-latency-avg": prodReqLatAvg = v; break;
+                            case "outgoing-byte-rate": prodOutByteRate = v; break;
+                            case "record-send-rate": prodRecordSendRate = v; break;
+                            case "bufferpool-wait-time-total": prodBufferWaitTotal = v; break;
+                            default: break;
+                        }
+                        continue;
+                    }
+
+                    // -------- Consumer metrics: only keep the GlobalKTable consumer(s) --------
+                    if ("consumer-metrics".equals(group)) {
+                        // Filter by client-id tag to exclude DATA_TOPIC consumer and keep global-table consumer.
+                        // This is best-effort; tag keys/values vary by Kafka version.
+                        if (!isGlobalTableConsumer(mn)) continue;
+
+                        switch (name) {
+                            case "fetch-latency-avg": gFetchLatencyAvg.add(v); break;
+                            case "fetch-rate": gFetchRate.add(v); break;
+                            case "bytes-consumed-rate": gBytesConsumedRate.add(v); break;
+                            case "records-consumed-rate": gRecordsConsumedRate.add(v); break;
+                            case "poll-latency-avg": gPollLatencyAvg.add(v); break;
+                            case "records-lag-max": gRecordsLagMax.add(v); break;
+                            default: break;
+                        }
                     }
                 }
 
-                logger.log("producer-metrics: " +
-                    "request-latency-avg = " + reqLatAvg +
-                    ", outgoing-byte-rate = " + outByteRate +
-                    ", record-send-rate = " + sendRate +
-                    ", bufferpool-wait-time-total = " + bufferWaitTotal
+                logger.log(
+                    "[metrics-filter-relevant]" + "\n" + 
+                    "producers: " +
+                    "request-latency-avg=" + fmt(prodReqLatAvg) +
+                    ", outgoing-byte-rate=" + fmt(prodOutByteRate) +
+                    ", record-send-rate=" + fmt(prodRecordSendRate) +
+                    ", bufferpool-wait-time-total=" + fmt(prodBufferWaitTotal) + "\n" +
+                    "global-consumer: " +
+                    "fetch-latency-avg=" + fmt(gFetchLatencyAvg.value()) +
+                    ", fetch-rate=" + fmt(gFetchRate.value()) +
+                    ", bytes-consumed-rate=" + fmt(gBytesConsumedRate.value()) +
+                    ", records-consumed-rate=" + fmt(gRecordsConsumedRate.value()) +
+                    ", poll-latency-avg=" + fmt(gPollLatencyAvg.value()) +
+                    ", records-lag-max=" + fmt(gRecordsLagMax.value())
                 );
             }
         });
@@ -277,6 +347,191 @@ public class Worker implements Runnable {
         t.setName("metrics-logger-worker-" + workerId);
         t.start();
     }
+
+    /**
+     * Best-effort selector for the GlobalKTable consumer metrics.
+     * Kafka Streams usually includes "client-id" in tags, and global thread client-ids often contain "global".
+     * Depending on Kafka version it may be "GlobalStreamThread", "global", or similar.
+     */
+    private static boolean isGlobalTableConsumer(MetricName mn) {
+        Map<String, String> tags = mn.tags();
+        if (tags == null) return false;
+
+        String clientId = tags.get("client-id");
+        if (clientId == null) return false;
+
+        String s = clientId.toLowerCase(java.util.Locale.ROOT);
+
+        if(s.contains("global") || s.contains("globalstreamthread")) {
+            // System.out.println("AAAAA: " + s);
+            return true;
+
+        }
+        return false;
+    }
+
+    // ---------- helpers ----------
+    private static String fmt(double v) {
+        if (Double.isNaN(v)) return "NaN";
+        return String.format(java.util.Locale.ROOT, "%.3f", v);
+    }
+
+    private enum AggMode { SUM, AVG, MAX }
+
+    private static final class Agg {
+        private final AggMode mode;
+        private double sum = 0.0;
+        private long count = 0;
+        private double max = Double.NEGATIVE_INFINITY;
+
+        Agg(AggMode mode) { this.mode = mode; }
+
+        void add(double v) {
+            switch (mode) {
+                case SUM:
+                case AVG:
+                    sum += v;
+                    count++;
+                    break;
+                case MAX:
+                    if (v > max) max = v;
+                    count++;
+                    break;
+            }
+        }
+
+        double value() {
+            if (count == 0) return Double.NaN;
+            switch (mode) {
+                case SUM: return sum;
+                case AVG: return sum / count;
+                case MAX: return max;
+                default: return Double.NaN;
+            }
+        }
+    }
+
+    private void startBatchingProofLogger(KafkaStreams streams) {
+        final Map<MetricName, ? extends Metric> metrics = streams.metrics();
+
+        Thread t = new Thread(() -> {
+            while (!control.isStopRequested(workerId)) {
+                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+
+                double batchSizeAvg = Double.NaN;
+                double batchSizeMax = Double.NaN;
+                double recordsPerRequestAvg = Double.NaN;
+                double recordQueueTimeAvg = Double.NaN;
+                double requestRate = Double.NaN;
+                double recordSendRate = Double.NaN;
+
+                for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
+                    MetricName mn = e.getKey();
+                    if (!"producer-metrics".equals(mn.group())) continue;
+
+                    Object vObj = e.getValue().metricValue();
+                    if (!(vObj instanceof Number)) continue;
+                    double v = ((Number) vObj).doubleValue();
+
+                    switch (mn.name()) {
+                        case "batch-size-avg": batchSizeAvg = v; break;
+                        case "batch-size-max": batchSizeMax = v; break;
+                        case "records-per-request-avg": recordsPerRequestAvg = v; break;
+                        case "record-queue-time-avg": recordQueueTimeAvg = v; break;
+                        case "request-rate": requestRate = v; break;
+                        case "record-send-rate": recordSendRate = v; break;
+                        default: break;
+                    }
+                }
+
+                // Derived proof signals
+                double recordsPerRequestFromRates = Double.NaN;
+                if (!Double.isNaN(recordSendRate) && !Double.isNaN(requestRate) && requestRate > 0.0) {
+                    recordsPerRequestFromRates = recordSendRate / requestRate;
+                }
+
+                // Proof conditions (human-readable)
+                String proof1 = (!Double.isNaN(recordsPerRequestAvg) && recordsPerRequestAvg > 1.05)
+                    ? "BATCHING_PROVEN(records-per-request-avg>1)"
+                    : "records-per-request-avg not proving";
+
+                String proof2 = (!Double.isNaN(recordsPerRequestFromRates) && recordsPerRequestFromRates > 1.05)
+                    ? "BATCHING_LIKELY(record-send-rate/request-rate>1)"
+                    : "rate-ratio not proving";
+
+                logger.log(
+                    "[batching-proof] " +
+                    "batch-size-avg=" + fmt(batchSizeAvg) +
+                    ", batch-size-max=" + fmt(batchSizeMax) +
+                    ", records-per-request-avg=" + fmt(recordsPerRequestAvg) +
+                    ", record-queue-time-avg=" + fmt(recordQueueTimeAvg) +
+                    ", request-rate=" + fmt(requestRate) +
+                    ", record-send-rate=" + fmt(recordSendRate) +
+                    ", send/request=" + fmt(recordsPerRequestFromRates) +
+                    " | " + proof1 + " | " + proof2
+                );
+            }
+        });
+
+        t.setDaemon(true);
+        t.setName("batching-proof-worker-" + workerId);
+        t.start();
+    }
+
+    private void dumpProducerMetricNamesOnce(KafkaStreams streams) {
+        Set<String> names = new HashSet<>();
+        for (MetricName mn : streams.metrics().keySet()) {
+            if ("producer-metrics".equals(mn.group())) {
+                names.add(mn.name());
+            }
+        }
+        System.out.println("[Worker " + workerId + "] producer-metrics available: " + names);
+        logger.log("[Worker " + workerId + "] producer-metrics available: " + names);
+    }
+    // private void startMetricsLogger(KafkaStreams streams) {
+    //     final Map<MetricName, ? extends Metric> metrics = streams.metrics();
+
+    //     Thread t = new Thread(() -> {
+    //         while (!control.isStopRequested(workerId)) {
+    //             try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+
+    //             double reqLatAvg = Double.NaN;
+    //             double outByteRate = Double.NaN;
+    //             double sendRate = Double.NaN;
+    //             double bufferWaitTotal = Double.NaN;
+
+    //             for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
+    //                 MetricName name = e.getKey();
+    //                 if (!"producer-metrics".equals(name.group())) continue;
+
+    //                 String n = name.name();
+    //                 Object v = e.getValue().metricValue();
+    //                 if (!(v instanceof Number)) continue;
+
+    //                 double dv = ((Number) v).doubleValue();
+
+    //                 switch (n) {
+    //                     case "request-latency-avg": reqLatAvg = dv; break;
+    //                     case "outgoing-byte-rate": outByteRate = dv; break;
+    //                     case "record-send-rate": sendRate = dv; break;
+    //                     case "bufferpool-wait-time-total": bufferWaitTotal = dv; break;
+    //                     default: break;
+    //                 }
+    //             }
+
+    //             logger.log("producer-metrics: " +
+    //                 "request-latency-avg = " + reqLatAvg +
+    //                 ", outgoing-byte-rate = " + outByteRate +
+    //                 ", record-send-rate = " + sendRate +
+    //                 ", bufferpool-wait-time-total = " + bufferWaitTotal
+    //             );
+    //         }
+    //     });
+
+    //     t.setDaemon(true);
+    //     t.setName("metrics-logger-worker-" + workerId);
+    //     t.start();
+    // }
 
 }
 
