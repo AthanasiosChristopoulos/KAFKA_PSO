@@ -969,14 +969,28 @@ found a better region than the second or third best neighbors (they may not have
     - This effected increases with population size, increasing N_WORKERS generally should help exploration, but in this case, due to the increased central pull, its harming it
     - This is why with increased neighborhood size we get stronger smaller exploration
 
-## ==================================================================================
-## Functional Requirements: =========================================================
+## Communication: =================================================================================
 
-### Filtering / Communication prevention:
+Kafka / Kafka Streams => this is a non centralized enviroment. This is why these should be considered 
+
+    - End-to-end propagation delay => how quickly a particle / worker becomes up to date. This means that, during the delay, the particle will be computing with old information about pBest / gBest (which doesnt happen in centralized)
+        => this essentially slows down convergence, but may improve exploration
+        => this isnt necessarily something bad, but it is something that we need to adjust for parametrically in comparison to a centralized PSO enviroment
+
+    - CPU time spent in communication related work:
+        - Time spent serializing/deserializing, copying bytes, updating the store, etc.
+        - this is overhead time
+
+    - Independent of time, how many messages / bytes where sent. This may impact energy consumed, which may matter depending on the enviroment 
+
+### Filtering / Communication prevention: =========================================================
 
     - This is an asynchronous protocol. We dont have the ability to stop pipeline / incoming data from Kafka topics
     - But we have the ability for workers / coordinator to choose not to send messages, when it is predicted to be unnecessary 
-
+    
+    - Filtering effects overhead and sometimes delay
+        => Delay will be affected only in case of congsetion    
+        
     - Given the Kafka Topology, we can influence only the communication pipelines 2_1, 2_2 and 6:
         - 2_2 is the federated learning pipeline. It is used to extract the average model, but this doesnt actively partiticipate in PSO.
             - This should be selected as the users preference, since through this form of communication the progression of the algorithm is reported (CLI)
@@ -984,9 +998,32 @@ found a better region than the second or third best neighbors (they may not have
         - 2_1 and 6 are directly used for PSO (pBest / gBest weight messages). 
             - We can choose not to send them if the loss of the new model wasnt significantly improved 
 
-    - CPU time spent in communication related work:
-            - Time spent serializing/deserializing, copying bytes, updating the store, etc.
-            - this is overhead time
+## Metrics =======================================================================================
+
+These are Kafka Streams metrics. streams.metrics() returns metrics for the entire KafkaStreams instance in that JVM:
+    => This means all the internal consumers or producers Streams creates.
+    => internal Kafka Producers get created when there is a .to(TOPIC_NAME) in the Kafka Streams code and there is writing to a topic
+    => you cant measure time from the transformer. This isnt sending the object, this is just creating and returning it to the Kafka producer, who is actually going to send it.
+
+ - request-latency-avg:
+     - Average time (usually in milliseconds) for a produce request (Kafka Streams instance is both the consumer and the producer) to complete.
+     - Includes: time waiting in client, network RTT, broker processing, and waiting for acknowledgements (depends on acks).
+     - Interpretation: If this goes up, the broker/network is slower or you’re producing big batches or the broker is overloaded.
+
+ - bufferpool-wait-time-total:
+    - Cumulative time that producer threads spent blocked waiting for producer buffer memory (its already filled up).
+    - This blocking happens when the producer has a bounded memory pool (buffer.memory). If it’s full (because broker/network can’t keep up), producer threads block waiting for free space. If this is >0 and growing fast, your pipeline is backpressured by producing => communication is the bottleneck
+
+ - outgoing-byte-rate:
+     - Rate of bytes sent by the producer over the network (usually bytes/sec).
+     - How “heavy” your producing is. Decreasing model size and filtering should reduce this.
+
+ - record-send-rate:
+     - Records / sec successfully sent by the producer.
+
+## ==================================================================================
+## Functional Requirements: =========================================================
+
 
 ## Non Functional Requirements: =========================================================
 

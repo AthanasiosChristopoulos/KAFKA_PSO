@@ -268,7 +268,7 @@ public class BatchPrediction {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
             return null;
         }
-        logger.log("batch size of: " + batch.size());
+        // logger.log("batch size of: " + batch.size());
 
         for (DataMessage msg : batch) {
             if (msg == null) continue;

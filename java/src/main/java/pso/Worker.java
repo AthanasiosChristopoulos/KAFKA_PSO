@@ -18,6 +18,8 @@ import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 
@@ -175,35 +177,7 @@ public class Worker implements Runnable {
         branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
-        // ==================================================================================
-
-        Map<MetricName, ? extends Metric> metrics = streams.metrics();
-
-        // Example: print a few producer metrics every 5s
-        new Thread(() -> {
-            while (!control.isStopRequested(workerId)) {
-                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
-
-                for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
-                    MetricName name = e.getKey();
-                    if (!"producer-metrics".equals(name.group())) continue;
-
-                    String n = name.name();
-                    if (n.equals("outgoing-byte-rate") ||
-                        n.equals("request-latency-avg") ||
-                        n.equals("record-send-rate") ||
-                        n.equals("batch-size-avg") ||
-                        n.equals("record-size-avg") ||
-                        n.equals("compression-rate-avg") ||
-                        n.equals("bufferpool-wait-time-total")) {
-
-                        System.out.println("[Worker " + workerId + "] " + name.group() + "." + n + " = " + e.getValue().metricValue());
-                    }
-                }
-            }
-        }).start();
-        // ==================================================================================
-
+        // =====================================================================================================
         // =====================================================================================================
 
         Topology topology = builder.build();
@@ -223,6 +197,7 @@ public class Worker implements Runnable {
         }));
 
         streams.start();
+        startMetricsLogger(streams); 
 
         System.out.println("[Worker " + workerId + "] started.");
 
@@ -255,5 +230,53 @@ public class Worker implements Runnable {
         System.out.printf("[Worker %d] Elapsed time: %.3f seconds, exiting run()%n", workerId, seconds);
 
     }
+
+    //====================================================================================================================
+
+    private void startMetricsLogger(KafkaStreams streams) {
+        final Map<MetricName, ? extends Metric> metrics = streams.metrics();
+
+        Thread t = new Thread(() -> {
+            while (!control.isStopRequested(workerId)) {
+                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+
+                double reqLatAvg = Double.NaN;
+                double outByteRate = Double.NaN;
+                double sendRate = Double.NaN;
+                double bufferWaitTotal = Double.NaN;
+
+                for (Map.Entry<MetricName, ? extends Metric> e : metrics.entrySet()) {
+                    MetricName name = e.getKey();
+                    if (!"producer-metrics".equals(name.group())) continue;
+
+                    String n = name.name();
+                    Object v = e.getValue().metricValue();
+                    if (!(v instanceof Number)) continue;
+
+                    double dv = ((Number) v).doubleValue();
+
+                    switch (n) {
+                        case "request-latency-avg": reqLatAvg = dv; break;
+                        case "outgoing-byte-rate": outByteRate = dv; break;
+                        case "record-send-rate": sendRate = dv; break;
+                        case "bufferpool-wait-time-total": bufferWaitTotal = dv; break;
+                        default: break;
+                    }
+                }
+
+                logger.log("producer-metrics: " +
+                    "request-latency-avg = " + reqLatAvg +
+                    ", outgoing-byte-rate = " + outByteRate +
+                    ", record-send-rate = " + sendRate +
+                    ", bufferpool-wait-time-total = " + bufferWaitTotal
+                );
+            }
+        });
+
+        t.setDaemon(true);
+        t.setName("metrics-logger-worker-" + workerId);
+        t.start();
+    }
+
 }
 

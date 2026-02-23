@@ -136,6 +136,12 @@ builder.stream(...).transform(() -> new BatchingTransformer(...), "gBestStore") 
 - Threads run tasks
 - Each task = all processors (your KTable + your KStream + branches) for a given set of input partitions.
 
+Each Kafka Streams Instance creates internally:
+    - a Kafka client is a JVM process that uses Kafka client libraries => either a producer or a consumer
+    - one or more consumers (for input topics)
+    - one or more producers (for output / sink topics)
+    - Kafka Streams creates many clients
+
 Each task:
  - has its own instance of the processors (KTable internals, etc.),
  - has its own local state stores

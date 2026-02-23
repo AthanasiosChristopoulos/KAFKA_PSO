@@ -39,12 +39,6 @@ public class Dl4jParamUtils {
             // For CNNs (Convolutional Layer): [biases, parameters]
             // For FNNs (Dense Layer): [weights, biases]: Usually its: [Layer0_weights, Layer0_biases, Layer1_weights, Layer1_biases, ... ]
 
-    // public static float[] modelToFlatHead(PsoModel model, int headStartLayerIdx) {
-    //     float[] full = model.params().toFloatVector();
-    //     int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);
-    //     return Arrays.copyOfRange(full, start, full.length);
-    // }
-
     //=====================================================================================================
 
     public static float[] modelToFlatHead(PsoModel model, int start) {

@@ -78,7 +78,7 @@ public class Dl4jModelFactory {
 		} else if ("har".equals(DATASET)) {
 			model = createHarModel(workerId);
 
-		} else if ("pendigits".equals(DATASET) || "pendigits-half".equals(DATASET)) {
+		} else if (DATASET.contains("pendigits")) {
 			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);

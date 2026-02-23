@@ -79,9 +79,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long startUpdateX = System.nanoTime();
     private long sumElapsedNsUpdateX = 0;
 
-    private long startCommunication = System.nanoTime();
-    private long sumElapsedNsCommunication = 0;
-
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
     private static int countForwardPassesStatic = 0;
@@ -94,7 +91,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long lastOffset = 0;
     private double eps = 1e-12;
 
-    private static final long IDLE_MS = 60000; 
+    private static final long IDLE_MS = 3000; 
     private static final long CHECK_EVERY_MS = 100; // how often we check
     private static final long IDLE_GRACE_MS = 5000;
 
@@ -311,8 +308,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Send pBest or current weights ===================================================================
 
         // Filtering: is the loss significant enough to be reported ?
-
-        startCommunication = System.nanoTime();
+        // we cant meassure performance from here ... this is just creating an object and returning it to the one that is going to send it.
         boolean significant_diff = true;
 
         if(FILTER_ENABLED == true) {
@@ -365,8 +361,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             
             out = new KeyValue<>("current_weights", msg);
         }
-
-        sumElapsedNsCommunication += (System.nanoTime() - startCommunication);
 
         // =========================================================================================================
         // Logging and Time
@@ -605,7 +599,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private float[] readGBestStore() {
 
-        if(ENABLE_NEIGHBORHOODS == true) {
+        if(ENABLE_NEIGHBORHOODS == true) {  // right here i am not using global gBest (bestStore.get(keyName)), but local gBest (bestStore.get(key)) 
 
                 float minLoss = LOSS_INIT;
                 WeightsMessage bestMsg = null;
@@ -615,7 +609,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 }
                 if (bestStore == null) return null;
 
-                for (String key : neighborKeys) {
+                for (String key : neighborKeys) {   // find out what the local gBest is. It may have been updated
                     ValueAndTimestamp<WeightsMessage> vat = bestStore.get(key);
                     if (vat == null) continue;
 
@@ -836,7 +830,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
             double avgMsUpdateX = (sumElapsedNsUpdateX / 1_000_000.0) / count; 
             double avgMsPredict = (sumElapsedNsPredict / 1_000_000.0) / count; 
-            double avgMsCommunication = (sumElapsedNsCommunication / 1_000_000.0) / count; 
             double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
             
@@ -844,7 +837,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     ", average elapsed time Measurements: over " + count + " batches: " + "\n" +
                     "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
                     "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
-                    "=> per Communication: " + String.format("%.3f ms", avgMsCommunication) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
                     "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
                     "Rate of Updates / Batches per sec: " + String.format("%.5f sec", count / totalElapsedTimeSec)   // this is count_of_updates per seconds
