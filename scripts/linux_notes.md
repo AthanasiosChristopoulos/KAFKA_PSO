@@ -26,13 +26,16 @@
  - sudo apt install brightnessctl (brightnessctl info)
  - sudo brightnessctl set 100%
 
-# Misc Commands: ======================================================================================
+# Misc: ======================================================================================
 
  - Disable low battery notifications:
 	- gsettings set org.gnome.desktop.notifications show-banners false		# disable all notifications
 	- systemctl --user mask org.gnome.SettingsDaemon.Power.service
 	- systemctl --user stop org.gnome.SettingsDaemon.Power.service
 
+ - Enable correct Alt + Shift Shortcut:
+	- https://askubuntu.com/questions/967364/ubuntu-17-10-and-later-cant-change-the-input-switching-shortcut-to-altshift
+	- Disable menu bar focus in Vscode
 
 # Vscode: =============================================================================================
 

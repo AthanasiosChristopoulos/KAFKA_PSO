@@ -12,16 +12,12 @@
 ## Important Pending Tasks:
 	
 	1) Limit communication / Communication Efficiency:
-		Limit communication στο pBest_weights_topic pipeline:
-			-> Στειλε μονο οταν το loss εχει αλλαξει significantly 
-
-		- Αλλαζε το κατωφλι T του significant loss δυναμικα, στην αρχη να ειναι μικρο και μετα να αυξανεται.
-
+	
 		Geometric Monitoring:
 			- Actuall GM:
 				- Synchronization necessary
 			- παραλλαγης στο gm:
-				- ενας worker i βλεπει οτι κανει cross το border / to A / φευγει απο το κατωφλι
+				- ενας worker i βλεπει οτι κανει cross το border / τo A / φευγει απο το κατωφλι
 				- στελνει μονο αυτος στον Coordinator, ο οποιος κανει update το global average με update μονο του vector του i (οι αλλοι μενουν σταθεροι)
 				- το καινουργιο global average στελνεται ξανα σε ολους για sync 
 				- γλιτωνουμε απο την upstream επικοινωνια με coordinator, οχι ομως με την downstream

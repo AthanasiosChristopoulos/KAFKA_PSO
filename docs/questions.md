@@ -2,27 +2,7 @@
 Ερωτησεις για Διπλωματικη:
 
 	- Showcase: ==========================================================================================
-
-		- Running in Ubuntu enviroment
-
-		- Serialized from JSON messages to bytes
-		- Partitioning - Data Parallelism: χωριζω τα δεδομενα ανα worker (N workers) αλλα αυξανω συνολικα τα δεδομενα κατα Ν
-
-		- Test Graphs on (changed protocol to be training first to do the graphs - training time. Is training first correct ?):
-			- between Fully Informed vs Neighborhood best 
-			- Limitation / Filter or no limitation in the communication
-			- between differentiable and non-differentiable loss functions 
-			- δεν μπορω να αυξησω τον παραλλελισμο παραπανω, αφου το pc μου εχει limited number of cores / true parallelism:
-				- N_WORKERS => [2, 4, 6] or [3, 5, 8]
-
-		- New Datasets
-			=> Susy runs with 0.77 but on GD i am getting 0.8 cant get better in GD these results on PSO are fine.
-				=> Maybe something wrong with the model
-			=> Pendigits is easier to see improvement since multiple classes
-
-		- Cacherd data set only 500 samples always used
-
-	- Experimentation: ==========================================================================================
+	- Experimentation: =============================================================
 
 		- σκεφτηκα για GM οτι μπορω να το χρησιμοποησω μονο για monitoring του Federated Average Model χωρις full synchronization, μονο 
 			partial synchronization of one worker, αλλα θα πρεπει να χρησιμοποιησω το FFT για dimensionality reduction και δεν ξερω αμα αξιζει
@@ -42,9 +22,9 @@
 			layer to be trained "non differentiably" or i can get models rom the internet that are more specific to our problem (same dimensionality 
 			=> same dataset trained on). Is there a preference between these options ? 
 
-
+		- Μπορω να αρχισω να γραφω ?
 		
-	- Για συνταξη της Διπλωματικης + Next Steps: ==========================================================================================
+	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
 			- Comparison with Gradient Descent ?
@@ -54,9 +34,9 @@
 		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
 
 		- για τιτλο μηπως λειπει οτι χρησιμοποιουμε το PSO για training neural networks ? Η εννοειται ? 	
-			- Σε αλλα papers χρησιμοποιουν PSO γενικα ως τροπο βελτιοστοποιησεις μις συναρτησεις
+			- Σε αλλα papers χρησιμοποιουν PSO γενικα ως τροπο βελτιοστοποιησεις μιας συναρτησεις
 
-	- Implementation Detail ===================================================================================================
+	- Implementation Detail: ================================================================
 
 		- velocity like simulated annealing ? Make velocity reduce over time so that swarm converges ... 
 		- Χρησιμοποιω στον κωδικα καποια "κολπα" για να δουλευει το Kafka Streams με τους brokers πειραζει ?
