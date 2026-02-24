@@ -64,13 +64,16 @@
 		- Measure / Diagrams of:
 			- x: training samples / epochs / updatesX 	| y: loss / accuracy / F1 score	
 				- based on data you need to adjust parameters every time (find an automatic function for that)
-			- x: N_WORKERS 								| y: accuracy / time	
+			- x: N_WORKERS 								| y: accuracy / time
+			- x: N_WORKERS 								| y: number of messages / number of bytes
+
 			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
 			- how much time on average does it take you to process one record 
 				- this is supposed to be a streaming application: input_mbps < process_mbps
 			- Limit communication:
-				- Run without => identify latency
-				- Run with	  => makes training more efficient / faster
+				- Run without => identify latency (and number of messages)
+				- Run with	  => makes training more efficient / faster, identify reduction in number of messages.
+
 			- This is affected by Model Size (Number of Weights - NN?K) / Number of workers / BATCH_SIZE / FULLY_INFORMED (PROTOCOL used) / Loss Function:
 				- How much time until reached DESIRED_ACCURACY (Training Time) ?
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?

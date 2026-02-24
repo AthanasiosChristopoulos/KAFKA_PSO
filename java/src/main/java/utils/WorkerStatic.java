@@ -1,5 +1,6 @@
 package utils;
 
+import org.apache.kafka.common.serialization.Serdes;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -8,7 +9,12 @@ import org.nd4j.common.primitives.Pair;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
+
+import message.weights_message.*;
+import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.serialization.Serdes;
 
 import state.*;
 
@@ -51,6 +57,10 @@ public final class WorkerStatic {
     public int improved_pBest_count = 0;
     public int significant_pBest_count = 0;
 
+    public static long TOTAL_MESSAGES_SENT = 0;
+    public static long TOTAL_BYTES_SENT = 0;
+    public static long BYTES_PER_WEIGHTSMESSAGE = 0;
+
     // ========================================================
 
     public WorkerStatic(int workerId) {
@@ -88,6 +98,8 @@ public final class WorkerStatic {
         }
 
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
+        initFixedSendSizes(this.flatModel.length);
+
         this.stats = new Stats();
         this.psoUpdater = new PsoUpdater(workerId, this);
         this.predictor = new BatchPrediction(model, CustomLogger.getWorkerInstance(workerId), this); 
@@ -99,6 +111,26 @@ public final class WorkerStatic {
             // isAttached() == false ⇒ it is not currently attached to a specific device / not resident on device right now, at the moment you printed it.
 
     }
+
+    // ===========================================================================
+
+    public static void incrementTotalMessagesSent() {
+        TOTAL_MESSAGES_SENT++;
+        TOTAL_BYTES_SENT += BYTES_PER_WEIGHTSMESSAGE;
+    }
+    
+    // ===========================================================================
+
+    public static void initFixedSendSizes(int weightsDim) {
+
+        float[] dummyWeights = new float[weightsDim]; // zeros
+        WeightsMessage dummy = new WeightsMessage(0, "00000000-0000-0000-0000-000000000000", 0f, 0f, dummyWeights);
+        WeightsMessageSerializer valueSer = new WeightsMessageSerializer();
+        byte[] val = valueSer.serialize(null, dummy);
+        valueSer.close();
+        BYTES_PER_WEIGHTSMESSAGE = val.length;
+    }
+
 }
 
 // paramTable(): =========================================================================================================

@@ -302,7 +302,13 @@ public class Worker implements Runnable {
                             case "request-latency-avg": prodReqLatAvg = v; break;
                             case "outgoing-byte-rate": prodOutByteRate = v; break;
                             case "record-send-rate": prodRecordSendRate = v; break;
-                            case "bufferpool-wait-time-total": prodBufferWaitTotal = v; break;
+                            case "bufferpool-wait-time-total": {
+                                prodBufferWaitTotal = v; 
+                                if(v != 0) {
+                                    System.out.println("CONGESTION");
+                                }
+                                break;
+                            }
                             default: break;
                         }
                         continue;
@@ -325,7 +331,7 @@ public class Worker implements Runnable {
                         }
                     }
                 }
-
+    
                 logger.log(
                     "[metrics-filter-relevant]" + "\n" + 
                     "producers: " +

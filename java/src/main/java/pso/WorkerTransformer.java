@@ -455,6 +455,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         flushPendingPBest();    // this may send the actuall pBest
         
+        if(out != null) ws.incrementTotalMessagesSent();
+        
         return out;
     }
 
@@ -881,6 +883,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // This is the actual emission downstream from the Transformer
         ws.pBestForwardedCount++;
+        ws.incrementTotalMessagesSent();
         context.forward(keyName, msg);
 
         if (logger.isEnabled(1)) {
@@ -974,6 +977,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
     
+            if (logger.isEnabled(2)) logger.log("FIltering Statistics:");
+            if (logger.isEnabled(2)) logger.log("TOTAL_MESSAGES_SENT: "+ ws.TOTAL_MESSAGES_SENT +
+                 ", TOTAL_BYTES_SENT: " + ws.TOTAL_BYTES_SENT);
+
             if (logger.isEnabled(2)) logger.log("improved_pBest_count: "+ ws.improved_pBest_count + ", significant_pBest_count: " + ws.significant_pBest_count);
             if (logger.isEnabled(2)) logger.log("pBestCandidateCount: "+ ws.pBestCandidateCount + ", pBestForwardedCount: " + ws.pBestForwardedCount);
 

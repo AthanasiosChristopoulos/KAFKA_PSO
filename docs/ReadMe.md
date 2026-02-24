@@ -98,6 +98,7 @@ Standard PSO works this way:
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
 ## Non DIfferentiable Loss Functions: =======================================================
+
  - Review - Ranking:
     - ZERO_ONE is too discrete. Losses out on information.
     - MAE is middle, continious probability p depended, but it doesnt reward confidence as well as CE its not the ideal function
@@ -184,7 +185,7 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
     - updateModel(MultiLayerNetwork model, float[] flat)
  - Exchange pBest / gBest Weight Messages through Kafka Topics
 
-## Kafka Message Documentation:  ============================================================================
+## Kafka Message Documentation: =======================================================
 
 
 Input pBest-weights-topic:
@@ -642,6 +643,10 @@ improve the ability to escape local minima
  - The swarm converged on bad solution / local maximum
  - Is low inertia / velocity holding the swarm back from exploring more solutions faster ?
     - is the velocity being clamped / holded back by a limiter ?
+ - Model:
+    => Is the model good enough to fit the dataset or not
+    => dimensionality trade-off: high dimensionality model typically does better on gd (at least what overfitting is concerend), but this isnt the case for PSO. There dimensionality actively harms PSOs ability to optimize. 
+        => trade-off between models capacity to fit and PSO capability to train the model
 
  - **Increasing N_WORKERS:**
 
@@ -724,7 +729,6 @@ improve the ability to escape local minima
     // FI-PSO is not meant to drop inertia entirely, by itself, FI’s social term is either:
         // too small (means it has prematurely convergenced) or too noisy
     float velocity = C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
-
     ```
 
  - ## Clamping Velocity: ===================================================================================
@@ -1020,11 +1024,22 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
         - can be implemented also in a Kafka Streams way
 
     ## Filtering Ideas ======================================
+
      - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
         => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
         => This would harm convergence when convergence is needed most
         => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
-        
+
+    - Send pBest only when it beats a reference quality gate:
+        - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
+            => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
+
+    - If there is congestion be more strict:
+        => these is no congestion
+    
+    - Suppress updates that are worse than what other neighbors already have.
+        => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+
 ## ==================================================================================
 ## Functional Requirements: =========================================================
 
