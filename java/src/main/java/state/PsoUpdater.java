@@ -120,7 +120,8 @@ public class PsoUpdater {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);
+            MAX_PSO_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);   // (* 3): This is necessary because othewise it will never converge. 
+                                                                // We dont actually need to be exploring for that long
         } else {
             MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * BATCH_SIZE);
         }

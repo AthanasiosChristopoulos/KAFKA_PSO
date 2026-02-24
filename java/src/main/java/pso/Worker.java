@@ -195,7 +195,7 @@ public class Worker implements Runnable {
             branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
         } else {
-            
+
             branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
             branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         }
@@ -222,7 +222,8 @@ public class Worker implements Runnable {
         streams.start();
         startMetricsLogger(streams); 
         // dumpProducerMetricNamesOnce(streams);
-        startBatchingProofLogger(streams);
+        // startBatchingProofLogger(streams);
+        
         System.out.println("[Worker " + workerId + "] started.");
 
         // if(workerId == 0 && DEBUG_KAFKA == true) {

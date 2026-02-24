@@ -45,8 +45,11 @@ public final class WorkerStatic {
     public int start;     // configured
     public int headDim;               // number of trainable params in head
 
-    public long pBestCandidateCount = 0; // how many times filter said “send”
-    public long pBestForwardedCount = 0;
+    public int pBestCandidateCount = 0; // how many times filter said “send”
+    public int pBestForwardedCount = 0;
+
+    public int improved_pBest_count = 0;
+    public int significant_pBest_count = 0;
 
     // ========================================================
 

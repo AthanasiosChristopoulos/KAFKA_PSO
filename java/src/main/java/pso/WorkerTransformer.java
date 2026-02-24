@@ -31,6 +31,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private static Config cfg = Config.getInstance();
     private final int BATCH_SIZE = cfg.BATCH_SIZE;
     private final int N_BATCHES = cfg.N_BATCHES;  
+    private final int MONITORING_THRESHOLD_MAX = cfg.MONITORING_THRESHOLD_MAX;
+    private final int MONITORING_THRESHOLD_MIN = cfg.MONITORING_THRESHOLD_MIN; 
+    private int monitoring_threshold = cfg.N_BATCHES;
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean FILTER_ENABLED = cfg.FILTER_ENABLED;
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
@@ -71,7 +74,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     // Performance Measurements ==============================================
     private long start = System.nanoTime();
     private long sumElapsedNs = 0;
-    private int count = 0;
+    private int per_task_count = 0;
 
     private long startPredict = System.nanoTime();
     private long sumElapsedNsPredict = 0;
@@ -113,6 +116,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private volatile WeightsMessage pendingPBestMsg = null;
     private long lastPBestForwardMs = 0;
+
+    private int MAX_BATCHES; // expected max updates (for clamping)
+    private float TAU; 
+    private final float LOSS_THRESHOLD_MAX = cfg.LOSS_THRESHOLD_MAX;           // e.g. 0.10f (10%)
+    private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
+    private float loss_threshold;
 
     // ====================================================================================================================
     
@@ -159,6 +168,30 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         logger.log("taskInstance: " + taskInstance + ", Thread.currentThread().getName(): " + Thread.currentThread().getName());
+
+        if(FILTER_ENABLED) {
+        
+            if(cfg.INDEPENDENT_WORKER_DATA_PROCESSING == true) {
+                MAX_BATCHES = cfg.NUM_SAMPLES / BATCH_SIZE;
+                
+            } else {
+
+                MAX_BATCHES = cfg.NUM_SAMPLES / (cfg.N_WORKERS * BATCH_SIZE);
+            }
+
+            double epsEnd = 1e-3;
+            double diff = (double) LOSS_THRESHOLD_MAX - (double) LOSS_THRESHOLD_MIN;
+            double tau = (double) MAX_BATCHES / Math.log(diff / epsEnd);
+            logger.log("tau=" + tau + ", diff=" + diff);
+
+            if (Double.isNaN(tau) || Double.isInfinite(tau) || tau < 1.0) tau = 1.0;    // so its valid
+
+            this.TAU = (float) tau;
+
+            logger.log("MAX_BATCHES=" + MAX_BATCHES + ", TAU=" + TAU);
+
+
+        }
     }
 
     //=========================================================================================================================
@@ -238,6 +271,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             control.requestStopFinal(); // a serious error has happend
             return null;
         }
+
         accuracy = accLoss[0];
         loss = accLoss[1];
         nSamples = (int) accLoss[2];
@@ -270,10 +304,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ws.pBestWeights[i] = ws.flatModel[i];
             }
 
-            if (logger.isEnabled(1)) logger.log(taskInstance + 
-                ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
-                " and accuracy: " + ws.stats.getBestAccuracy() +
-                ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
+            ws.improved_pBest_count++;
+
+            // if (logger.isEnabled(1)) logger.log(taskInstance + 
+            //     ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
+            //     " and accuracy: " + ws.stats.getBestAccuracy() +
+            //     ", with weights: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT));
         }
 
         // =========================================================================================================
@@ -302,6 +338,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
 
             } else {
+
                 if (logger.isEnabled(1)) logger.log(taskInstance + ", gBest Weights: " + 
                     Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + ", gBest Accuracy: " 
                     + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
@@ -310,6 +347,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             }
         }
+
         sumElapsedNsUpdateX += (System.nanoTime() - startUpdateX);
 
         // =================================================================================================
@@ -318,16 +356,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Filtering: is the loss significant enough to be reported ?
         // we cant meassure performance from here ... this is just creating an object and returning it to the one that is going to send it.
         boolean significant_diff = true;
+        updateThreshold(ws.countForwardPasses);
 
         if(FILTER_ENABLED == true) {
+
             if(FULLY_INFORMED == true) {
 
-                significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > SIGNIFICANT_LOSS_DIFF;
+                significant_diff = Math.abs(loss - ws.stats.getLastSentPBestLoss()) / (Math.abs(ws.stats.getLastSentPBestLoss()) + eps) > loss_threshold;
                     // in comparison to the last pBest of a worker, dont send if insignificant, other workers already have a good enough version
             
             } else {
 
-                significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * SIGNIFICANT_LOSS_DIFF;
+                significant_diff = Math.abs(loss - ws.local_gBestLoss) / (Math.abs(ws.local_gBestLoss) + eps) > 0.3 * loss_threshold;
                     // in comparison to the last global model, dont send if insignificant, other workers already have a good enough version of the global model
                     // this is a much more damaging filter, because the global affects all workers as the only sense of direction
                     // thats why 0.3 
@@ -344,8 +384,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
-                    ", Improved and sending pBest with loss: " + ws.stats.getPBestLoss() + 
+                    ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
                     " and accuracy: " + ws.stats.getBestAccuracy() + ", msgIndex = " + msgIndex);
+            
+            ws.significant_pBest_count++;
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, ws.pBestWeights);
 
@@ -359,8 +401,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // =========================================================================================================
         // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset ws.batchesRead
+        
+        updateMonitoringThreshold(ws.countForwardPasses);
 
-        if (out == null && ws.batchesRead >= N_BATCHES) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
+        if (out == null && (ws.batchesRead >= monitoring_threshold && FILTER_ENABLED) &&
+                (ws.batchesRead >= N_BATCHES && !FILTER_ENABLED) ) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
                 ", Sending current weights ...");
@@ -384,7 +429,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
                 ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT) +
-                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT));  
+                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT) +
+                ", loss_threshold: " + loss_threshold + 
+                ", monitoring_threshold: " + monitoring_threshold);  
         // * 100 is for the user, just scale it upwards 
                 
         // =========================================================================================================
@@ -404,7 +451,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         sumElapsedNs += (System.nanoTime() - start);  // most of the time all we are measuring is the average time of forward pass (from callPredictions). 
                                         // Doesnt trigger when we are collecting a batch
-        count++; ws.countForwardPasses++; countForwardPassesStatic++;
+        per_task_count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
         flushPendingPBest();    // this may send the actuall pBest
         
@@ -837,15 +884,43 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         context.forward(keyName, msg);
 
         if (logger.isEnabled(1)) {
-            logger.log(taskInstance + " [DebounceFlush] forwarded pBest key=" + keyName +
-                    " msgIndex=" + msg.msgIndex + " loss=" + msg.loss + " acc=" + msg.accuracy);
+            logger.log(taskInstance + " Forwarded pBest key = " + keyName +
+                    " msgIndex = " + msg.msgIndex + " loss = " + msg.loss + " acc = " + msg.accuracy);
         }
+    }
+
+    //=========================================================================================================================
+
+    private void updateThreshold(int t) {     // threshold(t)=threshold_min + (threshold_max - threshold_min) * exp(-t / tau)
+
+        int tc = Math.min(t, MAX_BATCHES);
+
+        double expTerm = Math.exp(-(double) tc / (double) TAU);     // -t/tau
+        double threshold = (double) LOSS_THRESHOLD_MIN + ((double) LOSS_THRESHOLD_MAX - (double) LOSS_THRESHOLD_MIN) * expTerm;
+
+        if (threshold < LOSS_THRESHOLD_MIN) threshold = LOSS_THRESHOLD_MIN;
+        if (threshold > LOSS_THRESHOLD_MAX) threshold = LOSS_THRESHOLD_MAX;
+
+        this.loss_threshold = (float) threshold;
+    }
+
+    //=========================================================================================================================
+
+    private void updateMonitoringThreshold(int iter) {
+        // iter: ws.countForwardPasses (global per worker)
+        int T = Math.max(1, MAX_BATCHES);
+        double p = Math.min(1.0, (double) iter / (double) T);
+
+        double val = MONITORING_THRESHOLD_MAX + (MONITORING_THRESHOLD_MIN - MONITORING_THRESHOLD_MAX) * p;
+
+        monitoring_threshold = (int) Math.round(val);
     }
 
     //=========================================================================================================================
 
     @Override
     public void close() {
+
         ws.countPartitionsFinished += 1;
         if (!buffer.isEmpty()) {
             buffer.clear();
@@ -866,19 +941,19 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Seen partitions: " 
                 + seenPartitions + ", with lastOffset: " + lastOffset);
 
-            double avgMs = (sumElapsedNs / 1_000_000.0) / count;    // this is the overall time of processing a batch
-            double avgMsUpdateX = (sumElapsedNsUpdateX / 1_000_000.0) / count; 
-            double avgMsPredict = (sumElapsedNsPredict / 1_000_000.0) / count; 
+            double avgMs = (sumElapsedNs / 1_000_000.0) / per_task_count;    // this is the overall time of processing a batch
+            double avgMsUpdateX = (sumElapsedNsUpdateX / 1_000_000.0) / per_task_count; 
+            double avgMsPredict = (sumElapsedNsPredict / 1_000_000.0) / per_task_count; 
             double avgForwardPassMs = forwardPassNs / countForwardPass;     // this is just the forward pass part of it (1 batch => 1 forward pass)
                             // what we are observing is that forward pass takes the most amount of time inside the entire batch processing
             
             if (logger.isEnabled(2)) logger.log(taskInstance + 
-                    ", average elapsed time Measurements: over " + count + " batches: " + "\n" +
+                    ", average elapsed time Measurements: over " + per_task_count + " batches: " + "\n" +
                     "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
                     "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
                     "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
-                    "Rate of Updates / Batches per sec: " + String.format("%.5f sec", count / totalElapsedTimeSec)   // this is count_of_updates per seconds
+                    "Rate of Updates / Batches per sec: " + String.format("%.5f sec", per_task_count / totalElapsedTimeSec)   // this is count_of_updates per seconds
                         // Also equivalent with batches per second
             );
 
@@ -889,7 +964,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(ws.printedReport == false) {
 
-            if (logger.isEnabled(2)) logger.log("Closing Report ============================================================");
+            if (logger.isEnabled(2)) logger.log("Opening Report ============================================================");
 
             checkConvergence(false, true);
 
@@ -899,7 +974,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
     
+            if (logger.isEnabled(2)) logger.log("improved_pBest_count: "+ ws.improved_pBest_count + ", significant_pBest_count: " + ws.significant_pBest_count);
             if (logger.isEnabled(2)) logger.log("pBestCandidateCount: "+ ws.pBestCandidateCount + ", pBestForwardedCount: " + ws.pBestForwardedCount);
+
+            if (logger.isEnabled(2)) logger.log("Closing Report ============================================================");
 
             ws.printedReport = true;
         }

@@ -53,6 +53,10 @@ public class Config {
     public final String VMAX_CLAMPING_TYPE;
 
     public final float SIGNIFICANT_LOSS_DIFF;
+    public final float LOSS_THRESHOLD_MAX;
+    public final float LOSS_THRESHOLD_MIN;
+    public final int MONITORING_THRESHOLD_MAX;
+    public final int MONITORING_THRESHOLD_MIN;
     public final boolean FILTER_ENABLED;
     public final int PBEST_DEBOUNCE_MS;
 
@@ -237,16 +241,31 @@ public class Config {
         this.VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
         this.VMAX_CLAMPING_TYPE = getenv(dotenv, "VMAX_CLAMPING_TYPE", "DIM");
 
+        // =========================================================================================================
+
         this.FILTER_ENABLED = Boolean.parseBoolean(getenv(dotenv, "FILTER_ENABLED", "false"));
         this.PBEST_DEBOUNCE_MS = Integer.parseInt(getenv(dotenv, "PBEST_DEBOUNCE_MS", "100"));
+
         if(FILTER_ENABLED == false) {
             this.SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
             // this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 5;
+            this.LOSS_THRESHOLD_MAX = 0f;
+            this.LOSS_THRESHOLD_MIN = 0f;
+            this.MONITORING_THRESHOLD_MAX = 0;
+            this.MONITORING_THRESHOLD_MIN = 0;
+
         } else {
             this.SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
             this.N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 4;
+            this.MONITORING_THRESHOLD_MAX = Integer.parseInt(getenv(dotenv, "MONITORING_THRESHOLD_MAX", "60"));
+            this.MONITORING_THRESHOLD_MIN = Integer.parseInt(getenv(dotenv, "MONITORING_THRESHOLD_MIN", "10"));
+
+            this.LOSS_THRESHOLD_MAX = Float.parseFloat(getenv(dotenv, "LOSS_THRESHOLD_MAX", "0.1"));
+            this.LOSS_THRESHOLD_MIN = Float.parseFloat(getenv(dotenv, "LOSS_THRESHOLD_MIN", "0.005"));
         }
+
+        // =========================================================================================================
 
         this.SAMPLING_CONSTANT = Integer.parseInt(getenv(dotenv, "SAMPLING_CONSTANT", "3"));
 
