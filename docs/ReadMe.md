@@ -1005,14 +1005,14 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
 
     B) Filter based on:
 
-    - Significant Loss Thresshold:
+    - Significant Loss Threshold:
         - Decrease over time (strict → permissive)  
         - Increasing over time would mean you demand bigger improvements later — but later improvements are inherently smaller. That’s a recipe for “everyone stops talking” and accuracy tanks.
         - We want exploration first then exploitation
         - Using threshold function: θ(t)=θmin​+(θmax​−θmin​)e^(−t/τ)
         - This only approaches θmin asymptotically as t → ∞.
         - Need to determine τ (TAU) using θ(MAX_COUNT) = θmin​+ε and τ = MAX_COUNT / ln((θmax​−θmin​)/ε)
-  
+    
     - Batch pBest Messages / Records not accumulatitevely, but replacingly ....
         - i need to take advantage of this batching policy stuff to improve my filtering ... this is only possible if i am able to, instead of accumulationg records ion a batch, to replace them / update them before sending the batch ... so the the actual batch size would be 1 but you eould get the benefits from batching => for my app this makes sense ... there is no rason to send 3 pBest records at the same time i noly keep the most recent one:
         - set props.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0); but it doesnt really matter, because it is enforced already by PBEST_DEBOUNCE_MS
@@ -1020,10 +1020,11 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
         - can be implemented also in a Kafka Streams way
 
     ## Filtering Ideas ======================================
-     - Send only if its a significant distant away from another pBest. 
+     - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
         => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
         => This would harm convergence when convergence is needed most
-
+        => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
+        
 ## ==================================================================================
 ## Functional Requirements: =========================================================
 
