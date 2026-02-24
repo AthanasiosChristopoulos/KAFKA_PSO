@@ -55,10 +55,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int nSamples = 0;
     private int nCorrect = 0;
 
-    private float bestGlobalModelAccuracy = -1f;
     private float bestLoss = 10000f;
-
-    private float bestTrainingAccuracy = -1f;
 
     private final BatchPrediction globalPredictor;
 
@@ -167,8 +164,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         updateTime();
 
         if (control.isStopRequested(-1)) {
-            // control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
-            // control.setBestTrainingAccuracy(bestTrainingAccuracy);
             return;
         }
 
@@ -194,8 +189,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
         
-        if(bestTrainingAccuracy < msg.accuracy) {
-            bestTrainingAccuracy = msg.accuracy;
+        if(control.getBestTrainingAccuracy() < msg.accuracy) {
+            control.setBestTrainingAccuracy(msg.accuracy);
         }
 
         weightsBuffer.put(workerId, weights);
@@ -269,7 +264,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             // update bestGlobalModelAccuracy + bestLoss ========================================================
 
-            if(accuracy > bestGlobalModelAccuracy) {    
+            if(accuracy > control.getBestGlobalModelAccuracy()) {    
 
                 if(cfg.USING_PRETRAINED_MODEL) {
                     Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.start);
@@ -277,9 +272,11 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                     Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
                 }
 
-                bestGlobalModelAccuracy = accuracy;
+                control.setBestGlobalModelAccuracy(accuracy);
+                control.setBestGlobalModelLoss(loss);
+
                 if (logger.isEnabled(1)) logger.log(taskInstance + 
-                    ", New bestGlobalModel accuracy = " + bestGlobalModelAccuracy);
+                    ", New bestGlobalModel accuracy = " + control.getBestGlobalModelAccuracy());
             }
 
             if(loss < bestLoss) {    
@@ -288,22 +285,22 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             
             // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
             if (logger.isEnabled(0)) logger.log(taskInstance + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
                         ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
                         ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                        ", bestTrainingAccuracy: " + bestTrainingAccuracy);
+                        ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
 
             System.out.println(evaluation_count + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + bestGlobalModelAccuracy + 
+                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
                         ", bestLoss: " + bestLoss + 
                         ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss + 
                         ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                        ", bestTrainingAccuracy: " + bestTrainingAccuracy);
+                        ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
 
-            if (bestGlobalModelAccuracy >= this.DESIRED_ACCURACY) {
+            if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
                 Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
                 control.requestStopFinal();
                 return;
@@ -311,10 +308,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
             end = System.nanoTime();
             sumElapsedNs += (end - start_time);
-            evaluation_count++;   
-            
-            control.setBestGlobalModelAccuracy(bestGlobalModelAccuracy);
-            control.setBestTrainingAccuracy(bestTrainingAccuracy);
+            evaluation_count++;           
 
             //=================================================================================
             // weightsBuffer.clear();

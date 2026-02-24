@@ -53,8 +53,8 @@ public class Config {
     public final String VMAX_CLAMPING_TYPE;
 
     public final float SIGNIFICANT_LOSS_DIFF;
-    public final float LOSS_THRESHOLD_MAX;
-    public final float LOSS_THRESHOLD_MIN;
+    public float LOSS_THRESHOLD_MAX;
+    public float LOSS_THRESHOLD_MIN;
     public final int MONITORING_THRESHOLD_MAX;
     public final int MONITORING_THRESHOLD_MIN;
     public final boolean FILTER_ENABLED;
@@ -104,6 +104,8 @@ public class Config {
     public final float LAMBDA_VALUE; 
 
     public long IDLE_MS; 
+
+    public final String EXPERIMENTATION;
 
     public Config() {
         
@@ -330,6 +332,7 @@ public class Config {
             this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 10;
         }
 
+        this.EXPERIMENTATION = getenv(dotenv, "EXPERIMENTATION", "N_WORKERS");
     } 
 
     // ==================================================================================================================================
@@ -337,7 +340,7 @@ public class Config {
     public static Config getInstance() {
         return instance;
     }
-    
+
     // ==================================================================================================================================
 
     public void refreshRunId() {

@@ -8,22 +8,20 @@ import utils.*;
 public class CoordinatorControl {
 
     private static final Config cfg = Config.getInstance();
-    private static int N_WORKERS = cfg.N_WORKERS;
-    private static int count = N_WORKERS;
+    private static int count = cfg.N_WORKERS;
     private static float bestGlobalModelAccuracy = -1f;
     private static float bestGlobalModelLoss= 10000f;
-
     private static float bestTrainingAccuracy = -1f;
 
 	private static final CoordinatorControl instance = new CoordinatorControl();
 
-    private AtomicBoolean[] workerStopRequested = new AtomicBoolean[N_WORKERS];
+    private AtomicBoolean[] workerStopRequested = new AtomicBoolean[cfg.N_WORKERS];
     private AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
 
     // =================================================================================================
 
     private CoordinatorControl() {
-        for (int i = 0; i < N_WORKERS; i++) {
+        for (int i = 0; i < cfg.N_WORKERS; i++) {
             workerStopRequested[i] = new AtomicBoolean(false);
         }
     }
@@ -31,7 +29,7 @@ public class CoordinatorControl {
     // =================================================================================================
 
     public void requestStop(int workerId) {
-        if (workerId < 0 || workerId >= N_WORKERS) {
+        if (workerId < 0 || workerId >= cfg.N_WORKERS) {
             throw new IllegalArgumentException("Invalid workerId: " + workerId);
         }
 
@@ -52,7 +50,7 @@ public class CoordinatorControl {
     // =================================================================================================
 
     public boolean isStopRequested(int workerId) {
-        if (workerId < 0 || workerId >= N_WORKERS) {
+        if (workerId < 0 || workerId >= cfg.N_WORKERS) {
             return stopRequestedFinal.get();
         }
         return stopRequestedFinal.get() || workerStopRequested[workerId].get();
@@ -66,31 +64,31 @@ public class CoordinatorControl {
 
     // =================================================================================================
 
-    public static float getBestGlobalModelAccuracy() {
+    public float getBestGlobalModelAccuracy() {
         return bestGlobalModelAccuracy;
     }
 
-    public static void setBestGlobalModelAccuracy(float bestGlobalModelAccuracy) {
+    public void setBestGlobalModelAccuracy(float bestGlobalModelAccuracy) {
         CoordinatorControl.bestGlobalModelAccuracy = bestGlobalModelAccuracy;
     }
 
     // =================================================================================================
 
-    public static float getBestGlobalModelLoss() {
+    public float getBestGlobalModelLoss() {
 		return bestGlobalModelLoss;
 	}
 
-    public static void setBestGlobalModelLoss(float bestGlobalModelLoss) {
+    public void setBestGlobalModelLoss(float bestGlobalModelLoss) {
 		CoordinatorControl.bestGlobalModelLoss = bestGlobalModelLoss;
 	}
 
     // =================================================================================================
 
-	public static float getBestTrainingAccuracy() {
+	public float getBestTrainingAccuracy() {
         return bestTrainingAccuracy;
     }
 
-    public static void setBestTrainingAccuracy(float bestTrainingAccuracy) {
+    public void setBestTrainingAccuracy(float bestTrainingAccuracy) {
         CoordinatorControl.bestTrainingAccuracy = bestTrainingAccuracy;
     }
 
@@ -105,8 +103,6 @@ public class CoordinatorControl {
         // rebuild the array
         workerStopRequested = new AtomicBoolean[nWorkers];
         for (int i = 0; i < nWorkers; i++) workerStopRequested[i] = new AtomicBoolean(false);
-
-        this.N_WORKERS = nWorkers; // but this requires N_WORKERS not final/static
     }
         // =================================================================================================
 

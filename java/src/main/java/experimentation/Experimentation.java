@@ -16,69 +16,158 @@ public class Experimentation {
 
     private static final Config cfg = Config.getInstance();
     private static String bootstrap = "localhost:9092";
-
+    private static final float THRESH_CENTER = 0.055f;
+    private static final float MIN_FLOOR = 0.001f;
+    private static final float MAX_CEIL  = 0.20f;
+        
     public static void main(String[] args) throws Exception {
 
-        List<Integer> workersList = List.of(2, 4, 6);
-        Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
+        if(cfg.EXPERIMENTATION.equals("N_WORKERS")) {
+            List<Integer> workersList = List.of(2, 4, 6);
+            // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
+            Path dir = Path.of("experimental_results_v1");
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_n_workers.csv");
 
-        try (BufferedWriter w = Files.newBufferedWriter(
-                csvPath,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE
-        )) {
-            w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF\n");
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF\n");
 
-            for (int n : workersList) {
+                for (int n : workersList) {
 
-                cfg.refreshRunId();
-                CoordinatorControl.getInstance().resetForNewRun(n);
-                System.out.println("===============================================================================================");
-                System.out.println("N_WORKERS: " + n);
-                System.out.println("New RUN_ID: " + cfg.RUN_ID);
-                System.out.println("===============================================================================================");
+                    cfg.refreshRunId();
+                    cfg.N_WORKERS = n;
 
-                // =================================================================================================
-                // Restart the Kafka Parititions
+                    CoordinatorControl.getInstance().resetForNewRun(n);
+                    System.out.println("===============================================================================================");
+                    System.out.println("N_WORKERS: " + n);
+                    System.out.println("New RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
 
-                List<String> topics;
-                if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                    topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
-                } else {
-                    topics = List.of(cfg.GLOBAL_WEIGHTS_TOPIC);
+                    // =================================================================================================
+                    // Restart the Kafka Parititions
+
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GLOBAL_WEIGHTS_TOPIC);
+                    }
+
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    // =================================================================================================
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
+
+                    w.write(String.format(
+                            "%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f\n",
+                            n,
+                            r.getTotalElapsedSec(),
+                            coordElapsed,
+                            r.lastWorkerElapsedSec(),
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
+                            r.maxMessagesSent(),
+                            r.maxBytesSent(),
+                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN
+                    ));
+
+                    w.flush();
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with N_WORKERS: " + n);
+                    System.out.println("===============================================================================================");
+
                 }
+            } 
+        
+        // ===========================================================================================================================================
+        // ===========================================================================================================================================
 
-                KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+        } else if(cfg.EXPERIMENTATION.equals("THRESHOLD")){
+                         
+            List<Float> diffList = List.of(0.04f, 0.06f, 0.08f, 0.09f, 0.10f, 0.12f);
 
-                // =================================================================================================
+            // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
+            Path dir = Path.of("experimental_results_v2");
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_threshold.csv");
 
-                Config cfg = Config.getInstance();
-                cfg.N_WORKERS = n; // or better: create a Config copy per run
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF\n");
 
-                ExperimentResult r = SimulationRunner.runOnce(cfg);
+                for (float theshold_diff : diffList) {
 
-                double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
+                    // Derive min/max from diff around a fixed center
+                    float min = THRESH_CENTER - theshold_diff / 2.0f;
+                    float max = THRESH_CENTER + theshold_diff / 2.0f;
 
-                w.write(String.format(
-                        "%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%.3f\n",
-                        n,
-                        r.getTotalElapsedSec(),
-                        coordElapsed,
-                        r.lastWorkerElapsedSec(),
-                        r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
-                        r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
-                        r.maxMessagesSent(),
-                        r.maxBytesSent(),
-                        cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN
-                ));
+                    // Clamp
+                    if (min < MIN_FLOOR) min = MIN_FLOOR;
+                    if (max > MAX_CEIL)  max = MAX_CEIL;
 
-                w.flush();
+                    // Ensure ordering (in case diff too small or clamping breaks it)
+                    if (max <= min) {
+                        max = Math.min(MAX_CEIL, min + 0.001f);
+                    }
 
-                System.out.println("===============================================================================================");
-                System.out.println("End of experiment with N_WORKERS: " + n);
-                System.out.println("===============================================================================================");
+                    cfg.refreshRunId();
+                    cfg.LOSS_THRESHOLD_MIN = min;
+                    cfg.LOSS_THRESHOLD_MAX = max;
 
+                    System.out.println("===============================================================================================");
+                    System.out.println("LOSS_THRESHOLD_MIN=" + min + ", LOSS_THRESHOLD_MAX=" + max + ", DIFF=" + (max - min));
+                    System.out.println("New RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // =================================================================================================
+                    // Restart the Kafka Parititions
+
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GLOBAL_WEIGHTS_TOPIC);
+                    }
+
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    // =================================================================================================
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
+
+                    w.write(String.format(
+                            "%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f\n",
+                            cfg.N_WORKERS,
+                            r.getTotalElapsedSec(),
+                            coordElapsed,
+                            r.lastWorkerElapsedSec(),
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
+                            r.maxMessagesSent(),
+                            r.maxBytesSent(),
+                            theshold_diff
+                    ));
+
+                    w.flush();
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with theshold_diff: " + theshold_diff);
+                    System.out.println("===============================================================================================");
+
+                }   
             }
         }
     }
@@ -99,6 +188,7 @@ public class Experimentation {
         while (Files.exists(csv)) {
             rnd = ThreadLocalRandom.current().nextInt(1000, 10000);
             csv = dir.resolve(baseFileName + "_" + ts + "_" + rnd + ".csv");
+            
             if (++attempt > 50) throw new IOException("Could not create unique CSV under " + baseDirName);
         }
 
