@@ -1029,7 +1029,10 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
         => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
         => This would harm convergence when convergence is needed most
         => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
-
+        => In short, we would a combination of the two (send only if there is significant distance, but the threshold for significant distance decreases over time)
+            => But we dont really care if there is a significant distance in the first place, we know there is a distance already 
+                => The opposite could prove more effective => send only once per 50 * N_BATCHES (just to check progress) or if distance is small
+                
     - Send pBest only when it beats a reference quality gate:
         - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
             => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 

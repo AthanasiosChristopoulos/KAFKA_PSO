@@ -29,12 +29,10 @@
 				που δεν μπορει να το κανει το Kafka Streams:	
 			- το προτοκολλο ειναι fully asynchronous. Δηλαδη δεν μπορω να σταματησω το training και να αρχισω να περιμενω για καινουργιο global μοντελλο
 				- οσο ενας worker περιμενει νεα weights, αναγκαστηκα θα κανει consume νεα δεδομενα με το παλιο μοντελλο (no stop and weight).
-			- το sync στο PSO ενδεχεται να ειναι αντιφατικο, καθως στο PSO περιμενουμε το "sync" να ερθει ως αποτελεσμα του swarm να κανει converge, 
-					οχι να γινει enforced.
+			- το sync στο PSO ενδεχεται να ειναι αντιφατικο, καθως στο PSO περιμενουμε το "sync" να ερθει ως αποτελεσμα του swarm να κανει converge, οχι να γινει enforced.
 				- Για να γινει αυτο τα particles κανουν maintain το δικο τους position, δεν κανουν sync
 		
 		Limit communication στο local_weights_topic pipeline:
-			- οταν η current κατασταση του particle θα αποτελεσει μια σημαντικη αλλαγη στο FedAvg / Global Model, μονο τοτε στειλε 
 			- Federated Learning component of your project, averaging (FedAvg) and καθε ποσο κανω track το position
 				- μεχρι τωρα, καθε 60 updates. Θα πρεπει να αλλαξει αυτο, να κρινεται απο το ποσο εχει κανει diverge
 				- Measure of distance με προηγουμενη κατασταση (αμα εχει αλλαξει significantly ή κατασταση)
@@ -86,13 +84,7 @@
 ## =======================================================================================
 
 	Backlog Tasks:
-	
-	1) ? GUI for:
-		- enviroment variables configuration 		
-		- monitoring training progress
-		- inference
-		- Finding a third party library GUI for defining a neural model architecture ?
-	
+
 	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
 		- Improve code on Apache Kafka + Tensorflow:
 		- Use / Learn about Parallelization (Threading / Instances):
@@ -107,18 +99,15 @@
 	
 	19) velocity initialiazation (magnitude)
 
-	21) Implement neighbourhood topologies more efficiently:
+	21) Implement neighborhood topologies more efficiently:
 		=> Problem: With current protocols, if there are N Workers, there are N neighborhoods
 		=> Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
+
 	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
 
 	11) Add buffer as a statestore (on worker who is accumulating samples)
 
 	17) X_G state store - the global current position
-
-	20) Find non IID datasets - Partitioning of Non IID data if possible (this depends on the dataset):
-		- Up to now just Round Robin
-		- Otherwise you need to do it with keyed Records
 
 	21) Use Vector class not float[] => important for calculations
 
@@ -132,15 +121,11 @@
 		- Δες parameter server (independent learning με merging των μοντελλων afterwards) => δεδομενα ειναι λιγοτερα για καθε worker
 		- Basically πρεπει να κανεις το federated learning στην python με gradient descent
 
-	42) Partition wizard stuff για να δωσεις περισσοτερο χωρο στο Ubuntu
-
-	46) Fix nonexistent error logging. Set Index to wrong (HEAD_LAYER_IDX = 9)
-
 	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
 
 	51) Get ONXX - Pytorch - Cifar - 32 x 32 x 3 models
 
-	52) End-to-end propagation delay (what you probably want)
+	52) End-to-end propagation delay
 	
 ## =====================================================================================================
 
