@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.Map;
 import utils.*;
 import state.*;
+import experimentation.*;
 import message.data_message.*; 
 import message.weights_message.*; 
 
@@ -59,9 +60,11 @@ public class Worker implements Runnable {
     private WorkerStatic ws;
     private CustomLogger logger;
 
+    private final MetricsCollector collector; 
+
     // =====================================================================================================
 
-    public Worker(int workerId) {
+    public Worker(int workerId, MetricsCollector collector) {
 
         this.workerId = workerId;
 
@@ -76,6 +79,7 @@ public class Worker implements Runnable {
         this.control = CoordinatorControl.getInstance();
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
+        this.collector = collector;
     }
 
     // =====================================================================================================

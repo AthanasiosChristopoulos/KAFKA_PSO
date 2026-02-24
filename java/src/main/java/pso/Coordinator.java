@@ -36,10 +36,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import utils.*; 
 import state.*;
+import experimentation.*;
 import transformers.*;
 import message.data_message.*; 
 import message.weights_message.*; 
-import transformers.*;
 
 public class Coordinator implements Runnable {
 
@@ -80,9 +80,11 @@ public class Coordinator implements Runnable {
 
     private int start;
 
+    private final MetricsCollector collector; 
+
     // ====================================================================================================================================
 
-    public Coordinator() {
+    public Coordinator(MetricsCollector collector) {
 
         this.logger = CustomLogger.getInstanceForCoordinator();
 
@@ -108,6 +110,8 @@ public class Coordinator implements Runnable {
 
         System.out.println("Running on Dataset: " + DATASET + ", TEST_TOPIC: " + TEST_TOPIC);
         System.out.println("Coordinator topics: PRED_IN=" + PREDICTION_INPUT_TOPIC + ", PRED_OUT=" + PREDICTION_OUTPUT_TOPIC);
+
+        this.collector = collector;
     }
 
     // ====================================================================================================================================

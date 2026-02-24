@@ -176,6 +176,7 @@
 		- Future Work
 
 ## ================================================================================================
+
  - Generall Plan for now (5-43:36):
 	- 5 Datasets:
 		- iris (winequality - has 6500 samples)

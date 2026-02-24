@@ -24,7 +24,7 @@ public class Config {
     public final String PREDICTION_INPUT_TOPIC;
     public final String PREDICTION_OUTPUT_TOPIC;
 
-    public final int N_WORKERS;
+    public int N_WORKERS;
     public final int BATCH_SIZE;
     public final int TEST_BATCH_SIZE;
     public final int TEST_SIZE;

@@ -129,7 +129,7 @@ public class Simulation {
         System.out.println("ND4J ops: " + Nd4j.getExecutioner().getClass().getName());
         System.out.println("Data type: " + Nd4j.dataType());
 
-        Coordinator coordinator = new Coordinator();
+        Coordinator coordinator = new Coordinator(null);
         Thread coordinatorThread = new Thread(coordinator, "coordinator");  // the coordinator starts first and then the workers
         coordinatorThread.start();
 
@@ -141,7 +141,7 @@ public class Simulation {
                                         // 1GB of allocations for Buffers
                                         
         for (int i = 0; i < numWorkers; i++) {
-            Worker worker = new Worker(i);
+            Worker worker = new Worker(i, null);
             Thread workerThread = new Thread(worker, "worker-thread-" + i);
             workerThread.start();
             workerThreads.add(workerThread);

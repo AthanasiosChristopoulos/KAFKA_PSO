@@ -136,6 +136,12 @@ The architecture is build to support two types of PSO:
     - classical PSO / best-of-neighboorhood 
     - fully informed PSO (FIPS)
 
+## Project Implementation Details: ===================================================================
+    
+    - Java (Maven Project)
+    - Kafka / Kafka Streams
+    - DL4J 
+
 ## Partitioning: ==============================================================================
 
 N_WORKERS < N_PARTITIONS is not a problem, because if N_PARTITIONS = 40, then:
