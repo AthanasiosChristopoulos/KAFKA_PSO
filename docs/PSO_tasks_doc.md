@@ -55,7 +55,8 @@
 				- model / method parameters as possible
 				- measurement methods (error definitions) 
 			
-		- Measure / Diagrams of:
+		- Measure / Diagrams of (For these kinds of experiments set a paradigm where the samish correct solution is found => need data and convergence criteria):
+
 			- x: training samples / epochs / updatesX 	| y: loss / accuracy / F1 score	
 				- based on data you need to adjust parameters every time (find an automatic function for that)
 			- x: N_WORKERS 								| y: accuracy / time
@@ -74,12 +75,39 @@
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
 
+			- Με απλα Datasets:
+				- Sweet spot of N_WORKERS (να σταματησει να αυξανει το accuracy significantly, τοτε δεν εχει νοημα η αυξηση του N_WORKERS, καθως αυξανουμε την επικοινωνια):
+					- Fixed Threshold
+					- x: N_WORKERS / y: accuracy vs communication(Number of messages)  
+				
+				- Threshold Sensitivity (Also Sweet Spot of threshold): 
+					- Fixed N_WORKERS
+					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
+					- x: threshold T (decreasing) | y: accuracy (hopefully increasing)
+					- x: threshold T (decreasing) | y: communication (hopefully increasing)
+					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
+						- Strict: Hard to pass the filter, LESS communication
+						- Loose: Easy to pass the filter, MORE communication
+
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
 		- Θα πρεπει να βρεις additional Layers + Non Differentiable Loss Functions, ωστε:
 			- το base model να μην δουλευει καλα
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
+
+	56) Δοκιμασε MobileV3Small
+
+	57) Try harder on the pretrained model:
+		- Remove more Layers
+		- Semi train, rather than fully train
+		- Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
+		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
+		=> το να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
+
+	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
+
+	
 
 ## =======================================================================================
 
@@ -162,3 +190,17 @@
 
 ## ================================================================================================
 ## Email:
+
+Πρόσβαση στον server για διπλωματική εργασία
+
+Προς: parapi@tuc.gr
+, ngiatrakos@tuc.gr
+
+Καλησπέρα σας,
+
+Ονομάζομαι Αθανάσιος Χριστόπουλος (ΑΜ: 2022030077) και είμαι φοιτητής του ΗΜΜΥ. Στο πλαίσιο της διπλωματικής μου εργασίας, με επιβλέποντα καθηγητή τον κ. Γιατράκο, θα χρειαστώ πρόσβαση στον server, καθώς το project που υλοποιώ απαιτεί αυξημένους υπολογιστικούς πόρους (κυρίως GPU και μνήμη).
+
+Εφόσον είναι εφικτό να μου δοθεί πρόσβαση, θα ήθελα επίσης να ενημερωθώ για τυχόν κανόνες σχετικά με τη χρήση του server. Για παράδειγμα, φοβαμαι οτι θα χρειαστώ σημαντικό χώρο αποθήκευσης (κατά προσέγγιση ~30 GB, δεν ξερω αμα ειναι προβλημα ή οχι).
+
+Ευχαριστω πολυ,
+Αθανάσιος Χριστόπουλος

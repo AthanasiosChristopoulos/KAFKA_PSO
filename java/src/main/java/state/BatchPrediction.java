@@ -1,8 +1,6 @@
 
 package state;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -43,8 +41,6 @@ public class BatchPrediction {
     private static final String COMBINE_LOSS = cfg.COMBINE_LOSS;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
     public final boolean MEMORY_EFFICIENT = cfg.MEMORY_EFFICIENT;
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final PsoModel model;
     private final PsoModel bestModel;
@@ -694,28 +690,28 @@ public class BatchPrediction {
         
     // ===========================================================================
 
-    public String predictSingleBest(DataMessage msg) {
-        if (msg == null || msg.features == null || msg.features.length != NUM_FEATURES) {
-            return null;
-        }
+    // public String predictSingleBest(DataMessage msg) {
+    //     if (msg == null || msg.features == null || msg.features.length != NUM_FEATURES) {
+    //         return null;
+    //     }
 
-        try {
-            INDArray X = Nd4j.create(msg.features).reshape(1, NUM_FEATURES);
-            INDArray probs = bestModel.output(X, false);
-            int pred = probs.argMax(1).getInt(0);
+    //     try {
+    //         INDArray X = Nd4j.create(msg.features).reshape(1, NUM_FEATURES);
+    //         INDArray probs = bestModel.output(X, false);
+    //         int pred = probs.argMax(1).getInt(0);
 
-            Map<String, Object> out = new HashMap<>();
-            out.put("sample_index", msg.sampleIndex);
-            out.put("prediction", pred);
+    //         Map<String, Object> out = new HashMap<>();
+    //         out.put("sample_index", msg.sampleIndex);
+    //         out.put("prediction", pred);
 
-            return MAPPER.writeValueAsString(out);
+    //         return MAPPER.writeValueAsString(out);
 
-        } catch (Exception e) {
-            if (logger.isEnabled(2)) logger.log("Error in predictSingle: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
+    //     } catch (Exception e) {
+    //         if (logger.isEnabled(2)) logger.log("Error in predictSingle: " + e.getMessage());
+    //         e.printStackTrace();
+    //         return null;
+    //     }
+    // }
 }
 
 

@@ -16,9 +16,7 @@
 						
 		- Σωστα εκανα τα non differential functions ? Το λεω γιατι ειναι εκτος της ιδια της συναρτησης δεν επιρεαζουν directly την loss συναρτηση
 		
-		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own models and then leave last layer only for training ? This layer would then be "fine-tured" to work with a "non differentiable" loss function or i can get models from the internet that are more specific to our problem (same dimensionality 
-			=> same dataset trained on). Is there a preference between these options ? 
-			
+		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own models and then leave last layer only for training ? This layer would then be "fine-tured" to work with a "non differentiable" loss function or i can get models from the internet that are more specific to our problem (same dimensionality same dataset trained on). Is there a preference between these options ? 
 			Is it ok if:
 				=> Many epochs
 				=> Long Time (because of forward pass)
@@ -34,7 +32,7 @@
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
 			- Comparison with Gradient Descent ?
-			- GUI / .env as User Interface ?
+			- GUI / .e					- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?	- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?nv as User Interface ?
 			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?
 			
 		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη

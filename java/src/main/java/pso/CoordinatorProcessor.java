@@ -5,7 +5,6 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.nd4j.common.primitives.Pair;
 import org.nd4j.linalg.api.memory.MemoryWorkspace;
 import org.nd4j.linalg.factory.Nd4j;
@@ -13,8 +12,6 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;

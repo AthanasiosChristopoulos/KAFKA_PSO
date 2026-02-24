@@ -303,16 +303,15 @@ public class Coordinator implements Runnable {
                 TEST_STORE, this.preTrainedModel, this.start));
 
         // Inference Task ==================================================================================================
-        
-        KStream<String, DataMessage> predictionStream = builder.stream(
-            PREDICTION_INPUT_TOPIC,
-            Consumed.with(Serdes.String(), dataSerde)
-        );
+        // KStream<String, DataMessage> predictionStream = builder.stream(
+        //     PREDICTION_INPUT_TOPIC,
+        //     Consumed.with(Serdes.String(), dataSerde)
+        // );
 
-        predictionStream
-            .mapValues(dm -> predictor.predictSingleBest(dm))
-            .filter((k, v) -> v != null)
-            .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+        // predictionStream
+        //     .mapValues(dm -> predictor.predictSingleBest(dm))
+        //     .filter((k, v) -> v != null)
+        //     .to(PREDICTION_OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
         return builder.build();
     }
