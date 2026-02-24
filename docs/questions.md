@@ -16,9 +16,17 @@
 						
 		- Σωστα εκανα τα non differential functions ? Το λεω γιατι ειναι εκτος της ιδια της συναρτησης δεν επιρεαζουν directly την loss συναρτηση
 		
-		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own mdels and then leave last 
-			layer to be trained "non differentiably" or i can get models rom the internet that are more specific to our problem (same dimensionality 
+		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own models and then leave last layer only for training ? This layer would then be "fine-tured" to work with a "non differentiable" loss function or i can get models from the internet that are more specific to our problem (same dimensionality 
 			=> same dataset trained on). Is there a preference between these options ? 
+			
+			Is it ok if:
+				=> Many epochs
+				=> Long Time (because of forward pass)
+				=> My pretrained model on the same dataset removing only last layer maybe more
+					=> or a lightweight model of the same size, but of a different / more generall dataset
+				=> Probably need to run it on the server
+
+		- Memory consumption idea ?
 
 		- Μπορω να αρχισω να γραφω ?
 		

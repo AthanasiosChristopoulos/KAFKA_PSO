@@ -122,8 +122,8 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
-				// pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
+				// pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
+				pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
 
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
@@ -629,6 +629,7 @@ public class Dl4jModelFactory {
 		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.setFeatureExtractor(7)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(500)
 						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
@@ -675,6 +676,7 @@ public class Dl4jModelFactory {
 		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
+				.setFeatureExtractor(4)
 				.addLayer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 					.name("maxpool2")
 					.kernelSize(2, 2)

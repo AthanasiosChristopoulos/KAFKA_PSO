@@ -884,6 +884,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // This is the actual emission downstream from the Transformer
         ws.pBestForwardedCount++;
         ws.incrementTotalMessagesSent();
+        
         context.forward(keyName, msg);
 
         if (logger.isEnabled(1)) {

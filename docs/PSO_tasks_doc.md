@@ -113,8 +113,6 @@
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
-	((37) Dynamic Enviroments / Dynamic PSO (there is a specific paper for this)))
-
 	41) Συγκριση η τελικη θα γινει με κατανεμημενο περιβαλλον στο training του gradient descent:
 		- οχι centralized, αλλα gradient descent. 
 		- Δηλαδη θελουμε να συγκρινουμε PSO vs gradient descent σε distributed περιβαλλον
