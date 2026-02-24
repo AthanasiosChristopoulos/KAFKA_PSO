@@ -9,20 +9,23 @@ public final class ExperimentResult {
     private final CoordinatorMetrics coordinator;
     private final List<WorkerMetrics> workers;
 
-    public ExperimentResult(int nWorkers,
-                            double totalElapsedSec,
-                            CoordinatorMetrics coordinator,
-                            List<WorkerMetrics> workers) {
+    // ===============================================================================
+
+    public ExperimentResult(int nWorkers, double totalElapsedSec, CoordinatorMetrics coordinator, List<WorkerMetrics> workers) {
         this.nWorkers = nWorkers;
         this.totalElapsedSec = totalElapsedSec;
         this.coordinator = coordinator;
         this.workers = workers == null ? Collections.emptyList() : Collections.unmodifiableList(workers);
     }
 
+    // ===============================================================================
+
     public int getNWorkers() { return nWorkers; }
     public double getTotalElapsedSec() { return totalElapsedSec; }
     public CoordinatorMetrics getCoordinator() { return coordinator; }
     public List<WorkerMetrics> getWorkers() { return workers; }
+
+    // ===============================================================================
 
     public double lastWorkerElapsedSec() {
         double max = Double.NaN;
@@ -33,6 +36,26 @@ public final class ExperimentResult {
         }
         return max;
     }
+
+    // ===============================================================================
+
+    public long maxMessagesSent() {
+        return workers.stream()
+                .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT)
+                .max()
+                .orElse(0L);
+    }
+
+    // ===============================================================================
+
+    public long maxBytesSent() {
+        return workers.stream()
+                .mapToLong(WorkerMetrics::getTOTAL_BYTES_SENT)
+                .max()
+                .orElse(0L);
+    }
+
+    // ===============================================================================
 
     @Override
     public String toString() {

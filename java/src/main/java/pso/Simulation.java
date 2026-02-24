@@ -38,7 +38,25 @@ import java.util.Arrays;
 
 public class Simulation {
 
+    private static String bootstrap = "localhost:9092";
+    private static final Config cfg = Config.getInstance();
+
     public static void main(String[] args) throws Exception {
+
+        // =================================================================================================
+        // Restart the Kafka Parititions
+        
+        List<String> topics;
+        if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+            topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+        } else {
+            topics = List.of(cfg.GLOBAL_WEIGHTS_TOPIC);
+        }
+
+        KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+        // =================================================================================================
+
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             System.err.println("DEFAULT uncaught in " + t.getName());
             e.printStackTrace();

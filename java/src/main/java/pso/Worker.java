@@ -261,7 +261,7 @@ public class Worker implements Runnable {
         float bestLoss = ws.stats.getPBestLoss();      // you need to expose this (see below)
 
         if (collector != null) {
-            collector.reportWorkerDone(new WorkerMetrics(workerId, seconds, bestAcc, bestLoss));
+            collector.reportWorkerDone(new WorkerMetrics(workerId, seconds, bestAcc, bestLoss, ws.TOTAL_MESSAGES_SENT, ws.TOTAL_BYTES_SENT));
         }
     }
 
@@ -364,11 +364,8 @@ public class Worker implements Runnable {
         t.start();
     }
 
-    /**
-     * Best-effort selector for the GlobalKTable consumer metrics.
-     * Kafka Streams usually includes "client-id" in tags, and global thread client-ids often contain "global".
-     * Depending on Kafka version it may be "GlobalStreamThread", "global", or similar.
-     */
+    // ====================================================================================
+
     private static boolean isGlobalTableConsumer(MetricName mn) {
         Map<String, String> tags = mn.tags();
         if (tags == null) return false;
@@ -386,7 +383,8 @@ public class Worker implements Runnable {
         return false;
     }
 
-    // ---------- helpers ----------
+    // ====================================================================================
+
     private static String fmt(double v) {
         if (Double.isNaN(v)) return "NaN";
         return String.format(java.util.Locale.ROOT, "%.3f", v);
@@ -426,6 +424,8 @@ public class Worker implements Runnable {
             }
         }
     }
+
+    // ====================================================================================
 
     private void startBatchingProofLogger(KafkaStreams streams) {
         final Map<MetricName, ? extends Metric> metrics = streams.metrics();
@@ -494,6 +494,8 @@ public class Worker implements Runnable {
         t.start();
     }
 
+    // ====================================================================================
+
     private void dumpProducerMetricNamesOnce(KafkaStreams streams) {
         Set<String> names = new HashSet<>();
         for (MetricName mn : streams.metrics().keySet()) {
@@ -504,6 +506,7 @@ public class Worker implements Runnable {
         System.out.println("[Worker " + workerId + "] producer-metrics available: " + names);
         logger.log("[Worker " + workerId + "] producer-metrics available: " + names);
     }
+
     // private void startMetricsLogger(KafkaStreams streams) {
     //     final Map<MetricName, ? extends Metric> metrics = streams.metrics();
 

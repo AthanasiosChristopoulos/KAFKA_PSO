@@ -9,64 +9,70 @@ cd ./java
 # export CUDNN_LOGDEST_DBG=stdout
 # ==============================================================
 
-delete=2
 set -a           # auto-export all variables
 source .env
 set +a
 
-if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there is an command line argument to the script run_streams, 
-                                                                    # and it isnt debug or reset, then its N_WORKERS. Override this variable from .env with the argument  
-    export N_WORKERS="$1"
-fi
+mvn -q -e -DskipTests \
+-Dexec.mainClass=pso.Simulation \
+-Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
+-Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
+-Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
+ compile exec:java
 
-if [[ -n "$1" ]]; then
-    echo "$1"
-fi
+# if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there is an command line argument to the script run_streams, 
+#                                                                     # and it isnt debug or reset, then its N_WORKERS. Override this variable from .env with the argument  
+#     export N_WORKERS="$1"
+# fi
 
-if [[ "$1" != "--debug" ]]; then
+# if [[ -n "$1" ]]; then
+#     echo "$1"
+# fi
 
-    BROKER="broker"
-    BOOTSTRAP="localhost:9092"
+# if [[ "$1" != "--debug" ]]; then
 
-    if [[ "$FULLY_INFORMED" == "true" || "$ENABLE_NEIGHBORHOODS" == "true" ]]; then
-        TOPICS=(
-            "$PBEST_WEIGHTS_TOPIC"
-        )
+#     BROKER="broker"
+#     BOOTSTRAP="localhost:9092"
 
-    elif [[ "$1" == "--reset" ]]; then
+#     if [[ "$FULLY_INFORMED" == "true" || "$ENABLE_NEIGHBORHOODS" == "true" ]]; then
+#         TOPICS=(
+#             "$PBEST_WEIGHTS_TOPIC"
+#         )
+
+#     elif [[ "$1" == "--reset" ]]; then
         
-        TOPICS=(
-            "$PBEST_WEIGHTS_TOPIC"
-            "$GLOBAL_WEIGHTS_TOPIC"
-            "$LOCAL_WEIGHTS_TOPIC"
-        )
+#         TOPICS=(
+#             "$PBEST_WEIGHTS_TOPIC"
+#             "$GLOBAL_WEIGHTS_TOPIC"
+#             "$LOCAL_WEIGHTS_TOPIC"
+#         )
 
-    else
-        TOPICS=(
-            "$GLOBAL_WEIGHTS_TOPIC"
-        )
-    fi
+#     else
+#         TOPICS=(
+#             "$GLOBAL_WEIGHTS_TOPIC"
+#         )
+#     fi
 
 
-    for topic in "${TOPICS[@]}"; do
-        docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
-            --bootstrap-server "$BOOTSTRAP" \
-            --delete --topic "$topic"
-    done
+#     for topic in "${TOPICS[@]}"; do
+#         docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+#             --bootstrap-server "$BOOTSTRAP" \
+#             --delete --topic "$topic"
+#     done
 
-    for topic in "${TOPICS[@]}"; do
-        docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
-            --bootstrap-server "$BOOTSTRAP" \
-            --create --topic "$topic" \
-            --partitions 1 --if-not-exists  # this 1 could be N_WORKERS so this would work with 
-                                            # the exact partitions (1 partition per worker)
-    done
+#     for topic in "${TOPICS[@]}"; do
+#         docker exec -it "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+#             --bootstrap-server "$BOOTSTRAP" \
+#             --create --topic "$topic" \
+#             --partitions 1 --if-not-exists  # this 1 could be N_WORKERS so this would work with 
+#                                             # the exact partitions (1 partition per worker)
+#     done
 
-    echo Executing ...
+#     echo Executing ...
 
-fi
+# fi
 
-export RUN_ID="$(date +%Y%m%d_%H%M%S)"
+# export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 
 # Memory Limiters =====================================================
 # export MAVEN_OPTS="\
@@ -100,14 +106,6 @@ export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 # -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
 # -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
 # -P$ND4J_PROFILE compile exec:java
-
-
-mvn -q -e -DskipTests \
--Dexec.mainClass=pso.Simulation \
--Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
--Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
--Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
- compile exec:java
 
 # =====================================================================================
 

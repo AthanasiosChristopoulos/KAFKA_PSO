@@ -221,8 +221,10 @@ public class Coordinator implements Runnable {
 
                 float bestAcc = (float) control.getBestGlobalModelAccuracy();     // or getBestTrainingAccuracy if you prefer
                 float bestLoss = Float.NaN; // if you don't track it yet
-
-                collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, bestAcc, bestLoss));
+                
+                if(collector != null) {
+                    collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, bestAcc, bestLoss));
+                }
 
                 System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()
                      + ", Test Accuracy:" + control.getBestGlobalModelAccuracy());

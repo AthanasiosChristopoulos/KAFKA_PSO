@@ -11,9 +11,11 @@ public class CoordinatorControl {
     private static int N_WORKERS = cfg.N_WORKERS;
     private static int count = N_WORKERS;
     private static float bestGlobalModelAccuracy = -1f;
+    private static float bestGlobalModelLoss= 10000f;
+
     private static float bestTrainingAccuracy = -1f;
 
-    private static final CoordinatorControl instance = new CoordinatorControl();
+	private static final CoordinatorControl instance = new CoordinatorControl();
 
     private AtomicBoolean[] workerStopRequested = new AtomicBoolean[N_WORKERS];
     private AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
@@ -62,6 +64,8 @@ public class CoordinatorControl {
         return instance;
     }
 
+    // =================================================================================================
+
     public static float getBestGlobalModelAccuracy() {
         return bestGlobalModelAccuracy;
     }
@@ -70,7 +74,19 @@ public class CoordinatorControl {
         CoordinatorControl.bestGlobalModelAccuracy = bestGlobalModelAccuracy;
     }
 
-    public static float getBestTrainingAccuracy() {
+    // =================================================================================================
+
+    public static float getBestGlobalModelLoss() {
+		return bestGlobalModelLoss;
+	}
+
+    public static void setBestGlobalModelLoss(float bestGlobalModelLoss) {
+		CoordinatorControl.bestGlobalModelLoss = bestGlobalModelLoss;
+	}
+
+    // =================================================================================================
+
+	public static float getBestTrainingAccuracy() {
         return bestTrainingAccuracy;
     }
 
@@ -79,6 +95,7 @@ public class CoordinatorControl {
     }
 
     // =================================================================================================
+
     public synchronized void resetForNewRun(int nWorkers) {
         stopRequestedFinal.set(false);
         bestGlobalModelAccuracy = -1f;

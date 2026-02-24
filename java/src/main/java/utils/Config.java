@@ -337,6 +337,8 @@ public class Config {
     public static Config getInstance() {
         return instance;
     }
+    
+    // ==================================================================================================================================
 
     public void refreshRunId() {
         this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
