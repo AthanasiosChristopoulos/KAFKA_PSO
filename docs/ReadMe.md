@@ -1001,6 +1001,7 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
 
     A)
      - Just do a * 4 on N_BATCHES (this happens in config)
+     - OR just increase the monitoring / sampling rate as the swarm converges to identify the best solution (because at the start, as the swarm isnt converged, the accueracy / model performance is as good as random since the particles are far away and their average is wherever)
 
     B) Filter based on:
 
