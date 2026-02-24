@@ -327,7 +327,7 @@ public class Config {
         
         this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000"));
         if(DATASET.contains("cifar") || DATASET.contains("mnist")) {
-            this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 60;
+            this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 10;
         }
 
     } 

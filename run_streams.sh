@@ -2,7 +2,7 @@
 
 cd ./java
 # mvn -q -DskipTests clean  
-mvn -q -P$ND4J_PROFILE clean compile
+# mvn -q -P$ND4J_PROFILE clean compile
 
 # Verify that cuDNN is being used ==============================
 # export CUDNN_LOGINFO_DBG=1
@@ -94,12 +94,21 @@ export RUN_ID="$(date +%Y%m%d_%H%M%S)"
 # mvn -q -e -DskipTests -Dexec.mainClass=pso.Simulation compile exec:java  
 
 # Verify that all the cuda stuff went fine ============================================
+# mvn -q -e -DskipTests \
+# -Dexec.mainClass=pso.Simulation \
+# -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
+# -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
+# -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
+# -P$ND4J_PROFILE compile exec:java
+
+
 mvn -q -e -DskipTests \
 -Dexec.mainClass=pso.Simulation \
 -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
 -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
 -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
--P$ND4J_PROFILE compile exec:java
+ compile exec:java
+
 # =====================================================================================
 
 # mvn -DskipTests -Dexec.mainClass=pso.Simulation -P$ND4J_PROFILE compile exec:java  

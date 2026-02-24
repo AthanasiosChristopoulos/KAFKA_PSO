@@ -204,3 +204,7 @@
 
 Ευχαριστω πολυ,
 Αθανάσιος Χριστόπουλος
+
+uname -m 
+nvidia-smi
+ldconfig -p | grep libcudart

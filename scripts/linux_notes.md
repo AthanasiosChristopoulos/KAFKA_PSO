@@ -37,6 +37,8 @@
 	- https://askubuntu.com/questions/967364/ubuntu-17-10-and-later-cant-change-the-input-switching-shortcut-to-altshift
 	- Disable menu bar focus in Vscode
 
+ - uname -m // gives you system version
+
 # Vscode: =============================================================================================
 
  - Extensions:

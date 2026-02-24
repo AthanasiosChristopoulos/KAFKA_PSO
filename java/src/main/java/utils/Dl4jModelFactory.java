@@ -122,8 +122,8 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				// pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
-				pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
+				pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
+				// pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
 
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
