@@ -39,7 +39,7 @@ public class Config {
     public final float C;
     public final float C1;
     public final float C2;
-    public final String RUN_ID;
+    public String RUN_ID;
 
     public final boolean FULLY_INFORMED;
     public final boolean DEBUG_KAFKA;
@@ -336,6 +336,10 @@ public class Config {
     
     public static Config getInstance() {
         return instance;
+    }
+
+    public void refreshRunId() {
+        this.RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
     }
 
     private static String getenv(Dotenv dotenv, String key, String def) {

@@ -28,9 +28,12 @@ public class MetricsCollector {
     }
 
     public ExperimentResult buildResult(int nWorkers, double totalElapsedSec) {
+
         List<WorkerMetrics> list = workerMetrics.values().stream()
                 .sorted(Comparator.comparingInt(WorkerMetrics::getWorkerId))
                 .toList();
+        
         return new ExperimentResult(nWorkers, totalElapsedSec, coordinatorMetrics, list);
+
     }
 }

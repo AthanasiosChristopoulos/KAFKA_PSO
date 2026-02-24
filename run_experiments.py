@@ -111,6 +111,7 @@ def run_once(n_workers, log_path):
         f"coordinator elapsed time: {coordinator_time_sec} - "
         f"last worker elapsed time: {last_worker_time_sec}\n"
     )
+    
     print(result_line, end="")
 
     with log_path.open("a", encoding="utf-8") as f:

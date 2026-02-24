@@ -79,5 +79,17 @@ public class CoordinatorControl {
     }
 
     // =================================================================================================
+    public synchronized void resetForNewRun() {
+        this.stopFinal = false;
+        // if you have per-worker stop flags, clear them too
+        // e.g. stopRequestedWorkers.clear();
+
+        // also reset best metrics if you reuse the same singleton
+        this.bestTrainingAccuracy = 0.0;
+        this.bestGlobalModelAccuracy = 0.0;
+        // reset any other cached state you have
+    }
+
+        // =================================================================================================
 
 }

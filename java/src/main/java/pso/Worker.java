@@ -257,7 +257,12 @@ public class Worker implements Runnable {
 
         double seconds = (t1.get() - t0) / 1_000_000_000.0;     // t1 is updated at WorkerTransformer every time a new buffer has been processed
         System.out.printf("[Worker %d] Elapsed time: %.3f seconds, exiting run()%n", workerId, seconds);
+        float bestAcc = ws.stats.getBestAccuracy();   // you need to expose this (see below)
+        float bestLoss = ws.stats.getPBestLoss();      // you need to expose this (see below)
 
+        if (collector != null) {
+            collector.reportWorkerDone(new WorkerMetrics(workerId, seconds, bestAcc, bestLoss));
+        }
     }
 
     //====================================================================================================================
