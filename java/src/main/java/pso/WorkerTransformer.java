@@ -403,9 +403,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset ws.batchesRead
         
         updateMonitoringThreshold(ws.countForwardPasses);
+        boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
 
-        if (out == null && (ws.batchesRead >= monitoring_threshold && FILTER_ENABLED) &&
-                (ws.batchesRead >= N_BATCHES && !FILTER_ENABLED) ) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
+        if (out == null && shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
                 ", Sending current weights ...");
