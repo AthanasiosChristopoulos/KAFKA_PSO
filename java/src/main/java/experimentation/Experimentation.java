@@ -80,7 +80,9 @@ public class Experimentation {
                         Duration.ofSeconds(30),
                         Duration.ofSeconds(30)
                 );
+
                 // System.exit(0);
+
                 // =================================================================================================
 
                 Config cfg = Config.getInstance();
@@ -91,8 +93,8 @@ public class Experimentation {
                 double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
 
                 w.write(String.format(
-                        "%.3f,%.3f,%.3f,%.6f,%.6f\n",
-                        //r.getWorkers(),
+                        "%d,%.3f,%.3f,%.3f,%.6f,%.6f\n",
+                        n,
                         r.getTotalElapsedSec(),
                         coordElapsed,
                         r.lastWorkerElapsedSec(),
