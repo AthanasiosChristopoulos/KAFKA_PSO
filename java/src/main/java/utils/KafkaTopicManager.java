@@ -231,6 +231,31 @@ public final class KafkaTopicManager {
         return new CreateReport(topics, false,
                 "Timed out waiting for creation. Missing: " + missing);
     }
+    
+    public static DeleteReport deleteTopicsConfirmed(
+            String bootstrapServers,
+            List<String> topics,
+            Duration timeout
+    ) throws Exception {
+        Objects.requireNonNull(topics, "topics");
+        if (topics.isEmpty()) {
+            return new DeleteReport(List.of(), List.of(), true, "No topics requested.");
+        }
+        try (AdminClient admin = admin(bootstrapServers)) {
+            DeleteReport del = deleteTopicsConfirmed(admin, topics, timeout);
+            System.out.println("[KafkaTopicManager] Delete report: " + del);
+            return del;
+        }
+    }
+
+    // Convenience: delete ONE topic
+    public static DeleteReport deleteTopicConfirmed(
+            String bootstrapServers,
+            String topic,
+            Duration timeout
+    ) throws Exception {
+        return deleteTopicsConfirmed(bootstrapServers, List.of(topic), timeout);
+    }
 
     // ------------------------------------------------------------------------------------
     // Simple report objects (records) for logging and debugging

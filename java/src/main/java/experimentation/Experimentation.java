@@ -15,8 +15,22 @@ import java.time.Duration;
 public class Experimentation {
 
     private static final Config cfg = Config.getInstance();
+    private static String bootstrap = "localhost:9092";
 
     public static void main(String[] args) throws Exception {
+
+
+        // var del = KafkaTopicManager.deleteTopicConfirmed(
+        //         bootstrap,
+        //         "pbest-weights-topic",
+        //         Duration.ofSeconds(30)
+        // );
+
+        // if (!del.success()) {
+        //     throw new RuntimeException("Topic deletion failed: " + del.message());
+
+        // }
+        // System.exit(0);
 
         List<Integer> workersList = List.of(2, 4, 6);
         Path resultsDir = createUniqueResultsDir("experimental_results_v1");
@@ -32,8 +46,15 @@ public class Experimentation {
 
             for (int n : workersList) {
 
-                cfg.refreshRunId();
+                KafkaTopicManager.deleteTopicConfirmed(
+                        bootstrap,
+                        "pbest-weights-topic",
+                        Duration.ofSeconds(30)
+                );
 
+            
+                cfg.refreshRunId();
+                CoordinatorControl.getInstance().resetForNewRun(n);
                 System.out.println("===============================================================================================");
                 System.out.println("N_WORKERS: " + n);
                 System.out.println("New RUN_ID: " + cfg.RUN_ID);
@@ -59,6 +80,7 @@ public class Experimentation {
                         Duration.ofSeconds(30),
                         Duration.ofSeconds(30)
                 );
+                // System.exit(0);
                 // =================================================================================================
 
                 Config cfg = Config.getInstance();
@@ -81,6 +103,7 @@ public class Experimentation {
                 System.out.println("===============================================================================================");
                 System.out.println("End of experiment with N_WORKERS: " + n);
                 System.out.println("===============================================================================================");
+
             }
         }
     }

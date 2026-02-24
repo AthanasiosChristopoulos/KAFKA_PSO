@@ -8,15 +8,15 @@ import utils.*;
 public class CoordinatorControl {
 
     private static final Config cfg = Config.getInstance();
-    private static final int N_WORKERS = cfg.N_WORKERS;
+    private static int N_WORKERS = cfg.N_WORKERS;
     private static int count = N_WORKERS;
     private static float bestGlobalModelAccuracy = -1f;
     private static float bestTrainingAccuracy = -1f;
 
     private static final CoordinatorControl instance = new CoordinatorControl();
 
-    private final AtomicBoolean[] workerStopRequested = new AtomicBoolean[N_WORKERS];
-    private final AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
+    private AtomicBoolean[] workerStopRequested = new AtomicBoolean[N_WORKERS];
+    private AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
 
     // =================================================================================================
 
@@ -79,17 +79,18 @@ public class CoordinatorControl {
     }
 
     // =================================================================================================
-    public synchronized void resetForNewRun() {
-        this.stopFinal = false;
-        // if you have per-worker stop flags, clear them too
-        // e.g. stopRequestedWorkers.clear();
+    public synchronized void resetForNewRun(int nWorkers) {
+        stopRequestedFinal.set(false);
+        bestGlobalModelAccuracy = -1f;
+        bestTrainingAccuracy = -1f;
+        count = nWorkers;
 
-        // also reset best metrics if you reuse the same singleton
-        this.bestTrainingAccuracy = 0.0;
-        this.bestGlobalModelAccuracy = 0.0;
-        // reset any other cached state you have
+        // rebuild the array
+        workerStopRequested = new AtomicBoolean[nWorkers];
+        for (int i = 0; i < nWorkers; i++) workerStopRequested[i] = new AtomicBoolean(false);
+
+        this.N_WORKERS = nWorkers; // but this requires N_WORKERS not final/static
     }
-
         // =================================================================================================
 
 }
