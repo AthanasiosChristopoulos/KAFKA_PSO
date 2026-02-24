@@ -165,8 +165,8 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			String choose_model;
-			choose_model = "mobileNet";
-			// choose_model = "v1_v4";
+			// choose_model = "mobileNet";
+			choose_model = "v1_v4";
 
 			if(choose_model.equals("v1_v4")) {
 				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";

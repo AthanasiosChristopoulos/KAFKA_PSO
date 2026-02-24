@@ -103,6 +103,8 @@ public class Config {
     public final String REGULARIZER;
     public final float LAMBDA_VALUE; 
 
+    public long IDLE_MS; 
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -321,6 +323,11 @@ public class Config {
 
         } else {
             this.LAMBDA_VALUE = 0;
+        }
+        
+        this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000"));
+        if(DATASET.contains("cifar") || DATASET.contains("mnist")) {
+            this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 60;
         }
 
     } 

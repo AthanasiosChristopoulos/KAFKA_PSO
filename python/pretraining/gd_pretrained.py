@@ -175,24 +175,16 @@ if(DATASET == "CIFAR"):
     test_ds = test_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
     test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-    # Optional: sanity check one batch
     for images, labels in train_ds.take(1):
         print("Batch images:", images.shape, images.dtype, "range:", (tf.reduce_min(images).numpy(), tf.reduce_max(images).numpy()))
         print("Batch labels:", labels.shape, labels.dtype)
 
-    # -----------------------------
-    # Step 3: Load MobileNetV2 base (no top)
-    # -----------------------------
     base_model = tf.keras.applications.MobileNetV2(
         weights="imagenet",
         include_top=False,
         input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
     )
-    base_model.trainable = False  # frozen feature extractor. You can do this because you reshaped / preprocess_input the input
-
-    # -----------------------------
-    # Step 4: Build model head + compile
-    # -----------------------------
+    base_model.trainable = False  
     model = models.Sequential([
         base_model,
         layers.GlobalAveragePooling2D(),
@@ -209,9 +201,6 @@ if(DATASET == "CIFAR"):
 
     model.summary()
 
-    # -----------------------------
-    # Step 5: Train
-    # -----------------------------
     early_stop = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
     history = model.fit(
@@ -222,9 +211,6 @@ if(DATASET == "CIFAR"):
         verbose=2
     )
 
-    # -----------------------------
-    # Step 6: Evaluate
-    # -----------------------------
     loss, acc = model.evaluate(test_ds, verbose=0)
     print(f"Test Accuracy: {acc:.4f}")
     print(f"Test Loss:     {loss:.4f}")
@@ -234,35 +220,23 @@ if(DATASET == "CIFAR"):
 
 elif(DATASET == "MNIST"):
 
-    # ------------------------------------------------------------
-    # 1) Load MNIST
-    # ------------------------------------------------------------
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
-    # x: (N, 28, 28) uint8 -> float32
     x_train = tf.cast(x_train, tf.float32)
     x_test  = tf.cast(x_test,  tf.float32)
-
-    # Add channel dim: (N, 28, 28, 1)
     x_train = tf.expand_dims(x_train, axis=-1)
     x_test  = tf.expand_dims(x_test,  axis=-1)
 
-    # Resize to 32x32 (so it matches your CIFAR setup)
     x_train = tf.image.resize(x_train, (32, 32))
     x_test  = tf.image.resize(x_test,  (32, 32))
 
-    # Convert grayscale -> RGB by repeating channels: (N, 32, 32, 3)
     x_train = tf.image.grayscale_to_rgb(x_train)
     x_test  = tf.image.grayscale_to_rgb(x_test)
 
-    # MobileNetV2 preprocessing
     preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
     x_train = preprocess(x_train)
     x_test  = preprocess(x_test)
 
-    # ------------------------------------------------------------
-    # 2) Build frozen MobileNetV2 base (feature extractor)
-    # ------------------------------------------------------------
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(32, 32, 3),
         include_top=False,
@@ -270,9 +244,6 @@ elif(DATASET == "MNIST"):
     )
     base_model.trainable = False
 
-    # ------------------------------------------------------------
-    # 3) Add pooling + dense head (simple)
-    # ------------------------------------------------------------
     inputs = layers.Input(shape=(32, 32, 3))
     x = base_model(inputs, training=False)  # keep BN in inference mode
     x = layers.GlobalAveragePooling2D()(x)
@@ -280,9 +251,6 @@ elif(DATASET == "MNIST"):
 
     model = models.Model(inputs, outputs)
 
-    # ------------------------------------------------------------
-    # 4) Train only the head
-    # ------------------------------------------------------------
     model.compile(
         optimizer=tf.keras.optimizers.Adam(1e-3),
         loss="sparse_categorical_crossentropy",

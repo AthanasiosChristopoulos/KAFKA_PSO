@@ -94,7 +94,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long lastOffset = 0;
     private double eps = 1e-12;
 
-    private static final long IDLE_MS = 3000; 
+    private static final long IDLE_MS = cfg.IDLE_MS; 
     private static final long CHECK_EVERY_MS = 100; // how often we check
     private static final long IDLE_GRACE_MS = 5000;
 
@@ -884,7 +884,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // This is the actual emission downstream from the Transformer
         ws.pBestForwardedCount++;
         ws.incrementTotalMessagesSent();
-        
+
         context.forward(keyName, msg);
 
         if (logger.isEnabled(1)) {

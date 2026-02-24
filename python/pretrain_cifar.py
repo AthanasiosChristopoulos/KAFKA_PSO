@@ -207,8 +207,6 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
         # 8x8
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
-
-        # No Flatten!
         layers.GlobalAveragePooling2D(),  # -> (128,)
 
         layers.Dense(num_classes, activation="softmax", use_bias=True),
