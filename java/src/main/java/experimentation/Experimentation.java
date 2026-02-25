@@ -18,11 +18,10 @@ public class Experimentation {
     private static String bootstrap = "localhost:9092";
     private static final float THRESH_CENTER = 0.055f;
     private static final float MIN_FLOOR = 0.001f;
-    private static final float MAX_CEIL  = 0.20f;
         
     public static void main(String[] args) throws Exception {
 
-        if(cfg.EXPERIMENTATION.equals("N_WORKERS")) {
+        if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
             List<Integer> workersList = List.of(2, 4, 6);
             // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
             Path dir = Path.of("experimental_results_v1");
@@ -41,8 +40,8 @@ public class Experimentation {
 
                     cfg.refreshRunId();
                     cfg.N_WORKERS = n;
-
                     CoordinatorControl.getInstance().resetForNewRun(n);
+
                     System.out.println("===============================================================================================");
                     System.out.println("N_WORKERS: " + n);
                     System.out.println("New RUN_ID: " + cfg.RUN_ID);
@@ -90,9 +89,9 @@ public class Experimentation {
         // ===========================================================================================================================================
         // ===========================================================================================================================================
 
-        } else if(cfg.EXPERIMENTATION.equals("THRESHOLD")){
+        } else if(cfg.EXPERIMENTATION_MODE.equals("THRESHOLD")){
                          
-            List<Float> diffList = List.of(0.04f, 0.06f, 0.08f, 0.09f, 0.10f, 0.12f);
+            List<Float> theshold_offset_list = List.of(0.01f, 0.02f, 0.03f);
 
             // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
             Path dir = Path.of("experimental_results_v2");
@@ -107,27 +106,15 @@ public class Experimentation {
             )) {
                 w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF\n");
 
-                for (float theshold_diff : diffList) {
-
-                    // Derive min/max from diff around a fixed center
-                    float min = THRESH_CENTER - theshold_diff / 2.0f;
-                    float max = THRESH_CENTER + theshold_diff / 2.0f;
-
-                    // Clamp
-                    if (min < MIN_FLOOR) min = MIN_FLOOR;
-                    if (max > MAX_CEIL)  max = MAX_CEIL;
-
-                    // Ensure ordering (in case diff too small or clamping breaks it)
-                    if (max <= min) {
-                        max = Math.min(MAX_CEIL, min + 0.001f);
-                    }
+                for (float theshold_offset : theshold_offset_list) {
 
                     cfg.refreshRunId();
-                    cfg.LOSS_THRESHOLD_MIN = min;
-                    cfg.LOSS_THRESHOLD_MAX = max;
+                    cfg.LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN + theshold_offset;
+                    cfg.LOSS_THRESHOLD_MAX = cfg.LOSS_THRESHOLD_MAX + theshold_offset;
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
-                    System.out.println("LOSS_THRESHOLD_MIN=" + min + ", LOSS_THRESHOLD_MAX=" + max + ", DIFF=" + (max - min));
+                    System.out.println("LOSS_THRESHOLD_MIN=" + cfg.LOSS_THRESHOLD_MIN + ", LOSS_THRESHOLD_MAX=" + cfg.LOSS_THRESHOLD_MAX + ", DIFF=" + theshold_offset);
                     System.out.println("New RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 
@@ -159,12 +146,12 @@ public class Experimentation {
                             r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
                             r.maxMessagesSent(),
                             r.maxBytesSent(),
-                            theshold_diff
+                            theshold_offset
                     ));
 
                     w.flush();
                     System.out.println("===============================================================================================");
-                    System.out.println("End of experiment with theshold_diff: " + theshold_diff);
+                    System.out.println("End of experiment with theshold_diff: " + theshold_offset);
                     System.out.println("===============================================================================================");
 
                 }   

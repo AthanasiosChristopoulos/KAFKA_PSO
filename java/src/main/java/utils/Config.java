@@ -105,7 +105,7 @@ public class Config {
 
     public long IDLE_MS; 
 
-    public final String EXPERIMENTATION;
+    public final String EXPERIMENTATION_MODE;
 
     public Config() {
         
@@ -332,7 +332,7 @@ public class Config {
             this.IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 10;
         }
 
-        this.EXPERIMENTATION = getenv(dotenv, "EXPERIMENTATION", "N_WORKERS");
+        this.EXPERIMENTATION_MODE = getenv(dotenv, "EXPERIMENTATION_MODE", "N_WORKERS");
     } 
 
     // ==================================================================================================================================

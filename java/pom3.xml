@@ -13,49 +13,8 @@
     <maven.compiler.target>17</maven.compiler.target>
 
     <dl4j.version>1.0.0-M2.1</dl4j.version>
-
-    <!-- default backend = CPU -->
-    <nd4j.backend>nd4j-native-platform</nd4j.backend>
-    <bytedeco.cuda.version>11.6-8.3-1.5.7</bytedeco.cuda.version>
   </properties>
 
-  <!-- ========================================================= -->
-  <!-- PROFILES -->
-  <!-- ========================================================= -->
-  <profiles>
-
-    <!-- ================= CPU (default) ================= -->
-    <profile>
-      <id>cpu</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <nd4j.backend>nd4j-native-platform</nd4j.backend>
-      </properties>
-    </profile>
-
-    <!-- ================= GPU ================= -->
-    <profile>
-      <id>gpu</id>
-      <properties>
-        <nd4j.backend>nd4j-cuda-11.6-platform</nd4j.backend>
-      </properties>
-      <dependencies>
-        <!-- EXACTLY your current GPU dependency -->
-        <dependency>
-          <groupId>org.nd4j</groupId>
-          <artifactId>nd4j-cuda-11.6-platform</artifactId>
-          <version>${dl4j.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
-
-  </profiles>
-
-  <!-- ========================================================= -->
-  <!-- COMMON DEPENDENCIES -->
-  <!-- ========================================================= -->
   <dependencies>
 
     <!-- Kafka Streams -->
@@ -70,7 +29,7 @@
       <artifactId>slf4j-simple</artifactId>
       <version>1.7.36</version>
     </dependency>
-
+    
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
@@ -96,20 +55,15 @@
       <version>${dl4j.version}</version>
     </dependency>
 
-    <!-- ND4J backend (CPU default, overridden by gpu profile property) -->
+    <!-- GPU backend -->
     <dependency>
       <groupId>org.nd4j</groupId>
-      <artifactId>${nd4j.backend}</artifactId>
+      <artifactId>nd4j-cuda-11.6-platform</artifactId>
       <version>${dl4j.version}</version>
     </dependency>
 
-    <dependency>
-        <groupId>org.bytedeco</groupId>
-        <artifactId>cuda-platform-redist</artifactId>
-        <version>${bytedeco.cuda.version}</version>
-    </dependency>
-
     <!-- utils -->
+
     <dependency>
       <groupId>io.github.cdimascio</groupId>
       <artifactId>java-dotenv</artifactId>
