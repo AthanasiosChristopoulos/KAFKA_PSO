@@ -1269,41 +1269,32 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
  - https://www.quora.com/Is-particle-swarm-optimization-an-appropriate-way-to-train-a-deep-convolutional-neural-network-for-image-recognition
  - https://spotintelligence.com/2025/10/20/particle-swarm-optimization-pso/
 
-
-
 ## Transfer Learning: ==============================================================
 
-Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
- - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
-
- - Tier 1: MobileNetV3Large, EfficientNetB1, ResNet50 (or ResNet50V2)
-
- - Tier 2: ResNet101, InceptionV3, Xception, DenseNet121
-
- - Tier 3: heavy 
-    - DenseNet169 / DenseNet201, EfficientNetB2 / B3, InceptionResNetV2
-
- - Tier 4: don’t run on a laptop
-    - VGG16 / VGG19 (huge activations + tons of parameters; also slow)
-    - EfficientNetB4–B7, NASNetLarge, ResNet152
-
- - For DL4J:
- LeNet → SimpleCNN → TextGenerationLSTM → FaceNetNN4Small2 → Darknet19 → TinyYOLO → AlexNet → VGG16 → VGG19 → ResNet50 → InceptionResNetV1
- 
  - Use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
  - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)
+ - When the target dataset is significantly smaller than the base dataset, transfer learning can be a powerful tool to enable training a large target network without overfitting (raw training would cause overfitting). Its not easy for everyone to train a large network on a large dataset.
 
  - Generall Theory over new model choice:
     1) Αμα ειναι να μαθει καινουργια patterns μονο τοτε θα του βαλεις αλλα Layers απο αυτα που ειχε originally:
-    - Lower additive layers = match general features (dont change the behavior)
+    - Generall: Lower additive layers = match general features (dont change the behavior)
         - same domain
          => early layers learn generic features (edges, blobs) 
-         => this means that per dataset those are th same 
-    - Higher additive layers = match task-specific features (change the behavior of the model)
+         => this means that even on different datasets (per different training objective) those are the same 
+
+    - Specific: Higher additive layers = match task-specific features (change the behavior of the model)
         => deeper layers learn task-specific high-level features
         => BUT higher-level features still improve performance when transferred, especially if we are talking about 
     - So the more of the original head you keep, the more you assume: “this new classification task is very similar to the original one”
     - CNN layers progressively build hierarchical representations of the image (with each level having higher meaning for the class)
 
+    - There is a transition from Generall to Specific happening throughout the neural network
+
     2) Make conv layers as good as computationally possible + keep conv layers as they are (as feature extractors)
         => generally increasing the complexity of the convolutional layer, makes them a much better **feature extractor**
+ 
+    3) Freezing / Unfreezing - Fine Tuning:
+        => fine-tune them to the new task (leave them to take part in the backpropagation)
+        => Fine Tuning means dont change the initial size too much
+        vs
+        => leave them frozen 

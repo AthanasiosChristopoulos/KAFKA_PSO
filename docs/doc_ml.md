@@ -161,12 +161,27 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
     - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
         => those features arent perfectly separable, need more complex classification layers
 
+Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
+ - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
+
+ - Tier 1: MobileNetV3Large, EfficientNetB1, ResNet50 (or ResNet50V2)
+
+ - Tier 2: ResNet101, InceptionV3, Xception, DenseNet121
+
+ - Tier 3: heavy 
+    - DenseNet169 / DenseNet201, EfficientNetB2 / B3, InceptionResNetV2
+
+ - Tier 4: don’t run on a laptop
+    - VGG16 / VGG19 (huge activations + tons of parameters; also slow)
+    - EfficientNetB4–B7, NASNetLarge, ResNet152
+
+ - For DL4J:
+ LeNet → SimpleCNN → TextGenerationLSTM → FaceNetNN4Small2 → Darknet19 → TinyYOLO → AlexNet → VGG16 → VGG19 → ResNet50 → InceptionResNetV1
+ 
  - Comparing MobileNetV2 and MobileNetV3Small:
     - use compare_forward_pass_ms.py 
     - They get about the same time
     - Also they have about the same number of layers
-
-
 
 
 
