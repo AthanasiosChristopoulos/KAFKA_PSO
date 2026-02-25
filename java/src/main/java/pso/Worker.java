@@ -61,7 +61,8 @@ public class Worker implements Runnable {
     private CustomLogger logger;
 
     private final MetricsCollector collector; 
-
+    private boolean KAFKA_METRICS_ENABLED = false;
+    
     // =====================================================================================================
 
     public Worker(int workerId, MetricsCollector collector) {
@@ -224,7 +225,9 @@ public class Worker implements Runnable {
         }));
 
         streams.start();
-        startMetricsLogger(streams); 
+        if(KAFKA_METRICS_ENABLED) {
+            startMetricsLogger(streams);
+        } 
         // dumpProducerMetricNamesOnce(streams);
         // startBatchingProofLogger(streams);
         
@@ -340,7 +343,7 @@ public class Worker implements Runnable {
                         }
                     }
                 }
-    
+                
                 logger.log(
                     "[metrics-filter-relevant]" + "\n" + 
                     "producers: " +

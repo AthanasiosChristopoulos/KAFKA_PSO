@@ -119,7 +119,7 @@ public class Dl4jModelFactory {
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v5.h5";
-				default -> throw new IllegalArgumentException("Unknown version: " + version);
+				default -> filename = "no_pretrained_file_chosen";
 			}
 			
 			if (preTrained) {

@@ -1297,9 +1297,12 @@ Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
     1) Αμα ειναι να μαθει καινουργια patterns μονο τοτε θα του βαλεις αλλα Layers απο αυτα που ειχε originally:
     - Lower additive layers = match general features (dont change the behavior)
         - same domain
+         => early layers learn generic features (edges, blobs)
     - Higher additive layers = match task-specific features (change the behavior of the model)
-    - So the more of the original head you keep, the more you assume:
-    “this new task is very similar to the original one”
-    
+        => deeper layers learn task-specific high-level features
+        => BUT higher-level features still improve performance when transferred, especially if we are talking about 
+    - So the more of the original head you keep, the more you assume: “this new classification task is very similar to the original one”
+    - CNN layers progressively build hierarchical representations of the image (with each level having higher meaning for the class)
+
     2) Make conv layers as good as computationally possible + keep conv layers as they are (as feature extractors)
         => generally increasing the complexity of the convolutional layer, makes them a much better **feature extractor**
