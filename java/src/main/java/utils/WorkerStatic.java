@@ -67,7 +67,8 @@ public final class WorkerStatic {
         
         this.workerId = workerId;
         this.logger = CustomLogger.getWorkerInstance(workerId);
-
+        this.TOTAL_MESSAGES_SENT = 0;
+        this.TOTAL_BYTES_SENT = 0;
         // this.model = Dl4jModelFactory.createModel(workerId, false);
         Pair<PsoModel, Integer> pair = Dl4jModelFactory.createModel(workerId, false);
 

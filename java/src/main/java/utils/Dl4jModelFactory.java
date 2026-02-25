@@ -80,10 +80,10 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("pendigits")) {
 			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-			model = createPendigitsModelTanh(workerId);
+			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
 			// model = createPendigitsModelSmaller_2(workerId);
-			// model = createPendigitsModelSmaller_3(workerId);
+			model = createPendigitsModelSmaller_3(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			model = createWineQualityModel(workerId);

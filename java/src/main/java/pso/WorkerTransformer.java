@@ -422,7 +422,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // =========================================================================================================
         // Logging and Time
-
+        logger.log("TOTAL_MESSAGES_SENT: " + ws.TOTAL_MESSAGES_SENT);
+        
         updateTime();   // is updated  every time a new buffer has been processed. Need this for tracking lastActivity and overall activity time
         
         if (logger.isEnabled(0)) logger.log(taskInstance + 
