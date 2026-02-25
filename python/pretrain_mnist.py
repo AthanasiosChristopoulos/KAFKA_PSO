@@ -225,15 +225,48 @@ def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
+
+def build_mnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+
+        layers.GlobalAveragePooling2D(),                          # -> (50,)
+
+        layers.Dense(64, activation="relu", use_bias=True),
+        layers.Dense(32, activation="relu", use_bias=True),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True)
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
 # Train + Export
 
-def train_and_export(out_dir="pretrained_model", epochs=4, batch_size=128):
-    version = "v4"
+def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
+
+    version = "v5"
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
         "v2": ("mnist_base_plus_head_v2", build_mnist_base_plus_head_v2),
         "v3": ("mnist_base_plus_head_v3", build_mnist_base_plus_head_v3),
         "v4": ("mnist_base_plus_head_v4", build_mnist_base_plus_head_v4),
+        "v5": ("mnist_base_plus_head_v5", build_mnist_base_plus_head_v5),
     }
     
     filename, mnist_model_function = model_registry[version]
@@ -242,10 +275,11 @@ def train_and_export(out_dir="pretrained_model", epochs=4, batch_size=128):
         x_train, y_train, x_test, y_test = load_fashion_mnist()
         model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
         name_h5_file = f"fmnist_base_plus_head"
+
     else: 
         x_train, y_train, x_test, y_test = load_mnist()
         # model = build_mnist_base_plus_head_v3(input_shape=x_train.shape[1:], num_classes=10)
-        model = build_mnist_base_plus_head_v4(input_shape=x_train.shape[1:], num_classes=10)
+        model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
         name_h5_file = filename
 
 
@@ -272,16 +306,6 @@ def train_and_export(out_dir="pretrained_model", epochs=4, batch_size=128):
     h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
     model.save(h5_path)
     print("Saved Keras H5:", h5_path)
-
-    # # 2) Also save SavedModel (sometimes useful)
-    # sm_path = os.path.join(out_dir, "saved_model")
-    # model.save(sm_path, save_format="tf")
-    # print("Saved SavedModel:", sm_path)
-
-    # # 3) Also save weights only (optional)
-    # w_path = os.path.join(out_dir, "weights_only.h5")
-    # model.save_weights(w_path)
-    # print("Saved weights-only:", w_path)
 
     return model, history
 

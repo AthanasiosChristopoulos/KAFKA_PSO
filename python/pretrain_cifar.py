@@ -230,36 +230,6 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
     # Total​=896+9,248+18,496+36,928+73,856+147,584+1,290=288,298​​
     
 # ===============================================================================
-# Train + Export
-
-# def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
-#     x_train, y_train, x_test, y_test = load_cifar10()
-
-#     callbacks = [
-#         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
-#         keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
-#     ]
-
-#     history = model.fit(
-#         x_train, y_train,
-#         validation_split=0.1,
-#         epochs=epochs,
-#         batch_size=batch_size,
-#         verbose=2,
-#         callbacks=callbacks
-#     )
-
-#     test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
-#     print(f"CIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
-
-#     os.makedirs(out_dir, exist_ok=True)
-
-#     # Save H5 for DL4J import
-#     h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
-#     model.save(h5_path)
-#     print("Saved Keras H5:", h5_path)
-
-#     return model, history
 
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=5000):
     

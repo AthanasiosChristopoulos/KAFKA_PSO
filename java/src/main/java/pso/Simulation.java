@@ -71,10 +71,6 @@ public class Simulation {
 
         // Test: =====================================================================
 
-        // String fileName = "pretrained_models_dl4j/mobilenetv3small_32x32.h5";
-        // String fileName = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-        // String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v1.h5";
-        String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v3.h5";
 
         MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst().asMultiLayerNetwork();
 

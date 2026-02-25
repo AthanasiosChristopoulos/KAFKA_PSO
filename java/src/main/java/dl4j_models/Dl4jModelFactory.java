@@ -110,18 +110,7 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; 
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";	
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";	
-			int version = 4;
-
-			// if(preTrained) {
-			// 	// 1)
-			// 	// model = pretrainedModelLeNet(); 
-			// 	// 2) 
-			// 	model = pretrainedModelMNIST(filename); 	
-
+			int version = 5;
 
 			String filename;
 			switch (version) {
@@ -129,13 +118,14 @@ public class Dl4jModelFactory {
 				case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
+				case 5 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v5.h5";
 				default -> throw new IllegalArgumentException("Unknown version: " + version);
 			}
 			
 			if (preTrained) {
 				switch (version) {
 					case -2, -1, 0 -> model = pretrainedModelLeNet();
-					case 1, 2, 3, 4 -> model = pretrainedModelMNIST(filename);
+					case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			} else {
@@ -148,6 +138,7 @@ public class Dl4jModelFactory {
 					case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
 					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);
 					case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
+					case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			}
@@ -643,6 +634,59 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				// .setFeatureExtractor(2)
+				.addLayer(new DenseLayer.Builder()
+					.nIn(inputDim)            // IMPORTANT
+					.nOut(64)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+				.addLayer(new DenseLayer.Builder()
+					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nOut(32)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(32)
+						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
+														// this depends on the methodology used to define activation layers. They can be embedded or
+														// be external (right afterwards) to dense layers
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
+						.build())
+				.build();
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+
+	}
+
+	// ======================================================================================================================
+
+	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v5(int workerId, String filename, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(3)	// its 2 because for some reason the activation layers counts as well
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.setFeatureExtractor(5)
 				.addLayer(new DenseLayer.Builder()
 					.nIn(inputDim)            // IMPORTANT
 					.nOut(64)

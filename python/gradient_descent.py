@@ -645,7 +645,7 @@ def run_mnist():
             monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5
         ),
     ]
-    save_all_trainable_as_flat_txt(model, "pre_model_weights_flat.txt")
+    # save_all_trainable_as_flat_txt(model, "pre_model_weights_flat.txt")
 
     history = model.fit(X_train,y_train,validation_split=0.1,epochs=5,
                         batch_size=128,verbose=2,callbacks=callbacks)
@@ -655,7 +655,7 @@ def run_mnist():
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
 
-    save_all_trainable_as_flat_txt(model)
+    # save_all_trainable_as_flat_txt(model)
 
 # ======================================================================
 # MNIST4 DATASET (use only classes 0..3 => classes in total, drop the others)

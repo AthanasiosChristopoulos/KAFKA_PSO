@@ -1273,40 +1273,24 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 
 ## Transfer Learning: ==============================================================
 
-Ranked from simplest to heaviest:
- - Tier 0:
-    LesNet
-    MobileNetV3Small
-    MobileNetV2
-    EfficientNetB0
-    NASNetMobile
+Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
+ - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
 
- - Tier 1:
-    MobileNetV3Large
-    EfficientNetB1
-    ResNet50 (or ResNet50V2)
+ - Tier 1: MobileNetV3Large, EfficientNetB1, ResNet50 (or ResNet50V2)
 
- - Tier 2:
-    ResNet101
-    InceptionV3
-    Xception
-    DenseNet121
+ - Tier 2: ResNet101, InceptionV3, Xception, DenseNet121
 
  - Tier 3: heavy 
-    - DenseNet169 / DenseNet201
-    - EfficientNetB2 / B3
-    - InceptionResNetV2
+    - DenseNet169 / DenseNet201, EfficientNetB2 / B3, InceptionResNetV2
 
- - Tier 4: don’t run on a laptop” 
+ - Tier 4: don’t run on a laptop
     - VGG16 / VGG19 (huge activations + tons of parameters; also slow)
-    - EfficientNetB4–B7
-    - NASNetLarge
-    - ResNet152
+    - EfficientNetB4–B7, NASNetLarge, ResNet152
 
  - For DL4J:
  LeNet → SimpleCNN → TextGenerationLSTM → FaceNetNN4Small2 → Darknet19 → TinyYOLO → AlexNet → VGG16 → VGG19 → ResNet50 → InceptionResNetV1
  
- - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
+ - Use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
  - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)
 
  - Generall Theory over new model choice:
@@ -1317,4 +1301,5 @@ Ranked from simplest to heaviest:
     - So the more of the original head you keep, the more you assume:
     “this new task is very similar to the original one”
     
-    2) keep conv layers as they are (as feature extractors)
+    2) Make conv layers as good as computationally possible + keep conv layers as they are (as feature extractors)
+        => generally increasing the complexity of the convolutional layer, makes them a much better **feature extractor**
