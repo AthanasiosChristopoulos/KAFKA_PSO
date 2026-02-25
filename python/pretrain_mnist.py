@@ -15,28 +15,28 @@ DATASET="mnist"
 def load_fashion_mnist():
     (x_train, y_train), (x_test, y_test) = keras.datasets.fashion_mnist.load_data()
 
-    # Normalize to [0,1]
     x_train = (x_train.astype("float32") / 255.0)
     x_test  = (x_test.astype("float32") / 255.0)
 
-    # shapes: (N, 28, 28)
     return x_train, y_train, x_test, y_test
 
+# ===============================================================================
+
 def load_mnist():
+
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-    # Normalize to [0,1]
     x_train = (x_train.astype("float32") / 255.0)
     x_test  = (x_test.astype("float32") / 255.0)
 
-    # shapes: (N, 28, 28)
     return x_train, y_train, x_test, y_test
 
 
 # ===============================================================================
 # Model
 
-def build_fmnist_base_plus_head(input_shape=(28, 28), num_classes=10):
+def build_fmnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
@@ -69,40 +69,75 @@ def build_fmnist_base_plus_head(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
-# def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
-#     model = keras.Sequential([
-#         layers.Input(shape=input_shape),
-#         layers.Reshape((28, 28, 1)),
+def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
-#         # Base CNN (feature extractor)
-#         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
-#         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
 
-#         layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
-#         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+        # Base CNN (feature extractor)
+        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
-#         layers.Flatten(),
+        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
-#         # Optional base representation layer
-#         # layers.Dense(64, activation="relu", use_bias=True),
+        layers.Flatten(),
 
-#         # Head for Fashion-MNIST pretraining
-#         layers.Dense(num_classes, activation="softmax", use_bias=True),
-#     ])
+        # Optional base representation layer
+        layers.Dense(64, activation="relu", use_bias=True),
 
-#     model.compile(
-#         optimizer=keras.optimizers.Adam(1e-3),
-#         loss="sparse_categorical_crossentropy",
-#         metrics=["accuracy"],
-#     )
+        # Head for Fashion-MNIST pretraining
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
 
-#     model.summary()
-#     print("Trainable params:", model.count_params())
-#     return model
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
 
 # ===============================================================================
 
-def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
+def build_mnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Base CNN (feature extractor)
+        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Flatten(),
+
+        # Optional base representation layer
+        # layers.Dense(64, activation="relu", use_bias=True),
+
+        # Head for Fashion-MNIST pretraining
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
+def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
 
     # model = keras.Sequential([
     #     layers.Input(shape=input_shape),
@@ -146,21 +181,72 @@ def build_mnist_base_plus_head(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
+
+def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # -----------------------
+        # Feature extractor (CNN)
+        # Target: end at (4, 4, 50)
+        # -----------------------
+        layers.Conv2D(20, (5, 5), padding="valid", activation="relu", use_bias=True),  # 28 -> 24
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),       # 24 -> 12
+
+        layers.Conv2D(50, (5, 5), padding="valid", activation="relu", use_bias=True),  # 12 -> 8
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),        # 8 -> 4
+
+        # At this point: (4, 4, 50)  <-- IMPORTANT: channels=50
+        # No flatten.
+
+        # -----------------------
+        # Pretraining head (simple)
+        # You will throw this away in DL4J and attach:
+        # GAP -> Dense(64) -> Dense(32) -> Output
+        # -----------------------
+        layers.GlobalAveragePooling2D(),                          # -> (50,)
+
+        # NOTE: these should NOT be softmax in hidden layers; use relu.
+        layers.Dense(64, activation="relu", use_bias=True),
+        layers.Dense(32, activation="relu", use_bias=True),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True)
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
 # Train + Export
 
-def train_and_export(
-    out_dir="pretrained_model",
-    epochs=4,
-    batch_size=128
-):
+def train_and_export(out_dir="pretrained_model", epochs=4, batch_size=128):
+    version = "v4"
+    model_registry = {
+        "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
+        "v2": ("mnist_base_plus_head_v2", build_mnist_base_plus_head_v2),
+        "v3": ("mnist_base_plus_head_v3", build_mnist_base_plus_head_v3),
+        "v4": ("mnist_base_plus_head_v4", build_mnist_base_plus_head_v4),
+    }
+    
+    filename, mnist_model_function = model_registry[version]
+
     if(DATASET == "fashion_mnist"):
         x_train, y_train, x_test, y_test = load_fashion_mnist()
-        model = build_fmnist_base_plus_head(input_shape=x_train.shape[1:], num_classes=10)
+        model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
         name_h5_file = f"fmnist_base_plus_head"
     else: 
         x_train, y_train, x_test, y_test = load_mnist()
-        model = build_mnist_base_plus_head(input_shape=x_train.shape[1:], num_classes=10)
-        name_h5_file = f"mnist_base_plus_head_v2"
+        # model = build_mnist_base_plus_head_v3(input_shape=x_train.shape[1:], num_classes=10)
+        model = build_mnist_base_plus_head_v4(input_shape=x_train.shape[1:], num_classes=10)
+        name_h5_file = filename
 
 
     callbacks = [

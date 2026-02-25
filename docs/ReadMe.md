@@ -1271,7 +1271,7 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 
 
 
-## Transfer Learning ==============================================================
+## Transfer Learning: ==============================================================
 
 Ranked from simplest to heaviest:
  - Tier 0:
@@ -1309,4 +1309,12 @@ Ranked from simplest to heaviest:
  - use GlobalAveragePooling2D() instead of Flatten + Dense. Flatten costs a lot ...
  - MobileNetV2/V3 typically require at least ~32×32 (often more depending on implementation). 28×28 can fail or give junky shapes. This is because of the DownSample Layers (MaxPooling)
 
-
+ - Generall Theory over new model choice:
+    1) Αμα ειναι να μαθει καινουργια patterns μονο τοτε θα του βαλεις αλλα Layers απο αυτα που ειχε originally:
+    - Lower additive layers = match general features (dont change the behavior)
+        - same domain
+    - Higher additive layers = match task-specific features (change the behavior of the model)
+    - So the more of the original head you keep, the more you assume:
+    “this new task is very similar to the original one”
+    
+    2) keep conv layers as they are (as feature extractors)

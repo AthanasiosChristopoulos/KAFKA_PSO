@@ -83,8 +83,8 @@
 				- Threshold Sensitivity (Also Sweet Spot of threshold): 
 					- Fixed N_WORKERS
 					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
-					- x: threshold T (decreasing) | y: accuracy (hopefully increasing)
-					- x: threshold T (decreasing) | y: communication (hopefully increasing)
+					- x: threshold T (increasing) | y: accuracy (hopefully decreasing)
+					- x: threshold T (increasing) | y: communication (hopefully decreasing)
 					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
@@ -96,8 +96,6 @@
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
 
-	56) Δοκιμασε MobileV3Small
-
 	57) Try harder on the pretrained model:
 		- Remove more Layers
 		- Semi train, rather than fully train
@@ -106,8 +104,6 @@
 		=> το να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
 	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
-
-	
 
 ## =======================================================================================
 

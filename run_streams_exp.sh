@@ -12,4 +12,4 @@ mvn -q -e -DskipTests \
 -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
 -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
 -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
- compile exec:java
+ -P$ND4J_PROFILE compile exec:java

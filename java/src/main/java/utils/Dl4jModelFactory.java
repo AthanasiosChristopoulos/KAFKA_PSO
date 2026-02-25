@@ -107,9 +107,10 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 			// head_layer_idx = 8;	// LeNet
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5"; head_layer_idx = 3;
-			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; head_layer_idx = 4;
-			String filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";	
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head.h5";
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5"; 
+			// String filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";	
+			String filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";	
 
 			if(preTrained) {
 				// 1)
@@ -122,8 +123,9 @@ public class Dl4jModelFactory {
 
 			} else {
 				// 1)
-				pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
+				// pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
 				// pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
+				// pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
 				// 2) 
 				// model = createMNIST_CNN_Pretrained_MNIST(workerId, "fmnist_base_plus_head.h5"); 
@@ -132,8 +134,9 @@ public class Dl4jModelFactory {
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 
 				// model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
-
-			}
+				// 4)
+				model = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 
+			}	
 
 		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// model = createMNISTModelMLP(workerId);
@@ -580,6 +583,53 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
+	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v4(int workerId) {
+
+		// Pretrained Model ===========================================================
+		ZooModel zoo = LeNet.builder().numClasses(10).build();
+
+		MultiLayerNetwork base;
+		try {
+			base = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+		}
+		
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(2)	// its 2 because for some reason the activation layers counts as well
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.setFeatureExtractor(7)
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(500)
+						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
+														// this depends on the methodology used to define activation layers. They can be embedded or
+														// be external (right afterwards) to dense layers
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model), start);
+	}
+
+	// ======================================================================================================================
+
 	public static PsoModel pretrainedModelLeNet() {	// has MNIST weights / was trained on mnist
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
@@ -694,6 +744,72 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
+		return Pair.of(new PsoMultiLayerAdapter(model), start);
+	}
+
+// ======================================================================================================================
+	
+	public static Pair<PsoModel, Integer> createMNIST_CNN_PretrainedLeNet_v3(int workerId) {
+
+		// Pretrained Model ===========================================================
+		ZooModel zoo = LeNet.builder().numClasses(10).build();
+
+		MultiLayerNetwork base;
+		try {
+			base = (MultiLayerNetwork) zoo.initPretrained(PretrainedType.MNIST);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Failed to load pretrained LeNet MNIST", e);
+		}
+		
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(5)	// its 2 because for some reason the activation layers counts as well
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.setFeatureExtractor(4)
+				.addLayer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+					.name("maxpool2")
+					.kernelSize(2, 2)
+					.stride(2, 2)
+					.build())
+				.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG).build())  // -> (N, 50)
+				.addLayer(new DenseLayer.Builder()
+					.nIn(50)            // IMPORTANT
+					.nOut(64)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+
+				.addLayer(new DenseLayer.Builder()
+					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nOut(32)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+					.nIn(32)            // also explicit
+					.nOut(NUM_CLASSES)
+					.activation(Activation.SOFTMAX)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+					.build();
 		return Pair.of(new PsoMultiLayerAdapter(model), start);
 	}
 

@@ -18,7 +18,7 @@ mvn -q -e -DskipTests \
 -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
 -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
 -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
- compile exec:java
+ -P$ND4J_PROFILE compile exec:java
 
 # if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there is an command line argument to the script run_streams, 
 #                                                                     # and it isnt debug or reset, then its N_WORKERS. Override this variable from .env with the argument  
