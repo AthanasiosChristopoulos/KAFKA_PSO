@@ -9,6 +9,9 @@ import org.nd4j.common.primitives.Pair;
 import org.nd4j.linalg.api.memory.MemoryWorkspace;
 import org.nd4j.linalg.factory.Nd4j;
 
+import dl4j_models.Dl4jParamUtils;
+import dl4j_models.PsoModel;
+
 import java.io.File;
 import java.io.IOException;
 

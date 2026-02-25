@@ -4,6 +4,8 @@ import java.util.concurrent.Semaphore;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
+import dl4j_models.PsoModel;
+
 public class GpuGate {
     // One GPU: only one forward pass at a time.
     // If you want up to 2 concurrent passes, set permits=2.

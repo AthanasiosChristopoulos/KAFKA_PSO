@@ -1,4 +1,4 @@
-package utils;
+package dl4j_models;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import java.util.Map;

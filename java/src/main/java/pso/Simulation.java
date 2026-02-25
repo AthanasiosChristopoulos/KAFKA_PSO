@@ -15,6 +15,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import dl4j_models.Dl4jModelFactory;
+
 import org.deeplearning4j.nn.weights.WeightInit;
 
 import org.deeplearning4j.nn.conf.layers.*;

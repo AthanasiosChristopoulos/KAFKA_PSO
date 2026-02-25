@@ -28,6 +28,9 @@ import org.apache.kafka.streams.state.Stores;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.common.primitives.Pair;
 
+import dl4j_models.Dl4jModelFactory;
+import dl4j_models.PsoModel;
+
 import java.time.Duration;
 import java.util.Properties;
 import java.util.Collections;

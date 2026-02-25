@@ -2,6 +2,7 @@ package state;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
+import dl4j_models.Dl4jParamUtils;
 import pso.WorkerTransformer;
 
 import java.util.List;

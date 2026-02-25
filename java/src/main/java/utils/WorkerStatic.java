@@ -4,6 +4,11 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+
+import dl4j_models.Dl4jModelFactory;
+import dl4j_models.Dl4jParamUtils;
+import dl4j_models.PsoModel;
+
 import org.nd4j.common.primitives.Pair;
 
 import java.util.Arrays;

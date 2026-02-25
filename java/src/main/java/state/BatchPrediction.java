@@ -6,6 +6,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
+import dl4j_models.PsoModel;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

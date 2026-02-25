@@ -1,4 +1,4 @@
-package utils;
+package dl4j_models;
 
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -7,6 +7,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import java.lang.reflect.Field;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+
+import utils.Config;
 
 import java.io.File;
 import java.io.IOException;

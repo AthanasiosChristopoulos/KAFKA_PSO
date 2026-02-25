@@ -1,4 +1,4 @@
-package utils;
+package dl4j_models;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.WorkspaceMode;
@@ -9,6 +9,9 @@ import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+
+import utils.Config;
+
 import java.io.File;
 
 import org.deeplearning4j.nn.weights.WeightInit;

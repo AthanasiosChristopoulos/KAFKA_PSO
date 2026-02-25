@@ -5,10 +5,8 @@ import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import dl4j_models.Dl4jParamUtils;
 import message.weights_message.WeightsMessage;
-import utils.CustomLogger;
-import utils.Dl4jParamUtils;
-
 import utils.*;
 
 public class GBestProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {

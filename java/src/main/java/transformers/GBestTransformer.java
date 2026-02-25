@@ -5,9 +5,9 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import dl4j_models.Dl4jParamUtils;
 import message.weights_message.WeightsMessage;
 import utils.CustomLogger;
-import utils.Dl4jParamUtils;
 import utils.Config;
 import java.util.concurrent.atomic.AtomicInteger;
 
