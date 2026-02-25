@@ -161,7 +161,10 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
     - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
         => those features arent perfectly separable, need more complex classification layers
 
-
+ - Comparing MobileNetV2 and MobileNetV3Small:
+    - use compare_forward_pass_ms.py 
+    - They get about the same time
+    - Also they have about the same number of layers
 
 
 

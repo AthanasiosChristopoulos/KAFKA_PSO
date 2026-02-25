@@ -112,6 +112,8 @@ def benchmark_forward(model, x, use_tf_function=True, jit_compile=False):
 
     return (end - start) / N_RUNS * 1000.0
 
+# ============================================================================================
+
 def main(): 
     print_env()
     x = get_cifar_batch()
