@@ -16,12 +16,15 @@ public class Experimentation {
 
     private static final Config cfg = Config.getInstance();
     private static String bootstrap = "localhost:9092";
-    private static final float THRESH_CENTER = 0.055f;
-    private static final float MIN_FLOOR = 0.001f;
-    private static final float LOSS_THRESHOLD_MIN_ORIGINAL = cfg.LOSS_THRESHOLD_MIN;
-    private static final float LOSS_THRESHOLD_MAX_ORIGINAL = cfg.LOSS_THRESHOLD_MAX;
+    private static float LOSS_THRESHOLD_MIN_ORIGINAL;
+    private static float LOSS_THRESHOLD_MAX_ORIGINAL;
 
     public static void main(String[] args) throws Exception {
+
+        cfg.LOSS_THRESHOLD_MAX = 0.05f;
+        cfg.LOSS_THRESHOLD_MIN = 0.005f;
+        LOSS_THRESHOLD_MIN_ORIGINAL = cfg.LOSS_THRESHOLD_MIN;
+        LOSS_THRESHOLD_MAX_ORIGINAL = cfg.LOSS_THRESHOLD_MAX;
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
             List<Integer> workersList = List.of(2, 4, 6);
@@ -94,7 +97,7 @@ public class Experimentation {
         } else if(cfg.EXPERIMENTATION_MODE.equals("THRESHOLD")){
                          
             // List<Float> theshold_offset_list = List.of(0.01f, 0.02f, 0.03f);
-            List<Float> theshold_offset_list = List.of(0.00f, 0.03f);
+            List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
 
             // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
             Path dir = Path.of("experimental_results_v2");

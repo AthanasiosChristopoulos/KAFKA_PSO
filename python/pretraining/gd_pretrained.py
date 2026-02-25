@@ -147,6 +147,74 @@ DATASET="CIFAR"
 # ======================================================================================================
 
 
+# if(DATASET == "CIFAR"):
+
+#     BATCH_SIZE = 32
+#     IMG_SIZE = (224, 224)
+#     NUM_CLASSES = 10
+#     EPOCHS = 10
+#     SEED = 42
+
+#     tf.random.set_seed(SEED)
+
+#     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+#     def preprocess(image, label):
+#         image = tf.cast(image, tf.float32)
+#         image = tf.image.resize(image, IMG_SIZE, method="bilinear")
+#         image = preprocess_input(image)  # -> float32 in [-1, 1], basically normalize
+#         label = tf.one_hot(tf.cast(label[0], tf.int32), NUM_CLASSES)    # 3  → [0,0,0,1,0,0,0,0,0,0] one hot lavel encoders
+#         return image, label
+
+#     train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+#     train_ds = train_ds.shuffle(50000, seed=SEED, reshuffle_each_iteration=True)
+#     train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)        # Applies preprocessing function to each sample in the tensor
+#     train_ds = train_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+#     test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+#     test_ds = test_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+#     test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+#     for images, labels in train_ds.take(1):
+#         print("Batch images:", images.shape, images.dtype, "range:", (tf.reduce_min(images).numpy(), tf.reduce_max(images).numpy()))
+#         print("Batch labels:", labels.shape, labels.dtype)
+
+#     base_model = tf.keras.applications.MobileNetV2(
+#         weights="imagenet",
+#         include_top=False,
+#         input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
+#     )
+#     base_model.trainable = False  
+#     model = models.Sequential([
+#         base_model,
+#         layers.GlobalAveragePooling2D(),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dropout(0.5),
+#         layers.Dense(NUM_CLASSES, activation="softmax")
+#     ])
+
+#     model.compile(
+#         optimizer=tf.keras.optimizers.Adam(1e-3),
+#         loss="categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
+
+#     model.summary()
+
+#     early_stop = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+
+#     history = model.fit(
+#         train_ds,
+#         validation_data=test_ds,
+#         epochs=EPOCHS,
+#         callbacks=[early_stop],
+#         verbose=2
+#     )
+
+#     loss, acc = model.evaluate(test_ds, verbose=0)
+#     print(f"Test Accuracy: {acc:.4f}")
+#     print(f"Test Loss:     {loss:.4f}")
+
 if(DATASET == "CIFAR"):
 
     BATCH_SIZE = 32
@@ -159,16 +227,18 @@ if(DATASET == "CIFAR"):
 
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 
+    from tensorflow.keras.applications.mobilenet_v3 import preprocess_input
+
     def preprocess(image, label):
         image = tf.cast(image, tf.float32)
         image = tf.image.resize(image, IMG_SIZE, method="bilinear")
-        image = preprocess_input(image)  # -> float32 in [-1, 1], basically normalize
-        label = tf.one_hot(tf.cast(label[0], tf.int32), NUM_CLASSES)    # 3  → [0,0,0,1,0,0,0,0,0,0] one hot lavel encoders
+        image = preprocess_input(image)
+        label = tf.one_hot(tf.cast(label[0], tf.int32), NUM_CLASSES)
         return image, label
 
     train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_ds = train_ds.shuffle(50000, seed=SEED, reshuffle_each_iteration=True)
-    train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)        # Applies preprocessing function to each sample in the tensor
+    train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
     train_ds = train_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
     test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test))
@@ -176,21 +246,27 @@ if(DATASET == "CIFAR"):
     test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
     for images, labels in train_ds.take(1):
-        print("Batch images:", images.shape, images.dtype, "range:", (tf.reduce_min(images).numpy(), tf.reduce_max(images).numpy()))
+        print("Batch images:", images.shape, images.dtype,
+              "range:", (tf.reduce_min(images).numpy(), tf.reduce_max(images).numpy()))
         print("Batch labels:", labels.shape, labels.dtype)
 
-    base_model = tf.keras.applications.MobileNetV2(
+    # MobileNetV3Small backbone
+    base_model = tf.keras.applications.MobileNetV3Small(
         weights="imagenet",
         include_top=False,
         input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
+        pooling="avg",          # optional: gives you a flat vector already
+        include_preprocessing=False,  # keep False since we manually preprocess in tf.data
     )
-    base_model.trainable = False  
-    model = models.Sequential([
+    base_model.trainable = False
+
+    model = tf.keras.Sequential([
         base_model,
-        layers.GlobalAveragePooling2D(),
-        layers.Dense(128, activation="relu"),
-        layers.Dropout(0.5),
-        layers.Dense(NUM_CLASSES, activation="softmax")
+        # If you REMOVE pooling="avg" above, then uncomment the next line:
+        # tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(NUM_CLASSES, activation="softmax")
     ])
 
     model.compile(
@@ -201,7 +277,9 @@ if(DATASET == "CIFAR"):
 
     model.summary()
 
-    early_stop = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss", patience=3, restore_best_weights=True
+    )
 
     history = model.fit(
         train_ds,
@@ -214,7 +292,6 @@ if(DATASET == "CIFAR"):
     loss, acc = model.evaluate(test_ds, verbose=0)
     print(f"Test Accuracy: {acc:.4f}")
     print(f"Test Loss:     {loss:.4f}")
-
 
 # ======================================================================================================
 
