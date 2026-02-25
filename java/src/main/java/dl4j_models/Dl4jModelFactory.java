@@ -85,8 +85,8 @@ public class Dl4jModelFactory {
 			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
-			// model = createPendigitsModelSmaller_2(workerId);
-			model = createPendigitsModelSmaller_3(workerId);
+			model = createPendigitsModelSmaller_2(workerId);
+			// model = createPendigitsModelSmaller_3(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			model = createWineQualityModel(workerId);
@@ -110,7 +110,7 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 
-			int version = 5;
+			int version = 3;
 
 			String filename;
 			switch (version) {
@@ -119,26 +119,28 @@ public class Dl4jModelFactory {
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v5.h5";
+				case 6 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v6.h5";
 				default -> filename = "no_pretrained_file_chosen";
 			}
 			
 			if (preTrained) {
 				switch (version) {
 					case -2, -1, 0 -> model = pretrainedModelLeNet();
-					case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
+					case 1, 2, 3, 4, 5, 6 -> model = pretrainedModelMNIST(filename);
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			} else {
 				switch (version) {
-					case -2 -> pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
+					case -2 -> pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);		// 0.9
 					case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 					case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
 					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);
 					case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
-					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);
+					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
 					case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
-					case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);
+					case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
+					case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6(workerId, filename, 128);	// 0.7
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			}
@@ -482,7 +484,7 @@ public class Dl4jModelFactory {
 
 	public static PsoModel pretrainedModelMNIST(String fileName) {
 		try {
-
+			System.out.println("AAAAAAAAAAAAAAAAA");
 			File f = new File(fileName);
 			
 			if (!f.exists()) {
@@ -717,6 +719,59 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
+	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v6(int workerId, String filename, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(3)	// its 2 because for some reason the activation layers counts as well
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		// From your summary: last classifier layer had nIn=500
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.setFeatureExtractor(5)
+				.addLayer(new DenseLayer.Builder()
+					.nIn(inputDim)            // IMPORTANT
+					.nOut(64)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+				.addLayer(new DenseLayer.Builder()
+					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nOut(32)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(32)
+						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
+														// this depends on the methodology used to define activation layers. They can be embedded or
+														// be external (right afterwards) to dense layers
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
+						.build())
+				.build();
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+
+	}
+
+	// ======================================================================================================================
+
 	public static PsoModel pretrainedModelLeNet() {	// has MNIST weights / was trained on mnist
 		// 1) Load pretrained LeNet (MNIST 10-class)
 		ZooModel zoo = LeNet.builder()
@@ -899,6 +954,63 @@ public class Dl4jModelFactory {
 					.build();
 		return Pair.of(new PsoMultiLayerAdapter(model), start);
 	}
+
+	// ==========================================================================================
+	// LeNet Architecture =======================================================================
+
+    // public MultiLayerConfiguration conf() {
+    //     MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed)
+    //                     .activation(Activation.IDENTITY)
+    //                     .weightInit(WeightInit.XAVIER)
+    //                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+    //                     .updater(updater)
+    //                     .cacheMode(cacheMode)
+    //                     .trainingWorkspaceMode(workspaceMode)
+    //                     .inferenceWorkspaceMode(workspaceMode)
+    //                     .cudnnAlgoMode(cudnnAlgoMode)
+    //                     .convolutionMode(ConvolutionMode.Same)
+    //                     .list()
+    //                     // block 1
+    //                     .layer(new ConvolutionLayer.Builder()
+    //                             .name("cnn1")
+    //                             .kernelSize(5, 5)
+    //                             .stride(1, 1)
+    //                             .nIn(inputShape[0])
+    //                             .nOut(20)
+    //                             .activation(Activation.RELU)
+    //                             .build())
+    //                     .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+    //                             .name("maxpool1")
+    //                             .kernelSize(2, 2)
+    //                             .stride(2, 2)
+    //                             .build())
+    //                     // block 2
+    //                     .layer(new ConvolutionLayer.Builder()
+    //                             .name("cnn2")
+    //                             .kernelSize(5, 5)
+    //                             .stride(1, 1)
+    //                             .nOut(50)
+    //                             .activation(Activation.RELU).build())
+    //                     .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+    //                             .name("maxpool2")
+    //                             .kernelSize(2, 2)
+    //                             .stride(2, 2)
+    //                             .build())
+    //                     // fully connected
+    //                     .layer(new DenseLayer.Builder()
+    //                             .name("ffn1")
+    //                             .activation(Activation.RELU)
+    //                             .nOut(500)
+    //                             .build())
+    //                     // output
+    //                     .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+    //                             .name("output")
+    //                             .nOut(numClasses)
+    //                             .activation(Activation.SOFTMAX) // radial basis function required
+    //                             .build())
+    //                     .setInputType(InputType.convolutionalFlat(inputShape[2], inputShape[1], inputShape[0]))
+    //                     .build();
+
 
 	// ======================================================================================================================
 	// Iris Dataset Model Architecture 

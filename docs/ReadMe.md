@@ -1297,7 +1297,8 @@ Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
     1) Αμα ειναι να μαθει καινουργια patterns μονο τοτε θα του βαλεις αλλα Layers απο αυτα που ειχε originally:
     - Lower additive layers = match general features (dont change the behavior)
         - same domain
-         => early layers learn generic features (edges, blobs)
+         => early layers learn generic features (edges, blobs) 
+         => this means that per dataset those are th same 
     - Higher additive layers = match task-specific features (change the behavior of the model)
         => deeper layers learn task-specific high-level features
         => BUT higher-level features still improve performance when transferred, especially if we are talking about 

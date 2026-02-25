@@ -89,6 +89,8 @@
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
 
+			- x: Dimensionality / y: Accuracy
+
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
 		- Θα πρεπει να βρεις additional Layers + Non Differentiable Loss Functions, ωστε:
@@ -96,12 +98,13 @@
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
 
-	57) Try harder on the pretrained model:
-		- Remove more Layers
-		- Semi train, rather than fully train
-		- Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
+	57) Try harder on the pretrained model, in these levels:
+		- A) Remove more Layers
+		- B) Semi train pretrained model, rather than fully train (smaller amount of epochs)
+			=> Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
+		- C) Use models that are not trained in the same dataset and are repurposed by tranfer learning
 		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
-		=> το να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
+		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
 	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
 
@@ -159,6 +162,8 @@
 		
 		- Implementation:
 			- Architecture (Kafka Topology, Project Class Hierarchy)
+			- Difference between GD and PSO
+				- how much dimensionality affects PSO
 			- Protocol (Differences between normal PSO protocol and distributed / Federated learning / Kafka PSO protocol)
 				=> many things, like the sharing and updating of gBest, can be easily done on the same device.
 				=> that isnt the case with federated, communication is costly 
