@@ -50,6 +50,9 @@
 sudo apt install gnome-shell-extension-manager
  - extension: Hide TopBar
 
+Disable: Format on Space => Preferences/Settings/Text Editor/Formatting
+
+
 # Change Boot Order / Boot Priority: ============================================================
 
 https://www.youtube.com/watch?v=gVw1OMB-D5A

@@ -78,7 +78,7 @@ public class Simulation {
 
         System.out.println("OK loaded:");
         System.out.println(model.summary());
-        System.exit(0);
+        // System.exit(0);
 
         // ComputationGraph model = createCifarFromMobileNetV2Base(-1, fileName, 10);
         // System.out.println(model.summary());

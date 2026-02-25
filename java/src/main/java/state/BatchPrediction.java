@@ -131,6 +131,7 @@ public class BatchPrediction {
     // for Coordinator ==================================================================================================
 
     public BatchPrediction(PsoModel model, PsoModel bestModel, CustomLogger logger) {
+
         this.model = model;
         this.ws = null;
 
@@ -324,18 +325,27 @@ public class BatchPrediction {
                     X4d = X2d.reshape(nSamples, 32, 32, 3);        // [batch, 32, 32, 3]
                         // (nSamples, 32, 32, 3)
                     if (argument_model.isNhWC()) {
+                        // System.out.println("AAAAAAAAAAAAAAAAAA");
                         X = X4d;                             // keep NHWC
                     } else {
-
+                        // System.out.println("BBBBBBBBBBBBBBBBBB");
                         X = X4d.permute(0, 3, 1, 2);         // convert to NCHW
-
                     }        // (nSamples, 3, 32, 32)
 
 
                 } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
 
                     X2d = Nd4j.create(data);          // (nSamples, 784)
-                    X = X2d.reshape(X2d.size(0), 1, 28, 28);    // (nSamples, 1, 28, 28)
+                    
+                    X4d = X2d.reshape(nSamples, 28, 28, 1);  // (nSamples, 28, 28, 1)
+
+                    if (argument_model.isNhWC()) {
+                        // System.out.println("AAAAAAAAAAAAAAAAAA");
+                        X = X4d;                             // keep NHWC (TensorFlow/Keras style)
+                    } else {
+                        // System.out.println("BBBBBBBBBBBBBBBBBB");
+                        X = X4d.permute(0, 3, 1, 2);          // convert to NCHW (DL4J style)
+                    }   
                 }
 
             } else {    // Normal dataset (no image) + no CNN used 
@@ -453,14 +463,8 @@ public class BatchPrediction {
         GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
 
         // Evaluate input shape ========================================================
-        // long[] xShape = X.shape();       
-        // System.out.println("[Worker " + workerId + "] X.rank=" + X.rank() +
-        //         " shape=" + Arrays.toString(xShape) +
-        //         " order=" + X.ordering() +
-        //         " stride=" + Arrays.toString(X.stride()) +
-        //         " isView=" + X.isView() +
-        //         " dataType=" + X.dataType());
-
+        // System.out.println("Input shape to model: " + Arrays.toString(X.shape()));
+        // System.exit(0);
         // ==============================================================================================================
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
