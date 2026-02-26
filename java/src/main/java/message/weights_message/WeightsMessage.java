@@ -17,3 +17,21 @@ public class WeightsMessage {
     }
 
 }
+
+// WeightsMessage size estimation (approximately for dimensionality = 20000)
+
+// int workerId = 4 bytes
+// String msgIndex ≈ 40 bytes (object + char[] overhead, typical small string)
+// float accuracy = 4 bytes
+// float loss = 4 bytes
+// float[] weights (length = 20000)
+//   each float = 4 bytes
+//   20000 * 4 = 80000 bytes
+//   array overhead ≈ 16 bytes
+//   total weights ≈ 80016 bytes
+
+// Total ≈ 4 + 40 + 4 + 4 + 80016 = 80068 bytes
+
+// ≈ 80 KB per message 
+// The commonly hit limit is around ~1 MB by default => you can increase limit, but it is usually bad performance wise
+// Best: KBs (1–100 KB) per record

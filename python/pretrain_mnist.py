@@ -139,22 +139,6 @@ def build_mnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
 
 def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
 
-    # model = keras.Sequential([
-    #     layers.Input(shape=input_shape),
-    #     layers.Reshape((28, 28, 1)),
-
-    #     layers.Conv2D(16, 3, padding="same", use_bias=True),
-    #     layers.Activation("relu"),
-    #     layers.MaxPooling2D(),
-
-    #     layers.Conv2D(32, 3, padding="same", use_bias=True),
-    #     layers.Activation("relu"),
-
-    #     layers.GlobalAveragePooling2D(),
-
-    #     layers.Dense(num_classes, activation="softmax"),
-    # ])
-
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
@@ -253,11 +237,6 @@ def build_mnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),                         # 28 -> 14
 
-        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),                         # 14 -> 7
-
-        # 7 -> 4 using same+stride2, then 4 -> 2 pool
         layers.Conv2D(64, 3, strides=2, padding="same", activation="relu", use_bias=True),   # 7 -> 4
         layers.MaxPooling2D(2),                         # 4 -> 2
 
@@ -276,12 +255,47 @@ def build_mnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
+
+def build_mnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Backbone (same as your v3)
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+
+        # CNN-only classification head (NO Dense):
+        # 1x1 conv maps channels -> num_classes at each spatial location
+        layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
+
+        # Pool spatially to get class logits vector
+        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+
+        # Softmax for probabilities
+        layers.Activation("softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
 # ===============================================================================
 # Train + Export
 
-def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
+def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
 
-    version = "v1"
+    version = "v7"
     
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
@@ -290,6 +304,7 @@ def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
         "v4": ("mnist_base_plus_head_v4", build_mnist_base_plus_head_v4),
         "v5": ("mnist_base_plus_head_v5", build_mnist_base_plus_head_v5),
         "v6": ("mnist_base_plus_head_v6", build_mnist_base_plus_head_v6),
+        "v7": ("mnist_base_plus_head_v7", build_mnist_base_plus_head_v7),
     }
     
     filename, mnist_model_function = model_registry[version]

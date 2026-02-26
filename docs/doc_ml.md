@@ -61,6 +61,9 @@ CNNs have smoother valeys ?
         - fully-connected layers are very good at memorizing training examples
     - Multiple conv layers can have the same effect
 
+- Data Augmentation is there to help reduce overfitting
+    - This is a natural preprcossesing of the data => like flipping / rotation of the image
+
 ## Different Types of Neural Networks: ============================================
 
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
@@ -150,16 +153,15 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
  - 2) Fine-tuning:
     - take the pretrained model, keep most layers frozen but unfreeze the last few layers 
         - use small learning rate, this is only fine tuning
+     - Not freezing the underlying model:
+        - You may do this in case there is a new to adapt to a new dimensionality: 224×224 images => 32×32 images
+        - This is problematic when early convolutions downsample too aggressively
+        - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
+            => those features arent perfectly separable, need more complex classification layers
 
  - Improve performance:
     - Choose a different pretrained model
     - Unfreeze / Train more end Layers
-
- - Not freezing the underlying model:
-    - You may do this in case there is a new to adapt to a new dimensionality: 224×224 images => 32×32 images
-    - This is problematic when early convolutions downsample too aggressively
-    - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
-        => those features arent perfectly separable, need more complex classification layers
 
  - If original task vs tranfer tasks are similar then transfer will be completed / transfer gap is small
  - Generally better than randomizing weights at the begining of training
@@ -168,7 +170,7 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
      - 1) optimization difficulties related to splitting networks in the middle (where to set the freeze / trained network and the new network)
      - 2) the specialization of higher layer features to the original task (task A) at the expense of performance on the target task (task B).
 
-## ImageNet Datasets: ====================================================================================================
+## ImageNet Datasets: ==================================================================
 
     - ImageNet is a huge labeled dataset of images organized into thousands of object categories.
     - ~ 14+ million images 
@@ -179,7 +181,8 @@ Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
  - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
 
  - Tier 1: MobileNetV3Large, EfficientNetB1, ResNet50 (or ResNet50V2)
-
+    - ResNet18 => It is shallower 18 Layer but has many more parameters, so MobileNetV2 is ~6× cheaper to run
+                => Also has the same input dim 224 × 224 × 3 
  - Tier 2: ResNet101, InceptionV3, Xception, DenseNet121
 
  - Tier 3: heavy 

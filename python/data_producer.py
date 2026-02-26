@@ -787,7 +787,7 @@ def main():
                 for index in range(len(X_train)):
                     
                     if(DATASET in CNN_DATASETS):
-                        features = X_train[index].ravel().astype(np.float32)
+                        features = X_train[index].ravel().astype(np.float32)    # This is float type
                         # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
                         # .ravel() in C-order flattens the last axis fastest
                             # if its (32, 32, 3) => last axis is the channel axis, then the columns axis

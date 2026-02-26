@@ -100,7 +100,7 @@
 
 	57) Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
-		- B) Unfreeze base network
+		- B) Unfreeze / Fine-Tune base network
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
 			=> Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
 		- D) Use models that are not trained in the same dataset and are repurposed by tranfer learning
@@ -168,9 +168,11 @@
 			- Protocol (Differences between normal PSO protocol and distributed / Federated learning / Kafka PSO protocol)
 				=> many things, like the sharing and updating of gBest, can be easily done on the same device.
 				=> that isnt the case with federated, communication is costly 
-			- Functional and Non Functional Requirements
+			- PSO techniques used
 			- Different Non - Differentiable Loss Functions. You need to demonstrate about 3 such functions and show that they are non differentiable and the performance while using them.
-			
+			- Performance of the program (how the forward pass needs to be the bottleneck and that it doesnt matter if you add extra work to the transformers)
+			- Functional and Non Functional Requirements
+
 		- Experimental Evaluation:
 			- Run it locally 
 			- Run it on a server

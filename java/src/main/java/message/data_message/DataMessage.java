@@ -13,6 +13,23 @@
             this.label = label;
         }
 
+        // DataMessage size estimation for ONE CIFAR-10 image flattened to float[] features
+        // CIFAR image shape = (32, 32, 3)
+        // flattened length = 32 * 32 * 3 = 3072 floats
+
+        // int sampleIndex = 4 bytes
+        // int label       = 4 bytes
+
+        // float[] features (length = 3072)
+        //   each float = 4 bytes
+        //   3072 * 4 = 12288 bytes
+        //   array overhead ≈ 16 bytes
+        //   total features ≈ 12304 bytes
+
+        // Total ≈ 4 + 12304 + 4 = 12312 bytes
+
+        // ≈ 12.0 KB per CIFAR record
+
         // ======================================================================
 
         @Override

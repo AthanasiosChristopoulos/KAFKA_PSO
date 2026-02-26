@@ -1293,11 +1293,16 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
     2) Make conv layers as good as computationally possible + keep conv layers as they are (as feature extractors)
         => generally increasing the complexity of the convolutional layer, makes them a much better **feature extractor**
  
-    3) Freezing / Unfreezing - Fine Tuning:
+    3) Freezing (Fixed Feature Extractor) / Unfreezing (Fine Tuning):
+        => Fine-Tuning: Unfreeze a few of the top layers of a frozen model base and jointly train both the newly-added classifier layers and the last layers of the base model. 
         => fine-tune them to the new task (leave them to take part in the backpropagation)
-        => Fine Tuning means dont change the initial size too much
+        => Fine Tuning means dont change the initial size too much:
             => If the target dataset is small: dont fine-tune, may result in overfitting
             => The bigger the target dataset, the better it is to fine-tune, to the point training your own network from scratch
+            => Note: This should only be attempted after you have trained the top-level classifier with the pre-trained model set to non-trainable (Train to convergence first). If you add a randomly initialized classifier on top of a pre-trained model and attempt to train all layers jointly, the magnitude of the gradient updates will be too large (due to the random weights from the classifier) and your pre-trained model will forget what it has learned.
+            => Also, you should try to fine-tune a small number of top layers rather than the whole MobileNet model.
+                => unfreeze only the last 10–30% of the backbone layers
+            => This technique is usually recommended when the training dataset is large and very similar to the original dataset
         vs
         => Leave them frozen 
 
@@ -1306,3 +1311,19 @@ What i am doing is called a selffer network (original task A and transfer task B
     => Layer N at which network is chopped
     => aka: same-domain transfer baseline 
 • A transfer network ANB => cross-domain transfer model
+
+- Use pretraining only if target dataset is small 
+    => Using the pretrained one, you may reach convergence faster
+
+Guide to Transfer Learning:
+ - First, you need to pick which layer of MobileNet V2 you will use for feature extraction
+    => Follow the common practice to depend on the very last layer before the flatten operation.
+    => This layer is called the "bottleneck layer". 
+ - When you set layer.trainable = False, the BatchNormalization layer will run in inference mode, and will not update its mean and variance statistics.
+    => if you want fine tuning, layer.trainable = True, then run BatchNorm in inference mode (this is achieved by setting training = False, batchNorm will use store moving averages)
+    => you dont want / cant fine tune Batch Norm, because of the already learned moving averages
+        => base_model(inputs, training=False) means DO NOT update BN statistics
+
+ - Model Heads to use:
+    - GAP - Dense(num_classes) => fewer params, faster training, less overfitting risk
+    - Flatten - Dense(num_classes) => you need spatial detail - helps with small tasks
