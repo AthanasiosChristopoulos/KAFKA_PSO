@@ -98,7 +98,7 @@
 			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
 			- συνηθως δεν πας να κανεις train from scratch
 
-	57) Try harder on the pretrained model, in these levels:
+	57) This isnt fully GD / PSO hybrid. This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
 		- B) Unfreeze / Fine-Tune base network
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
