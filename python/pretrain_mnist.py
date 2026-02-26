@@ -99,6 +99,41 @@ def build_fmnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
+def build_fmnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Backbone (same as your v3)
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+
+        # CNN-only classification head (NO Dense):
+        # 1x1 conv maps channels -> num_classes at each spatial location
+        layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
+
+        # Pool spatially to get class logits vector
+        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+
+        # Softmax for probabilities
+        layers.Activation("softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
     model = keras.Sequential([
@@ -357,7 +392,7 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
 
     # version = "v8"
-    version = "v2_fmnist"
+    version = "v3_fmnist"
 
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
@@ -370,6 +405,8 @@ def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
         "v8": ("mnist_base_plus_head_v8", build_mnist_base_plus_head_v8),
         "v1_fmnist": ("fmnist_base_plus_head_v1", build_fmnist_base_plus_head_v1),
         "v2_fmnist": ("fmnist_base_plus_head_v2", build_fmnist_base_plus_head_v2),
+        "v3_fmnist": ("fmnist_base_plus_head_v3", build_fmnist_base_plus_head_v3),
+
     }
     
     filename, mnist_model_function = model_registry[version]

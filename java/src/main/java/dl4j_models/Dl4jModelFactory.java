@@ -112,26 +112,27 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 
-			int version = 1;
+			int version = 8;
 
 			String filename;
 			switch (version) {
 				// case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 				// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-				case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 90% Partial Freeze
+				// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
 				case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v5.h5";
 				case 6 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v6.h5";
 				case 7 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v7.h5";
+				case 8 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
 				default -> filename = "no_pretrained_file_chosen";
 			}
 			
 			if (preTrained) {
 				switch (version) {
 					case -2, -1, 0 -> model = pretrainedModelLeNet();
-					case 1, 2, 3, 4, 5, 6, 7 -> model = pretrainedModelMNIST(filename);
+					case 1, 2, 3, 4, 5, 6, 7, 8 -> model = pretrainedModelMNIST(filename);
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			} else {
@@ -142,7 +143,7 @@ public class Dl4jModelFactory {
 
 					// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 					// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 90% Partial Freeze
+					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 80% Partial Freeze
 					case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
 					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
 					case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
@@ -157,6 +158,7 @@ public class Dl4jModelFactory {
 					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.84, 0.86 with freeze index 1
 					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(workerId, filename);	// 0.84, 0.86 with freeze index 1
 					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(workerId, filename, 64);	// 0.23
+					case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% 
 
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
