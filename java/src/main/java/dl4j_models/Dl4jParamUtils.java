@@ -44,7 +44,9 @@ public class Dl4jParamUtils {
     //=====================================================================================================
 
     public static float[] modelToFlatHead(PsoModel model, int start) {
-
+        // if(!cfg.FREEZE) {
+        //     return modelToFlatList(model);
+        // }
         float[] full = model.params().toFloatVector();
         return Arrays.copyOfRange(full, start, full.length);
     }
@@ -60,6 +62,9 @@ public class Dl4jParamUtils {
     //=====================================================================================================
 
     public static void updateModelHead(PsoModel model, float[] headFlat, int start) {
+        // if(!cfg.FREEZE) {
+        //     updateModel(model, headFlat);
+        // }
 
         INDArray p = model.params(); // 1D view of the whole parameter buffer
         // int start = ParamSlices.headFlatIndex(model, headStartLayerIdx);

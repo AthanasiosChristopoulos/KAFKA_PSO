@@ -78,23 +78,21 @@ public final class WorkerStatic {
         Pair<PsoModel, Integer> pair = Dl4jModelFactory.createModel(workerId, false);
 
         this.model = pair.getFirst();        // the model
-
-        try {
+            
+        if(cfg.USING_PRETRAINED_MODEL && cfg.FREEZE) {
+            
             this.start = pair.getSecond(); // add to Config
             this.headDim = (int) model.numParams() - start;
             if(logger.isEnabled(2)) logger.log("Model Dimensions => " + 
                 "start: " + this.start + ", model.numParams(): " + model.numParams() + 
                 ", headDim: " + this.headDim);
                 
-            if(cfg.USING_PRETRAINED_MODEL) {
-                this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.start);
-            } else {
-                this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
-            }
-        } catch(Exception e) {
-            e.printStackTrace();  
+            this.flatModel = Dl4jParamUtils.modelToFlatHead(model, this.start);
+
+        } else {
+            this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
         }
-        
+  
         if(logger.isEnabled(2)) {
             this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
             Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);

@@ -101,9 +101,9 @@
 	57) Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
 		- B) Unfreeze base network
-		- B) Semi train pretrained model, rather than fully train (smaller amount of epochs)
+		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
 			=> Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
-		- C) Use models that are not trained in the same dataset and are repurposed by tranfer learning
+		- D) Use models that are not trained in the same dataset and are repurposed by tranfer learning
 		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 

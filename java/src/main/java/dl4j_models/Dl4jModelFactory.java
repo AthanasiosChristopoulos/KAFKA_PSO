@@ -136,7 +136,8 @@ public class Dl4jModelFactory {
 					case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 					case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);
+					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99
+					// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8
 					case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
 					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
 					case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
@@ -173,6 +174,8 @@ public class Dl4jModelFactory {
 			// model = createMNIST4Cnn_New_Simpler(workerId);
 			model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
+
+		// ======================================================================================================================
 
 		} else if (DATASET.contains("cifar")) {
 
@@ -214,6 +217,10 @@ public class Dl4jModelFactory {
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
+		}
+
+		if(cfg.FREEZE == false) {
+			cfg.USING_PRETRAINED_MODEL = false;
 		}
 
 		if(pair == null) {
@@ -583,24 +590,63 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())  
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)	// its 2 because for some reason the activation layers counts as well
+			.removeLayersFromOutput(1)	
 			.build();
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)
+						.nOut(NUM_CLASSES) 
+						.activation(Activation.SOFTMAX)		
+						.weightInit(WeightInit.XAVIER)
+    					.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, false), start);
+	}
+
+	// ===========================================================================================
+
+	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler_v1(int workerId, String fileName, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+
+		// ============================================================================
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp()) 
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(2)	
+			.build();
+
+		int start = (int) truncated.numParams();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc) 
+				.addLayer(new DenseLayer.Builder()
+					.nIn(inputDim)            
+					.nOut(64)
+					.activation(Activation.RELU)
+					.weightInit(WeightInit.XAVIER)
+					.biasInit(0.0)
+					.build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(64)
 						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
 						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
 														// this depends on the methodology used to define activation layers. They can be embedded or
@@ -1045,6 +1091,11 @@ public class Dl4jModelFactory {
     //                     .setInputType(InputType.convolutionalFlat(inputShape[2], inputShape[1], inputShape[0]))
     //                     .build();
 
+// cnn1: (5*5*1*20)+20 = 520
+// cnn2: (5*5*20*50)+50 = 25,050
+// ffn1: (7*7*50*500)+500 = 1,225,500
+// out : (500*10)+10 = 5,010
+// TOTAL = 1,256,080
 
 	// ======================================================================================================================
 	// Iris Dataset Model Architecture 

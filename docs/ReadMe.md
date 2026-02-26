@@ -1289,12 +1289,20 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
     - CNN layers progressively build hierarchical representations of the image (with each level having higher meaning for the class)
 
     - There is a transition from Generall to Specific happening throughout the neural network
-
+    
     2) Make conv layers as good as computationally possible + keep conv layers as they are (as feature extractors)
         => generally increasing the complexity of the convolutional layer, makes them a much better **feature extractor**
  
     3) Freezing / Unfreezing - Fine Tuning:
         => fine-tune them to the new task (leave them to take part in the backpropagation)
         => Fine Tuning means dont change the initial size too much
+            => If the target dataset is small: dont fine-tune, may result in overfitting
+            => The bigger the target dataset, the better it is to fine-tune, to the point training your own network from scratch
         vs
-        => leave them frozen 
+        => Leave them frozen 
+
+What i am doing is called a selffer network (original task A and transfer task B):
+• A selffer (=> self transfer)  network BNB (N is the number of layers that are kept from the original and thnen frozen) 
+    => Layer N at which network is chopped
+    => aka: same-domain transfer baseline 
+• A transfer network ANB => cross-domain transfer model

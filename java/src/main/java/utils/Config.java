@@ -107,6 +107,10 @@ public class Config {
 
     public final String EXPERIMENTATION_MODE;
 
+    public final boolean FREEZE;
+
+    //=============================================================================================================
+
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -311,6 +315,7 @@ public class Config {
         this.HEAD_LAYER_IDX = Integer.parseInt(getenv(dotenv, "HEAD_LAYER_IDX", "4"));
         // this.USING_PRETRAINED_MODEL = Boolean.parseBoolean(getenv(dotenv, "USING_PRETRAINED_MODEL", "false"));
         this.USING_PRETRAINED_MODEL = false;
+        this.FREEZE = Boolean.parseBoolean(getenv(dotenv, "FREEZE", "true"));
 
         this.REGULARIZER = getenv(dotenv, "REGULARIZER", "NONE");
         
@@ -333,6 +338,8 @@ public class Config {
         }
 
         this.EXPERIMENTATION_MODE = getenv(dotenv, "EXPERIMENTATION_MODE", "N_WORKERS");
+
+
     } 
 
     // ==================================================================================================================================

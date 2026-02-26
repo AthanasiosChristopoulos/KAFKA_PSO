@@ -161,6 +161,20 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
     - Not being frozen doesnt mean that they are randomized, they are already at a good starting point just need to adapt a little bit
         => those features arent perfectly separable, need more complex classification layers
 
+ - If original task vs tranfer tasks are similar then transfer will be completed / transfer gap is small
+ - Generally better than randomizing weights at the begining of training
+ 
+ - When having different datasets, then transferability is negatively affected by:
+     - 1) optimization difficulties related to splitting networks in the middle (where to set the freeze / trained network and the new network)
+     - 2) the specialization of higher layer features to the original task (task A) at the expense of performance on the target task (task B).
+
+## ImageNet Datasets: ====================================================================================================
+
+    - ImageNet is a huge labeled dataset of images organized into thousands of object categories.
+    - ~ 14+ million images 
+    - Smallest Version: ImageNet-1K = 1,000 classes, ~1.2 million images
+    - ImageNet Models are huge and diverse
+    
 Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
  - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
 

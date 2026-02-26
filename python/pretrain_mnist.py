@@ -187,27 +187,14 @@ def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # -----------------------
-        # Feature extractor (CNN)
-        # Target: end at (4, 4, 50)
-        # -----------------------
         layers.Conv2D(20, (5, 5), padding="valid", activation="relu", use_bias=True),  # 28 -> 24
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),       # 24 -> 12
 
         layers.Conv2D(50, (5, 5), padding="valid", activation="relu", use_bias=True),  # 12 -> 8
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),        # 8 -> 4
 
-        # At this point: (4, 4, 50)  <-- IMPORTANT: channels=50
-        # No flatten.
+        layers.GlobalAveragePooling2D(),                    
 
-        # -----------------------
-        # Pretraining head (simple)
-        # You will throw this away in DL4J and attach:
-        # GAP -> Dense(64) -> Dense(32) -> Output
-        # -----------------------
-        layers.GlobalAveragePooling2D(),                          # -> (50,)
-
-        # NOTE: these should NOT be softmax in hidden layers; use relu.
         layers.Dense(64, activation="relu", use_bias=True),
         layers.Dense(32, activation="relu", use_bias=True),
 
@@ -294,7 +281,8 @@ def build_mnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
 
 def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
 
-    version = "v6"
+    version = "v1"
+    
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
         "v2": ("mnist_base_plus_head_v2", build_mnist_base_plus_head_v2),
