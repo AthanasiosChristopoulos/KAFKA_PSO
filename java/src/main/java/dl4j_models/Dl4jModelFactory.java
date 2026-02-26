@@ -102,7 +102,7 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			// model = createMNISTModelMLP(workerId);
-			// model = createMNISTModelMLPSimple_0(workerId);
+			model = createMNISTModelMLPSimple_0(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
 			// model = createMNISTModelMLPSimple_2(workerId);
 			// model = createMNISTCnn(workerId);
@@ -146,8 +146,11 @@ public class Dl4jModelFactory {
 					case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
 					case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6(workerId, filename, 256);	// 0.53
 					// case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6_1(workerId, filename, 64);	// 0.71
-					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7(workerId, filename);	// 0.53
-					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(workerId, filename, 64);	// 0.53
+					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7(workerId, filename);	// 0.77
+					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(workerId, filename, 64);	// 0.46
+					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_2(workerId, filename, 10); // 0.66	
+					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_3(workerId, filename, 5 * 5 * 10);	
+
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			}
@@ -925,6 +928,8 @@ public class Dl4jModelFactory {
 				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
 				// truncated has 4 layers => new OutputLayer is index 4
 				.setInputPreProcessor(4, new NhwcToFeedForwardPreProcessor(7, 7, 64))
+					// this preproccessor executes right before the layer index (4) you attach it to 
+					// so right before the output layer
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -965,7 +970,95 @@ public class Dl4jModelFactory {
 				.build())
 			.build();
 
-		return Pair.of(new PsoMultiLayerAdapter(model, false), start);
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+
+	// ======================================================================================================================
+
+	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_2(
+			int workerId, String filename, int inputDim) {
+
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(3)
+				.build();
+
+		int start = (int) truncated.numParams();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+			.fineTuneConfiguration(ftc)
+			.addLayer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
+				.nIn(64)
+				.nOut(10)       
+				.stride(1, 1)
+				.padding(0, 0)							// 26 x 26 x 8
+				.activation(Activation.RELU)
+				.dataFormat(CNN2DFormat.NHWC)  
+				.build())
+			.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG)
+				.poolingDimensions(1, 2)   // NHWC: pool H,W
+				.collapseDimensions(true)  // default, keeps output [N, C]
+				.build())
+			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+				.nIn(10)                 // because conv2d_1 outputs 64 channels
+				.nOut(NUM_CLASSES)
+				.activation(Activation.SOFTMAX)
+				.weightInit(WeightInit.XAVIER)
+				.biasInit(0.0)
+				.build())
+			.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+
+	// ======================================================================================================================
+
+	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_3(
+			int workerId, String filename, int inputDim) {
+
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.build();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(3)
+				.build();
+
+		int start = (int) truncated.numParams();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+			.fineTuneConfiguration(ftc)
+			.addLayer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
+				.nIn(64)
+				.nOut(10)       
+				.stride(1, 1)
+				.padding(0, 0)							// 26 x 26 x 8
+				.activation(Activation.RELU)
+				.dataFormat(CNN2DFormat.NHWC)  
+				.build())
+			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+				.nIn(inputDim)                 // because conv2d_1 outputs 64 channels
+				.nOut(NUM_CLASSES)
+				.activation(Activation.SOFTMAX)
+				.weightInit(WeightInit.XAVIER)
+				.biasInit(0.0)
+				.build())
+			.setInputPreProcessor(5, new NhwcToFeedForwardPreProcessor(5, 5, 10))
+
+			.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
 	// ======================================================================================================================

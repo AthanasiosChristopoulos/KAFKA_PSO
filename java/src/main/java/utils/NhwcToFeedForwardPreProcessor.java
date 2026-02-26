@@ -15,7 +15,7 @@ public class NhwcToFeedForwardPreProcessor implements InputPreProcessor {
 
     @Override
     public INDArray preProcess(INDArray input, int minibatchSize, LayerWorkspaceMgr workspaceMgr) {
-        // expects NHWC: [N,H,W,C]
+        // expects NHWC: [N,H,W,C] (incoming is nhwc (coming from python) needs to be flattend)
         long[] s = input.shape();
         if (input.rank() != 4 || s[1] != h || s[2] != w || s[3] != c) {
             throw new IllegalStateException(
@@ -23,7 +23,11 @@ public class NhwcToFeedForwardPreProcessor implements InputPreProcessor {
             );
         }
         // flatten -> [N, H*W*C]
-        return input.reshape('c', minibatchSize, h * w * c);
+        return input.reshape('c', minibatchSize, h * w * c);    // just a flattend array
+        // There are two common orderings:
+        // 'c' = C order (row-major, like NumPy default): the last dimension changes fastest
+        // 'f' = Fortran order (column-major): the first dimension changes fastest
+
     }
 
     @Override

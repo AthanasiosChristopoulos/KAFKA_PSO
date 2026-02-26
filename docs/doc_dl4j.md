@@ -21,6 +21,7 @@ Library  | What it is                                     | Imports
     - similar to output, but gives an overall ACC / AUC / F1 / ... score (from all batches reduced)
 
 ## DL4J Model Building ====================================================================
+
 ```java
 .addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG)
     .poolingDimensions(1, 2)   // NHWC: pool H,W, TAKES AS ARGUMENT THE AXES INDEX
@@ -34,6 +35,12 @@ In Keras: [N, H, W, C] = [batch, height, width, channels]   // .poolingDimension
 In DL4J: [N, C, H, W] = [batch, channels, height, width]    // .poolingDimensions(2, 3)
 Global Average Pooling should do: [N, 7, 7, 64]  →  [N, 64]
    => we want to collapse the Height and Width dimensionality not the Channel
+
+
+Also this fixes the same issue for:
+```java
+.dataFormat(CNN2DFormat.NHWC) 
+```
 
 ## DL4J workspaces =================================================================================
 

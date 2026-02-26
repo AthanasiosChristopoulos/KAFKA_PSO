@@ -138,6 +138,17 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
         - using only nOut (its a dense layer nIn can be infered). Except for the first input, this needs to be specified in this case by:
             - .setInputType(InputType.convolutionalFlat(height, width, channels))
 
+ - conv1x1:
+    - layers.Conv2D(num_classes, kernel_size=1, padding="same")
+    - For every pixel in the feature map, compute a score for each class
+    - behaves very much like a Dense layer applied at every spatial position. (doesnt case about neighbor pixels)
+    - Fully convolutional classifier:
+        - Conv2D(10, kernel_size=1)
+        - GlobalAveragePooling2D()
+    - vs Dense Classifier:
+        - Flatten()
+        - Dense(10)
+        
 ## Transfer Learning ============================================================================
  
  Two Strategies:
