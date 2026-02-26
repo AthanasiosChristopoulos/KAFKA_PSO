@@ -290,12 +290,47 @@ def build_mnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
+
+def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Backbone (same as your v3)
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+
+        # CNN-only classification head (NO Dense):
+        # 1x1 conv maps channels -> num_classes at each spatial location
+        layers.Conv2D(10, 3, padding="same", activation="relu", use_bias=True),
+
+        # Pool spatially to get class logits vector
+        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+
+        # Softmax for probabilities
+        layers.Activation("softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
 # ===============================================================================
 # Train + Export
 
 def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
 
-    version = "v7"
+    version = "v8"
     
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
@@ -305,6 +340,7 @@ def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
         "v5": ("mnist_base_plus_head_v5", build_mnist_base_plus_head_v5),
         "v6": ("mnist_base_plus_head_v6", build_mnist_base_plus_head_v6),
         "v7": ("mnist_base_plus_head_v7", build_mnist_base_plus_head_v7),
+        "v8": ("mnist_base_plus_head_v8", build_mnist_base_plus_head_v8),
     }
     
     filename, mnist_model_function = model_registry[version]
@@ -339,7 +375,6 @@ def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
 
     os.makedirs(out_dir, exist_ok=True)
 
-    # 1) Recommended for DL4J Keras import: H5
     h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
     model.save(h5_path)
     print("Saved Keras H5:", h5_path)
