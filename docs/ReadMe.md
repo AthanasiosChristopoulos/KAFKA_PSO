@@ -1324,6 +1324,8 @@ Guide to Transfer Learning:
     => you dont want / cant fine tune Batch Norm, because of the already learned moving averages
         => base_model(inputs, training=False) means DO NOT update BN statistics
 
- - Model Heads to use:
+ - Model Heads to use (most commonly used in practice, excluding additional CNN layers):
     - GAP - Dense(num_classes) => fewer params, faster training, less overfitting risk
+    - GAP - Dense(256) - Dense(num_classes) => Adds non linear decision boundary
     - Flatten - Dense(num_classes) => you need spatial detail - helps with small tasks
+    - Flatten - Dense(nOut) - Dense(num_classes) => Explodes parameter count

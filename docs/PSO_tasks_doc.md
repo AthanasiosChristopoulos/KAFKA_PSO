@@ -107,6 +107,14 @@
 		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
+		Solution: 
+			- Find a model in GD (trained in tensorflow) that doesnt perform well (below 70% on MNIST) and has no dense layer (it relies solely on Convolutional Layer)
+			- Go to DL4J / PSO and add those Layers achieving a higher accuracy
+			- The idea is that GD will create a great CNN feature extractor and PSO will be able to use it and training its own classification layer on top of it
+				=> Goal is for PSO to be of significant improvement (accuracy GAP to be significant) and if possible to have PSO increase accuracy beyond 90%
+				=> Problems: PSO suffers under high dimensionality, the more dense layers with higher parameters the worse the result. Also PSO basically cant train CNNs, so conv layers in the head are out of the question
+				=> GD backbone (good features, weak classifier), PSO head (small dense layer)
+				=> Conv features that are good, but final decision boundary is suboptimal
 	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
 
 ## =======================================================================================

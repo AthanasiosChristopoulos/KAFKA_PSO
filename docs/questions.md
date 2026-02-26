@@ -32,7 +32,7 @@
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
 			- Comparison with Gradient Descent ?
-			- GUI / .e					- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?	- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?nv as User Interface ?
+			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?	- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?nv as User Interface ?
 			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?
 			
 		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
