@@ -97,6 +97,20 @@ public class Dl4jModelFactory {
 			model = createLetterModel(workerId);
 			// model = createLetterModel70K(workerId);
 
+		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
+			// model = createMNISTModelMLP(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNIST4Cnn(workerId);	// 70ms forward pass
+			// model = createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
+			// model = createMNIST4MLP(workerId);
+			// model = createMNIST4MLP_Reduced(workerId);
+			// model = createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
+			// model = createMNIST4Cnn_New_Simpler(workerId);
+			model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+
+		// ======================================================================================================================
+
 		} else if ("mnist".equals(DATASET)) {
 
 			cfg.USING_PRETRAINED_MODEL = true;
@@ -158,40 +172,13 @@ public class Dl4jModelFactory {
 					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.84, 0.86 with freeze index 1
 					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(workerId, filename);	// 0.84, 0.86 with freeze index 1
 					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(workerId, filename, 64);	// 0.23
-					case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% 
+					case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
 
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			}
 
-			// 1)
-			// pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);
-			// pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);		// not working
-			// pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
-
-			// 2) 
-			// model = createMNIST_CNN_Pretrained_MNIST_v1(workerId, filename);						// v1
-			// pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64); 			// v1
-			// pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5); 	// v2
-			// pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128); 	// v3
-			// 4)
-			// pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50); 
-			
-
-		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
-			// model = createMNISTModelMLP(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNIST4Cnn(workerId);	// 70ms forward pass
-			// model = createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
-			// model = createMNIST4MLP(workerId);
-			// model = createMNIST4MLP_Reduced(workerId);
-			// model = createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			// model = createMNIST4Cnn_New_Simpler(workerId);
-			model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
-
-
-		// ======================================================================================================================
+		// ======================================================================================================================	
 
 		} else if (DATASET.contains("cifar")) {
 
@@ -209,25 +196,28 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			String choose_model;
-			// choose_model = "mobileNet";
-			choose_model = "v1_v4";
+			int version = 3;
+			String filename;
 
-			if(choose_model.equals("v1_v4")) {
-				String filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+			switch (version) {
+				case 1 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
+				case 2 -> filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
+				case 1 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
+				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
+			}
 
-				if(preTrained) {
-					model = pretrainedModelCIFAR(filename);		// pretrained model size: 288298 parameters
-				} else { 
-					pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-					// this is pretrained for cifar10, but can still use it for cifar 3
+			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
+			if (preTrained) {
+				switch (version) {
+					case 1 -> model = pretrainedModelCIFAR(filename);
+					case 2 -> model = pretrainedModelMobileNetV2(filename);
+					default -> throw new IllegalStateException("Unknown ???" );
 				}
-			} else if(choose_model.equals("mobileNet")) {
-				String filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-				if(preTrained) {
-					model = pretrainedModelMobileNetV2(filename);  	// pretrained model size: 2261827 parameters (approximately 10 times larger)
-				} else { 
-					pair = createCifarFromMobileNetV2Base(workerId, filename);
+			} else {
+				switch (version) {
+					case 1 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 2 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
+					default -> throw new IllegalStateException("Unknown ???");
 				}
 			}
 
