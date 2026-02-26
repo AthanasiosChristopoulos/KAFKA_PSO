@@ -11,6 +11,7 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import utils.Config;
+import utils.NhwcToFeedForwardPreProcessor;
 
 import java.io.File;
 
@@ -145,8 +146,8 @@ public class Dl4jModelFactory {
 					case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
 					case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6(workerId, filename, 256);	// 0.53
 					// case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6_1(workerId, filename, 64);	// 0.71
-					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7(workerId, filename);	// 0.53
-					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(workerId, filename, 64);	// 0.53
+					case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7(workerId, filename);	// 0.53
+					// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(workerId, filename, 64);	// 0.53
 					default -> throw new IllegalArgumentException("Unknown version: " + version);
 				}
 			}
@@ -923,7 +924,7 @@ public class Dl4jModelFactory {
 						.build())
 				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
 				// truncated has 4 layers => new OutputLayer is index 4
-				.setInputPreProcessor(4, new CnnToFeedForwardPreProcessor(c, h, w))
+				.setInputPreProcessor(4, new NhwcToFeedForwardPreProcessor(7, 7, 64))
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -951,8 +952,10 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 			.fineTuneConfiguration(ftc)
-			.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG).build()) // -> [N, C]
-			
+			.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG)
+				.poolingDimensions(1, 2)   // NHWC: pool H,W
+				.collapseDimensions(true)  // default, keeps output [N, C]
+				.build())
 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 				.nIn(inputDim)                 // because conv2d_1 outputs 64 channels
 				.nOut(NUM_CLASSES)

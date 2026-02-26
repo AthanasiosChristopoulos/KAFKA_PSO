@@ -20,6 +20,21 @@ Library  | What it is                                     | Imports
  - Evaluation won’t give you the full probs array for every sample, because it’s designed to aggregate results, not return raw outputs.  
     - similar to output, but gives an overall ACC / AUC / F1 / ... score (from all batches reduced)
 
+## DL4J Model Building ====================================================================
+```java
+.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG)
+    .poolingDimensions(1, 2)   // NHWC: pool H,W, TAKES AS ARGUMENT THE AXES INDEX
+    .collapseDimensions(true)  // default, keeps output [N, C]
+    .build())
+```
+
+GlobalPoolingLayer takes a rank-4 tensor (CNN output) and reduces some axes by averaging to rank 2 tensor.
+A 4-rank tensor has: axes = [axes_0, axes_1, axes_2, axes_3 ] 
+In Keras: [N, H, W, C] = [batch, height, width, channels]   // .poolingDimensions(1, 2)
+In DL4J: [N, C, H, W] = [batch, channels, height, width]    // .poolingDimensions(2, 3)
+Global Average Pooling should do: [N, 7, 7, 64]  →  [N, 64]
+   => we want to collapse the Height and Width dimensionality not the Channel
+
 ## DL4J workspaces =================================================================================
 
  - ND4J workspace as a reusable arena of memory
@@ -64,7 +79,7 @@ With workspaces:
         => activation buffers for largest batch
         => Memory allocated per model is persistent after first output
 
-## On output(): ============================================================================================================
+## On output(): ===============================================================================
 
  - Runs forward pass inside a workspace
    => wrapping MultiLayerNetwork.output() in your own workspace is not compatible with that internal check. of outputOfLayerDetached()
@@ -88,8 +103,6 @@ The question is whether they’re:
 
 ✅ output(x,false) = “give me a detached output; therefore no workspace must be open”
 ✅ output(x,false, ws) = “put output into this workspace; it’s allowed for a workspace to be open”
-
-
 
 
 If there are exactly one workspace per thread, then:
