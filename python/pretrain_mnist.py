@@ -374,15 +374,13 @@ def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
     
     filename, mnist_model_function = model_registry[version]
 
-    if(DATASET == "fashion_mnist"):
+    if "fmnist" in version:
         x_train, y_train, x_test, y_test = load_fashion_mnist()
-        model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
-        name_h5_file = f"fmnist_base_plus_head"
-
     else: 
         x_train, y_train, x_test, y_test = load_mnist()
-        model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
-        name_h5_file = filename
+
+    model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
+    name_h5_file = filename
 
 
     callbacks = [

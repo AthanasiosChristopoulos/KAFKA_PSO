@@ -118,7 +118,7 @@ public class Dl4jModelFactory {
 			switch (version) {
 				// case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 				// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-				case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
+				case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 90% Partial Freeze
 				case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
@@ -142,7 +142,7 @@ public class Dl4jModelFactory {
 
 					// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 					// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800);
+					case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 90% Partial Freeze
 					case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
 					case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
 					case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
