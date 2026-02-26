@@ -112,6 +112,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     public CoordinatorProcessor(PsoModel globalModel, PsoModel bestGlobalModel, 
             long t0, long t1, String testStoreName, PsoModel preTrainedModel, int start) {
+
         this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.t0 = t0;
@@ -489,9 +490,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
         if(false && cfg.USING_PRETRAINED_MODEL) {
             float[] accLoss;
-            try (MemoryWorkspace ws = Nd4j.getWorkspaceManager().scopeOutOfWorkspaces()) {
-                accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
-            }
+            accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
@@ -506,8 +505,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             preTrainedModel.close();
             preTrainedModel.params().close();
             preTrainedModel = null;
-            System.gc();
-            System.runFinalization();
             Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }
         

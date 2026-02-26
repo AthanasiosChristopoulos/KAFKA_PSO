@@ -101,7 +101,7 @@ public class Coordinator implements Runnable {
         this.bestGlobalModel = pair_best.getFirst();
         this.start = pair_best.getSecond();
 
-        if(cfg.USING_PRETRAINED_MODEL) {
+        if(cfg.USING_PRETRAINED_MODEL || cfg.FREEZE) {
             this.preTrainedModel = Dl4jModelFactory.createModel(-1, true).getFirst();
             if(logger.isEnabled(2)) logger.log("Pretrained Summary ===========================================");
             if(logger.isEnabled(2)) logger.log(this.preTrainedModel.summary());

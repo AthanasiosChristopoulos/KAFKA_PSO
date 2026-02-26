@@ -69,6 +69,36 @@ def build_fmnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
+def build_fmnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        # Base CNN (feature extractor)
+        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Flatten(),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
     model = keras.Sequential([
@@ -118,10 +148,6 @@ def build_mnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
 
         layers.Flatten(),
 
-        # Optional base representation layer
-        # layers.Dense(64, activation="relu", use_bias=True),
-
-        # Head for Fashion-MNIST pretraining
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -328,10 +354,11 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 # ===============================================================================
 # Train + Export
 
-def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
+def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
 
-    version = "v8"
-    
+    # version = "v8"
+    version = "v2_fmnist"
+
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
         "v2": ("mnist_base_plus_head_v2", build_mnist_base_plus_head_v2),
@@ -341,6 +368,8 @@ def train_and_export(out_dir="pretrained_model", epochs=3, batch_size=128):
         "v6": ("mnist_base_plus_head_v6", build_mnist_base_plus_head_v6),
         "v7": ("mnist_base_plus_head_v7", build_mnist_base_plus_head_v7),
         "v8": ("mnist_base_plus_head_v8", build_mnist_base_plus_head_v8),
+        "v1_fmnist": ("fmnist_base_plus_head_v1", build_fmnist_base_plus_head_v1),
+        "v2_fmnist": ("fmnist_base_plus_head_v2", build_fmnist_base_plus_head_v2),
     }
     
     filename, mnist_model_function = model_registry[version]

@@ -108,6 +108,7 @@ public class Config {
     public final String EXPERIMENTATION_MODE;
 
     public final boolean FREEZE;
+    public final int FREEZE_INDEX;
 
     //=============================================================================================================
 
@@ -316,6 +317,7 @@ public class Config {
         // this.USING_PRETRAINED_MODEL = Boolean.parseBoolean(getenv(dotenv, "USING_PRETRAINED_MODEL", "false"));
         this.USING_PRETRAINED_MODEL = false;
         this.FREEZE = Boolean.parseBoolean(getenv(dotenv, "FREEZE", "true"));
+        this.FREEZE_INDEX = Integer.parseInt(getenv(dotenv, "FREEZE_INDEX", "0"));
 
         this.REGULARIZER = getenv(dotenv, "REGULARIZER", "NONE");
         

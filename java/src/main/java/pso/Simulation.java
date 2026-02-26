@@ -78,22 +78,6 @@ public class Simulation {
         System.out.println(model.summary());
         // System.exit(0);
 
-        // ComputationGraph model = createCifarFromMobileNetV2Base(-1, fileName, 10);
-        // System.out.println(model.summary());
-        // System.out.println("numParams = " + model.numParams());
-        // System.out.println("outputs = " + Arrays.toString(model.getConfiguration().getNetworkOutputs().toArray()));
-        // // INDArray x = Nd4j.rand(new long[]{1, 3, 32, 32});   // NCHW (Number of samples, channels, height, width)
-        // INDArray x = Nd4j.rand(new long[]{1, 32, 32, 3});   // NHWC (Number of samples, height, width, channels)
-
-        // INDArray y = model.outputSingle(false, x);
-        // System.out.println("y shape = " + Arrays.toString(y.shape())); // expect [1, numClasses]
-
-        // MultiLayerNetwork model = Dl4jModelFactory.pretrainedModelCIFAR(filename).asMultiLayerNetwork();
-        // System.out.println("OK loaded:");
-        // System.out.println(model.summary());
-        
-        // System.exit(0);
-
         System.out.println("printCudaCudnnVersions");
         // printCudaCudnnVersions();
         // =============================================================================================
