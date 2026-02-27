@@ -83,6 +83,107 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
+## ======================================================================
+## Server Stuff =========================================================
+```bash
+ssh achristopoulos@polytechnix.softnet.tuc.gr
+# enter with:
+# username: achristopoulos
+# password: Erwd!oS21
+
+# Launches you into:
+achristopoulos@polytechnix:~$  === achristopoulos@polytechnix:/home/achristopoulos$
+    => This is the home directory: ~ is the home directory of the current user
+
+# Check also with 
+pwd
+```
+
+NAS = Network Attached Storage
+ - High Disk Volume for every but available only through the network
+
+```bash
+cd /mnt/nas_drive/achristopoulos
+df -h .     # Disk Storage overall
+du -sh .    # Disk Storage of your own files
+
+docker --version
+
+```
+
+
+
+ds123f15@ds123f15-Nitro-AN515-57:~$ ^C
+ds123f15@ds123f15-Nitro-AN515-57:~$ ssh achristopoulos@polytechnix.softnet.tuc.gr
+achristopoulos@polytechnix.softnet.tuc.gr's password: 
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-92-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Fri Feb 27 04:55:49 PM UTC 2026
+
+  System load:                      6.603515625
+  Usage of /:                       86.2% of 877.18GB
+  Memory usage:                     26%
+  Swap usage:                       99%
+  Temperature:                      31.0 C
+  Processes:                        1151
+  Users logged in:                  3
+  IPv4 address for br-113cb6b8be10: 192.168.192.1
+  IPv4 address for br-400e4d3de2a2: 192.168.240.1
+  IPv4 address for br-432a0ba7132e: 172.30.0.1
+  IPv4 address for br-57cf8a87930e: 172.19.0.1
+  IPv4 address for br-5c641bd65b3c: 172.24.0.1
+  IPv4 address for br-5e119f36ea0d: 172.31.0.1
+  IPv4 address for br-6a3c198f962f: 172.27.0.1
+  IPv4 address for br-769f9bde856e: 172.23.0.1
+  IPv4 address for br-9759ed98ce96: 172.21.0.1
+  IPv4 address for br-9a3757b4c864: 172.28.0.1
+  IPv4 address for br-9c01870fa928: 192.168.224.1
+  IPv4 address for br-9c20c56e9ab4: 172.20.0.1
+  IPv4 address for br-a195a21a49d4: 172.26.0.1
+  IPv4 address for br-aca37d0c7092: 172.25.0.1
+  IPv4 address for br-b4176f0e85dc: 192.168.64.1
+  IPv4 address for br-b535d3fe4715: 172.22.0.1
+  IPv4 address for br-ba0750f5d1f5: 172.18.0.1
+  IPv4 address for br-d9a1387af70b: 172.29.0.1
+  IPv4 address for docker0:         172.17.0.1
+  IPv4 address for eno8303:         147.27.14.250
+
+  => / is using 86.2% of 877.18GB
+  => There are 206 zombie processes.
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+404 updates can be applied immediately.
+303 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+94 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+New release '24.04.4 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+achristopoulos@polytechnix:~$ 
+
+here is some info for you ... 
 
 ## Related Work: =============================================
 
