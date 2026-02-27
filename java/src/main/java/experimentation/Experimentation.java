@@ -15,7 +15,7 @@ import java.time.Duration;
 public class Experimentation {
 
     private static final Config cfg = Config.getInstance();
-    private static String bootstrap = "localhost:9092";
+    private static String bootstrap = cfg.KAFKA_HOST;
     private static float LOSS_THRESHOLD_MIN_ORIGINAL;
     private static float LOSS_THRESHOLD_MAX_ORIGINAL;
 

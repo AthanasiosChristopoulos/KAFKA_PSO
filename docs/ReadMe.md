@@ -83,10 +83,12 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
+
 ## ======================================================================
 ## Server Stuff =========================================================
 ```bash
 ssh achristopoulos@polytechnix.softnet.tuc.gr
+Erwd!oS21
 # enter with:
 # username: achristopoulos
 # password: Erwd!oS21
@@ -104,6 +106,7 @@ NAS = Network Attached Storage
 
 ```bash
 cd /mnt/nas_drive/achristopoulos
+cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
 df -h .     # Disk Storage overall
 du -sh .    # Disk Storage of your own files
 

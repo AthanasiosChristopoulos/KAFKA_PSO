@@ -133,7 +133,7 @@ public class Coordinator implements Runnable {
 
         // Shared base properties (we will clone and override app.id / threads per instance)
         Properties baseProps = new Properties();
-        baseProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        baseProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST);
         baseProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         baseProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5MB
@@ -144,14 +144,14 @@ public class Coordinator implements Runnable {
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
         mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
-        mainProps.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams/main-" + RUN_ID);
+        mainProps.put(StreamsConfig.STATE_DIR_CONFIG, cfg.KAFKA_TMP_DIR + "/main-" + RUN_ID);
 
         // GBEST instance props (separate app.id!)
         Properties gbestProps = new Properties();
         gbestProps.putAll(baseProps);
         gbestProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-gbest-relay-" + RUN_ID);
         gbestProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
-        gbestProps.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams/gbest-" + RUN_ID);
+        gbestProps.put(StreamsConfig.STATE_DIR_CONFIG, cfg.KAFKA_TMP_DIR + "/gbest-" + RUN_ID);
 
         // Build topologies =============================================================
 

@@ -10,7 +10,7 @@ public class SimulationRunner {
         int numWorkers = cfg.N_WORKERS;
 
         // IMPORTANT for Kafka Streams: unique state dir / application.id per run
-        var baseStateDir = java.nio.file.Path.of("/tmp/kstreams/run-" + System.currentTimeMillis());
+        var baseStateDir = java.nio.file.Path.of(cfg.KAFKA_TMP_DIR + "/run-" + System.currentTimeMillis());
         java.nio.file.Files.createDirectories(baseStateDir);
 
         MetricsCollector collector = new MetricsCollector(numWorkers);
