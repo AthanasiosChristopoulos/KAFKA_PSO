@@ -202,7 +202,6 @@ If N_WORKERS > N_PARTITIONS, then #(N_WORKERS - N_PARTITIONS) workers will remai
 
 ## Kafka Message Documentation: =======================================================
 
-
 Input pBest-weights-topic:
 
     Field             | Type

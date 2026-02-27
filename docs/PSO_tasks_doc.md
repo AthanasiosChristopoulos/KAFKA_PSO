@@ -108,6 +108,8 @@
 				=> Conv features that are good, but final decision boundary is suboptimal
 	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
 
+	60) Write dimplomatiki
+
 ## =======================================================================================
 
 	Backlog Tasks:
@@ -155,7 +157,7 @@
 ## =====================================================================================================
 
 	Thesis Structure:
-		- Acknowledgement
+		- Acknowledgements
 		- Abstract
 		- Table of Contents
 		- Introduction (Why is this a current world problem, why this field of research has a problem in the modern world and what is my solution to this problem):
@@ -168,13 +170,16 @@
 		- Motivation
 		- Related Work 
 		- Thesis Contribution
+
 		- Theoretical Background => is this generall in nature or what is necessary to understand before proceding ???:
 			- Kafka / Kafka Streams (copy paste ???)
 			- Classification Task Explained + Neural Networks:
 				- FNNs / MPLs
 				- CNNs	
+			- Transfer Learning
 			- Federated Learning (Distributed Learning ???)
 			- PSO
+			
 		- Functional and Non Functional System Requirements
 			- εξηγω τι χρειαζεται να κανει το προγραμμα μου πριν εξηγησω πως το κανει
 
@@ -192,11 +197,14 @@
 				- choose between them using .env interface => "User Interface"
 			- Performance of the program (how the forward pass needs to be the bottleneck and that it doesnt matter if you add extra work to the transformers)
 
-
 		- Experimental Evaluation:
-			- Run it locally 
-			- Run it on a server
-			
+			- Datasets it run on with their corresponding models
+			- Special Transfer learning stuff for CNN Datasets and Excuses
+			- Measure Accuracy and Performance:
+				- Run it locally 
+				- Run it on a server
+				- Using different .env stuff 
+
 		- Future Work
 
 ## ================================================================================================

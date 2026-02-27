@@ -1,0 +1,168 @@
+% chapters/07_implementation.tex
+\chapter{Implementation}
+
+\section{Protocol}
+
+The standard Particle Swarm Optimization (PSO) protocol must be adapted in order to operate correctly and efficiently in a distributed, streaming environment based on Kafka and Kafka Streams. That is, because in a single-device setting, information such as the global best solution can be accessed and updated instantly by all particles. 
+
+However, in this case, workers need to communicate with each other via Kafka records and Kafka topics. This communication is costly on both time and energy. This is to say there is some latency between worker communication and pBest sharing.
+
+This section first presents the baseline PSO protocol and then describes the proposed distributed, data-parallel Kafka-based PSO protocol.
+
+\subsection{Baseline PSO Protocol}
+
+Particle Swarm Optimization (PSO) is a population-based stochastic optimization algorithm inspired by the social behavior of swarms. The algorithm maintains a population of particles, where each particle represents a candidate solution in a $d$-dimensional search space.
+
+Each particle $i$ is associated with:
+\begin{itemize}
+    \item a position vector $x_i \in \mathbb{R}^d$,
+    \item a velocity vector $v_i \in \mathbb{R}^d$,
+    \item a personal best position $pbest_i$,
+\end{itemize}
+while the swarm maintains a global best position $gbest$.
+
+The baseline PSO algorithm proceeds as follows:
+
+\begin{enumerate}
+    \item Initialize a population of particles with random positions and velocities in the search space.
+    \item Evaluate the fitness function for each particle.
+    \item For each particle, update its personal best:
+    \[
+    \text{if } f(x_i) < f(pbest_i) \Rightarrow pbest_i \leftarrow x_i
+    \]
+    \item Update the global best:
+    \[
+    gbest = \arg\min_{i} f(pbest_i)
+    \]
+    \item Update velocity and position:
+    \[
+    v_i \leftarrow w v_i + c_1 r_1 (pbest_i - x_i) + c_2 r_2 (gbest - x_i)
+    \]
+    \[
+    x_i \leftarrow x_i + v_i
+    \]
+    where $r_1, r_2 \sim U(0,1)$ are random variables.
+    \item Repeat steps 2--5 until a stopping criterion is met (e.g., maximum iterations or desired fitness).
+\end{enumerate}
+
+Variants of PSO replace $gbest$ with a local neighborhood best ($lbest$) or use fully informed PSO (FIPS), where particles are influenced by multiple neighbors.
+
+\subsection{Distributed / Kafka-based PSO Protocol}
+
+To scale PSO training to large datasets and models, we design a distributed, data-parallel PSO protocol implemented on top of Kafka and Kafka Streams. In this setting, each worker is responsible for evaluating and updating one or more particles using a partition of the training data.
+
+\subsubsection{Initialization Phase}
+
+\begin{itemize}
+    \item A global neural network architecture is defined. The architecture remains fixed throughout training; only the weights are optimized.
+    \item Each particle is initialized with random weights (position) and velocities.
+    \item Each worker is assigned one or more particles.
+    \item The training dataset is partitioned and distributed across workers via Kafka topics.
+\end{itemize}
+
+\subsubsection{Worker-Side Training Loop}
+
+Each worker executes the following loop until a termination condition is met:
+
+\begin{enumerate}
+    \item For each mini-batch of size \texttt{BATCH\_SIZE}:
+    \begin{itemize}
+        \item Evaluate the particle position (model weights) on the batch using a potentially non-differentiable loss function.
+        \item If the current loss improves the personal best, update $pbest_i$.
+        \item Publish updated $pbest_i$ to the \texttt{PBEST\_WEIGHTS\_TOPIC}.
+    \end{itemize}
+
+    \item Receive neighborhood information:
+    \begin{itemize}
+        \item In the neighborhood-best variant: receive $gbest$ from the coordinator.
+        \item In the fully-informed variant (FIPS): receive a set of neighbor $pbest_j$ values.
+    \end{itemize}
+
+    \item Update velocity and position:
+    \[
+    v_i^{new} = w v_i + \frac{c}{M} \sum_{j=1}^{M} r_j (pbest_j - x_i)
+    \]
+    \[
+    x_i^{new} = x_i + v_i^{new}
+    \]
+
+    \item After processing all batches, send the current particle weights $x_i$ to the \texttt{LOCAL\_WEIGHTS\_TOPIC} for aggregation (e.g., FedAvg-style averaging).
+\end{enumerate}
+
+\subsubsection{Coordinator Responsibilities}
+
+A central coordinator component performs the following:
+
+\begin{itemize}
+    \item Receives $pbest$ updates from all workers and maintains the global best solution $gbest$.
+    \item Publishes $gbest$ to workers through the \texttt{GLOBAL\_WEIGHTS\_TOPIC}.
+    \item Aggregates the current particle positions $x_i$ into a global model $x_g$ using averaging:
+    \[
+    x_g = \frac{1}{N} \sum_{i=1}^{N} x_i
+    \]
+    \item Evaluates the aggregated model on validation/test data.
+    \item Terminates training if:
+    \begin{itemize}
+        \item the target accuracy is reached, or
+        \item the training data stream is exhausted.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Post-Training Inference}
+
+After training completes, the coordinator retains the best global model and continues operating in inference mode by consuming data from the \texttt{PREDICTION\_INPUT\_TOPIC} and publishing predictions to the \texttt{PREDICTION\_OUTPUT\_TOPIC}.
+
+\subsubsection{Discussion}
+
+Unlike the baseline PSO, where all particles share memory and global information is instantly available, the distributed protocol requires explicit communication via Kafka topics. This introduces communication overhead but enables scalable, data-parallel training across multiple workers and large datasets. The design also supports both neighborhood-based PSO and fully informed PSO (FIPS), making it flexible for different optimization strategies.
+
+\section{System Architecture}
+\subsection{Kafka Topology}
+% Diagram placeholder:
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=0.9\textwidth]{figures/topology.pdf}
+%   \caption{Kafka Streams topology (placeholder).}
+% \end{figure}
+
+\subsection{Project Class Hierarchy}
+% Describe modules/classes at a high level.
+
+\subsection{Transforms / Processing Stages}
+% Explain each transform and why it exists.
+
+\section{Gradient Descent vs PSO}
+\subsection{Optimization Signal}
+% Gradients vs black-box evaluation.
+
+\subsection{Effect of Dimensionality}
+% Curse of dimensionality, parameter count, etc.
+
+\section{Non-Differentiable Loss Functions}
+\subsection{Loss Function A (placeholder)}
+% Show why non-differentiable + implications.
+
+\subsection{Loss Function B (placeholder)}
+% Show why non-differentiable + implications.
+
+\subsection{Loss Function C (placeholder)}
+% Show why non-differentiable + implications.
+
+\subsection{Comparative Performance}
+% Experimental results summary table placeholder.
+
+\section{PSO Techniques Used}
+\subsection{Technique Selection via Configuration}
+% .env interface => "User Interface"
+\begin{itemize}
+  \item Inertia strategies (placeholder)
+  \item Neighborhood topology selection (placeholder)
+  \item FIPS toggle (placeholder)
+\end{itemize}
+
+\section{Performance Considerations}
+\subsection{Forward Pass as Bottleneck}
+% Explain what dominates runtime and why.
+
+\subsection{Transformer Overhead}
+% Why extra transformer work may not matter compared to inference.
