@@ -164,11 +164,20 @@
 ## =====================================================================================================
 
 	Thesis Structure:
+		- Acknowledgement
+		- Abstract
+		- Table of Contents
+		- Introduction (Why is this a current world problem, why this field of research has a problem in the modern world):
+			- Need to study PSO:
+				- Non Differentiable Function
+			- Federated / Distrubuted Processing enviroment
+			- Why i choose Kafka / Kafka Streams as the architecture 
+			- What this work / project contributes
+		- Motivation
+		- Related Work 
+		- Thesis Contribution
+		- Theoretical Background
 
-		- Motivation, Table of Contents
-		- Related Work / Thesis Contribution
-		- Introduction (Theoretical Background)
-		
 		- Implementation:
 			- Architecture (Kafka Topology, Project Class Hierarchy)
 			- Difference between GD and PSO

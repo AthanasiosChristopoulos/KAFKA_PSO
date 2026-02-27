@@ -257,7 +257,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             //     return;
             // }
 
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel);  // inference / evaluate every time all workers current models arrive
+            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel, false);  // inference / evaluate every time all workers current models arrive
                                                                                 // monitor how training is going
             accuracy = accLoss[0];
             loss = accLoss[1];
@@ -490,7 +490,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         
         if(false && cfg.USING_PRETRAINED_MODEL) {
             float[] accLoss;
-            accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel);
+            accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel, true);
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
@@ -505,7 +505,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             preTrainedModel.close();
             preTrainedModel.params().close();
             preTrainedModel = null;
-            Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }
         
 

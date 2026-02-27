@@ -269,7 +269,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         bufferSizeAcc += buffer.size();
 
-        float[] accLoss = ws.predictor.callPredictionsBatch(buffer, ws.model);    // this is a forward pass
+        float[] accLoss = ws.predictor.callPredictionsBatch(buffer, ws.model, false);    // this is a forward pass
         if(accLoss == null) {
             control.requestStopFinal(); // a serious error has happend
             return null;

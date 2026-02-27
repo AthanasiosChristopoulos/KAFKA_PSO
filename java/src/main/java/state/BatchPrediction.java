@@ -258,7 +258,7 @@ public class BatchPrediction {
     // }
     // ===========================================================================
 
-    public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model) {
+    public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model, boolean deleteWorkspace) {
 
         // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() +  "] START");
         GpuMem.log("[Worker " + workerId + "] START");
@@ -485,7 +485,7 @@ public class BatchPrediction {
         // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         // Nd4j.getMemoryManager().purgeCaches();
 
-        if (GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500) {
+        if (GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500 || deleteWorkspace) {
             System.out.println("Reducing Memory: Destroying workspaces");
             Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }

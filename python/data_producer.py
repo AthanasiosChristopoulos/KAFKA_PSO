@@ -34,6 +34,8 @@ BATCH_FLUSH = int(os.getenv("BATCH_FLUSH"))
 NUMBER_OF_DATA_REPEATS = 1
 NUMBER_OF_DATA_REPEATS_TEST = 1
 
+# ==============================================================================================
+
 if(DATASET == "iris" or DATASET == "wine"):
     NUMBER_OF_DATA_REPEATS = 2500
     NUMBER_OF_DATA_REPEATS_TEST = 2
@@ -77,6 +79,8 @@ if(DATASET == "mnist4"):
 if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
     NUMBER_OF_DATA_REPEATS_TEST = 1
+
+# ==============================================================================================
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "mnist", "mnist4", "fashion_mnist")
 

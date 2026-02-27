@@ -202,20 +202,21 @@ public class Dl4jModelFactory {
 			switch (version) {
 				case 1 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 				case 2 -> filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-				case 1 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
+				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
-					case 1 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3 -> model = pretrainedModelCIFAR(filename);
 					case 2 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
+
 				switch (version) {
-					case 1 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 2 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					default -> throw new IllegalStateException("Unknown ???");
 				}
@@ -316,12 +317,15 @@ public class Dl4jModelFactory {
 				.inferenceWorkspaceMode(WorkspaceMode.NONE)
 				.build();
 
+		int start = (int) new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)
+			.build().numParams();
+
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
 			.removeLayersFromOutput(1)
 			.build();
-
-		int start = (int) truncated.numParams();
 		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
