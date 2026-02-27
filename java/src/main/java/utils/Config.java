@@ -9,6 +9,9 @@ public class Config {
 
     private static Config instance = new Config();     // Singleton
 
+    public final String KAFKA_TMP_DIR;
+    public final String KAFKA_HOST;
+
     public final int NUM_FEATURES;      // Number of Features of Dataset
     public final int NUM_CLASSES;     // Number of Classes of Dataset
     public final int NEURAL_OUTPUT;     // Number of Classes of Dataset
@@ -115,7 +118,9 @@ public class Config {
     public Config() {
         
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        
+        this.KAFKA_TMP_DIR = getenv(dotenv, "cfg.KAFKA_TMP_DIR", "/tmp/kstreams");
+        this.KAFKA_HOST = getenv(dotenv, "KAFKA_HOST", "localhost:9092");
+
         this.DATASET = getenv(dotenv, "DATASET", "iris");
         this.DATA_TOPIC = this.DATASET + "-input";
         this.TEST_TOPIC = this.DATASET + "-test";

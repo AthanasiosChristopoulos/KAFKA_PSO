@@ -115,11 +115,11 @@ public class Worker implements Runnable {
         // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);     // different group Id, processing of the same data
         // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + "_" + RUN_ID);        // same group Id, parallel processing
        
-        props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstreams-" + RUN_ID + "-worker-" + workerId);
+        props.put(StreamsConfig.STATE_DIR_CONFIG, cfg.KAFKA_TMP_DIR + "-" + RUN_ID + "-worker-" + workerId);
         props.put(StreamsConfig.CLIENT_ID_CONFIG, "pso-worker-" + workerId + "-RUN-" + RUN_ID);
             // Kafka Streams uses this that client id as a prefix when naming its threads,
 
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // for now localhost, but this is the URL of the Kafka cluster
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST); // for now localhost, but this is the URL of the Kafka cluster
         props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
         // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);

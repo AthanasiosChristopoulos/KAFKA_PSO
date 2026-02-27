@@ -40,8 +40,9 @@ import java.util.Arrays;
 
 public class Simulation {
 
-    private static String bootstrap = "localhost:9092";
     private static final Config cfg = Config.getInstance();
+
+    private static String bootstrap = cfg.KAFKA_HOST;
 
     public static void main(String[] args) throws Exception {
 
@@ -82,7 +83,7 @@ public class Simulation {
         // printCudaCudnnVersions();
         // =============================================================================================
 
-        var baseStateDir = java.nio.file.Path.of("/tmp/kstreams/");
+        var baseStateDir = java.nio.file.Path.of(cfg.KAFKA_TMP_DIR + "/");
         deleteDir(baseStateDir);
         java.nio.file.Files.createDirectories(baseStateDir);
 

@@ -75,6 +75,9 @@ git push --force origin main (so you dont have to pull first / be up to date)
 
 git checkout main
 
+git config --global user.name "AthanasiosChristopoulos"
+git config --global user.email "athanasioschristopoulos61@gmail.com"
+
 Codes:
 	username: AthanasiosChristopoulos
 	password: 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
@@ -83,13 +86,18 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
+
 ## ======================================================================
 ## Server Stuff =========================================================
 ```bash
 ssh achristopoulos@polytechnix.softnet.tuc.gr
+Erwd!oS21
 # enter with:
 # username: achristopoulos
 # password: Erwd!oS21
+
+ssh-keygen -t ed25519   # press enter for the options
+ssh-copy-id achristopoulos@polytechnix.softnet.tuc.gr   # no need for passwords afterwards
 
 # Launches you into:
 achristopoulos@polytechnix:~$  === achristopoulos@polytechnix:/home/achristopoulos$
@@ -104,11 +112,13 @@ NAS = Network Attached Storage
 
 ```bash
 cd /mnt/nas_drive/achristopoulos
+cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
 df -h .     # Disk Storage overall
 du -sh .    # Disk Storage of your own files
 
 docker --version
 
+git clone --branch DL4J-PSO-Generic --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
 ```
 
 
