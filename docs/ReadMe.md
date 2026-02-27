@@ -75,6 +75,9 @@ git push --force origin main (so you dont have to pull first / be up to date)
 
 git checkout main
 
+git config --global user.name "AthanasiosChristopoulos"
+git config --global user.email "athanasioschristopoulos61@gmail.com"
+
 Codes:
 	username: AthanasiosChristopoulos
 	password: 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
@@ -92,6 +95,9 @@ Erwd!oS21
 # enter with:
 # username: achristopoulos
 # password: Erwd!oS21
+
+ssh-keygen -t ed25519   # press enter for the options
+ssh-copy-id achristopoulos@polytechnix.softnet.tuc.gr   # no need for passwords afterwards
 
 # Launches you into:
 achristopoulos@polytechnix:~$  === achristopoulos@polytechnix:/home/achristopoulos$
