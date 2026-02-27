@@ -109,6 +109,7 @@ du -sh .    # Disk Storage of your own files
 
 docker --version
 
+git clone --branch DL4J-PSO-Generic --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
 ```
 
 
