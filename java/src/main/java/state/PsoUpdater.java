@@ -15,10 +15,10 @@ import utils.*;
 public class PsoUpdater {
 
     private Config cfg = Config.getInstance();
-    private final float W_INERTIA = cfg.W_INERTIA;
-    private final float W_INERTIA_START = cfg.W_INERTIA_START;
-    private final float W_INERTIA_END = cfg.W_INERTIA_END;
-    private float W_INERTIA_CURRENT = cfg.W_INERTIA;
+    private final float INERTIA = cfg.INERTIA;
+    private final float INERTIA_START = cfg.INERTIA_START;
+    private final float INERTIA_END = cfg.INERTIA_END;
+    private float INERTIA_CURRENT = cfg.INERTIA;
     public final boolean ADAPTIVE_INERTIA = cfg.ADAPTIVE_INERTIA;
 
     private final float C = cfg.C;
@@ -72,12 +72,12 @@ public class PsoUpdater {
     private final SplittableRandom rnd; // SplittableRandom is NOT thread-safe and uses simple arithmetic
 
     // ---- Adaptive inertia (progress-based) ----
-    private float wCurrent = cfg.W_INERTIA_START;   // start high
+    private float wCurrent = cfg.INERTIA_START;   // start high
     private float bestAccEma = -1f;                 // best (so far) EMA of accuracy
     private float accEma = -1f;                     // EMA of current batch accuracy
 
-    private final float W_MIN_ADAPT = cfg.W_INERTIA_END; // exploit
-    private final float W_MAX_ADAPT = cfg.W_INERTIA_START; // explore
+    private final float W_MIN_ADAPT = cfg.INERTIA_END; // exploit
+    private final float W_MAX_ADAPT = cfg.INERTIA_START; // explore
     private final float ACC_EMA_ALPHA = 0.10f;  // smoothing
     private final float IMPROVE_EPS = 0.002f;    // “no progress” threshold (0.2% acc)
     private final float W_STEP_UP = 0.02f;       // explore increase step
@@ -253,13 +253,13 @@ public class PsoUpdater {
             float r1 = rnd.nextFloat();   // randomness. Is dimensional, for every other dimension this is randomly changed
             float r2 = rnd.nextFloat();  
 
-            inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+            inertiaVec[k] = INERTIA_CURRENT * velocity[k];
 
             cognitiveVec[k] = c1 * r1 * (pbest[k] - ws.flatModel[k]);
             socialVec[k] = c2 * r2 * (gbest[k] - ws.flatModel[k]);
             diffPBestGBest[k] = c2 * r2 * (pbest[k] - gbest[k]);
 
-            // float velocity_value = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - ws.flatModel[k]) + C2 * r2 * (gbest[k] - ws.flatModel[k]);
+            // float velocity_value = INERTIA * velocity[k] + C1 * r1 * (pbest[k] - ws.flatModel[k]) + C2 * r2 * (gbest[k] - ws.flatModel[k]);
             
             // float velocity_value = inertiaVec[k] + cognitiveVec[k] + socialVec[k];
             // velocity[k] = clampVelocity(velocity_value);  // velocity clamping implementation
@@ -295,7 +295,7 @@ public class PsoUpdater {
         if(VMAX_CLAMPING_TYPE.equals("NORM")) {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                    ", with INERTIA: " + INERTIA_CURRENT +
                     ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
                     ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
                     ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
@@ -306,7 +306,7 @@ public class PsoUpdater {
         
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " + 
                     "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                    ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                    ", with INERTIA: " + INERTIA_CURRENT +
                     ", cognitive = " + Dl4jParamUtils.rmsScaled(cognitiveVec, 100) + ", c1: " + Dl4jParamUtils.round(c1, 1) +
                     ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) + ", c2: " + Dl4jParamUtils.round(c2, 1) +
                     ", diffPBestGBest = " + Dl4jParamUtils.rmsScaled(diffPBestGBest, 100) + 
@@ -335,7 +335,7 @@ public class PsoUpdater {
         if (neighbors == null || neighbors.isEmpty()) {
 
             for (int k = 0; k < dimensionality; k++) {
-                velocity[k] = W_INERTIA_CURRENT * velocity[k];
+                velocity[k] = INERTIA_CURRENT * velocity[k];
                 // ws.flatModel[k] = ws.flatModel[k] + velocity[k];
             }
             if (WEIGHT_CLAMPING) {
@@ -376,7 +376,7 @@ public class PsoUpdater {
 
         // for (int k = 0; k < socialVec.length; k++) {
         //     socialVec[k] *= scale;
-        //     inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+        //     inertiaVec[k] = INERTIA_CURRENT * velocity[k];
         //     velocity[k] = inertiaVec[k] + socialVec[k];
         // }
         // ===============================================================================
@@ -403,7 +403,7 @@ public class PsoUpdater {
         // // now scale by C only (no /N because weights sum to 1)
         // for (int k = 0; k < socialVec.length; k++) {
         //     socialVec[k] *= C;
-        //     inertiaVec[k] = W_INERTIA_CURRENT * velocity[k];
+        //     inertiaVec[k] = INERTIA_CURRENT * velocity[k];
         //     velocity[k] = inertiaVec[k] + socialVec[k];
         // }
         // ===============================================================================
@@ -454,7 +454,7 @@ public class PsoUpdater {
             for (int d = 0; d < dimensionality; d++) {
                 float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
 
-                inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
+                inertiaVec[d] = INERTIA_CURRENT * velocity[d];
                 // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
 
                 socialVec[d]  = (den[d] / scaleWk) * (Pm_d - ws.flatModel[d]); 
@@ -489,7 +489,7 @@ public class PsoUpdater {
             for (int d = 0; d < dimensionality; d++) {
                 float Pm_d = (den[d] > EPS) ? (num[d] / den[d]) : ws.flatModel[d];
 
-                inertiaVec[d] = W_INERTIA_CURRENT * velocity[d];
+                inertiaVec[d] = INERTIA_CURRENT * velocity[d];
                 // socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]);   // pull toward Pm (screenshot form uses φ outside too)
 
                 socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]); 
@@ -535,7 +535,7 @@ public class PsoUpdater {
         if(VMAX_CLAMPING_TYPE.equals("NORM")) {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
                         "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                        ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                        ", with INERTIA: " + INERTIA_CURRENT +
                         ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
                         ", VMAX_NORM: " + VMAX_NORM + ", velocity_norm: " + velocity_norm + 
                         ", count_updates: " + count_updates
@@ -543,7 +543,7 @@ public class PsoUpdater {
         } else {
             if (logger.isEnabled(0)) logger.log(taskInstance + ", PSO magnitudes: " +
                         "inertia = " + Dl4jParamUtils.rmsScaled(inertiaVec, 100) + 
-                        ", with W_INERTIA: " + W_INERTIA_CURRENT +
+                        ", with INERTIA: " + INERTIA_CURRENT +
                         ", social = " + Dl4jParamUtils.rmsScaled(socialVec, 100) +
                         ", number of Clamps: " + clamp_count + 
                         ", count_updates: " + count_updates
@@ -566,13 +566,13 @@ public class PsoUpdater {
             // this is exponential fall, right around the middle
 
         float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;   
-        W_INERTIA_CURRENT = W_INERTIA_START + progressFactor * (W_INERTIA_END - W_INERTIA_START);  // t = [0, 1]
-            // when t = 1, then W_INERTIA_CURRENT == W_INERTIA_END. This is linear fall of INERTIA
+        INERTIA_CURRENT = INERTIA_START + progressFactor * (INERTIA_END - INERTIA_START);  // t = [0, 1]
+            // when t = 1, then INERTIA_CURRENT == INERTIA_END. This is linear fall of INERTIA
         // Mathematicall equivalent: 
-        // W_INERTIA_CURRENT = W_INERTIA_END + progressFactor * (W_INERTIA_START - W_INERTIA_END);  
+        // INERTIA_CURRENT = INERTIA_END + progressFactor * (INERTIA_START - INERTIA_END);  
         // float progressFactor = (MAX_PSO_UPDATES - updateIndex) / (float) MAX_PSO_UPDATES;      // T = MAX_PSO_UPDATES. 
-        // W_INERTIA_CURRENT = W_INERTIA_MIN + progressFactor * (W_INERTIA_MAX - W_INERTIA_MIN);  // from IEEE PSO survey
-        // if progressFactor = 0 (if updateIndex == MAX_PSO_UPDATES), then W_INERTIA_CURRENT = W_INERTIA_MIN
+        // INERTIA_CURRENT = INERTIA_MIN + progressFactor * (INERTIA_MAX - INERTIA_MIN);  // from IEEE PSO survey
+        // if progressFactor = 0 (if updateIndex == MAX_PSO_UPDATES), then INERTIA_CURRENT = INERTIA_MIN
     }
 
     //================================================================================================
@@ -609,7 +609,7 @@ public class PsoUpdater {
 
         wCurrent = clamp(wCurrent, W_MIN_ADAPT, W_MAX_ADAPT);
 
-        W_INERTIA_CURRENT = wCurrent;  // keep your existing variable as the "source of truth"
+        INERTIA_CURRENT = wCurrent;  // keep your existing variable as the "source of truth"
     }
 
     //================================================================================================

@@ -179,7 +179,7 @@
 			- Transfer Learning
 			- Federated Learning (Distributed Learning ???)
 			- PSO
-			
+
 		- Functional and Non Functional System Requirements
 			- εξηγω τι χρειαζεται να κανει το προγραμμα μου πριν εξηγησω πως το κανει
 
@@ -220,4 +220,7 @@
 		- baseline (no filtering)
 		- with filter
 	- 3 Non-Differential Functions
+
+
+
 

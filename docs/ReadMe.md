@@ -131,7 +131,7 @@ These are the topics that run on Kafka:
     TEST_TOPIC
     PBEST_WEIGHTS_TOPIC
     LOCAL_WEIGHTS_TOPIC
-    GLOBAL_WEIGHTS_TOPIC
+    GPEST_WEIGHTS_TOPIC
     PREDICTION_INPUT_TOPIC
     PREDICTION_OUTPUT_TOPIC
 
@@ -782,10 +782,10 @@ improve the ability to escape local minima
  - Inertia parameters should be adjusted so that velocity decreases slowly overtime as swarm converges
  		- velocity like simulated annealing ? Make it reduce over time
 
- - **W_INERTIA_FULLY > W_INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
+ - **INERTIA_FULLY > INERTIA_G_BEST** because we have to make up for extra directional addition in velocity:
     ```java
-    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
-    float velocity = W_INERTIA * velocity[k] + socialAggregate[k]       // 2 accelarations
+    float velocity = INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]); // 3 accelarations
+    float velocity = INERTIA * velocity[k] + socialAggregate[k]       // 2 accelarations
 
     // some original versions dont have the Inertia term all together. Observed a significant performance decrease when doing so. 
     // FI-PSO is not meant to drop inertia entirely, by itself, FI’s social term is either:
@@ -867,10 +867,10 @@ improve the ability to escape local minima
 
     ```java
     // 1) static randmoness per updateX / Statistically independent dimensions
-    float velocity = W_INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
+    float velocity = INERTIA * velocity[k] + C1 * r1 * (pbest[k] - x_i[k]) + C2 * r2 * (gbest[k] - x_i[k]);   // dimension randomness is different per dimension 
     
     // 2) for each dimensions a different random Number is generated / Statistically dependent (coupled) dimensions:
-    float velocity = W_INERTIA * velocity[k] + C1 * r1[k] * (pbest[k] - x_i[k]) + C2 * r2[k] * (gbest[k] - x_i[k]);  // dimension randomness is the same
+    float velocity = INERTIA * velocity[k] + C1 * r1[k] * (pbest[k] - x_i[k]) + C2 * r2[k] * (gbest[k] - x_i[k]);  // dimension randomness is the same
     ```
     - (1) larger search space / converges less easily / less direction / Each weight can “wiggle” independently
         - May struggle comparatively ro rotated version of the problems. 

@@ -54,7 +54,7 @@ public class GBestProcessor implements Processor<String, WeightsMessage, String,
                         ", with weights: " + Dl4jParamUtils.sampleFlat(msg.weights, SAMPLING_CONSTANT));
         }
 
-        // else: drop, dont write to GLOBAL_WEIGHTS_TOPIC
+        // else: drop, dont write to GPEST_WEIGHTS_TOPIC
     }
 
     @Override

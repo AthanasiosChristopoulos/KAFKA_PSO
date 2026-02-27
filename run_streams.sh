@@ -43,13 +43,13 @@ mvn -q -e -DskipTests \
         
 #         TOPICS=(
 #             "$PBEST_WEIGHTS_TOPIC"
-#             "$GLOBAL_WEIGHTS_TOPIC"
+#             "$GPEST_WEIGHTS_TOPIC"
 #             "$LOCAL_WEIGHTS_TOPIC"
 #         )
 
 #     else
 #         TOPICS=(
-#             "$GLOBAL_WEIGHTS_TOPIC"
+#             "$GPEST_WEIGHTS_TOPIC"
 #         )
 #     fi
 

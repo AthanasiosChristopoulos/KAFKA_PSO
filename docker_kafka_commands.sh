@@ -722,7 +722,7 @@ docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic local-weights-topic --from-beginning
 
-# GLOBAL_WEIGHTS_TOPIC ==============================================================
+# GPEST_WEIGHTS_TOPIC ==============================================================
 
 docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 \
