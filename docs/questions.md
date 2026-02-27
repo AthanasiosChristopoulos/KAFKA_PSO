@@ -14,8 +14,6 @@
 		- αυτην την στιγμη το communication cost ειναι μικροτερο απο οτι θα ειναι στην πραγματικοτητα ? Δηλαδη σε ενα πραγματικο Federated Enviroment, με remote communication protocol, to communication θα ειναι πιο costly ? Γιατι αυτην την στιγμη το processing of data + forward pass ειναι το bottleneck.
 			=> Async protocol, αρα δεν παιζει
 						
-		- Σωστα εκανα τα non differential functions ? Το λεω γιατι ειναι εκτος της ιδια της συναρτησης δεν επιρεαζουν directly την loss συναρτηση
-		
 		- Pretrained ImageNet Models from the Internet on independent datasets wont work. I need to either train my own models and then leave last layer only for training ? This layer would then be "fine-tured" to work with a "non differentiable" loss function or i can get models from the internet that are more specific to our problem (same dimensionality same dataset trained on). Is there a preference between these options ? 
 			Is it ok if:
 				=> Many epochs
@@ -28,6 +26,10 @@
 
 		- Μπορω να αρχισω να γραφω ?
 		
+		- Federated Learning or Distributed Learning ?
+			=> Αρκει να αλλαξω το dataset σε NON-IDD ?
+			=> Αρκει οτι το συστημα εχει μονο το capacity να το κανει αυτο και οτι απλως δεν το εξεταζουμε / δεν το τρεχουμε ετσι για διευκολυνση ?
+
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

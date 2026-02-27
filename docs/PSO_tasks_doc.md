@@ -1,13 +1,4 @@
 
-## =========================================================================
-## Generall Aspects of this Thesis that need Improving / Expanding upon (and how they are combined with each other):
-
- - PSO
- - Neural Networks - Models Used for what datasets
- - Kafka / Kafka Streams
- - Filtering / Efficient Communication Protocol
- - Federated Learning
-
 ## =======================================================================================
 ## Important Pending Tasks:
 	
@@ -167,28 +158,40 @@
 		- Acknowledgement
 		- Abstract
 		- Table of Contents
-		- Introduction (Why is this a current world problem, why this field of research has a problem in the modern world):
+		- Introduction (Why is this a current world problem, why this field of research has a problem in the modern world and what is my solution to this problem):
 			- Need to study PSO:
 				- Non Differentiable Function
 			- Federated / Distrubuted Processing enviroment
 			- Why i choose Kafka / Kafka Streams as the architecture 
-			- What this work / project contributes
+			- What this work is and how this project contributes to it
+
 		- Motivation
 		- Related Work 
 		- Thesis Contribution
-		- Theoretical Background
+		- Theoretical Background => is this generall in nature or what is necessary to understand before proceding ???:
+			- Kafka / Kafka Streams (copy paste ???)
+			- Classification Task Explained + Neural Networks:
+				- FNNs / MPLs
+				- CNNs	
+			- Federated Learning (Distributed Learning ???)
+			- PSO
+		- Functional and Non Functional System Requirements
+			- εξηγω τι χρειαζεται να κανει το προγραμμα μου πριν εξηγησω πως το κανει
 
 		- Implementation:
-			- Architecture (Kafka Topology, Project Class Hierarchy)
-			- Difference between GD and PSO
-				- how much dimensionality affects PSO
 			- Protocol (Differences between normal PSO protocol and distributed / Federated learning / Kafka PSO protocol)
 				=> many things, like the sharing and updating of gBest, can be easily done on the same device.
 				=> that isnt the case with federated, communication is costly 
-			- PSO techniques used
+			- Architecture (Kafka Topology, Project Class Hierarchy)
+				- Exact topology / Kafka Details explained 
+				- Trandformes explained
+			- Difference between GD and PSO
+				- how much dimensionality affects PSO
 			- Different Non - Differentiable Loss Functions. You need to demonstrate about 3 such functions and show that they are non differentiable and the performance while using them.
+			- PSO techniques used:
+				- choose between them using .env interface => "User Interface"
 			- Performance of the program (how the forward pass needs to be the bottleneck and that it doesnt matter if you add extra work to the transformers)
-			- Functional and Non Functional Requirements
+
 
 		- Experimental Evaluation:
 			- Run it locally 
@@ -210,23 +213,3 @@
 		- with filter
 	- 3 Non-Differential Functions
 
-## ================================================================================================
-## Email:
-
-Πρόσβαση στον server για διπλωματική εργασία
-
-Προς: parapi@tuc.gr
-, ngiatrakos@tuc.gr
-
-Καλησπέρα σας,
-
-Ονομάζομαι Αθανάσιος Χριστόπουλος (ΑΜ: 2022030077) και είμαι φοιτητής του ΗΜΜΥ. Στο πλαίσιο της διπλωματικής μου εργασίας, με επιβλέποντα καθηγητή τον κ. Γιατράκο, θα χρειαστώ πρόσβαση στον server, καθώς το project που υλοποιώ απαιτεί αυξημένους υπολογιστικούς πόρους (κυρίως GPU και μνήμη).
-
-Εφόσον είναι εφικτό να μου δοθεί πρόσβαση, θα ήθελα επίσης να ενημερωθώ για τυχόν κανόνες σχετικά με τη χρήση του server. Για παράδειγμα, φοβαμαι οτι θα χρειαστώ σημαντικό χώρο αποθήκευσης (κατά προσέγγιση ~30 GB, δεν ξερω αμα ειναι προβλημα ή οχι).
-
-Ευχαριστω πολυ,
-Αθανάσιος Χριστόπουλος
-
-uname -m 
-nvidia-smi
-ldconfig -p | grep libcudart

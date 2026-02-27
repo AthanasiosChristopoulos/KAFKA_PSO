@@ -108,6 +108,15 @@ Standard PSO works this way:
  - If its a discrete signal, then PSO gets no gradient like guidance, weights change and loss remains the same flat (not informative, doesnt give a direction)
 
 
+## ============================================================================================
+## Generall Aspects / Topics of this Thesis (they are combined with each other):
+
+ - PSO
+ - Neural Networks - Models Used for what datasets
+ - Kafka / Kafka Streams
+ - Filtering / Efficient Communication Protocol
+ - Federated Learning
+
 ## =====================================================================================================
 ## Project Architecture Description: ===================================================================
 
@@ -223,6 +232,54 @@ Input input-weights-topic:
     accuracy          | float
     loss              | float
     weights           | float[]
+
+## Distributed Learning =============================================== 
+
+Distributed learning = training a model using multiple machines/workers that cooperate.
+    - Data-parallel distributed learning, each worker has a partition of the dataset
+    - All workers train the same model architecture (not different parts of the model)
+    - Workers exchange weights with the central node
+    - A central node combines these models (using WeightAvg)
+
+In academic and ML literature, “distributed” is primarily a software / algorithmic concept.
+    - how computation and data are logically divided into multiple workers
+    - NOT necessarily where those workers physically run / Hardware Distribution.
+
+So a system is “distributed” if:
+    - there are multiple workers/processes
+    - This means that 8 processes on 1 laptop is equivalent to 8 machines each running 1 worker
+
+## Federated Learning: ===========================================================
+
+ - Is a special case of Federated Learning
+    => Has extra constraints
+    => Only model updates are shared (true)
+
+ - Workers are client based (run / train on client devices, are not server based - decentralized training):
+    - Data remains local, no data is shared between workers (true)
+    - A worker is an edge device not part of a server (may be true)
+    - Coordinator is on a central server and does FedAvg (true)
+
+ - Local data is non-IID (heterogeneous) and unbalanced (false, not yet implemented)
+
+Is my system Federated Learning: No because
+    The dataset is centrally available and partitioned by you
+    Workers are not independent data owners
+    There is no privacy constraint and no non IDD
+
+Centralized vs Decentralized:
+    => It refers to how control, data, and coordination are organized in the algorithm/system.
+    => and how the hardware is distributed:
+    
+Hardware Distribution: ======================================
+
+| Type           | Meaning                  |
+| -------------- | ------------------------ |
+| Single machine | everything on one laptop |
+| Cluster        | multiple machines        |
+| Edge devices   | phones, IoT, etc.        |
+
+Federated Learning implies hardware distribution between edge devices
 
 ## ===================================================
 ## ===================================================

@@ -24,17 +24,6 @@ PySwarms (Python Library) gives you a way to train models without gradients, usi
 
 -------------------------------------
 
-## Federated Learning:
-
- - Workers are client based (run / train on client devices, are not server based - decentralized training):
-    - Data remains local
-
- - Local data is non-IID (heterogeneous)
- - Data is processed distributedly 
-
- - Workers send weights, not data
- - Coordinator averages weights
-
 ## Microservice:
 
  - Independent deployment (just run a worker.jar)
