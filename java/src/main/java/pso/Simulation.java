@@ -45,7 +45,8 @@ public class Simulation {
     private static String bootstrap = cfg.KAFKA_HOST;
 
     public static void main(String[] args) throws Exception {
-
+        System.out.println("OK loaded:");
+        System.exit(0);
         // =================================================================================================
         // Restart the Kafka Parititions
         
@@ -77,7 +78,7 @@ public class Simulation {
 
         System.out.println("OK loaded:");
         System.out.println(model.summary());
-        // System.exit(0);
+        System.exit(0);
 
         System.out.println("printCudaCudnnVersions");
         // printCudaCudnnVersions();
