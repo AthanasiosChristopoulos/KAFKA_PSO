@@ -9,16 +9,8 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
-  --topic local-weights-topic
-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists
-
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
-  --topic global-weights-topic --from-beginning
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic prediction-input --partitions 1 --if-not-exists

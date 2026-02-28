@@ -125,14 +125,11 @@ def serialize_data_message(sample_index: int, features: np.ndarray, label: int) 
 
     return header + be.tobytes()
 
-# producer = KafkaProducer(
-#     bootstrap_servers = "localhost:9092",
-#     value_serializer = lambda v: json.dumps(v).encode("utf-8") # convert json int bytes before sending
-# )
 
-# .toBytes():
+kafka_host = s.getenv(KAFKA_HOST)
+
 producer = KafkaProducer(
-    bootstrap_servers="localhost:9092",
+    bootstrap_servers=kafka_host,
     value_serializer=lambda m: serialize_data_message(m["sample_index"], m["features"], m["label"])
 )
 
