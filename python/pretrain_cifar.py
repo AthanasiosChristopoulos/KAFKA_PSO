@@ -64,6 +64,27 @@ def export_mobilenetv2_base(save_path="pretrained_model/mobilenetv2_base_32x32.h
     for layer in base_model.layers[-20:]:
         print("  ", layer.name)
 
+
+# ================================================================================================
+
+def export_mobilenetv2_base_224(save_path="pretrained_model/mobilenetv2_base_224x224.h5"):
+    # Feature extractor only (no classifier head)
+    base_model = tf.keras.applications.MobileNetV2(input_shape=(224,224,3), include_top=False, weights="imagenet")
+
+    base_model.trainable = False
+
+    _ = base_model(tf.zeros([1, 224, 224, 3]), training=False)
+
+    print("\n=== Base model summary ===")
+    base_model.summary()
+
+    base_model.save(save_path)
+    print(f"\nSaved base model to: {save_path}")
+
+    print("\nLast 20 layer names (for DL4J setFeatureExtractor / removing vertices):")
+    for layer in base_model.layers[-20:]:
+        print("  ", layer.name)
+
 # ============================================================================================
 
 def export_mobilenetv3small_base(save_path="pretrained_model/mobilenetv3small_32x32.h5"):
@@ -452,8 +473,9 @@ def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
 if __name__ == "__main__":
     
     # export_mobilenetv2_base()
+    export_mobilenetv2_base_224()
     # export_mobilenetv3small_base()
-    train_and_export()
+    # train_and_export()
 
 
     # source ~/venvs/tf215/bin/activate

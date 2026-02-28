@@ -204,7 +204,7 @@ public class Dl4jModelFactory {
 			String filename;
 			
 			if(version == 2) {
-				cfg.TRANSFORM_IMAGE = false;
+				cfg.TRANSFORM_IMAGE = true;
 			}
 
 			switch (version) {

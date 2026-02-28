@@ -255,7 +255,9 @@ public class BatchPrediction {
         for (DataMessage msg : batch) {
             if (msg == null) continue;
 
-            float[] features = msg.features;    // (NUM_FEATURES,)        
+            float[] features = msg.features;    // (NUM_FEATURES,)   
+            System.out.println("features.length = " + features.length);
+     
             if (features == null) {
                 if (logger.isEnabled(2)) logger.log("Null features in DataMessage");
                 continue;
@@ -449,7 +451,10 @@ public class BatchPrediction {
                 }
             }
         }
-
+        System.out.println("NUM_FEATURES = " + NUM_FEATURES);
+        System.out.println("X shape = " + java.util.Arrays.toString(X.shape()));
+        System.out.println("X order = " + X.ordering());
+        System.out.println("Model expects NHWC? " + argument_model.isNhWC());
         if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
 
         // Evaluate input shape ========================================================
