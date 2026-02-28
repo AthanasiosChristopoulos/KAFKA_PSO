@@ -200,10 +200,10 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 2;
+			int version = 5;
 			String filename;
 			
-			if(version == 2) {
+			if(version == 4) {
 				cfg.TRANSFORM_IMAGE = true;
 			}
 
@@ -211,6 +211,8 @@ public class Dl4jModelFactory {
 				case 1 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
 				case 2 -> filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
 				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
+				case 4 -> filename = "pretrained_models_dl4j/mobilenetv2_base_224x224.h5";
+				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
@@ -218,14 +220,15 @@ public class Dl4jModelFactory {
 			if (preTrained) {
 				switch (version) {
 					case 1, 3 -> model = pretrainedModelCIFAR(filename);
-					case 2 -> model = pretrainedModelMobileNetV2(filename);
+					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
 					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-					case 2 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
+					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
+					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
 					default -> throw new IllegalStateException("Unknown ???");
 				}
 			}
@@ -433,6 +436,7 @@ public class Dl4jModelFactory {
 			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
 		}
 	}
+
 	// ===================================================================================================
 
 	public static Pair<PsoModel, Integer> createCifarFromMobileNetV2Base(int workerId, String kerasH5Path) {
@@ -447,8 +451,8 @@ public class Dl4jModelFactory {
 			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 					.seed(123 + workerId)
 					.updater(new NoOp())        // PSO moves weights; no optimizer
-					.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-					.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+					// .cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+					// .inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 					.build();
 
 			// This is the name of the last output layer of MobileNet. Check model.summary (it also indicates if layer has been frozen or not)
@@ -499,6 +503,65 @@ public class Dl4jModelFactory {
 			// 				((ConvolutionLayer) conf).getCudnnAlgoMode());
 			// 	}
 			// }
+
+			return Pair.of(new PsoGraphAdapter(model), start);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import and build transfer model from: " + kerasH5Path, e);
+		}
+	}
+
+	// ===================================================================================================
+
+	public static Pair<PsoModel, Integer> createCifarFromMobileNet(int workerId, String kerasH5Path) {
+		try {
+			// 1) Import Keras base (include_top=False)
+			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
+
+			// start = base params BEFORE adding head
+			int start = (int) base.numParams();
+
+			// 2) Freeze ALL layers in the base (feature extractor)
+			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+					.seed(123 + workerId)
+					.updater(new NoOp())        // PSO moves weights; no optimizer
+					// .cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+					// .inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+					.build();
+
+			// This is the name of the last output layer of MobileNet. Check model.summary (it also indicates if layer has been frozen or not)
+			String featureLayer = "conv_pw_13_relu";	
+
+			ComputationGraph model = new TransferLearning.GraphBuilder(base)
+					.fineTuneConfiguration(ftc)
+					.setFeatureExtractor(featureLayer) // freeze base up to here
+
+					// GAP: no trainable params
+					.addLayer("gap",
+							new GlobalPoolingLayer.Builder()
+									.poolingType(PoolingType.AVG)
+									// pool across spatial dims only; safe for NHWC imports too
+									.poolingDimensions(1, 2)
+									.build(),
+							featureLayer)
+
+					// output head (trainable)
+					.addLayer("new_output",
+							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+									// IMPORTANT: for MobileNetV2, channels=1280 after out_relu
+									.nIn(1280)
+									.nOut(NUM_CLASSES)
+									.activation(Activation.SOFTMAX)
+									.weightInit(WeightInit.XAVIER)
+									.biasInit(0.0)
+									.build(),
+							"gap")
+
+					.setOutputs("new_output")
+					.build();
+
+			model.init();
+			// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
 
 			return Pair.of(new PsoGraphAdapter(model), start);
 

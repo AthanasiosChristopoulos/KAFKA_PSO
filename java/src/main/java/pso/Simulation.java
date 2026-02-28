@@ -75,10 +75,11 @@ public class Simulation {
         // Test: =====================================================================
 
 
-        // PsoModel model = Dl4jModelFactory.createModel(-1, true).getFirst();
+        PsoModel model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
-        // System.out.println("OK loaded:");
-        // System.out.println(model.summary());
+        System.out.println("OK loaded:");
+        System.out.println(model.summary());
+        System.exit(0);
 
         // System.out.println("printCudaCudnnVersions");
         // printCudaCudnnVersions();

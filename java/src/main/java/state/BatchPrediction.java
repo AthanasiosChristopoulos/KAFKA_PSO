@@ -256,7 +256,6 @@ public class BatchPrediction {
             if (msg == null) continue;
 
             float[] features = msg.features;    // (NUM_FEATURES,)   
-            System.out.println("features.length = " + features.length);
      
             if (features == null) {
                 if (logger.isEnabled(2)) logger.log("Null features in DataMessage");
@@ -314,12 +313,14 @@ public class BatchPrediction {
                     if (argument_model.isNhWC()) {
                         // System.out.println("AAAAAAAAAAAAAAAAAA");
                         X = X4d;                             // keep NHWC
+
                         if(cfg.TRANSFORM_IMAGE) {
                             System.out.println("I am TRANSFORM_IMAGE");
-                            INDArray X224_nhwc = Nd4j.exec(new Upsampling2d(X4d, 7, 7, true))[0];
+                            INDArray X224_nhwc = Nd4j.exec(new Upsampling2d(X4d, 7, 7, false))[0];
                             X224_nhwc = X224_nhwc.div(127.5).sub(1.0);
                             X = X224_nhwc;
                         }
+                        
                     } else {
                         // System.out.println("BBBBBBBBBBBBBBBBBB");
                         X = X4d.permute(0, 3, 1, 2);         // convert to NCHW
@@ -451,10 +452,12 @@ public class BatchPrediction {
                 }
             }
         }
-        System.out.println("NUM_FEATURES = " + NUM_FEATURES);
-        System.out.println("X shape = " + java.util.Arrays.toString(X.shape()));
-        System.out.println("X order = " + X.ordering());
-        System.out.println("Model expects NHWC? " + argument_model.isNhWC());
+   
+        // System.out.println("NUM_FEATURES = " + NUM_FEATURES);
+        // System.out.println("X shape = " + java.util.Arrays.toString(X.shape()));
+        // System.out.println("X order = " + X.ordering());
+        // System.out.println("Model expects NHWC? " + argument_model.isNhWC());
+
         if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
 
         // Evaluate input shape ========================================================
