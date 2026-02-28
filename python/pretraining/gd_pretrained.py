@@ -31,6 +31,7 @@ def cifar_model_v1():
         include_top=False,
         weights="imagenet",
     )
+
     base_model.trainable = True
 
     # ------------------------------------------------------------
@@ -92,7 +93,7 @@ def cifar_model_v2():
     x_train = preprocess(x_train)
     x_test  = preprocess(x_test)
 
-    base_model = tf.keras.applications.MobileNet(
+    base_model = tf.keras.applications.MobileNetV2(
         input_shape=(32, 32, 3),
         include_top=False,
         weights="imagenet",
@@ -178,7 +179,9 @@ def cifar_model_v3():
         include_top=False,
         input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
     )
+
     base_model.trainable = False  
+
     model = models.Sequential([
         base_model,
         layers.GlobalAveragePooling2D(),
@@ -202,7 +205,9 @@ def cifar_model_v3():
         validation_data=test_ds,
         epochs=EPOCHS,
         callbacks=[early_stop],
-        verbose=2
+        verbose=2,
+        batch_size=128
+
     )
 
     loss, acc = model.evaluate(test_ds, verbose=0)
@@ -212,7 +217,7 @@ def cifar_model_v3():
 # ==========================================================================================================
 # For MobileNetV3Small uses both reshaping
 
-def cifar_model_v5():
+def cifar_model_v4():
 
     import tensorflow as tf
     from tensorflow.keras import layers
@@ -420,12 +425,12 @@ def mnist_model_v1():
 # ================================================================================================
 
 if __name__ == "__main__":
+
     if(DATASET == "CIFAR"):
-        # cifar_model_v1()
-        # cifar_model_v2()
-        cifar_model_v3()
+        # cifar_model_v1()        # doesnt work for some reason
+        cifar_model_v2()      # Input: (32, 32, 3), this is why faster, 79% validation accuracy, 92% training accuracy
+        # cifar_model_v3()      # Input (224, 224, 3), this is why very slow, 85% validation accuracy, 84% training accuracy
         # cifar_model_v4()
-        # cifar_model_v5()
 
     else:
         mnist_model_v1()

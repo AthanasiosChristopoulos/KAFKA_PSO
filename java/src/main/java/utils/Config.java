@@ -113,6 +113,8 @@ public class Config {
     public final boolean FREEZE;
     public final int FREEZE_INDEX;
 
+    public boolean TRANSFORM_IMAGE;
+
     //=============================================================================================================
 
     public Config() {
@@ -346,7 +348,7 @@ public class Config {
 
         this.EXPERIMENTATION_MODE = getenv(dotenv, "EXPERIMENTATION_MODE", "N_WORKERS");
 
-
+        this.TRANSFORM_IMAGE = false;
     } 
 
     // ==================================================================================================================================

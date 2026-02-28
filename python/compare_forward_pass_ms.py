@@ -58,6 +58,24 @@ def build_prebuilt_mobilenetv2_base():
     ], name="prebuilt_mobilenetv2_base_gap")
     return model
 
+
+# ---------------------------
+# Prebuilt: MobileNetV1 base + GAP (reference)
+# ---------------------------
+def build_prebuilt_mobilenetv1_base():
+    base = tf.keras.applications.MobileNet(
+        input_shape=(32, 32, 3),
+        include_top=False,
+        weights="imagenet"
+    )
+    base.trainable = False
+    model = keras.Sequential([
+        layers.Input(shape=(32, 32, 3)),
+        base,
+        layers.GlobalAveragePooling2D(),
+    ], name="prebuilt_mobilenetv2_base_gap")
+    return model
+
 # ---------------------------
 # Tiny fully-conv + GAP (PSO-friendly)
 # ---------------------------
@@ -121,6 +139,7 @@ def main():
     models = [
         ("Prebuilt MobileNetV3Small base+GAP", build_prebuilt_mobilenetv3small_base()),
         ("Prebuilt MobileNetV2 base+GAP",      build_prebuilt_mobilenetv2_base()),
+        ("Prebuilt MobileNetV1 base+GAP",      build_prebuilt_mobilenetv1_base()),
         ("Tiny fully-conv + GAP",              build_tiny_fcn_gap()),
         ("Simple Flatten+Dense",               build_simple_flatten_dense()),
     ]

@@ -5,6 +5,9 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.ops.transforms.Transforms;
+import org.nd4j.linalg.api.ops.impl.layers.convolution.config.Conv2DConfig;
+import org.nd4j.linalg.api.ops.impl.layers.convolution.Upsampling2d;
 
 import dl4j_models.PsoModel;
 
@@ -309,6 +312,12 @@ public class BatchPrediction {
                     if (argument_model.isNhWC()) {
                         // System.out.println("AAAAAAAAAAAAAAAAAA");
                         X = X4d;                             // keep NHWC
+                        if(cfg.TRANSFORM_IMAGE) {
+                            System.out.println("I am TRANSFORM_IMAGE");
+                            INDArray X224_nhwc = Nd4j.exec(new Upsampling2d(X4d, 7, 7, true))[0];
+                            X224_nhwc = X224_nhwc.div(127.5).sub(1.0);
+                            X = X224_nhwc;
+                        }
                     } else {
                         // System.out.println("BBBBBBBBBBBBBBBBBB");
                         X = X4d.permute(0, 3, 1, 2);         // convert to NCHW

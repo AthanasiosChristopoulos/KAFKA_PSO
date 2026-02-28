@@ -202,6 +202,10 @@ public class Dl4jModelFactory {
 
 			int version = 2;
 			String filename;
+			
+			if(version == 2) {
+				cfg.TRANSFORM_IMAGE = false;
+			}
 
 			switch (version) {
 				case 1 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";

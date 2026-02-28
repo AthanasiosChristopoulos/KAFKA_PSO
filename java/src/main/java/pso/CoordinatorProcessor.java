@@ -488,7 +488,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
-        if(true && cfg.USING_PRETRAINED_MODEL) {
+        if(false && cfg.USING_PRETRAINED_MODEL) {
             float[] accLoss;
             accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel, true);
             accuracy = accLoss[0];
