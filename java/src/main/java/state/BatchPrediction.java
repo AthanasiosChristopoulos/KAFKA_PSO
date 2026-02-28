@@ -41,18 +41,11 @@ public class BatchPrediction {
     public final String DATASET = cfg.DATASET;
     private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
     private static final String COMBINE_LOSS = cfg.COMBINE_LOSS;
-    private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
     public final boolean MEMORY_EFFICIENT = cfg.MEMORY_EFFICIENT;
-
-    private final PsoModel model;
-    private final PsoModel bestModel;
 
     private static BatchPrediction coordinatorInstance = null;
 
     private final CustomLogger logger;
-    private final boolean isCoordinator;
-
-    private static boolean checked = false;
 
     private final WorkerStatic ws;
 
@@ -78,17 +71,6 @@ public class BatchPrediction {
 
     private transient MemoryWorkspace inferenceWsObj;
     private transient String wsName;
-    // Config tuned for stable reuse (no spilling, reuse buffers)
-    // private static final WorkspaceConfiguration WS_CONF =
-    //         WorkspaceConfiguration.builder()
-    //                 .initialSize(0) // let it grow to what it needs once
-    //                 .overallocationLimit(2) // allow growth bursts
-    //                 .policyAllocation(AllocationPolicy.OVERALLOCATE)
-    //                 .policyLearning(LearningPolicy.FIRST_LOOP) // learn size on first loop
-    //                 .policyReset(ResetPolicy.ENDOFBUFFER_REACHED) // reuse within workspace scope
-    //                 .policySpill(SpillPolicy.EXTERNAL) // or SpillPolicy.REALLOCATE if EXTERNAL not desired
-    //                 .policyMirroring(MirroringPolicy.FULL) // safe default for CUDA
-    //                 .build();
 
     private static final WorkspaceConfiguration WS_CONF =
         WorkspaceConfiguration.builder()
@@ -107,13 +89,10 @@ public class BatchPrediction {
     // for Worker (from WorkerStatic) =======================================================================================================
 
     public BatchPrediction(PsoModel model, CustomLogger logger, WorkerStatic ws) {
-        this.model = model;
         this.ws = ws;
         this.workerId = ws.workerId;
         this.MODEL_IS_CNN = model.isCnn();
-        this.bestModel = null;
         this.logger = logger;
-        this.isCoordinator = false;
         EXPECTED_SIZE = cfg.BATCH_SIZE;
 
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
@@ -134,13 +113,10 @@ public class BatchPrediction {
 
     public BatchPrediction(PsoModel model, PsoModel bestModel, CustomLogger logger) {
 
-        this.model = model;
         this.ws = null;
 
         this.MODEL_IS_CNN = model.isCnn();
-        this.bestModel = bestModel;
         this.logger = logger;
-        this.isCoordinator = true;
         this.EXPECTED_SIZE = 500;
 
         if (MODEL_IS_CNN) {
@@ -167,6 +143,7 @@ public class BatchPrediction {
             coordinatorInstance = new BatchPrediction(model, bestModel, logger);
             return coordinatorInstance;
         } 
+
         return coordinatorInstance;
     }
 
@@ -210,6 +187,9 @@ public class BatchPrediction {
     //         return y.detach(); // valid ONLY while ws is still open
     //     }
     // }
+
+    // ===========================================================================
+
     public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
         MemoryWorkspace ws = null;
         try (MemoryWorkspace w = Nd4j.getWorkspaceManager()
@@ -228,6 +208,7 @@ public class BatchPrediction {
             }
         }
     }
+    
     // ===========================================================================
 
     private MemoryWorkspace getInferenceWsObj() {
@@ -260,8 +241,7 @@ public class BatchPrediction {
 
     public float[] callPredictionsBatch(List<DataMessage> batch, PsoModel argument_model, boolean deleteWorkspace) {
 
-        // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() +  "] START");
-        GpuMem.log("[Worker " + workerId + "] START");
+        if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] START");
 
         if (batch == null || batch.isEmpty()) {
             if (logger.isEnabled(2)) logger.log("Batch is empty");
@@ -461,8 +441,7 @@ public class BatchPrediction {
             }
         }
 
-        // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() + "] BEFORE FORWARD");
-        GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
+        if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] BEFORE FORWARD");
 
         // Evaluate input shape ========================================================
         // System.out.println("Input shape to model: " + Arrays.toString(X.shape()));
@@ -470,8 +449,8 @@ public class BatchPrediction {
         // ==============================================================================================================
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        // probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-        probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // probs = outputWithWorkspace(argument_model, X); 
         Nd4j.getExecutioner().commit();
 
@@ -485,7 +464,7 @@ public class BatchPrediction {
         // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         // Nd4j.getMemoryManager().purgeCaches();
 
-        if (GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500 || deleteWorkspace) {
+        if (MEMORY_EFFICIENT && GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500 || deleteWorkspace) {
             System.out.println("Reducing Memory: Destroying workspaces");
             Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }
@@ -505,7 +484,7 @@ public class BatchPrediction {
         // System.out.println("probs min/max = " + min + " / " + max);
         
         // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() + "] AFTER FORWARD");
-        GpuMem.log("[Worker " + workerId + "] AFTER FORWARD");
+        if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] AFTER FORWARD");
 
         // Forward Pass End ===============================================================================
 
@@ -687,7 +666,7 @@ public class BatchPrediction {
         }
 
         // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() + "] AFTER CLOSE");
-        GpuMem.log("[Worker " + workerId + "] AFTER CLOSE");
+        if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] AFTER CLOSE");
 
         return new float[]{accuracy, loss, nSamples, nCorrect, forwardMs};
 

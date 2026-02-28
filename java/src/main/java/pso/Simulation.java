@@ -16,6 +16,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import dl4j_models.Dl4jModelFactory;
+import dl4j_models.PsoModel;
 
 import org.deeplearning4j.nn.weights.WeightInit;
 
@@ -74,12 +75,12 @@ public class Simulation {
         // Test: =====================================================================
 
 
-        MultiLayerNetwork model = Dl4jModelFactory.createModel(-1, true).getFirst().asMultiLayerNetwork();
+        // PsoModel model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
-        System.out.println("OK loaded:");
-        System.out.println(model.summary());
+        // System.out.println("OK loaded:");
+        // System.out.println(model.summary());
 
-        System.out.println("printCudaCudnnVersions");
+        // System.out.println("printCudaCudnnVersions");
         // printCudaCudnnVersions();
         // =============================================================================================
 
