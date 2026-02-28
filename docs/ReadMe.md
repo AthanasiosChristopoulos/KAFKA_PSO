@@ -73,6 +73,8 @@ git reset --hard HEAD~1   # Removes commit AND changes
 git push -u origin main
 git push --force origin main (so you dont have to pull first / be up to date)
 
+git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit 
+
 git checkout main
 
 git config --global user.name "AthanasiosChristopoulos"
@@ -89,6 +91,7 @@ git rm -r --cached target
 
 ## ======================================================================
 ## Server Stuff =========================================================
+
 ```bash
 ssh achristopoulos@polytechnix.softnet.tuc.gr
 Erwd!oS21
@@ -115,10 +118,22 @@ cd /mnt/nas_drive/achristopoulos
 cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
 df -h .     # Disk Storage overall
 du -sh .    # Disk Storage of your own files
+du -sh ~/.m2    # Directory and what space it takes
 
 docker --version
 
 git clone --branch DL4J-PSO-Generic --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
+
+rm -rf /mnt/nas_drive/achristopoulos/kafka-kraft/logs/*
+
+CLUSTER_ID=$(kafka-storage.sh random-uuid)
+kafka-storage.sh format -t "$CLUSTER_ID" -c /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+
+export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
+export PATH="$KAFKA_HOME/bin:$PATH"
+kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+
+
 ```
 
 
