@@ -117,7 +117,7 @@ NAS = Network Attached Storage
 cd /mnt/nas_drive/achristopoulos
 cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
 df -h .     # Disk Storage overall
-du -sh .    # Disk Storage of your own files
+du -sh .    # how much space your current folder uses
 du -sh ~/.m2    # Directory and what space it takes
 
 docker --version
@@ -130,13 +130,25 @@ CLUSTER_ID=$(kafka-storage.sh random-uuid)
 kafka-storage.sh format -t "$CLUSTER_ID" -c /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 
 export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
-export PATH="$KAFKA_HOME/bin:$PATH"
+export PATH="$KAFKA_HOME/bin:$PATH"     # this isnt overriding PATH, this is are prepending to it (appending to the beggining of the list)
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+which kafka-topics.sh   
 
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$PATH"
+java --version
+javac --version
 
 ```
 
+```bash
+run-parts /etc/update-motd.d/   # Resee it using this
+```
 
+Enviromental Variables Ubuntu:
+
+ - When you type kafka-topics.sh, then Ubuntu looks in the PATH enviroment variable from right to left tries to match the file to the location.
+ - This means when you execute this command, the file doesnt have to be in pwd
 
 ds123f15@ds123f15-Nitro-AN515-57:~$ ^C
 ds123f15@ds123f15-Nitro-AN515-57:~$ ssh achristopoulos@polytechnix.softnet.tuc.gr
@@ -1511,3 +1523,39 @@ Guide to Transfer Learning:
     - GAP - Dense(256) - Dense(num_classes) => Adds non linear decision boundary
     - Flatten - Dense(num_classes) => you need spatial detail - helps with small tasks
     - Flatten - Dense(nOut) - Dense(num_classes) => Explodes parameter count
+
+
+# ===============================================================================
+# How to get Keras 2 .h5 files:
+
+```bash
+# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
+
+# This is the standard way on Ubuntu when you need an older Python.
+
+# 1) Install prerequisites
+sudo apt update
+sudo apt install -y software-properties-common
+
+# 2) Add deadsnakes
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# 3) Install Python 3.11 + venv
+sudo apt install -y python3.11 python3.11-venv python3.11-dev
+
+# 4) Create the venv using python3.11
+python3.11 -m venv /mnt/nas_drive/achristopoulos/venvs/tf215
+source /mnt/nas_drive/achristopoulos/venvs/tf215/bin/activate
+python --version   # should say 3.11.x
+pip install --upgrade pip
+pip install "tensorflow[and-cuda]==2.15.*"
+
+pip install \
+  numpy \
+  pandas \
+  scikit-learn \
+  python-dotenv \
+  kafka-python
+```
+# ===============================================================================
