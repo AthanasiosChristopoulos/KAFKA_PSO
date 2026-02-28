@@ -139,7 +139,7 @@ public class Coordinator implements Runnable {
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5MB
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0);
 
-        // MAIN instance props
+        // MAIN instance props fdfdf
         Properties mainProps = new Properties();
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
