@@ -116,7 +116,7 @@ public class Dl4jModelFactory {
 			cfg.USING_PRETRAINED_MODEL = true;
 
 			// model = createMNISTModelMLP(workerId);
-			model = createMNISTModelMLPSimple_0(workerId);
+			// model = createMNISTModelMLPSimple_0(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
 			// model = createMNISTModelMLPSimple_2(workerId);
 			// model = createMNISTCnn(workerId);
@@ -126,13 +126,13 @@ public class Dl4jModelFactory {
 
 			// pretrained =============================================================================================
 
-			int version = 8;
+			int version = 1;
 
 			String filename;
 			switch (version) {
 				// case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 				// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-				// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
+				case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
 				case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 				case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";

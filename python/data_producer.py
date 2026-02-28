@@ -126,7 +126,7 @@ def serialize_data_message(sample_index: int, features: np.ndarray, label: int) 
     return header + be.tobytes()
 
 
-kafka_host = s.getenv(KAFKA_HOST)
+kafka_host = os.getenv("KAFKA_HOST")
 
 producer = KafkaProducer(
     bootstrap_servers=kafka_host,

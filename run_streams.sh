@@ -1,5 +1,5 @@
 #!/bin/bash
-echo AAAAA
+
 cd ./java
 # mvn -q -DskipTests clean  
 # mvn -q -P$ND4J_PROFILE clean compile
@@ -14,7 +14,7 @@ source .env
 set +a
 
 mvn -Dmaven.repo.local=/mnt/nas_drive/achristopoulos/m2repo \
-  -e -DskipTests \
+  -q -e -DskipTests \
   -Dexec.mainClass=pso.Simulation \
   -P$ND4J_PROFILE compile exec:java
   
