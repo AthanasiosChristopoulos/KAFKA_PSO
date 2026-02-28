@@ -1557,5 +1557,10 @@ pip install \
   scikit-learn \
   python-dotenv \
   kafka-python
+
+
+conda activate /mnt/nas_drive/achristopoulos/venvs/tf215
+python -m pip install -U pip
+python -m pip install "tensorflow[and-cuda]==2.15.*"
 ```
 # ===============================================================================
