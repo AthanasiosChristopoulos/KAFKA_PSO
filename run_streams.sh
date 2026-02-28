@@ -13,17 +13,17 @@ set -a           # auto-export all variables
 source .env
 set +a
 
-mvn -Dmaven.repo.local=/mnt/nas_drive/achristopoulos/m2repo \
-  -q -e -DskipTests \
-  -Dexec.mainClass=pso.Simulation \
-  -P$ND4J_PROFILE compile exec:java
+# mvn -Dmaven.repo.local=/mnt/nas_drive/achristopoulos/m2repo \
+#   -q -e -DskipTests \
+#   -Dexec.mainClass=pso.Simulation \
+#   -P$ND4J_PROFILE compile exec:java
   
-# mvn -e -DskipTests \
-# -Dexec.mainClass=pso.Simulation \
-# -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
-# -Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
-# -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
-#  -P$ND4J_PROFILE compile exec:java
+mvn -q -e -DskipTests \
+-Dexec.mainClass=pso.Simulation \
+-Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
+-Dorg.slf4j.simpleLogger.log.org.deeplearning4j=debug \
+-Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
+ -P$ND4J_PROFILE compile exec:java
 
 # if [[ -n "$1" && "$1" != "--reset" && "$1" != "--debug" ]]; then    # if there is an command line argument to the script run_streams, 
 #                                                                     # and it isnt debug or reset, then its N_WORKERS. Override this variable from .env with the argument  

@@ -43,6 +43,7 @@ public class Simulation {
     private static final Config cfg = Config.getInstance();
 
     private static String bootstrap = cfg.KAFKA_HOST;
+    private static volatile long startNs = 0L;
 
     public static void main(String[] args) throws Exception {
         System.out.println("OK Running");
@@ -86,7 +87,7 @@ public class Simulation {
         deleteDir(baseStateDir);
         java.nio.file.Files.createDirectories(baseStateDir);
 
-        long start = System.nanoTime();
+        startNs = System.nanoTime();
 
         Config cfg = Config.getInstance();
         int numWorkers = cfg.N_WORKERS;
@@ -118,15 +119,19 @@ public class Simulation {
             System.out.println("Started worker thread " + i);
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n[Shutdown] JVM is stopping, workers will close.");
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {     // shutdown hook to keep it from printing
+
+            double elapsedTimeSec = (System.nanoTime() - startNs) / 1_000_000_000.0;
+            System.out.printf("[Simulation] Execution interupted, JVM is stopping, workers will close.");
+            System.out.printf("============= Training is over, ElapsedTime: %.3f seconds =============%n", elapsedTimeSec);
+
+        }, "shutdown-hook"));
 
         for (Thread t : workerThreads) {
             t.join();
         }
 
-        double elapsedTimeSec = (System.nanoTime() - start) / 1_000_000_000.0; // 10^9, so this is converting to seconds    
+        double elapsedTimeSec = (System.nanoTime() - startNs) / 1_000_000_000.0; // 10^9, so this is converting to seconds    
         System.out.printf("============= Training is over, ElapsedTime: %.3f seconds =============%n", elapsedTimeSec);
 
         coordinatorThread.join(); // if finished every worker waits on the coordinator

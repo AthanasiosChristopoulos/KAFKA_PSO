@@ -226,6 +226,34 @@ def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
 
 # ===============================================================================
 
+def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32->16
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16->8
+
+        layers.Conv2D(feat_dim, 3, padding="same", activation="relu", use_bias=True),
+
+        layers.GlobalAveragePooling2D(),          # -> (feat_dim,)
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
 
     model = keras.Sequential([
@@ -254,34 +282,6 @@ def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
-    model.summary()
-    print("Trainable params:", model.count_params())
-    return model
-
-# ===============================================================================
-
-def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-
-        layers.Conv2D(16, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 32->16
-
-        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 16->8
-
-        layers.Conv2D(feat_dim, 3, padding="same", activation="relu", use_bias=True),
-
-        layers.GlobalAveragePooling2D(),          # -> (feat_dim,)
-        layers.Dense(num_classes, activation="softmax", use_bias=True),
-    ])
-
-    model.compile(
-        optimizer=keras.optimizers.Adam(1e-3),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
-
     model.summary()
     print("Trainable params:", model.count_params())
     return model
@@ -366,6 +366,7 @@ def build_cinic_base_v1(input_shape=(32, 32, 3), num_classes=10):
 # ===============================================================================
 
 def build_model_by_version(version: str, input_shape, num_classes: int):
+
     match version:
         case "v1":
             model = build_cifar_base(input_shape=input_shape, num_classes=num_classes)
