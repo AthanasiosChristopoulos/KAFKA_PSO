@@ -202,7 +202,8 @@ def cifar_model_v3():
         validation_data=test_ds,
         epochs=EPOCHS,
         callbacks=[early_stop],
-        verbose=2
+        verbose=2,
+        batch_size=128
     )
 
     loss, acc = model.evaluate(test_ds, verbose=0)
@@ -213,9 +214,6 @@ def cifar_model_v3():
 # For MobileNetV3Small uses both reshaping
 
 def cifar_model_v5():
-
-    import tensorflow as tf
-    from tensorflow.keras import layers
 
     # -----------------------
     # Config
@@ -341,7 +339,8 @@ def cifar_model_v5():
         validation_data=test_ds,
         epochs=EPOCHS_FINETUNE,
         callbacks=callbacks_stage2,
-        verbose=2
+        verbose=2,
+        batch_size=128
     )
 
     loss, acc = model.evaluate(test_ds, verbose=0)

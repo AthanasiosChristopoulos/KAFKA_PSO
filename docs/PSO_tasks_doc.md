@@ -91,10 +91,12 @@
 
 	57) This isnt fully GD / PSO hybrid. This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
-		- B) Unfreeze / Fine-Tune base network
+		- B) Unfreeze / Fine-Tune base network (train the highly specific / class specific / last conv layers (paper))
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
 			=> Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
 		- D) Use models that are not trained in the same dataset and are repurposed by tranfer learning
+		- E) Use ImageNet models
+
 		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
@@ -106,6 +108,7 @@
 				=> Problems: PSO suffers under high dimensionality, the more dense layers with higher parameters the worse the result. Also PSO basically cant train CNNs, so conv layers in the head are out of the question
 				=> GD backbone (good features, weak classifier), PSO head (small dense layer)
 				=> Conv features that are good, but final decision boundary is suboptimal
+				
 	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
 
 	60) Write dimplomatiki

@@ -450,9 +450,9 @@ def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
 
 if __name__ == "__main__":
     
-    # export_mobilenetv2_base()
+    export_mobilenetv2_base()
     # export_mobilenetv3small_base()
-    train_and_export()
+    # train_and_export()
 
 
     # source ~/venvs/tf215/bin/activate
