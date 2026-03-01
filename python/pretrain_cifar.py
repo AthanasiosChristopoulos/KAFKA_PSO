@@ -495,6 +495,7 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
 # ===============================================================================
 
 def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
@@ -669,6 +670,10 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5"
 
+        case "v5_cifar100":
+            model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
+            name_h5_file = "cifar100_base_plus_head_v5"
+
         case "v6":
             model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v6"
@@ -698,12 +703,12 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    version = "v6"
+    # version = "v6"
     # version = "v5_cinic"
-    # version = "v1_cifar100"
+    version = "v5_cifar100"
     # version = "v1_tinyimagenet"
 
-    EPOCHS = 10
+    EPOCHS = 20
 
     if "cinic" in version: # ================================================================================
 

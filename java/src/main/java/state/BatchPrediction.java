@@ -547,7 +547,8 @@ public class BatchPrediction {
         } else {
 
             if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
-                System.out.println("AAAA");
+                // System.out.println("NUM_CLASSES: " + outDim);
+            
                 argMax = probs.argMax(1);   // max probability => this is what we are deciding
                 Nd4j.getExecutioner().commit();
 
@@ -555,14 +556,14 @@ public class BatchPrediction {
 
                 for (int i = 0; i < nSamples; i++) {
 
-                    int pred = argMax.getInt(i);
+                    int pred = argMax.getInt(i);    // accuracy is dependent on this and only this not from probs
 
                     int label = labels.get(i);
                     if (pred == label) nCorrect++;
 
-                    int base = i * outDim;
+                    int base = i * outDim;         
                     for (int c = 0; c < outDim; c++) {
-                        probabilities[c] = flatProps[base + c];
+                        probabilities[c] = flatProps[base + c];     // this will be used to calculate loss
                     }
 
                     // IMPORTANT: ensure your loss function expects the same outDim as the model output.
