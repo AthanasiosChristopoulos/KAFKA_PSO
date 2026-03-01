@@ -18,6 +18,13 @@ public class Experimentation {
     private static String bootstrap = cfg.KAFKA_HOST;
     private static float LOSS_THRESHOLD_MIN_ORIGINAL;
     private static float LOSS_THRESHOLD_MAX_ORIGINAL;
+    // private static List<Integer> workersList = List.of(2, 6, 12);
+    // private static List<Integer> workersList = List.of(2, 4, 6);
+    // private static List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_WORKER_DATA_PROCESSING == false
+    // private static List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
+    private static List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
+
+    private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
 
     public static void main(String[] args) throws Exception {
 
@@ -27,9 +34,9 @@ public class Experimentation {
         LOSS_THRESHOLD_MAX_ORIGINAL = cfg.LOSS_THRESHOLD_MAX;
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
-            List<Integer> workersList = List.of(2, 4, 6);
-            // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
-            Path dir = Path.of("experimental_results_v1");
+            
+            // Path csvPath = createUniqueCsvPath("experimental_results_server", "results");
+            Path dir = Path.of("experimental_results_server");
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_n_workers.csv");
 
@@ -96,11 +103,8 @@ public class Experimentation {
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("THRESHOLD")){
                          
-            // List<Float> theshold_offset_list = List.of(0.01f, 0.02f, 0.03f);
-            List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
-
-            // Path csvPath = createUniqueCsvPath("experimental_results_v1", "results");
-            Path dir = Path.of("experimental_results_v2");
+            // Path csvPath = createUniqueCsvPath("experimental_results_server", "results");
+            Path dir = Path.of("experimental_results_server");
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_threshold.csv");
 

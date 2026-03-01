@@ -87,8 +87,8 @@ public class Dl4jModelFactory {
 			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
-			model = createPendigitsModelSmaller_2(workerId);
-			// model = createPendigitsModelSmaller_3(workerId);
+			// model = createPendigitsModelSmaller_2(workerId);
+			model = createPendigitsModelSmaller_3(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			model = createWineQualityModel(workerId);
@@ -201,7 +201,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 9;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -237,6 +237,8 @@ public class Dl4jModelFactory {
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
 					case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
 					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
+						// 77% accuracy pretrained, 73% new
+
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
 					default -> throw new IllegalStateException("Unknown ???");

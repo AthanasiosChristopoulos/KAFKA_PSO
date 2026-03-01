@@ -124,14 +124,14 @@ def run_once(n_workers, log_path):
 
 def main():
 
-    logs_dir = Path("./experimental_results")
+    logs_dir = Path("./experimental_results_server")
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     log_path = logs_dir / f"experiment_log_workers_{workers_tag(WORKERS_LIST)}.log"
 
     log_path.write_text("", encoding="utf-8")   # Reset log file
 
-    Path("experimental_results").mkdir(parents=True, exist_ok=True)
+    Path("experimental_results_server").mkdir(parents=True, exist_ok=True)
 
     results = []
 
@@ -156,7 +156,7 @@ def main():
             "LAST_WORKER_ELAPSED_TIME_SEC": last_worker_secs,
         })
 
-    csv_path = Path("experimental_results/results.csv")
+    csv_path = Path("experimental_results_server/results.csv")
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(
             f,
@@ -183,7 +183,7 @@ def main():
     plt.title("Accuracy vs N_WORKERS")
     plt.xticks(xs)
     plt.grid(True)
-    plt.savefig("experimental_results/accuracy_vs_workers.png", dpi=200)
+    plt.savefig("experimental_results_server/accuracy_vs_workers.png", dpi=200)
     plt.close()
 
     # Plot 2: Training time vs N_WORKERS
@@ -196,7 +196,7 @@ def main():
     plt.title("Training Time vs N_WORKERS")
     plt.xticks(xs)
     plt.grid(True)
-    plt.savefig("experimental_results/time_vs_workers.png", dpi=200)
+    plt.savefig("experimental_results_server/time_vs_workers.png", dpi=200)
     plt.close()
 
 # ========================================================================================

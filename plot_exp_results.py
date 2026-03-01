@@ -89,7 +89,7 @@ def main():
     mode = os.getenv("EXPERIMENTATION_MODE")
 
     if mode == "THRESHOLD":
-        csv_path = Path("java/experimental_results_v2/results_threshold.csv")
+        csv_path = Path("java/experimental_results_server/results_threshold.csv")
         xcol = "LOSS_THRESHOLD_DIFF"
         xlabel = "LOSS_THRESHOLD_DIFF (T)"
         suffix = "threshold"
@@ -98,7 +98,7 @@ def main():
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs Threshold (T)", "bytes"),
         ]
     else:
-        csv_path = Path("java/experimental_results_v1/results_n_workers.csv")
+        csv_path = Path("java/experimental_results_server/results_n_workers.csv")
         xcol = "N_WORKERS"
         xlabel = "N_WORKERS"
         suffix = "workers"
