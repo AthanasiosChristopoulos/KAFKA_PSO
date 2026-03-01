@@ -65,7 +65,7 @@ if(DATASET == "cifar5"):
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "cifar10"):
-    NUMBER_OF_DATA_REPEATS = 5
+    NUMBER_OF_DATA_REPEATS = 9
     NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "mnist"):
@@ -796,6 +796,7 @@ def main():
                         # (row, col, channel) with channel changing fastest
                         # (0,0,0), (0,0,1), (0,0,2)
                         # then next pixel (0,1,0), (0,1,1), (0,1,2)
+                        
                     else:
                         features = X_train[index]
 

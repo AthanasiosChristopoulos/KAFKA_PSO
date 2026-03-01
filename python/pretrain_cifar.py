@@ -415,6 +415,7 @@ def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
 # ===============================================================================
 
 def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
+
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
@@ -455,6 +456,44 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
     
 # ===============================================================================
 
+def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # Base CNN (feature extractor) - CIFAR-ready
+        # 32x32
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
+
+        # 16x16
+        layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
+
+        # 8x8
+        layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
+
+        # REQUIRED tail (exact pattern like your MNIST model)
+        layers.Flatten(),
+
+        # Optional base representation layer
+        layers.Dense(64, activation="relu", use_bias=True),
+
+        # Head for CIFAR pretraining / training
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
+
 def build_cinic_base_v1(input_shape=(32, 32, 3), num_classes=10):
     aug = keras.Sequential([
         layers.RandomFlip("horizontal"),
@@ -492,15 +531,9 @@ def build_cinic_base_v1(input_shape=(32, 32, 3), num_classes=10):
 # ===============================================================================
 
 def build_tinyimagenet_base_v1(input_shape=(64, 64, 3), num_classes=200):
-    aug = keras.Sequential([
-        layers.RandomFlip("horizontal"),
-        layers.RandomTranslation(0.1, 0.1),
-        layers.RandomZoom(0.1),
-    ], name="aug")
 
     model = keras.Sequential([
         layers.Input(shape=input_shape),
-        aug,
 
         # Block 1
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
@@ -531,6 +564,7 @@ def build_tinyimagenet_base_v1(input_shape=(64, 64, 3), num_classes=200):
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
+
     return model
 
 # ===============================================================================
@@ -554,8 +588,11 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             model = build_cifar_base_v4(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v4"
 
-        # NEW: CINIC pretrain version
-        case "v5_cinic":
+        case "v5":
+            model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v5"
+
+        case "v5_cinic":         # NEW: CINIC pretrain version
 
             model = build_cinic_base_v1(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cinic10_base_plus_head_v1"
@@ -568,7 +605,7 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
         case "v1_tinyimagenet":
             # Pretrain on Tiny ImageNet-200
             model = build_tinyimagenet_base_v1(input_shape=input_shape, num_classes=200)
-            name_h5_file = "tinyimagenet200_pretrained_fcconv_v1"
+            name_h5_file = "tinyimagenet200_pretrained_v2"
 
         case _:
             raise ValueError(f"Unknown version: {version}")
@@ -580,9 +617,10 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
 def train_and_export(out_dir="pretrained_model", epochs=30, batch_size=128):
     
     # version = "v2"
+    version = "v5"
     # version = "v5_cinic"
     # version = "v1_cifar100"
-    version = "v1_tinyimagenet"
+    # version = "v1_tinyimagenet"
 
     EPOCHS = 20
 

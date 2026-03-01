@@ -200,7 +200,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 5;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -213,24 +213,25 @@ public class Dl4jModelFactory {
 				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mobilenetv2_base_224x224.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
-				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_fcconv_v1.h5";
+				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_v2.h5";
+				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
-					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3, 7 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
-					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 256);
+					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
 					default -> throw new IllegalStateException("Unknown ???");
 				}
 			}
@@ -353,16 +354,7 @@ public class Dl4jModelFactory {
 				.build();
 
 		model.init(); 
-	
-		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
-		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
-        // for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
-        //     Layer conf = l.conf().getLayer();
-        //     if (conf instanceof ConvolutionLayer) {
-        //         System.out.println(conf.getLayerName() + " algoMode = " +
-        //                 ((ConvolutionLayer) conf).getCudnnAlgoMode());
-        //     }
-        // }
+
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
@@ -401,7 +393,7 @@ public class Dl4jModelFactory {
 						.poolingDimensions(1, 2)
 						.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(256)           // for this TF model: 128
+						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES)       // your target classes
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
@@ -411,15 +403,6 @@ public class Dl4jModelFactory {
 
 		model.init(); 
 	
-		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
-		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
-        // for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
-        //     Layer conf = l.conf().getLayer();
-        //     if (conf instanceof ConvolutionLayer) {
-        //         System.out.println(conf.getLayerName() + " algoMode = " +
-        //                 ((ConvolutionLayer) conf).getCudnnAlgoMode());
-        //     }
-        // }
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
     // ===================================================================================================
