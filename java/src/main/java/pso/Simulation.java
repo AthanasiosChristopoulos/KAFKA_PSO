@@ -79,7 +79,6 @@ public class Simulation {
 
         System.out.println("OK loaded:");
         System.out.println(model.summary());
-        System.exit(0);
 
         // System.out.println("printCudaCudnnVersions");
         // printCudaCudnnVersions();

@@ -75,4 +75,35 @@ public class GpuMem {
 
         return freeB / 1024.0 / 1024.0;
     }
+
+    // =================================================================================
+
+    public static double totalMb() {
+        SizeTPointer free = new SizeTPointer(1);
+        SizeTPointer total = new SizeTPointer(1);
+
+        int rc = cudaMemGetInfo(free, total);
+        if (rc != 0) {
+            free.close();
+            total.close();
+            return -1;
+        }
+
+        long totalB = total.get();
+
+        free.close();
+        total.close();
+
+        return totalB / 1024.0 / 1024.0;
+    }
+
+    // =================================================================================
+    public static double usedPercent() {
+        double used = usedMb();
+        double total = totalMb();
+
+        if (used < 0 || total <= 0) return -1;
+
+        return used / total;   // value in range [0,1]
+    }
 }

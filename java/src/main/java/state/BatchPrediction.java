@@ -293,7 +293,8 @@ public class BatchPrediction {
         // }
 
         // Forward Pass Start ===============================================================================
-        if(!MEMORY_EFFICIENT) {
+
+        if(true || !MEMORY_EFFICIENT) {
             
             // ==============================================================================================================
             // Alternative 1) Costs Memory (Allocates new Memory every time), but Better Time and simplicity
@@ -481,7 +482,7 @@ public class BatchPrediction {
         // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         // Nd4j.getMemoryManager().purgeCaches();
 
-        if (MEMORY_EFFICIENT && GpuMem.freeMb() >= 0 && GpuMem.freeMb() < 500 || deleteWorkspace) {
+        if (MEMORY_EFFICIENT && (GpuMem.usedPercent() >= 0.80) || deleteWorkspace) {
             System.out.println("Reducing Memory: Destroying workspaces");
             Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
         }
@@ -674,7 +675,7 @@ public class BatchPrediction {
         featureList.clear();
         labels.clear();
 
-        if(!MEMORY_EFFICIENT) {
+        if(false && !MEMORY_EFFICIENT) {
             if (probs != null) probs.close();
             if (X != null && X != Xbuffer) X.close();
             if (argMax != null) argMax.close();

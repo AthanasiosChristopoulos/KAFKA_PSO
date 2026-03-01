@@ -203,7 +203,7 @@ public class Dl4jModelFactory {
 			int version = 5;
 			String filename;
 			
-			if(version == 4) {
+			if(version == 4 || version == 5) {
 				cfg.TRANSFORM_IMAGE = true;
 			}
 
@@ -213,13 +213,14 @@ public class Dl4jModelFactory {
 				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mobilenetv2_base_224x224.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
+				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_fcconv_v1.h5";
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
-					case 1, 3 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
@@ -229,6 +230,7 @@ public class Dl4jModelFactory {
 					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
+					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 256);
 					default -> throw new IllegalStateException("Unknown ???");
 				}
 			}
@@ -364,6 +366,62 @@ public class Dl4jModelFactory {
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
+
+	// ============================================================================
+
+	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(int workerId, String fileName, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+
+		// ============================================================================
+		// DL4J needs a FineTuneConfiguration to define updater etc.
+		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+				.inferenceWorkspaceMode(WorkspaceMode.NONE)
+				.build();
+
+		int start = (int) new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(2 + cfg.FREEZE_INDEX)
+			.build().numParams();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(2)
+			.build();
+		
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)
+                .addLayer(new GlobalPoolingLayer.Builder()
+						.poolingType(PoolingType.AVG)
+						.poolingDimensions(1, 2)
+						.build())
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(256)           // for this TF model: 128
+						.nOut(NUM_CLASSES)       // your target classes
+						.activation(Activation.SOFTMAX)
+						.weightInit(WeightInit.XAVIER)
+						.biasInit(0.0)
+						.build())
+				.build();
+
+		model.init(); 
+	
+		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 32, 32, 3});
+		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
+        // for (org.deeplearning4j.nn.api.Layer l : model.getLayers()) {
+        //     Layer conf = l.conf().getLayer();
+        //     if (conf instanceof ConvolutionLayer) {
+        //         System.out.println(conf.getLayerName() + " algoMode = " +
+        //                 ((ConvolutionLayer) conf).getCudnnAlgoMode());
+        //     }
+        // }
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
     // ===================================================================================================
 
 	public static PsoModel pretrainedModelCIFAR(String fileName) {
@@ -549,7 +607,7 @@ public class Dl4jModelFactory {
 					.addLayer("new_output",
 							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 									// IMPORTANT: for MobileNetV2, channels=1280 after out_relu
-									.nIn(1280)
+									.nIn(1024)
 									.nOut(NUM_CLASSES)
 									.activation(Activation.SOFTMAX)
 									.weightInit(WeightInit.XAVIER)
