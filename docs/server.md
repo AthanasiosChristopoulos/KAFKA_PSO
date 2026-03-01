@@ -2,6 +2,7 @@
 ## Server Stuff =========================================================
 
 ```bash
+
 ssh achristopoulos@polytechnix.softnet.tuc.gr
 Erwd!oS21
 # enter with:
@@ -69,7 +70,6 @@ ln -s /mnt/nas_drive/achristopoulos/.javacpp ~/.javacpp
 ln -s /mnt/nas_drive/achristopoulos/.m2 ~/.m2
 ls -ld ~/.javacpp ~/.keras  # you can see if they are links or not 
 
-
 ```
 
 ## .bashrc =====================================================================================================
@@ -103,13 +103,10 @@ echo 'export MAVEN_USER_HOME=/mnt/nas_drive/achristopoulos/.m2' >> ~/.bashrc
 
 ```bash
 
-pip install \
-  numpy \
-  pandas \
-  scikit-learn \
-  python-dotenv \
-  kafka-python
+# Activate the enviroment =======================================================
+conda activate /mnt/nas_drive/achristopoulos/venvs/tf215
 
+# Build the enviroment ==========================================================
 source /mnt/nas_drive/achristopoulos/miniconda3/etc/profile.d/conda.sh
 conda activate /mnt/nas_drive/achristopoulos/venvs/tf215
 source /mnt/nas_drive/achristopoulos/venvs/tf215/bin/activate

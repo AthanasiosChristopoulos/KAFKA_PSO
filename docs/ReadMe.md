@@ -658,7 +658,7 @@ CNNs are helped by a Dense Layer in the end:
 
 However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
 
-## Convergence vs Exploration: =========================================================
+`## Convergence vs Exploration: =========================================================
 
  - change model
  - change constants => inertia, C1, C2
@@ -676,13 +676,14 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
     - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
  - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
+
  - Performance (record processing speed - overall data processing time) affects convergence:
     - Increase record processing speed => more updateX in a shorter amount of time + higher data processing speed
     - 1) Faster updateX => Not as reactive to social directive (because of communication latency)
         - Essentially communication latency becomes more substantial / significant
         - This harms convergence, because particle behavior "depends" more on inertia + cognitive accelarators
     - 2) This can still be regulated by adaptive inertia
-
+`
 ## Premature congvergence: =========================================================
 
  - trapped in a local optimum if the search environment is complex with numerous local solutions.
