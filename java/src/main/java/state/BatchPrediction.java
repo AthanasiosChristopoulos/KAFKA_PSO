@@ -68,7 +68,8 @@ public class BatchPrediction {
 
     List<float[]> featureList = new ArrayList<>();
     List<Integer> labels = new ArrayList<>();
-    float[] probabilities = new float[NUM_CLASSES];
+    // float[] probabilities = new float[NUM_CLASSES];
+    float[] probabilities;
 
     private final boolean coordinator;
 
@@ -515,6 +516,12 @@ public class BatchPrediction {
         float loss = 0f;
 
         float[] sampleLosses = new float[nSamples];
+        int outDim = (int) probs.size(1);
+
+        // Make sure the scratch buffer fits the actual output dimension
+        if (probabilities == null || probabilities.length < outDim) {
+            probabilities = new float[outDim];
+        }
 
         // BINARY CASE (SIGMOID) ======================================================================
 
@@ -540,27 +547,28 @@ public class BatchPrediction {
         } else {
 
             if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
-                
+                System.out.println("AAAA");
                 argMax = probs.argMax(1);   // max probability => this is what we are deciding
                 Nd4j.getExecutioner().commit();
 
-                float[] flatProps = probs.data().asFloat();  // converd 2D [nSamples, classes] into flat array
-                
+                float[] flatProps = probs.data().asFloat();  // row-major view of probs data
+
                 for (int i = 0; i < nSamples; i++) {
 
                     int pred = argMax.getInt(i);
-                    int label = labels.get(i);  // labels = integers of 0, ... , C
+
+                    int label = labels.get(i);
                     if (pred == label) nCorrect++;
 
-                    int base = i * NUM_CLASSES; 
-                    for (int c = 0; c < NUM_CLASSES; c++) { // C order (row-major) - how it will implement
-                        // 2D array to flat array conversion (here write 1 row, then 2 row, ...)
-                                                            
+                    int base = i * outDim;
+                    for (int c = 0; c < outDim; c++) {
                         probabilities[c] = flatProps[base + c];
                     }
+
+                    // IMPORTANT: ensure your loss function expects the same outDim as the model output.
+                    // If your labels are in [0..NUM_CLASSES-1] but outDim != NUM_CLASSES, you must reconcile that elsewhere.
                     sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
                 }
-
                 // for (int i = 0; i < nSamples; i++) {
 
                 //     int pred = argMax.getInt(i);

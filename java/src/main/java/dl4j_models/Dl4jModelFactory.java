@@ -136,6 +136,7 @@ public class Dl4jModelFactory {
 					// case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
 					case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
+							// protinomeno
 					case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 					case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 					case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
@@ -200,7 +201,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 7;
+			int version = 8;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -215,20 +216,24 @@ public class Dl4jModelFactory {
 				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
 				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_v2.h5";
 				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";
+				case 8 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v6.h5";
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6, 7 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7, 8 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
-					case 1, 3, 7 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 7 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
+						// cifar 10 trained 75%, cifar 5 optimized 90%
+					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
@@ -318,12 +323,8 @@ public class Dl4jModelFactory {
 
 	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(int workerId, String fileName, int inputDim) {
 
-		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
 
-		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define updater etc.
-		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
@@ -343,7 +344,7 @@ public class Dl4jModelFactory {
 		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
-				.setFeatureExtractor(7)	// look at model.summary()
+				// .setFeatureExtractor(7)	// look at model.summary()
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES)       // your target classes
