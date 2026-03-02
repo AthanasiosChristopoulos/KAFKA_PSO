@@ -33,7 +33,8 @@ public class Experimentation {
     private static List<Integer> filterEnableList = List.of(1, 0);
 
     // ========================================================================
-    private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
+    // private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
+    private static List<Float> theshold_offset_list = List.of(0.00f, 0.05f, 0.1f, 0.15f);
 
     // ========================================================================
 
@@ -186,11 +187,13 @@ public class Experimentation {
                     cfg.refreshRunId();
                     cfg.LOSS_THRESHOLD_MIN = LOSS_THRESHOLD_MIN_ORIGINAL + theshold_offset;
                     cfg.LOSS_THRESHOLD_MAX = LOSS_THRESHOLD_MAX_ORIGINAL + theshold_offset;
+                    cfg.PBEST_DEBOUNCE_MS = 0;
+
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
                     System.out.println("LOSS_THRESHOLD_MIN = " + cfg.LOSS_THRESHOLD_MIN + 
-                        ", LOSS_THRESHOLD_MAX = " + cfg.LOSS_THRESHOLD_MAX + ", DIFF=" + theshold_offset);
+                        ", LOSS_THRESHOLD_MAX = " + cfg.LOSS_THRESHOLD_MAX + ", DIFF = " + theshold_offset);
                     System.out.println("New RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 

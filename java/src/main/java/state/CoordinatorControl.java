@@ -95,12 +95,12 @@ public class CoordinatorControl {
     // =================================================================================================
 
     public synchronized void resetForNewRun(int nWorkers) {
+        
         stopRequestedFinal.set(false);
         bestGlobalModelAccuracy = -1f;
         bestTrainingAccuracy = -1f;
         count = nWorkers;
 
-        // rebuild the array
         workerStopRequested = new AtomicBoolean[nWorkers];
         for (int i = 0; i < nWorkers; i++) workerStopRequested[i] = new AtomicBoolean(false);
     }

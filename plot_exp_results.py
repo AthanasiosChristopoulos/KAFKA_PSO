@@ -23,8 +23,8 @@ def main():
         suffix = "threshold"
         plots = [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs Threshold (T)", "accuracy"),
-            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs Threshold (T)", "bytes"),
-        ]
+            ("TOTAL_MESSAGES_SENT_PBEST", "TOTAL_BYTES_SENT_PBEST", "Bytes vs Threshold (T)", "bytes"),
+        ]    
 
     # =================================================================================
 
@@ -42,7 +42,6 @@ def main():
     # =================================================================================
 
     else:
-
         csv_path = Path(f"java/{experimentation_dir}/results_n_workers.csv")
         xcol = "N_WORKERS"  # use for x in the plot the field of the .csv N_WORKERS
         xlabel = "N_WORKERS"
