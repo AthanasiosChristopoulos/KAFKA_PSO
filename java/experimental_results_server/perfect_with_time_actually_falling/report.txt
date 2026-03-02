@@ -1,0 +1,7 @@
+Remember that:
+ - For weight communication to be of significance weights need to be large
+ - use the hardest NN for pendigits (maybe need more)
+ - to actually train it you will need significantly more data (data parrallel = false)
+ - Negligible time difference, good weight message difference
+ - Positive => basically no accuracy drop
+    => point ! => more data makes filterds less damaging, since plenty of time for convergence
