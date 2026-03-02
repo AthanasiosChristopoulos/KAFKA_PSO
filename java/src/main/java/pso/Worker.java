@@ -264,7 +264,9 @@ public class Worker implements Runnable {
         float bestLoss = ws.stats.getPBestLoss();      // you need to expose this (see below)
 
         if (collector != null) {
-            collector.reportWorkerDone(new WorkerMetrics(workerId, seconds, bestAcc, bestLoss, ws.TOTAL_MESSAGES_SENT, ws.TOTAL_BYTES_SENT));
+            collector.reportWorkerDone(new WorkerMetrics(workerId, seconds, bestAcc, bestLoss, 
+                ws.TOTAL_MESSAGES_SENT, ws.TOTAL_MESSAGES_SENT_PBEST,ws.TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS,
+                ws.TOTAL_BYTES_SENT));
         }
     }
 

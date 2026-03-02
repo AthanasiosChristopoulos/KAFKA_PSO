@@ -25,11 +25,22 @@ public class Experimentation {
     // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
     // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
 
+    // ========================================================================
     // Scenario with high workers:
     private static List<Integer> workersList = List.of(6, 18, 24);
 
     // ========================================================================
+    private static List<Integer> filterEnableList = List.of(1, 0);
+
+    // ========================================================================
     private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
+
+    // ========================================================================
+
+    public static String header_1 = "FILTER_ENABLED,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
+                    "GBEST_ACC,GBEST_LOSS," + 
+                    "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
+                    "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX\n";
 
     public static void main(String[] args) throws Exception {
 
@@ -40,8 +51,8 @@ public class Experimentation {
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
             
-            // Path csvPath = createUniqueCsvPath("experimental_results_server", "results");
-            Path dir = Path.of("experimental_results_server");
+            // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_n_workers.csv");
 
@@ -51,7 +62,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF\n");
+                w.write(header_1);
 
                 for (int n : workersList) {
 
@@ -83,7 +94,8 @@ public class Experimentation {
                     double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
 
                     w.write(String.format(
-                            "%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f\n",
+                            "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f,%f,%f\n",
+                            (cfg.FILTER_ENABLED ? 1 : 0),
                             n,
                             r.getTotalElapsedSec(),
                             coordElapsed,
@@ -91,8 +103,12 @@ public class Experimentation {
                             r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
                             r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
                             r.maxMessagesSent(),
+                            r.maxPBestMessagesSent(),
+                            r.maxCurrentWeightsMessagesSent(),
                             r.maxBytesSent(),
-                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN
+                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN,
+                            cfg.LOSS_THRESHOLD_MIN,
+                            cfg.LOSS_THRESHOLD_MAX
                     ));
 
                     w.flush();
@@ -106,10 +122,84 @@ public class Experimentation {
         // ===========================================================================================================================================
         // ===========================================================================================================================================
 
+        } else if(cfg.EXPERIMENTATION_MODE.equals("FILTER_ENABLED")) {
+            
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_filter_enabled.csv");
+
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write(header_1);
+
+                for (int fE : filterEnableList) {
+
+                    cfg.refreshRunId();
+
+                    if(fE == 0) {
+                        cfg.FILTER_ENABLED = false;
+
+                    } else {
+                        cfg.FILTER_ENABLED = true;
+                    }
+                
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("FILTER_ENABLED: " + cfg.FILTER_ENABLED);
+                    System.out.println("New RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // =================================================================================================
+                    // Restart the Kafka Parititions
+
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                    }
+
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    // =================================================================================================
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
+
+                    w.write(String.format(
+                            "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f\n",
+                            fE,
+                            cfg.N_WORKERS,
+                            r.getTotalElapsedSec(),
+                            coordElapsed,
+                            r.lastWorkerElapsedSec(),
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
+                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
+                            r.maxMessagesSent(),
+                            r.maxBytesSent(),
+                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN
+                    ));
+
+                    w.flush();
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with FILTER_ENABLED: " + cfg.FILTER_ENABLED);
+                    System.out.println("===============================================================================================");
+
+                }
+            } 
+        
+        // ===========================================================================================================================================
+        // ===========================================================================================================================================
+
         } else if(cfg.EXPERIMENTATION_MODE.equals("THRESHOLD")){
                          
-            // Path csvPath = createUniqueCsvPath("experimental_results_server", "results");
-            Path dir = Path.of("experimental_results_server");
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_threshold.csv");
 
@@ -119,7 +209,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED,GBEST_ACC,GBEST_LOSS,TOTAL_MESSAGES_SENT,TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX\n");
+                w.write(header_1);
 
                 for (float theshold_offset : theshold_offset_list) {
 
@@ -129,7 +219,8 @@ public class Experimentation {
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
-                    System.out.println("LOSS_THRESHOLD_MIN = " + cfg.LOSS_THRESHOLD_MIN + ", LOSS_THRESHOLD_MAX = " + cfg.LOSS_THRESHOLD_MAX + ", DIFF=" + theshold_offset);
+                    System.out.println("LOSS_THRESHOLD_MIN = " + cfg.LOSS_THRESHOLD_MIN + 
+                        ", LOSS_THRESHOLD_MAX = " + cfg.LOSS_THRESHOLD_MAX + ", DIFF=" + theshold_offset);
                     System.out.println("New RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 

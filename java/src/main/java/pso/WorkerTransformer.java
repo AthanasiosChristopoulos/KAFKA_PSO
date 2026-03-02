@@ -398,6 +398,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ws.pBestCandidateCount++;
                 pendingPBestMsg = msg;
             } else {
+                ws.incrementTotalMessagesSent("pBest");
                 out = new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
             }
         }
@@ -459,7 +460,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         flushPendingPBest();    // this may send the actuall pBest
         
-        if(out != null) ws.incrementTotalMessagesSent();
+        if(out != null) ws.incrementTotalMessagesSent("current_weights");
         
         return out;
     }
@@ -887,7 +888,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // This is the actual emission downstream from the Transformer
         ws.pBestForwardedCount++;
-        ws.incrementTotalMessagesSent();
+        ws.incrementTotalMessagesSent("pBest");
 
         context.forward(keyName, msg);
 

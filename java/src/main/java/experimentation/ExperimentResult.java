@@ -47,6 +47,23 @@ public final class ExperimentResult {
     }
 
     // ===============================================================================
+    
+    public long maxPBestMessagesSent() {
+        return workers.stream()
+                .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT_PBEST)
+                .max()
+                .orElse(0L);
+    }    
+
+    // ===============================================================================
+
+    public long maxCurrentWeightsMessagesSent() {
+        return workers.stream()
+                .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT_CURRENT_WEIGHTS)
+                .max()
+                .orElse(0L);
+    }
+    // ===============================================================================
 
     public long maxBytesSent() {
         return workers.stream()

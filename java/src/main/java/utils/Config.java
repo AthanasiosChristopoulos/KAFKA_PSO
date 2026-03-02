@@ -60,7 +60,7 @@ public class Config {
     public float LOSS_THRESHOLD_MIN;
     public final int MONITORING_THRESHOLD_MAX;
     public final int MONITORING_THRESHOLD_MIN;
-    public final boolean FILTER_ENABLED;
+    public boolean FILTER_ENABLED;
     public final int PBEST_DEBOUNCE_MS;
 
     public final int SAMPLING_CONSTANT;
@@ -109,6 +109,7 @@ public class Config {
     public long IDLE_MS; 
 
     public final String EXPERIMENTATION_MODE;
+    public final String EXPERIMENTATION_DIR;
 
     public final boolean FREEZE;
     public final int FREEZE_INDEX;
@@ -347,6 +348,7 @@ public class Config {
         }
 
         this.EXPERIMENTATION_MODE = getenv(dotenv, "EXPERIMENTATION_MODE", "N_WORKERS");
+        this.EXPERIMENTATION_DIR = getenv(dotenv, "EXPERIMENTATION_DIR", "experimental_results_server");
 
         this.TRANSFORM_IMAGE = false;
     } 
