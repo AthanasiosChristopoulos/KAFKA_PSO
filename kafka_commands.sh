@@ -6,6 +6,9 @@
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic pbest-weights-topic --partitions 1 --if-not-exists
 
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic pbest-weights-topic --from-beginning
+
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
