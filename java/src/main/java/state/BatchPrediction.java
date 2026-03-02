@@ -517,7 +517,7 @@ public class BatchPrediction {
 
         float[] sampleLosses = new float[nSamples];
         int outDim = (int) probs.size(1);
-
+        // System.out.println("outDim: " + outDim + ", probs: " + probs);
         // Make sure the scratch buffer fits the actual output dimension
         if (probabilities == null || probabilities.length < outDim) {
             probabilities = new float[outDim];
@@ -565,7 +565,7 @@ public class BatchPrediction {
                     for (int c = 0; c < outDim; c++) {
                         probabilities[c] = flatProps[base + c];     // this will be used to calculate loss
                     }
-
+                    //  System.out.println("probabilities: " + Arrays.toString(probabilities));
                     // IMPORTANT: ensure your loss function expects the same outDim as the model output.
                     // If your labels are in [0..NUM_CLASSES-1] but outDim != NUM_CLASSES, you must reconcile that elsewhere.
                     sampleLosses[i] = LossFunction.compute_loss(probabilities, label);

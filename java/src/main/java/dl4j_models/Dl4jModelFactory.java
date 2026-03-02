@@ -201,11 +201,12 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 7;
+			int version = 4;
 			String filename;
 			
 			if(version == 4 || version == 5) {
 				cfg.TRANSFORM_IMAGE = true;
+				cfg.TRANSFORM_IMAGE = false;
 			}
 
 			switch (version) {
