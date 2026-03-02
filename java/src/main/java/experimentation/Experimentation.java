@@ -65,7 +65,7 @@ public class Experimentation {
                 w.write(header_1);
 
                 for (int n : workersList) {
-
+                    
                     cfg.refreshRunId();
                     cfg.N_WORKERS = n;
                     CoordinatorControl.getInstance().resetForNewRun(n);
@@ -91,25 +91,7 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
-
-                    w.write(String.format(
-                            "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f,%f,%f\n",
-                            (cfg.FILTER_ENABLED ? 1 : 0),
-                            n,
-                            r.getTotalElapsedSec(),
-                            coordElapsed,
-                            r.lastWorkerElapsedSec(),
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
-                            r.maxMessagesSent(),
-                            r.maxPBestMessagesSent(),
-                            r.maxCurrentWeightsMessagesSent(),
-                            r.maxBytesSent(),
-                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN,
-                            cfg.LOSS_THRESHOLD_MIN,
-                            cfg.LOSS_THRESHOLD_MAX
-                    ));
+                    writeExperimentData(w, r, n, -1, -1);
 
                     w.flush();
                     System.out.println("===============================================================================================");
@@ -146,7 +128,9 @@ public class Experimentation {
                     } else {
                         cfg.FILTER_ENABLED = true;
                     }
-                
+
+                    cfg.refreshFilterEnabled();
+
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
@@ -170,21 +154,7 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
-
-                    w.write(String.format(
-                            "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f\n",
-                            fE,
-                            cfg.N_WORKERS,
-                            r.getTotalElapsedSec(),
-                            coordElapsed,
-                            r.lastWorkerElapsedSec(),
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
-                            r.maxMessagesSent(),
-                            r.maxBytesSent(),
-                            cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN
-                    ));
+                    writeExperimentData(w, r, -1, fE, -1);
 
                     w.flush();
                     System.out.println("===============================================================================================");
@@ -240,22 +210,7 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    double coordElapsed = r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN;
-
-                    w.write(String.format(
-                            "%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%f,%f,%f\n",
-                            cfg.N_WORKERS,
-                            r.getTotalElapsedSec(),
-                            coordElapsed,
-                            r.lastWorkerElapsedSec(),
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
-                            r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
-                            r.maxMessagesSent(),
-                            r.maxBytesSent(),
-                            theshold_offset,
-                            cfg.LOSS_THRESHOLD_MIN,
-                            cfg.LOSS_THRESHOLD_MAX
-                    ));
+                    writeExperimentData(w, r, -1, -1, theshold_offset);
 
                     w.flush();
                     System.out.println("===============================================================================================");
@@ -288,6 +243,47 @@ public class Experimentation {
         }
 
         return csv;
+
+    }
+
+    // =============================================================================================================
+
+    private static void writeExperimentData(BufferedWriter w, ExperimentResult r, int nWorkers_arg, 
+        int filterEnabled_arg, float theshold_offset_arg) {
+
+        int nWorkers = cfg.N_WORKERS;
+        int filterEnabled = (cfg.FILTER_ENABLED ? 1 : 0);
+        float theshold_offset = cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN;
+
+        if(nWorkers_arg != -1) nWorkers = nWorkers_arg;
+        if(filterEnabled_arg != -1) filterEnabled = filterEnabled_arg;
+        if(theshold_offset_arg != -1) theshold_offset = theshold_offset_arg;
+        
+        try{     
+
+            w.write(String.format(
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f\n",
+                filterEnabled,
+                nWorkers,
+                r.getTotalElapsedSec(),
+                r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN,
+                r.lastWorkerElapsedSec(),
+                r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
+                r.getCoordinator() != null ? r.getCoordinator().getGlobalBestLoss() : Double.NaN,
+                r.sumMessagesSent(),
+                r.sumPBestMessagesSent(),
+                r.sumCurrentWeightsMessagesSent(),
+                r.sumBytesSent(),
+                theshold_offset,
+                (double) cfg.LOSS_THRESHOLD_MIN,
+                (double) cfg.LOSS_THRESHOLD_MAX
+            ));
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     // =============================================================================================================

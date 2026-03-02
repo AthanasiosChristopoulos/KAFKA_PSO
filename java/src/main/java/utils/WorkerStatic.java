@@ -62,10 +62,10 @@ public final class WorkerStatic {
     public int improved_pBest_count = 0;
     public int significant_pBest_count = 0;
 
-    public static long TOTAL_MESSAGES_SENT = 0;
-    public static long TOTAL_MESSAGES_SENT_PBEST = 0;
-    public static long TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS = 0;
-    public static long TOTAL_BYTES_SENT = 0;
+    public long TOTAL_MESSAGES_SENT = 0;
+    public long TOTAL_MESSAGES_SENT_PBEST = 0;
+    public long TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS = 0;
+    public long TOTAL_BYTES_SENT = 0;
     public static long BYTES_PER_WEIGHTSMESSAGE = 0;
 
     // ========================================================
@@ -119,7 +119,7 @@ public final class WorkerStatic {
 
     // ===========================================================================
 
-    public static void incrementTotalMessagesSent(String msgType) {
+    public void incrementTotalMessagesSent(String msgType) {
         TOTAL_MESSAGES_SENT++;
         TOTAL_BYTES_SENT += BYTES_PER_WEIGHTSMESSAGE;
         if(msgType.equals("current_weights")) {

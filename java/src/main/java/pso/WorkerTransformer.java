@@ -399,17 +399,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 pendingPBestMsg = msg;
             } else {
                 ws.incrementTotalMessagesSent("pBest");
-                out = new KeyValue<>(keyName, msg);    // this is the unique key, necessary for the statestore to work between multiple entries
-            }
+                context.forward(keyName, msg);  // context.forward can be called 0 times, 1 time, or many times per input record.
+            }   // This immediately pushes a record downstream from inside the processor.
         }
 
         // =========================================================================================================
         // Send current position after N_BATCHES, for FedAvg + Swarm Monitoring. Reset ws.batchesRead
         
         updateMonitoringThreshold(ws.countForwardPasses);
-        boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
+        boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || 
+            (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
 
-        if (out == null && shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
+        if (shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
                 ", Sending current weights ...");
@@ -421,6 +422,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
             
+            ws.incrementTotalMessagesSent("current_weights");
             out = new KeyValue<>("current_weights", msg);
         }
 
@@ -459,11 +461,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         per_task_count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
         flushPendingPBest();    // this may send the actuall pBest
-        
-        if(out != null) ws.incrementTotalMessagesSent("current_weights");
-        
-        return out;
-    }
+                
+        return out; // like this pBest and current_weights can be sent in the same transform() call
+                    // Kafka Streams takes the one KeyValue<K,V> returned from transform() and sends it downstream.
+    }               // it may be null
 
     //=========================================================================================================================
 
@@ -921,7 +922,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         double p = Math.min(1.0, (double) iter / (double) T);
 
         double val = MONITORING_THRESHOLD_MAX + (MONITORING_THRESHOLD_MIN - MONITORING_THRESHOLD_MAX) * p;
-
+        logger.log("monitoring_threshold: " + monitoring_threshold + ", MONITORING_THRESHOLD_MAX: " +
+            MONITORING_THRESHOLD_MAX + ", MONITORING_THRESHOLD_MIN: " + MONITORING_THRESHOLD_MIN
+        );
         monitoring_threshold = (int) Math.round(val);
     }
 

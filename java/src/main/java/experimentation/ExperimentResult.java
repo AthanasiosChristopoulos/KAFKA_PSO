@@ -39,37 +39,33 @@ public final class ExperimentResult {
 
     // ===============================================================================
 
-    public long maxMessagesSent() {
+    public long sumMessagesSent() {
         return workers.stream()
                 .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT)
-                .max()
-                .orElse(0L);
+                .sum();
     }
 
     // ===============================================================================
     
-    public long maxPBestMessagesSent() {
+    public long sumPBestMessagesSent() {
         return workers.stream()
                 .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT_PBEST)
-                .max()
-                .orElse(0L);
+                .sum();
     }    
 
     // ===============================================================================
 
-    public long maxCurrentWeightsMessagesSent() {
+    public long sumCurrentWeightsMessagesSent() {
         return workers.stream()
                 .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT_CURRENT_WEIGHTS)
-                .max()
-                .orElse(0L);
+                .sum();
     }
     // ===============================================================================
 
-    public long maxBytesSent() {
+    public long sumBytesSent() {
         return workers.stream()
                 .mapToLong(WorkerMetrics::getTOTAL_BYTES_SENT)
-                .max()
-                .orElse(0L);
+                .sum();
     }
 
     // ===============================================================================
