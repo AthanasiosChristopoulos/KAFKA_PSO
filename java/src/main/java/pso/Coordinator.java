@@ -212,6 +212,7 @@ public class Coordinator implements Runnable {
                 while (!control.isStopRequested(-1)) {
                     Thread.sleep(50); 
                 }
+
                 System.out.println("[Coordinator] Stop requested, closing streams");
 
                 safeClose(mainStreams);
@@ -223,7 +224,8 @@ public class Coordinator implements Runnable {
                 final double seconds = (t1 - t0) / 1_000_000_000.0;
 
                 if(collector != null) {
-                    collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, control.getBestGlobalModelAccuracy(), control.getBestGlobalModelLoss()));
+                    collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, 
+                        control.getBestGlobalModelAccuracy(), control.getBestGlobalModelLoss()));
                 }
 
                 System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()
@@ -309,7 +311,7 @@ public class Coordinator implements Runnable {
             LOCAL_WEIGHTS_TOPIC,
             Consumed.with(Serdes.String(), weightsSerde)
         );
-
+        
         localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, 
                 TEST_STORE, this.preTrainedModel, this.start));
 

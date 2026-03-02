@@ -45,6 +45,7 @@ import message.weights_message.*;
 import org.apache.kafka.common.TopicPartition;
 
 public class CoordinatorProcessor implements Processor<String, WeightsMessage, String, WeightsMessage> {
+    
     private ProcessorContext<String, WeightsMessage> context;
 
     private final Map<String, float[]> weightsBuffer = new HashMap<>(); // this should be a dictionary of N_WORKER unique "id_worker" keys
@@ -168,6 +169,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         updateTime();
 
         if (control.isStopRequested(-1)) {
+            // onAllWorkersReported();
             return;
         }
 
@@ -201,141 +203,136 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         // Run only if all workers have reported their position 
         // if (logger.isEnabled(0)) logger.log("Which worker Id have already sent: " + weightsBuffer.keySet() + ", weightsBuffer.size() : " + weightsBuffer.size());
-
-        if (weightsBuffer.size() == N_WORKERS) { // the particles of the workers should converge so asynchronous communication shouldnt matter
         
-            float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
-
-            if(cfg.USING_PRETRAINED_MODEL) {
-                Dl4jParamUtils.updateModelHead(globalModel, avgWeights, this.start);
-            } else {
-                Dl4jParamUtils.updateModel(globalModel, avgWeights);
-            }
-
-            // ======== evaluate accuracy of globalModel using BatchPrediction ========
-            
-            List<DataMessage> evalBatch;
-
-            if (TEST_SIZE == -1) {
-                List<DataMessage> full = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
-                if (full == null || full.isEmpty()) {
-                    if (logger.isEnabled(2)) logger.log(taskInstance + ", Cannot evaluate, Test set is null/empty.");
-                    return;
-                }
-
-                int total = full.size();
-                int batchSize = Math.min(cfg.TEST_BATCH_SIZE, total);
-                if (evalCursor >= total) evalCursor = 0;
-                int end = evalCursor + batchSize;
-
-                if (end <= total) {
-                    evalBatch = full.subList(evalCursor, end);
-                } else {
-                    List<DataMessage> tmp = new ArrayList<>(batchSize);
-                    tmp.addAll(full.subList(evalCursor, total));
-                    tmp.addAll(full.subList(0, end % total));
-                    evalBatch = tmp;
-                }
-
-                evalCursor = (evalCursor + batchSize) % total;
-            } else {
-
-                evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
-                logConsumerOffsets();   
-            }
-
-            // if (TEST_SIZE == -1) {
-            //     evalBatch = readNextBatchFromStore(cfg.TEST_BATCH_SIZE);
-            // } else {
-            //     // If you still want the Kafka-consumer path, keep it.
-            //     // But for your state-store path, this is the rolling batch solution.
-            //     evalBatch = readExactlyTestSizeBatch(Math.min(TEST_SIZE, cfg.TEST_BATCH_SIZE));
-            // }
-            // if (evalBatch == null || evalBatch.isEmpty()) {
-            //     if (logger.isEnabled(2)) logger.log(taskInstance + 
-            //             ", Cannot evaluate, Test set is null/empty.");
-            //     return;
-            // }
-
-            float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel, false);  // inference / evaluate every time all workers current models arrive
-                                                                                // monitor how training is going
-            accuracy = accLoss[0];
-            loss = accLoss[1];
-            nSamples = (int) accLoss[2];
-            nCorrect = (int) accLoss[3];
-            forwardPassNs += accLoss[4];
-            countForwardPass += 1;
-
-            // update bestGlobalModelAccuracy + bestLoss ========================================================
-
-            if(accuracy > control.getBestGlobalModelAccuracy()) {    
-
-                if(cfg.USING_PRETRAINED_MODEL) {
-                    Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.start);
-                } else {
-                    Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
-                }
-
-                control.setBestGlobalModelAccuracy(accuracy);
-                control.setBestGlobalModelLoss(loss);
-
-                if (logger.isEnabled(1)) logger.log(taskInstance + 
-                    ", New bestGlobalModel accuracy = " + control.getBestGlobalModelAccuracy());
-            }
-
-            if(loss < bestLoss) {    
-                bestLoss = loss;
-            }
-            
-            // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
-            if (logger.isEnabled(0)) logger.log(taskInstance + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
-                        ", bestLoss: " + bestLoss + 
-                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
-                        ", nCorrect: " + nCorrect + " loss: " + loss + 
-                        ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                        ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
-
-            System.out.println(evaluation_count + 
-                        ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
-                        ", bestLoss: " + bestLoss + 
-                        ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
-                        ", nCorrect: " + nCorrect + " loss: " + loss + 
-                        ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                        ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
-
-            if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
-                Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
-                control.requestStopFinal();
-                return;
-            }
-
-            end = System.nanoTime();
-            sumElapsedNs += (end - start_time);
-            evaluation_count++;           
-
-            //=================================================================================
-            // weightsBuffer.clear();
-            //=================================================================================
-            // for(int workerId = weightsBuffer.keyes; i++) {
-            //     if(control.isStopRequested(workerId) == false) {
-            //         weightsBuffer[i].remove();
-            //     } 
-            // }
-            //=================================================================================
-            weightsBuffer.entrySet().removeIf(e -> {
-                int wid;
-                try {
-                    wid = Integer.parseInt(e.getKey());
-                } catch (NumberFormatException ex) {
-                    return true;
-                }
-                return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
-            });
-            //=================================================================================
-        } 
+        if (weightsBuffer.size() == N_WORKERS) {
+            onAllWorkersReported();
+        }
     }
 
+//=========================================================================================================================
+//=========================================================================================================================
+//=========================================================================================================================
+
+public void onAllWorkersReported() {
+
+    float[] avgWeights = averageWeights(new ArrayList<>(weightsBuffer.values()));
+
+    if(cfg.USING_PRETRAINED_MODEL) {
+        Dl4jParamUtils.updateModelHead(globalModel, avgWeights, this.start);
+    } else {
+        Dl4jParamUtils.updateModel(globalModel, avgWeights);
+    }            
+    List<DataMessage> evalBatch;
+
+    if (TEST_SIZE == -1) {
+        List<DataMessage> full = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
+        if (full == null || full.isEmpty()) {
+            if (logger.isEnabled(2)) logger.log(taskInstance + ", Cannot evaluate, Test set is null/empty.");
+            return;
+        }
+
+        int total = full.size();
+        int batchSize = Math.min(cfg.TEST_BATCH_SIZE, total);
+        if (evalCursor >= total) evalCursor = 0;
+        int end = evalCursor + batchSize;
+
+        if (end <= total) {
+            evalBatch = full.subList(evalCursor, end);
+        } else {
+            List<DataMessage> tmp = new ArrayList<>(batchSize);
+            tmp.addAll(full.subList(evalCursor, total));
+            tmp.addAll(full.subList(0, end % total));
+            evalBatch = tmp;
+        }
+
+        evalCursor = (evalCursor + batchSize) % total;
+    } else {
+
+        evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
+        logConsumerOffsets();   
+    }
+
+    float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel, false);  // inference / evaluate every time all workers current models arrive
+                                                                        // monitor how training is going
+    accuracy = accLoss[0];
+    loss = accLoss[1];
+    nSamples = (int) accLoss[2];
+    nCorrect = (int) accLoss[3];
+    forwardPassNs += accLoss[4];
+    countForwardPass += 1;
+
+    // update bestGlobalModelAccuracy + bestLoss ========================================================
+
+    if(accuracy > control.getBestGlobalModelAccuracy()) {    
+
+        if(cfg.USING_PRETRAINED_MODEL) {
+            Dl4jParamUtils.updateModelHead(bestGlobalModel, avgWeights, this.start);
+        } else {
+            Dl4jParamUtils.updateModel(bestGlobalModel, avgWeights);
+        }
+
+        control.setBestGlobalModelAccuracy(accuracy);
+        control.setBestGlobalModelLoss(loss);
+
+        if (logger.isEnabled(1)) logger.log(taskInstance + 
+            ", New bestGlobalModel accuracy = " + control.getBestGlobalModelAccuracy());
+    }
+
+    if(loss < bestLoss) {    
+        bestLoss = loss;
+    }
+    
+    // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
+    if (logger.isEnabled(0)) logger.log(taskInstance + 
+                ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
+                ", bestLoss: " + bestLoss + 
+                ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                ", nCorrect: " + nCorrect + " loss: " + loss + 
+                ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
+
+    System.out.println(evaluation_count + 
+                ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
+                ", bestLoss: " + bestLoss + 
+                ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
+                ", nCorrect: " + nCorrect + " loss: " + loss + 
+                ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
+
+    if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
+        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
+        control.requestStopFinal();
+        return;
+    }
+
+    end = System.nanoTime();
+    sumElapsedNs += (end - start_time);
+    evaluation_count++;           
+
+    //=================================================================================
+    // weightsBuffer.clear();
+    //=================================================================================
+    // for(int workerId = weightsBuffer.keyes; i++) {
+    //     if(control.isStopRequested(workerId) == false) {
+    //         weightsBuffer[i].remove();
+    //     } 
+    // }
+    //=================================================================================
+    weightsBuffer.entrySet().removeIf(e -> {
+        int wid;
+        try {
+            wid = Integer.parseInt(e.getKey());
+        } catch (NumberFormatException ex) {
+            return true;
+        }
+        return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
+    });
+    //=================================================================================
+} 
+
+//=========================================================================================================================
+//=========================================================================================================================
+//=========================================================================================================================
     //=========================================================================================================================
 
     private void updateTime() {
@@ -672,6 +669,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
                 ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
                 + " over " + evaluation_count + " batches" + ", average forwardPassMs: " 
                 + avgForwardPassMs);
+
+        if(control.getBestGlobalModelAccuracy() == -1f) { // coordinator never evaluated local state
+            onAllWorkersReported();
+        }   
 
         this.logger.flush();
     }
