@@ -70,6 +70,12 @@ ln -s /mnt/nas_drive/achristopoulos/.javacpp ~/.javacpp
 ln -s /mnt/nas_drive/achristopoulos/.m2 ~/.m2
 ls -ld ~/.javacpp ~/.keras  # you can see if they are links or not 
 
+# Transfer files
+scp my-pendigits.tra achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data/
+
+# Reset local-weights-topic:
+kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weights-topic
+kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weights-topic --partitions 1 --if-not-exists
 ```
 
 ## .bashrc =====================================================================================================
@@ -117,7 +123,8 @@ python -m pip install \
   pandas \
   scikit-learn \
   python-dotenv \
-  kafka-python
+  kafka-python \
+  matplotlib
 
 ```
 
