@@ -8,6 +8,7 @@ from tensorflow.keras import layers, models
 from contextlib import contextmanager
 from pathlib import Path
 import shutil
+import tensorflow_datasets as tfds
 
 
 DATASET = "cifar10"
@@ -645,6 +646,158 @@ def build_tinyimagenet_base_v1(input_shape=(64, 64, 3), num_classes=200):
 
     return model
 
+# =============================================================================
+# STL-10 (96x96) -> downsample to 32x32
+
+def load_stl10_32(
+    data_dir="./data",
+    batch_size=128,
+    val_split=0.1,
+    shuffle_buffer=10_000,
+    seed=42,
+    return_tfdata=True,
+):
+
+    os.makedirs(data_dir, exist_ok=True)
+
+    # STL-10 splits in TFDS:
+    # - "train" (5k labeled)
+    # - "test" (8k labeled)
+    # There is also "unlabelled" (100k) if you want later.
+    ds_train = tfds.load("stl10", split="train", data_dir=data_dir, as_supervised=True)
+    ds_test  = tfds.load("stl10", split="test",  data_dir=data_dir, as_supervised=True)
+
+    AUTOTUNE = tf.data.AUTOTUNE
+
+    def preprocess(x, y):
+        # x: uint8 [96,96,3] -> float32 [32,32,3] in [0,1]
+        x = tf.image.resize(x, (32, 32), method="bilinear", antialias=True)
+        x = tf.cast(x, tf.float32) / 255.0
+        y = tf.cast(y, tf.int32)
+        return x, y
+
+    ds_train = ds_train.map(preprocess, num_parallel_calls=AUTOTUNE)
+    ds_test  = ds_test.map(preprocess,  num_parallel_calls=AUTOTUNE)
+
+    # Make a validation split from TRAIN
+    # (cardinality is known for tfds STL-10 train = 5000)
+    train_count = tf.data.experimental.cardinality(ds_train).numpy()
+    if train_count < 0:
+        # fallback (shouldn't happen for STL-10)
+        train_count = 5000
+
+    val_count = int(train_count * val_split)
+    train_count2 = train_count - val_count
+
+    ds_train = ds_train.shuffle(shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
+    ds_val = ds_train.take(val_count)
+    ds_train = ds_train.skip(val_count)
+
+    # Batch / prefetch
+    ds_train = ds_train.batch(batch_size).prefetch(AUTOTUNE)
+    ds_val   = ds_val.batch(batch_size).prefetch(AUTOTUNE)
+    ds_test  = ds_test.batch(batch_size).prefetch(AUTOTUNE)
+
+    if return_tfdata:
+        return ds_train, ds_val, ds_test
+
+    # Convert to numpy (optional)
+    x_train, y_train = tfds.as_numpy(tfds.dataset_as_numpy(ds_train.unbatch()))
+    # NOTE: The above line is not correct usage; better to materialize properly:
+    # We'll do a safe conversion via iteration:
+
+    def ds_to_numpy(ds):
+        xs, ys = [], []
+        for xb, yb in ds:
+            xs.append(xb.numpy())
+            ys.append(yb.numpy())
+        return tf.concat(xs, axis=0).numpy(), tf.concat(ys, axis=0).numpy()
+
+    # Rebuild unbatched datasets for conversion (since ds_train/ds_val are batched)
+    ds_train_u = tfds.load("stl10", split=f"train[{val_count}:]", data_dir=data_dir, as_supervised=True).map(preprocess)
+    ds_val_u   = tfds.load("stl10", split=f"train[:{val_count}]", data_dir=data_dir, as_supervised=True).map(preprocess)
+    ds_test_u  = tfds.load("stl10", split="test", data_dir=data_dir, as_supervised=True).map(preprocess)
+
+    x_train, y_train = ds_to_numpy(ds_train_u.batch(batch_size))
+    x_val, y_val     = ds_to_numpy(ds_val_u.batch(batch_size))
+    x_test, y_test   = ds_to_numpy(ds_test_u.batch(batch_size))
+
+    return x_train, y_train, x_val, y_val, x_test, y_test
+
+
+# =============================================================================
+# CIFAR-style base model for STL-10
+
+def build_stl10_base_v1(input_shape=(32, 32, 3), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # 32x32
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32 -> 16
+
+        # 16x16
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16 -> 8
+
+        # 8x8
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+        layers.GlobalAveragePooling2D(),  # -> (128,)
+
+        layers.Dropout(0.2),
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
+
+def pretrain_stl10_and_export(
+    data_dir="./data",
+    out_dir="pretrained_model",
+    epochs=20,
+    batch_size=128,
+):
+    train_ds, val_ds, test_ds = load_stl10_32(
+        data_dir=data_dir,
+        batch_size=batch_size,
+        return_tfdata=True
+    )
+
+    model = build_stl10_base_v1(input_shape=(32, 32, 3), num_classes=10)
+
+    callbacks = [
+        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
+        keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
+    ]
+
+    history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=epochs,
+        verbose=2,
+        callbacks=callbacks,
+    )
+
+    test_loss, test_acc = model.evaluate(test_ds, verbose=0)
+    print(f"\nSTL-10 (downsampled 32x32) test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
+
+    os.makedirs(out_dir, exist_ok=True)
+    h5_path = os.path.join(out_dir, "stl10_pretrained_base_plus_head_v1.h5")
+    model.save(h5_path)
+    print("Saved Keras H5:", h5_path)
+
+    return model, history
+
 # ===============================================================================
 
 def build_model_by_version(version: str, input_shape, num_classes: int):
@@ -705,8 +858,9 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v2"
     # version = "v6"
     # version = "v5_cinic"
-    version = "v5_cifar100"
+    # version = "v5_cifar100"
     # version = "v1_tinyimagenet"
+    version = "v1_stl10"
 
     EPOCHS = 20
 
@@ -715,6 +869,17 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)
             model, name_h5_file = build_model_by_version(version, (32,32,3), 10)
             history = model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
+
+    elif "v1_stl10" in version:     # ================================================================================
+        
+        pretrain_stl10_and_export(
+            data_dir="./data",          # <- your pwd/data
+            out_dir="pretrained_model",
+            epochs=20,
+            batch_size=128,
+        )
+
+        exit(0)
 
     elif "tinyimagenet" in version:     # ================================================================================
 

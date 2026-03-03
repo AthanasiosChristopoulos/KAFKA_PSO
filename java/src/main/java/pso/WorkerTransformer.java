@@ -842,22 +842,33 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 }
             }
 
-            double dist = normL2PerDim(ws.flatModel, center);      // dist ≈ 0.05 → each weight differs by ~0.05 on average
+            double dist = normL2PerDim(ws.flatModel, center);       // dist ≈ 0.05 → each weight differs by ~0.05 on average
+                                                                    // this is a normalized / scaled metric 
 
             // ==========================================================================================================
             double radius;
+
             if(stricter) {
-                radius = CONVERGENCE_STRICTNESS_FACTOR * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
+                radius = CONVERGENCE_STRICTNESS_FACTOR * CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);    // rms measures magnitude 
             } else {
-                radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); // RMS / typical magnitude of weights
+                radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center); 
+                    // rms(center) is the typical magnitude of the weights in the center model.
                     // The particle is converged if, on average, each weight differs from the center by 
                     // less than CONVERGENCE_ALPHA * 100% (i.e. 10%) of a typical weight’s magnitude.
+
+                    // So condition:
+                    // converge if rms(x - center) <= α * rms(center)
+                    // That is basically a relative closeness test:
+                    // converge if rms(x - center) / rms(center) <= α
+
             }
+
             // ==========================================================================================================
             // double radius = CONVERGENCE_ALPHA * Dl4jParamUtils.rms(center);
             // ==========================================================================================================
 
             boolean converged = dist <= radius;
+
             if(verbose) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
                         + " radius = " + Dl4jParamUtils.round((float) radius, 4)

@@ -386,7 +386,6 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
-# ===============================================================================
 # Train + Export
 
 def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
