@@ -186,7 +186,10 @@ public class Experimentation {
 
                 for (float theshold_offset : theshold_offset_list) {
 
+                    cfg.FILTER_ENABLED = true;
                     cfg.refreshRunId();
+                    cfg.refreshFilterEnabled();
+
                     cfg.LOSS_THRESHOLD_MIN = LOSS_THRESHOLD_MIN_ORIGINAL + theshold_offset;
                     cfg.LOSS_THRESHOLD_MAX = LOSS_THRESHOLD_MAX_ORIGINAL + theshold_offset;
                     cfg.PBEST_DEBOUNCE_MS = 0;

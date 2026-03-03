@@ -426,6 +426,7 @@ public class PsoUpdater {
             
         final float phiMaxPerNeighbor = phiMax / (float) N;
         float accWk = 0;
+
         if(WEIGHTS_ON_UPDATEX) {
 
             for (NeighborPBest nb : neighbors) {
@@ -459,11 +460,12 @@ public class PsoUpdater {
 
                 socialVec[d]  = (den[d] / scaleWk) * (Pm_d - ws.flatModel[d]); 
                     // accuracy decides direction (where Pm sits), but not step size
+
                 if(GIVE_HALF_TO_SELF) {
                     cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
                     velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
                 } else {
-                    velocity[d] = inertiaVec[d] + socialVec[d];
+                    velocity[d] = inertiaVec[d] + socialVec[d]; // Look at this
                 }
             
             }
@@ -494,6 +496,7 @@ public class PsoUpdater {
 
                 socialVec[d]  = den[d] * (Pm_d - ws.flatModel[d]); 
                     // accuracy decides direction (where Pm sits), but not step size
+
                 if(GIVE_HALF_TO_SELF) {
                     cognitiveVec[d] =  phiMax * rnd.nextFloat() * (ws.pBestWeights[d] - ws.flatModel[d]);
                     velocity[d] = inertiaVec[d] + cognitiveVec[d] + socialVec[d];
