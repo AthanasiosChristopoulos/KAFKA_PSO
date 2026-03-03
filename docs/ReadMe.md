@@ -1284,7 +1284,7 @@ DL4J has 3 different memory spaces:
             - The underlying ND4J arrays are off-heap, and with the CUDA backend they are (effectively) backed by GPU memory for GPU execution.
         => ND4J mirrors OFF-HEAP buffers to GPU
             - This means that on CPU => GPU communication, NDArray Buffers are exchanged off heap (copied from CPU off-heap to GPU. If CPU off-heap is limited, then GPU VRAM is limited in the same way) => ff-heap allocations are “mapped” to GPU memory
-        => ND4J CUDA uses JavaCPP (bytedeco) to allocate native memory and manage CUDA resources.
+        => ND4J CUDA uses JavaCPP (bytedeco) to allocatevidian native memory and manage CUDA resources.
             - JavaCPP (bytedeco) is the bridge between Java and native code (code of the CPU)
             - this is generally necessary when not on JVM / on Heap. The RAM is managed natively by C.
             - JavaCPP will try to keep native allocations it tracks under this budget (mostly host /off-heap), but CUDA/ND4J can still reserve/hold VRAM via its own pools/caches and via CUDA/cuDNN (this is what is reported by nvidia-smi).

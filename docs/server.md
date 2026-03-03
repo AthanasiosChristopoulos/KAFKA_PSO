@@ -40,8 +40,6 @@ docker --version
 
 git clone --branch DL4J-PSO-Generic --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
 
-rm -rf /mnt/nas_drive/achristopoulos/kafka-kraft/logs/*
-
 # Kafka ===========================================================================
 
 CLUSTER_ID=$(kafka-storage.sh random-uuid)
@@ -50,6 +48,12 @@ kafka-storage.sh format -t "$CLUSTER_ID" -c /mnt/nas_drive/achristopoulos/kafka-
 export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
 export PATH="$KAFKA_HOME/bin:$PATH"     # this isnt overriding PATH, this is are prepending to it (appending to the beggining of the list)
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-ssd.properties
+
+# see differences between disks:
+df -hT /home/achristopoulos/kafka-logs
+df -hT /mnt/nas_drive/achristopoulos
+
 which kafka-topics.sh   
 
 ## Try listening on see if it works:
@@ -58,7 +62,17 @@ kafka-topics.sh --bootstrap-server localhost:19092 --list
 # where will kafka log ?
 cd /mnt/nas_drive/achristopoulos/kafka-local/config/kraf
 nano server.properties # look for the log.dirs= ... variable
-# its in log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs
+
+# Set the following:
+log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs
+log.retention.hours=-1
+log.retention.bytes=2221225472
+
+kafka-storage.sh format \
+  -t TZnQLupIQNKrZbEwke1-cw \
+  -c /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-ssd.properties
+
+# ========================================================================================
 
 export JAVA_HOME=/mnt/nas_drive/achristopoulos/jdks/jdk-17.0.18+8
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -76,9 +90,11 @@ scp my-pendigits.tra achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KA
 # Reset local-weights-topic:
 kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weights-topic
 kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weights-topic --partitions 1 --if-not-exists
+
+
 ```
 
-## .bashrc =====================================================================================================
+## .bashrc ==========================================================================
 
 ~/.bashrc is a configuration file for the Bash shell:
     - It lives in your home directory (~)

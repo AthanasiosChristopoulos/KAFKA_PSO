@@ -56,6 +56,7 @@
 			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
 			- how much time on average does it take you to process one record 
 				- this is supposed to be a streaming application: input_mbps < process_mbps
+
 			- Limit communication:
 				- Run without => identify latency (and number of messages)
 				- Run with	  => makes training more efficient / faster, identify reduction in number of messages.
@@ -65,6 +66,9 @@
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
+
+			# =================================================================
+			# New:
 
 			- Με απλα Datasets:
 				- Sweet spot of N_WORKERS (να σταματησει να αυξανει το accuracy significantly, τοτε δεν εχει νοημα η αυξηση του N_WORKERS, καθως αυξανουμε την επικοινωνια):
@@ -76,11 +80,14 @@
 					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
 					- x: threshold T (increasing) | y: accuracy (hopefully decreasing)
 					- x: threshold T (increasing) | y: communication (hopefully decreasing)
+					
 					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
 
 			- x: Dimensionality / y: Accuracy
+
+	# ========================================================================================
 
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
