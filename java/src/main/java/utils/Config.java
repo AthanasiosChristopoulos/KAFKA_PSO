@@ -102,6 +102,7 @@ public class Config {
 
     public int HEAD_LAYER_IDX; 
     public boolean USING_PRETRAINED_MODEL;
+    public boolean TESTABLE_PRETRAINED_MODEL;
 
     public String REGULARIZER;
     public float LAMBDA_VALUE; 
@@ -334,6 +335,8 @@ public class Config {
         HEAD_LAYER_IDX = Integer.parseInt(getenv(dotenv, "HEAD_LAYER_IDX", "4"));
         // USING_PRETRAINED_MODEL = Boolean.parseBoolean(getenv(dotenv, "USING_PRETRAINED_MODEL", "false"));
         USING_PRETRAINED_MODEL = false;
+        TESTABLE_PRETRAINED_MODEL = true;
+        
         FREEZE = Boolean.parseBoolean(getenv(dotenv, "FREEZE", "true"));
         FREEZE_INDEX = Integer.parseInt(getenv(dotenv, "FREEZE_INDEX", "0"));
 

@@ -201,12 +201,12 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 4;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
 				cfg.TRANSFORM_IMAGE = true;
-				cfg.TRANSFORM_IMAGE = false;
+				// cfg.TRANSFORM_IMAGE = false;
 			}
 
 			switch (version) {
@@ -453,29 +453,28 @@ public class Dl4jModelFactory {
 // 	}
 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
 		try {
+
+			cfg.TESTABLE_PRETRAINED_MODEL = false;
+
 			File f = new File(fileName);
 			if (!f.exists()) {
 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
 			}
 
-			// 1) Import base Keras model (already initialized with weights)
 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(
 					f.getAbsolutePath(),
 					false
 			);
 
-			// 2) Build a FineTuneConfiguration with NO inference workspace
 			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 					.updater(new NoOp())   // no optimizer
 					.inferenceWorkspaceMode(WorkspaceMode.NONE)  
 					.build();
 
-			// 3) Rebuild graph with that configuration
 			ComputationGraph model = new TransferLearning.GraphBuilder(base)
 					.fineTuneConfiguration(ftc)
 					.build();
 
-			// 4) Wrap it
 			return new PsoGraphAdapter(model);
 
 		} catch (Exception e) {
