@@ -1094,33 +1094,44 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
 
     ## Filtering Ideas ======================================
 
-     - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
-        => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
-        => This would harm convergence when convergence is needed most
-        => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
-        => In short, we would a combination of the two (send only if there is significant distance, but the threshold for significant distance decreases over time)
-            => But we dont really care if there is a significant distance in the first place, we know there is a distance already 
-                => The opposite could prove more effective => send only once per 50 * N_BATCHES (just to check progress) or if distance is small
-                
-    - Send pBest only when it beats a reference quality gate:
-        - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
-            => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
-    - You know previous mean estimate μ̂ (from last seen global average message, even if stale)
-        Your current weights w_i
-        If coordinator averages uniformly, your marginal effect is about:
-        Δμ ≈ (w_i - w_i_last_contributed)/N
+        - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
+            => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
+            => This would harm convergence when convergence is needed most
+            => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
+            => In short, we would a combination of the two (send only if there is significant distance, but the threshold for significant distance decreases over time)
+                => But we dont really care if there is a significant distance in the first place, we know there is a distance already 
+                    => The opposite could prove more effective => send only once per 50 * N_BATCHES (just to check progress) or if distance is small
+                    
+        - Send pBest only when it beats a reference quality gate:
+            - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
+                => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
+        - You know previous mean estimate μ̂ (from last seen global average message, even if stale)
+            Your current weights w_i
+            If coordinator averages uniformly, your marginal effect is about:
+            Δμ ≈ (w_i - w_i_last_contributed)/N
 
-    - If there is congestion be more strict:
-        => these is no congestion
-    
-    - Suppress updates that are worse than what other neighbors already have.
-        => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+        - If there is congestion be more strict:
+            => these is no congestion
+        
+        - Suppress updates that are worse than what other neighbors already have.
+            => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
 
-    - When FULLY_INFORMED / neighborhoods: suppress if your candidate is “dominated” by what’s already in the store. A neighbor dominates you if: loss_neighbor <= loss_you and accuracy_neighbor >= accuracy_you. So send only if you are non-dominated (Pareto-front-ish) in your neighborhood.
+        - When FULLY_INFORMED / neighborhoods: suppress if your candidate is “dominated” by what’s already in the store. A neighbor dominates you if: loss_neighbor <= loss_you and accuracy_neighbor >= accuracy_you. So send only if you are non-dominated (Pareto-front-ish) in your neighborhood.
 
 
-    - Suppress updates that are worse than what other neighbors already have.
-        => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+        - Suppress updates that are worse than what other neighbors already have.
+            => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+
+        - Send only header (accuracy) for gBest to the coordinator , then coordinator says which worker should sent 
+            => reduces overall bytes, but increases latency significantly and increase number of messages (new topic needed) 
+
+    ## Filtering Ideas That wont work ======================================
+
+        F. “I’m already represented” filter (cluster suppression)
+        Keep a small set of centroids of recently seen neighbor pBests (or gBest history).
+        If your candidate is within radius r of any centroid, don’t send.
+            => Reason: its because we dont just send to give new pBest but also replace the old one
+
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================
@@ -1256,7 +1267,6 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
                 - this also gets a * 4 because of other parametes like gradients, Adam stuff => 4 × 1.10 MiB = ~4.4 MiB
                 - This is negligable to the memory consumed by the activations (intermediate data / feature maps)
 
-
         Memory Phenomenon:
             - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
             - ND4J uses a caching allocator on GPU: allocator growth / caching
@@ -1307,8 +1317,8 @@ DL4J has 3 different memory spaces:
              => these memory allocations are used for the actuall convolution, not the memory transfer
     - You cant control CUDA / GPU caching 
 
- - 1)  -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
-            - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
+ - 1) -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
+        - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
 
  - 2) -Dorg.bytedeco.javacpp.maxphysicalbytes => total physical memory footprint of the process
         => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra

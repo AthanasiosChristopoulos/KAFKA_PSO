@@ -91,6 +91,7 @@ scp my-pendigits.tra achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KA
 kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weights-topic
 kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
+watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
 
 ```
 
@@ -140,7 +141,8 @@ python -m pip install \
   scikit-learn \
   python-dotenv \
   kafka-python \
-  matplotlib
+  matplotlib \ 
+  tensorflow-datasets
 
 ```
 
