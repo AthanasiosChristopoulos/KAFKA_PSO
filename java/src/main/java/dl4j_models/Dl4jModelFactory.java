@@ -201,7 +201,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 7;
+			int version = 9;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -219,20 +219,21 @@ public class Dl4jModelFactory {
 				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";
 				case 8 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v6.h5";
 				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";
+				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6, 7, 8, 9 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7, 8, 9, 10 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
-					case 1, 3 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3, 10 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 7 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 						// cifar 10 trained 75%, cifar 5 optimized 90%
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
