@@ -190,6 +190,7 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
     
 Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
  - Tier 0: LesNet, MobileNetV3Small, MobileNetV2, EfficientNetB0, NASNetMobile
+    => MobileNetV1 generally a bit heavier than V2 at the same “size setting”, but still “mobile”.
 
  - Tier 1: MobileNetV3Large, EfficientNetB1, ResNet50 (or ResNet50V2)
     - ResNet18 => It is shallower 18 Layer but has many more parameters, so MobileNetV2 is ~6× cheaper to run
@@ -205,7 +206,8 @@ Pretrained ImageNet CNN models, Ranked from simplest to heaviest:
 
  - For DL4J:
  LeNet → SimpleCNN → TextGenerationLSTM → FaceNetNN4Small2 → Darknet19 → TinyYOLO → AlexNet → VGG16 → VGG19 → ResNet50 → InceptionResNetV1
- 
+    - SimpleCNN isnt really pretrained, just a predefined structure
+    
  - Comparing MobileNetV2 and MobileNetV3Small:
     - use compare_forward_pass_ms.py 
     - They get about the same time

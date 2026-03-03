@@ -1,6 +1,9 @@
 ## PSO Theory: ============================================================
 
  - Belongs to the EC algorithms (Evolutionary Computation), population based algorithm
+ - This means: In ML papers, evolutionary usually means Evolutionary Algorithms (EAs): optimization methods inspired by biological evolution.
+
+
  - Neighborhood, a relation between each particle, must be defined in advance (neighborhood can be implemented by a graph G = {V, E})
     - V = Vertex = Particle, E = Edge = neighborhood relation between particles
  - One of the main drawbacks of the gradient-based technique is that is easily captured in the local minimum, the maximum number

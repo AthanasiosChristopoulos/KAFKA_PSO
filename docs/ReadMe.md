@@ -12,6 +12,7 @@ mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:
 ```
 
 ## Run Docker: ===========================================================
+
 ```bash
 docker compose up
 docker compose stop
@@ -73,6 +74,8 @@ git reset --hard HEAD~1   # Removes commit AND changes
 git push -u origin main
 git push --force origin main (so you dont have to pull first / be up to date)
 
+git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit 
+
 git checkout main
 
 git config --global user.name "AthanasiosChristopoulos"
@@ -86,114 +89,6 @@ git rm -r --cached logs
 git rm -r --cached target
 
 ```
-
-## ======================================================================
-## Server Stuff =========================================================
-```bash
-ssh achristopoulos@polytechnix.softnet.tuc.gr
-Erwd!oS21
-# enter with:
-# username: achristopoulos
-# password: Erwd!oS21
-
-ssh-keygen -t ed25519   # press enter for the options
-ssh-copy-id achristopoulos@polytechnix.softnet.tuc.gr   # no need for passwords afterwards
-
-# Launches you into:
-achristopoulos@polytechnix:~$  === achristopoulos@polytechnix:/home/achristopoulos$
-    => This is the home directory: ~ is the home directory of the current user
-
-# Check also with 
-pwd
-```
-
-NAS = Network Attached Storage
- - High Disk Volume for every but available only through the network
-
-```bash
-cd /mnt/nas_drive/achristopoulos
-cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
-df -h .     # Disk Storage overall
-du -sh .    # Disk Storage of your own files
-
-docker --version
-
-git clone --branch DL4J-PSO-Generic --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
-```
-
-
-
-ds123f15@ds123f15-Nitro-AN515-57:~$ ^C
-ds123f15@ds123f15-Nitro-AN515-57:~$ ssh achristopoulos@polytechnix.softnet.tuc.gr
-achristopoulos@polytechnix.softnet.tuc.gr's password: 
-Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-92-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
-  System information as of Fri Feb 27 04:55:49 PM UTC 2026
-
-  System load:                      6.603515625
-  Usage of /:                       86.2% of 877.18GB
-  Memory usage:                     26%
-  Swap usage:                       99%
-  Temperature:                      31.0 C
-  Processes:                        1151
-  Users logged in:                  3
-  IPv4 address for br-113cb6b8be10: 192.168.192.1
-  IPv4 address for br-400e4d3de2a2: 192.168.240.1
-  IPv4 address for br-432a0ba7132e: 172.30.0.1
-  IPv4 address for br-57cf8a87930e: 172.19.0.1
-  IPv4 address for br-5c641bd65b3c: 172.24.0.1
-  IPv4 address for br-5e119f36ea0d: 172.31.0.1
-  IPv4 address for br-6a3c198f962f: 172.27.0.1
-  IPv4 address for br-769f9bde856e: 172.23.0.1
-  IPv4 address for br-9759ed98ce96: 172.21.0.1
-  IPv4 address for br-9a3757b4c864: 172.28.0.1
-  IPv4 address for br-9c01870fa928: 192.168.224.1
-  IPv4 address for br-9c20c56e9ab4: 172.20.0.1
-  IPv4 address for br-a195a21a49d4: 172.26.0.1
-  IPv4 address for br-aca37d0c7092: 172.25.0.1
-  IPv4 address for br-b4176f0e85dc: 192.168.64.1
-  IPv4 address for br-b535d3fe4715: 172.22.0.1
-  IPv4 address for br-ba0750f5d1f5: 172.18.0.1
-  IPv4 address for br-d9a1387af70b: 172.29.0.1
-  IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eno8303:         147.27.14.250
-
-  => / is using 86.2% of 877.18GB
-  => There are 206 zombie processes.
-
- * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
-   just raised the bar for easy, resilient and secure K8s cluster deployment.
-
-   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
-
-Expanded Security Maintenance for Applications is not enabled.
-
-404 updates can be applied immediately.
-303 of these updates are standard security updates.
-To see these additional updates run: apt list --upgradable
-
-94 additional security updates can be applied with ESM Apps.
-Learn more about enabling ESM Apps service at https://ubuntu.com/esm
-
-New release '24.04.4 LTS' available.
-Run 'do-release-upgrade' to upgrade to it.
-
-
-
-The programs included with the Ubuntu system are free software;
-the exact distribution terms for each program are described in the
-individual files in /usr/share/doc/*/copyright.
-
-Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
-applicable law.
-
-achristopoulos@polytechnix:~$ 
-
-here is some info for you ... 
 
 ## Related Work: =============================================
 
@@ -763,7 +658,7 @@ CNNs are helped by a Dense Layer in the end:
 
 However, major disadvantages of BP are its convergence rate is relatively slow and always being trapped at the local minima.
 
-## Convergence vs Exploration: =========================================================
+`## Convergence vs Exploration: =========================================================
 
  - change model
  - change constants => inertia, C1, C2
@@ -781,13 +676,14 @@ However, major disadvantages of BP are its convergence rate is relatively slow a
  - Improve fitness function evaluation => Needs to be less noisy, increase TRAINING_SIZE:
     - If fitness is noisy, pBests / gBest become noisy, and the swarm can wander to a wrong direction.
  - Restricting the social learning aspect to only the gBest makes the original PSO converge fast.
+
  - Performance (record processing speed - overall data processing time) affects convergence:
     - Increase record processing speed => more updateX in a shorter amount of time + higher data processing speed
     - 1) Faster updateX => Not as reactive to social directive (because of communication latency)
         - Essentially communication latency becomes more substantial / significant
         - This harms convergence, because particle behavior "depends" more on inertia + cognitive accelarators
     - 2) This can still be regulated by adaptive inertia
-
+`
 ## Premature congvergence: =========================================================
 
  - trapped in a local optimum if the search environment is complex with numerous local solutions.
@@ -1198,23 +1094,44 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
 
     ## Filtering Ideas ======================================
 
-     - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
-        => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
-        => This would harm convergence when convergence is needed most
-        => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
-        => In short, we would a combination of the two (send only if there is significant distance, but the threshold for significant distance decreases over time)
-            => But we dont really care if there is a significant distance in the first place, we know there is a distance already 
-                => The opposite could prove more effective => send only once per 50 * N_BATCHES (just to check progress) or if distance is small
-                
-    - Send pBest only when it beats a reference quality gate:
-        - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
-            => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
+        - Send only if its a significant distance away from the previous pBest => maybe you can combine it with the significant loss 
+            => Problems: this would have an effect only in the case of convergence, but in this case we actually want to converge to the best possible solution
+            => This would harm convergence when convergence is needed most
+            => minute changes in the distance can significantly change loss, which is what we care about, especially during convergence
+            => In short, we would a combination of the two (send only if there is significant distance, but the threshold for significant distance decreases over time)
+                => But we dont really care if there is a significant distance in the first place, we know there is a distance already 
+                    => The opposite could prove more effective => send only once per 50 * N_BATCHES (just to check progress) or if distance is small
+                    
+        - Send pBest only when it beats a reference quality gate:
+            - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
+                => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
+        - You know previous mean estimate μ̂ (from last seen global average message, even if stale)
+            Your current weights w_i
+            If coordinator averages uniformly, your marginal effect is about:
+            Δμ ≈ (w_i - w_i_last_contributed)/N
 
-    - If there is congestion be more strict:
-        => these is no congestion
-    
-    - Suppress updates that are worse than what other neighbors already have.
-        => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+        - If there is congestion be more strict:
+            => these is no congestion
+        
+        - Suppress updates that are worse than what other neighbors already have.
+            => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+
+        - When FULLY_INFORMED / neighborhoods: suppress if your candidate is “dominated” by what’s already in the store. A neighbor dominates you if: loss_neighbor <= loss_you and accuracy_neighbor >= accuracy_you. So send only if you are non-dominated (Pareto-front-ish) in your neighborhood.
+
+
+        - Suppress updates that are worse than what other neighbors already have.
+            => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+
+        - Send only header (accuracy) for gBest to the coordinator , then coordinator says which worker should sent 
+            => reduces overall bytes, but increases latency significantly and increase number of messages (new topic needed) 
+
+    ## Filtering Ideas That wont work ======================================
+
+        F. “I’m already represented” filter (cluster suppression)
+        Keep a small set of centroids of recently seen neighbor pBests (or gBest history).
+        If your candidate is within radius r of any centroid, don’t send.
+            => Reason: its because we dont just send to give new pBest but also replace the old one
+
 
 ## ==================================================================================
 ## Functional Requirements: =========================================================
@@ -1325,6 +1242,10 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
                 There is a baseline VRAM “floor” that doesn’t go away:
                  - CUDA context + cuDNN handles, cuDNN convolution workspaces (often big), the memory might get reserved/cached, and just not evicted because VRAM not full (ND4J/CUDA caching allocator / memory pool (keeps memory reserved for speed)), model parameters / NDArrays resident on device (and possibly extra buffers)
                  -loads libraries, allocate internal state and caches => This memory stays allocated until the process exits. The cuda code is loaded in the GPU
+            
+            - Tensorflow policy:
+                - TF’s default behavior is: grab almost all available VRAM up front, then manage it internally
+                - it will take as much as it can get
 
             ## NVIDIA cuDNN (DNN = Deep Neural Network):
 
@@ -1345,7 +1266,6 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
                 - Size ≈ 288,298 × 4 = 1,153,192 bytes ≈ 1.15 MB
                 - this also gets a * 4 because of other parametes like gradients, Adam stuff => 4 × 1.10 MiB = ~4.4 MiB
                 - This is negligable to the memory consumed by the activations (intermediate data / feature maps)
-
 
         Memory Phenomenon:
             - Memory Leak: Memory is never freed => some GPU arrays stay referenced (pointer) and never get released. The garbage collector cant free them
@@ -1384,7 +1304,7 @@ DL4J has 3 different memory spaces:
             - The underlying ND4J arrays are off-heap, and with the CUDA backend they are (effectively) backed by GPU memory for GPU execution.
         => ND4J mirrors OFF-HEAP buffers to GPU
             - This means that on CPU => GPU communication, NDArray Buffers are exchanged off heap (copied from CPU off-heap to GPU. If CPU off-heap is limited, then GPU VRAM is limited in the same way) => ff-heap allocations are “mapped” to GPU memory
-        => ND4J CUDA uses JavaCPP (bytedeco) to allocate native memory and manage CUDA resources.
+        => ND4J CUDA uses JavaCPP (bytedeco) to allocatevidian native memory and manage CUDA resources.
             - JavaCPP (bytedeco) is the bridge between Java and native code (code of the CPU)
             - this is generally necessary when not on JVM / on Heap. The RAM is managed natively by C.
             - JavaCPP will try to keep native allocations it tracks under this budget (mostly host /off-heap), but CUDA/ND4J can still reserve/hold VRAM via its own pools/caches and via CUDA/cuDNN (this is what is reported by nvidia-smi).
@@ -1397,8 +1317,8 @@ DL4J has 3 different memory spaces:
              => these memory allocations are used for the actuall convolution, not the memory transfer
     - You cant control CUDA / GPU caching 
 
- - 1)  -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
-            - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
+ - 1) -Dorg.bytedeco.javacpp.maxbytes => limits JavaCPP’s own tracked allocations , off-heap host memory
+        - This INDIRECTLY effects memory usage if tensor size / transfer is the bottleneck
 
  - 2) -Dorg.bytedeco.javacpp.maxphysicalbytes => total physical memory footprint of the process
         => both on heap and off heap => is set by default to maxphysicalbytes = maxbytes + Xmx + extra
@@ -1496,3 +1416,31 @@ Guide to Transfer Learning:
     - GAP - Dense(256) - Dense(num_classes) => Adds non linear decision boundary
     - Flatten - Dense(num_classes) => you need spatial detail - helps with small tasks
     - Flatten - Dense(nOut) - Dense(num_classes) => Explodes parameter count
+
+Why this gap exists (important for your decision)
+    CIFAR is 32×32 resolution, and historically:
+    It’s considered too small to justify building a large pretraining ecosystem
+    Training from scratch on CIFAR is fast and cheap, so the community didn’t invest in pretrained checkpoints
+    Transfer learning value is much higher from large, diverse datasets (ImageNet, JFT, LAION)
+
+# ===============================================================================
+# How to get Keras 2 .h5 files:
+
+```bash
+# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
+
+# This is the standard way on Ubuntu when you need an older Python.
+
+# 1) Install prerequisites
+sudo apt update
+sudo apt install -y software-properties-common
+
+# 2) Add deadsnakes
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# 3) Install Python 3.11 + venv
+sudo apt install -y python3.11 python3.11-venv python3.11-dev
+
+source ~/venvs/tf215/bin/activate
+```

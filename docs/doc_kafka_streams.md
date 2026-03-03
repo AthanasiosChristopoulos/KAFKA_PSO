@@ -1,3 +1,24 @@
+=====================================================================
+## Kafka Streams:
+
+ - Use Case for Kafka Streams: 
+    - a Kafka Streams app is usually a long-running service / app, you cant stop and restart constantly
+        - its a constalty running stream
+        - a topology (just processing rules) is static it cant be altered once you call .start() in the code 
+    - you build a topology once, start it, and let it run indefinitely as events flow in.
+    - as data streams in, it is processed immidiately. You cannot pause, dynamically rewire, or stop consuming data
+
+
+ - Kafka Streams has two layers:
+    - High-level DSL (StreamsBuilder, KStream)
+    - Low-level Processor API (Processor) (when you just call .process() )
+
+ - Kafka Streams DSL (Domain-Specific Language) => High Level Language on top of Kafka Streams Library
+    - KStream, KTable, GlobalKTable
+
+ - Processor API => costum logic (not really pure Kafka Streams logic, just Java, arbitery Java code)
+
+
 ## State Store: ==========================================================
 
 There is local State Store (a state store is simply a local database) and remote State Store.

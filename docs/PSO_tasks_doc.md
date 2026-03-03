@@ -56,6 +56,7 @@
 			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
 			- how much time on average does it take you to process one record 
 				- this is supposed to be a streaming application: input_mbps < process_mbps
+
 			- Limit communication:
 				- Run without => identify latency (and number of messages)
 				- Run with	  => makes training more efficient / faster, identify reduction in number of messages.
@@ -65,6 +66,9 @@
 				- How much data until reached DESIRED_ACCURACY - How many epochs ?
 				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
 			- Performance and Accuracy Comparison with Gradient Descent
+
+			# =================================================================
+			# New:
 
 			- Με απλα Datasets:
 				- Sweet spot of N_WORKERS (να σταματησει να αυξανει το accuracy significantly, τοτε δεν εχει νοημα η αυξηση του N_WORKERS, καθως αυξανουμε την επικοινωνια):
@@ -76,11 +80,14 @@
 					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
 					- x: threshold T (increasing) | y: accuracy (hopefully decreasing)
 					- x: threshold T (increasing) | y: communication (hopefully decreasing)
+					
 					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
 
 			- x: Dimensionality / y: Accuracy
+			- x: Different Topologies / y: Accuracy
+	# ========================================================================================
 
 	43) PSO Tranfer Learning:
 		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
@@ -91,14 +98,16 @@
 
 	57) This isnt fully GD / PSO hybrid. This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
-		- B) Unfreeze / Fine-Tune base network
+		- B) Unfreeze / Fine-Tune base network (train the highly specific / class specific / last conv layers (paper))
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
 			=> Goal is to achieve greater performance comparing the pretrained version of the model to the newly PSO-trained version of the model 
 		- D) Use models that are not trained in the same dataset and are repurposed by tranfer learning
+		- E) Use ImageNet models
+
 		=> go from 1 Output Layer to 2 Dense Layers. Θελει περισσοτερα Layers (2-3)
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
-		Solution: 
+		Solution_1: 
 			- Find a model in GD (trained in tensorflow) that doesnt perform well (below 70% on MNIST) and has no dense layer (it relies solely on Convolutional Layer)
 			- Go to DL4J / PSO and add those Layers achieving a higher accuracy
 			- The idea is that GD will create a great CNN feature extractor and PSO will be able to use it and training its own classification layer on top of it
@@ -106,7 +115,50 @@
 				=> Problems: PSO suffers under high dimensionality, the more dense layers with higher parameters the worse the result. Also PSO basically cant train CNNs, so conv layers in the head are out of the question
 				=> GD backbone (good features, weak classifier), PSO head (small dense layer)
 				=> Conv features that are good, but final decision boundary is suboptimal
-	58) κανε το 32X32 => 224Χ224 Conversion in RAM, οχι στο broker
+				=> no ImageNet models
+				
+		Solution_2:
+			- Find a Dataset that is similar but different to the target dataset
+			- Train the model on that dataset
+			- Transfer it to the other dataset, replacing its classification layers and using the other data + PSO to train it
+			- no ImageNet models
+
+			due to the nature of PSO this is not possible  to use ImageNet type models 
+
+			i need to use models of this  complexity 
+
+			def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
+				model = keras.Sequential([
+					layers.Input(shape=input_shape),
+
+					# 32x32
+					layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+					layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+					layers.MaxPooling2D(2),  # 32 -> 16
+
+					# 16x16
+					layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+					layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+					layers.MaxPooling2D(2),  # 16 -> 8
+
+					# 8x8
+					layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+					layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+					layers.GlobalAveragePooling2D(),  # -> (128,)
+
+					layers.Dense(num_classes, activation="softmax", use_bias=True),
+				])
+
+				model.compile(
+					optimizer=keras.optimizers.Adam(1e-3),
+					loss="sparse_categorical_crossentropy",
+					metrics=["accuracy"],
+				)
+				return model
+
+			Also i need to use 32X32 i dont know if youwould recomend downlsampling in this case .... 
+
+
 
 	60) Write dimplomatiki
 
@@ -153,59 +205,7 @@
 	51) Get ONXX - Pytorch - Cifar - 32 x 32 x 3 models
 
 	52) End-to-end propagation delay
-	
-## =====================================================================================================
 
-	Thesis Structure:
-		- Acknowledgements
-		- Abstract
-		- Table of Contents
-		- Introduction (Why is this a current world problem, why this field of research has a problem in the modern world and what is my solution to this problem):
-			- Need to study PSO:
-				- Non Differentiable Function
-			- Federated / Distrubuted Processing enviroment
-			- Why i choose Kafka / Kafka Streams as the architecture 
-			- What this work is and how this project contributes to it
-
-		- Motivation
-		- Related Work 
-		- Thesis Contribution
-
-		- Theoretical Background => is this generall in nature or what is necessary to understand before proceding ???:
-			- Kafka / Kafka Streams (copy paste ???)
-			- Classification Task Explained + Neural Networks:
-				- FNNs / MPLs
-				- CNNs	
-			- Transfer Learning
-			- Federated Learning (Distributed Learning ???)
-			- PSO
-
-		- Functional and Non Functional System Requirements
-			- εξηγω τι χρειαζεται να κανει το προγραμμα μου πριν εξηγησω πως το κανει
-
-		- Implementation:
-			- Protocol (Differences between normal PSO protocol and distributed / Federated learning / Kafka PSO protocol)
-				=> many things, like the sharing and updating of gBest, can be easily done on the same device.
-				=> that isnt the case with federated, communication is costly 
-			- Architecture (Kafka Topology, Project Class Hierarchy)
-				- Exact topology / Kafka Details explained 
-				- Trandformes explained
-			- Difference between GD and PSO
-				- how much dimensionality affects PSO
-			- Different Non - Differentiable Loss Functions. You need to demonstrate about 3 such functions and show that they are non differentiable and the performance while using them.
-			- PSO techniques used:
-				- choose between them using .env interface => "User Interface"
-			- Performance of the program (how the forward pass needs to be the bottleneck and that it doesnt matter if you add extra work to the transformers)
-
-		- Experimental Evaluation:
-			- Datasets it run on with their corresponding models
-			- Special Transfer learning stuff for CNN Datasets and Excuses
-			- Measure Accuracy and Performance:
-				- Run it locally 
-				- Run it on a server
-				- Using different .env stuff 
-
-		- Future Work
 
 ## ================================================================================================
 
@@ -220,7 +220,3 @@
 		- baseline (no filtering)
 		- with filter
 	- 3 Non-Differential Functions
-
-
-
-

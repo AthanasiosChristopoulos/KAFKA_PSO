@@ -2,7 +2,7 @@
 ## Geometrically Monitored Particle Swarm Optimization for Data-Parallel Neural Training on Apache Kafka Streams
 ## Distributed Neural Network Training with Particle Swarm Optimization and Geometric Monitoring over Apache Kafka and Kafka Streams
 
-```yml ================================================================================================================
+```yml ===============================================================
 KAFKA_NODE_ID: 1  # Single node, acts as both controller and broker 
 KAFKA_PROCESS_ROLES: broker, controller
     # Broker (data plane): handles client traffic (produce/consume on topics).
@@ -23,7 +23,7 @@ ports: "9092:9092" # tells Docker forward host port 9092 → container port 9092
 
 ```
 
-## Kafka Explained:
+## Kafka Explained: ===========================================================
 
 **Offset:**
     the sequence number of a record within a partition. Each consumer maintains a position (the next offset it will read) per partition.
@@ -116,106 +116,73 @@ KStream<String, String> out = in.mapValues(value -> IrisStreamsApp.callPredictio
 
 ```
 
-=================================================================================================================================
-## Kafka Streams:
+## Kafka Retention Policy: ====================================================
 
- - Use Case for Kafka Streams: 
-    - a Kafka Streams app is usually a long-running service / app, you cant stop and restart constantly
-        - its a constalty running stream
-        - a topology (just processing rules) is static it cant be altered once you call .start() in the code 
-    - you build a topology once, start it, and let it run indefinitely as events flow in.
-    - as data streams in, it is processed immidiately. You cannot pause, dynamically rewire, or stop consuming data
+There are TWO retention policies that Kafka supports:
+
+ - Time-based retention:
+    log.retention.hours=168   # keep up to 7 days long records 
+    
+ - Size-based retention:
+    log.retention.bytes=3221225472   # ~3GB
+    This means Kafka will keep at most ~3GB of log data per partition. When a partition grows beyond that size, Kafka will delete the oldest log segments until the size is back under the limit.
+
+ - Kafka log storage works in a per log.segment.bytes=1073741824 basis. Logs are stored in segments of 1GB chucks. This means that retention will effectively work in ~1GB chunks, meaning a Kafka broker cant delete less than that (no fine-turning).
 
 
- - Kafka Streams has two layers:
-    - High-level DSL (StreamsBuilder, KStream)
-    - Low-level Processor API (Processor) (when you just call .process() )
+## Broker Parallelism / Multiple Brokers: ====================================================
 
- - Kafka Streams DSL (Domain-Specific Language) => High Level Language on top of Kafka Streams Library
-    - KStream, KTable, GlobalKTable
+In Kafka single node means single machine.
+1 node = 1 server / 1 VM / 1 physical machine
 
- - Processor API => costum logic (not really pure Kafka Streams logic, just Java, arbitery Java code)
+🧠 3. Why multiple brokers on one machine cause random I/O
 
-=================================================================================================================================
-## Tensorflow Java:
+Kafka normally works like this:
 
-```bash
+👉 Each partition is written sequentially to a log file
 
-# print about the actuall model:
-saved_model_cli show --dir iris_savedmodel --all
+BUT when you run many brokers on one disk:
 
-```
-### Tensorflow Theory:
+each broker has its own logs
 
-A matrix is a 2-D tensor.
-A vector is a 1-D tensor.
-A scalar is a 0-D tensor.
+they all write at the same time
 
-TensorFlow revolves around: Graph and Session
-Computations are represented as graphs (mathematical operations) in TensorFlow
-    => what computations exist (nodes) and how data flows between them (edges).
-    => tensors are the data that are running through the graph
+the disk has to jump between files
 
-Α TensorFlow graph is a just schematic of the computation (no values, not running). A graph must be run inside a TensorFlow session.
-Seesion: The runtime environment / executor that takes the graph + your data (tensors) and produces outputs (new tensors).
+So instead of:
+Sequential write to one log
+you get:
+Broker A writes → Broker B writes → Broker C writes → Broker A again...
 
-```java
-Session sess = new Session(graph) // session depends on the graph
-Tensor<Double> tensor = sess.runner().fetch("z")
-  .feed("x", Tensor.<Double>create(3.0, Double.class))
-  .feed("y", Tensor.<Double>create(6.0, Double.class))
-  .run().get(0).expect(Double.class);
-```
+🧠 4. Why multiple disks fixes it
 
-MetaGraphDef with tag-set: 'serve' contains the following SignatureDefs: // this is the metagraph with the tag serve 
+If you instead have:
 
-SignatureDefs == named entry point. One model can have multiple signatures. The most usuall are:
-    - signature_def['serve']
-    - signature_def['serving_default']
-inputs['keras_tensor'] tensor_info:
-    dtype: DT_FLOAT
-    shape: (-1, 4) // this means the batch size is (X, 4). The number of samples you feed forward at once is X (and have always 4 features) 
-                        => Allow any batch size
-    name: serving_default_keras_tensor:0
-The given SavedModel SignatureDef contains the following output(s):
-outputs['output_0'] tensor_info:
-    dtype: DT_FLOAT
-    shape: (-1, 3)
-    name: StatefulPartitionedCall_1:0
+Broker A → Disk 1
+Broker B → Disk 2
+Broker C → Disk 3
 
-```java
-    static { // Load Model. This runs once
-        try {
-            bundle = SavedModelBundle.load(SAVED_MODEL, SIGNATURE_TAG);  // loads the graph + variables that were exported from Python
-                    // The SIGNATURE_TAG (often "serve" or "serving") tells TF which meta-graph inside the export to use
+then each disk gets sequential writes again
 
-            // Discover first input/output from the serving signature   
-            Map<String, SignatureDef> sigs = bundle.metaGraphDef().getSignatureDefMap();
-            SignatureDef sig = sigs.getOrDefault("serving_default", sigs.values().stream().findFirst().orElseThrow());
-                // SignatureDef describes which inputs and outputs the model expects when you run inference.
+It mostly turns into multiple nodes logically, while still being one node physically (same disks, same NIC, same CPUs, same memory bus).
 
-            inputName  = sig.getInputsMap().values().iterator().next().getName();  // input tensor name
-            outputName = sig.getOutputsMap().values().iterator().next().getName(); // output tensor name
-                // Without these names you can’t tell TF what data you’re feeding in or what you’re getting out.
-                // These names are what you will later use in .feed(inputName, tensor) and .fetch(outputName) when running the session.
-                
-        } catch (Exception e) {
-            throw new RuntimeException("TF init failed: " + e.getMessage(), e);
-        }
-    }
+NIC = Network Interface Card network hardware: Broadcom 5720 Dual Port 1Gb On-Board LOM
 
-    TFloat32 input = TFloat32.tensorOf(Shape.of(1, 4))  // Normally Keras automatically converts input data under the hood into a tensor
-                            // But in TensorFlow Java, there’s no abstraction, it expects explicit tensors for all inputs and outputs.
-    for (int i = 0; i < 4; i++) {
-        input.setFloat(features.get(i).getAsFloat(), 0, i);
-    }
-
-    var outList = bundle.session().runner()
-        .feed(INPUT_TENSOR, input)
-        .fetch(OUTPUT_TENSOR)
-        .run();  // returns a list of output tensors (because models can have multiple outputs).
-
-    TFloat32 probabilities_tensor = (TFloat32) outList.get(0) // our model has one output tensor (we arejust peeling the list layer)
-    int n = (int) probabilities_tensor.shape().size(1);       // probabilities_tensor.shape() => (1,3) , then .size(1) => 3, so n outputs
-
-```
+1
+191) time: 83.775, bestAccuracy: 0.772, bestLoss: 2.5142236, accuracy: 0.752, with nSamples: 500, nCorrect: 376 loss: 2.7200594, weights sample: [1.90353, 1.88747, -1.83364, ...], bestTrainingAccuracy: 0.91
+[Worker1] Closed, because of idleness for 30021 ms
+[Worker 1] Dist = 0.0733, Radius = 0.097, with velocity (magnitude): 10.297 => CONVERGED
+[Worker 1] Average Elapsed Time per Batch: 31.724 ms, InActivePartitions 0
+[Worker 1] Elapsed time: 83.908 seconds, exiting run()
+[Worker0] Closed, because of idleness for 30025 ms
+[Coordinator] Stop requested, closing streams
+[Worker 0] Dist = 0.0741, Radius = 0.097, with velocity (magnitude): 10.832 => CONVERGED
+Saved flat weights to models/global-model-flat.txt, with length=325
+[Worker 0] Average Elapsed Time per Batch: 37.367 ms, InActivePartitions 0
+[Worker 0] Elapsed time: 85.087 seconds, exiting run()
+============= Training is over, ElapsedTime: 116.993 seconds =============
+[Coordinator] Exiting run()
+============== Coordinator stopped, stopping simulation ==============
+[Coordinator] Final (Best) Results: Training Accuracy: 0.91, Test Accuracy:0.772
+[Coordinator] Elapsed time: 116.081 seconds
+achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4$ 
