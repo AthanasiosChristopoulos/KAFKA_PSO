@@ -1105,10 +1105,20 @@ Kafka / Kafka Streams => this is a non centralized enviroment. This is why these
     - Send pBest only when it beats a reference quality gate:
         - I may only not send based on loss using a previous reference. Using a flat loss cutoff is problematic, loss / accuracy is NUM_CLASS dependend and for some cases learning happens rather slowly with small adjustments. We are evaluating based on significant relative improvement.
             => we need to slowly warm up to a correct solution we cant reject it because its not good enough yet 
+    - You know previous mean estimate μ̂ (from last seen global average message, even if stale)
+        Your current weights w_i
+        If coordinator averages uniformly, your marginal effect is about:
+        Δμ ≈ (w_i - w_i_last_contributed)/N
 
     - If there is congestion be more strict:
         => these is no congestion
     
+    - Suppress updates that are worse than what other neighbors already have.
+        => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
+
+    - When FULLY_INFORMED / neighborhoods: suppress if your candidate is “dominated” by what’s already in the store. A neighbor dominates you if: loss_neighbor <= loss_you and accuracy_neighbor >= accuracy_you. So send only if you are non-dominated (Pareto-front-ish) in your neighborhood.
+
+
     - Suppress updates that are worse than what other neighbors already have.
         => Fully Informed losses its meaning or at the very worst we are stuck with old pBest vaules
 

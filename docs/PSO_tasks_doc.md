@@ -86,7 +86,7 @@
 						- Loose: Easy to pass the filter, MORE communication
 
 			- x: Dimensionality / y: Accuracy
-
+			- x: Different Topologies / y: Accuracy
 	# ========================================================================================
 
 	43) PSO Tranfer Learning:
