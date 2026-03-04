@@ -29,6 +29,12 @@ public class LossFunction {
 
         } else if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
             return compute_loss_zero_one(probs, label);
+
+        } else if ("ABSOLUTE_MARGIN_LOSS".equals(LOSS_FUNCTION)) {
+            return compute_loss_margin_abs(probs, label);
+
+        } else if ("HINGE_LOSS".equals(LOSS_FUNCTION)) {
+            return compute_loss_hinge(probs, label);
         }
 
         System.out.println("No valid loss function selected");
@@ -87,7 +93,6 @@ public class LossFunction {
     }
 
     // =============================================================================================
-    // Loss Functions:
     
     public static float compute_loss_MSE(float[] probs, int label) {
 
@@ -139,6 +144,8 @@ public class LossFunction {
         return (float) -Math.log(p);    // natural log; base doesn't really matter
     }
     
+    // ============================================================================================
+    // Non - Differentiable
     // =============================================================================================
     // ZERO_ONE:
 
@@ -177,6 +184,44 @@ public class LossFunction {
         }
 
         return sum / C;
+    }
+
+    // =============================================================================================
+    // Absolute Margin Loss
+
+    public static float compute_loss_margin_abs(float[] probs, int label) { // is non differentiable at 0
+        // penalizes margin violations (largest wrong class probability)
+        float py = probs[label];
+
+        float maxOther = -Float.MAX_VALUE;
+
+        for (int i = 0; i < probs.length; i++) {
+            if (i == label) continue;   // this is why its maxOther. Its the max probability other than the one with the label
+            if (probs[i] > maxOther) maxOther = probs[i];
+        }
+
+        // Implement L= ∣1 − (py​−pmax_other​)∣
+        float margin = py - maxOther;
+        return Math.abs(1f - margin);
+    }
+
+    // =============================================================================================
+    // Hinge Loss
+
+    public static float compute_loss_hinge(float[] probs, int label) {
+
+        float py = probs[label];
+
+        float maxOther = -Float.MAX_VALUE;
+
+        for (int i = 0; i < probs.length; i++) {
+            if (i == label) continue;
+            if (probs[i] > maxOther) maxOther = probs[i];
+        }
+
+        float margin = py - maxOther;
+
+        return Math.max(0f, 1f - margin);
     }
 
     // =============================================================================================
@@ -223,8 +268,9 @@ public class LossFunction {
     }
     
     // ==================================================================================
-    // Regularization - Weight Penalty Score
+    // Regularization
     // ==================================================================================
+
     // L2 - Penalty:
 
     public static double l2Penalty(float[] w) {
