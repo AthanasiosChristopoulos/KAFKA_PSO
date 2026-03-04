@@ -87,6 +87,8 @@
 
 			- x: Dimensionality / y: Accuracy
 			- x: Different Topologies / y: Accuracy
+			- x: FedAvgIterByCoordinator / y: Current Accuracy 
+			
 	# ========================================================================================
 
 	43) PSO Tranfer Learning:

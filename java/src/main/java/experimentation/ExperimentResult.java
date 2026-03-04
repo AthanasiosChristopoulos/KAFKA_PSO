@@ -39,6 +39,12 @@ public final class ExperimentResult {
 
     // ===============================================================================
 
+    public List<Float> getAccuracyValues() {
+        return coordinator.accuracyValues;
+    }
+    
+    // ===============================================================================
+
     public long sumMessagesSent() {
         return workers.stream()
                 .mapToLong(WorkerMetrics::getTOTAL_MESSAGES_SENT)

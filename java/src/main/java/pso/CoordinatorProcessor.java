@@ -282,7 +282,8 @@ public void onAllWorkersReported() {
         bestLoss = loss;
     }
     
-    // ", process_count: " + process_count + " thread = " + Thread.currentThread().getName()
+    control.accuracyValues.add(accuracy);
+
     if (logger.isEnabled(0)) logger.log(taskInstance + 
                 ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
                 ", bestLoss: " + bestLoss + 

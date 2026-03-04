@@ -18,6 +18,7 @@ docker compose up
 docker compose stop
 
 docker compose down     # CAREFUL deletes topics ??? 
+
 ```
 ## Formulas for PSO / velocity update:
 

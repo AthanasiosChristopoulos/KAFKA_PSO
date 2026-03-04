@@ -51,6 +51,9 @@ public class Experimentation {
         cfg.LOSS_THRESHOLD_MIN = 0.005f;
         LOSS_THRESHOLD_MIN_ORIGINAL = cfg.LOSS_THRESHOLD_MIN;
         LOSS_THRESHOLD_MAX_ORIGINAL = cfg.LOSS_THRESHOLD_MAX;
+        
+        // ===========================================================================================================================================
+        // ===========================================================================================================================================
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
             
@@ -227,7 +230,57 @@ public class Experimentation {
 
                 }   
             }
-        }
+
+        // ===========================================================================================================================================
+        // ===========================================================================================================================================
+
+        } else if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
+            
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_monitoring_iterations.csv");
+
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write("MONITORING_ITER,ACCURACY");
+
+                CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                System.out.println("===============================================================================================");
+                System.out.println("New RUN_ID: " + cfg.RUN_ID);
+                System.out.println("===============================================================================================");
+
+                // =================================================================================================
+                // Restart the Kafka Parititions
+
+                List<String> topics;
+                if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                    topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                } else {
+                    topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                }
+
+                KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                // =================================================================================================
+
+                ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                // writeExperimentData(w, r, -1, -1, -1);
+                writeAccuracyValues(w, r);
+
+                w.flush();
+                System.out.println("===============================================================================================");
+                System.out.println("End of experiment with MONITORING_ITERATIONS");
+                System.out.println("===============================================================================================");
+
+            }
+        } 
+        
     }
 
     // =============================================================================================================
@@ -290,8 +343,28 @@ public class Experimentation {
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
 
 
+    // =============================================================================================================
+
+    private static void writeAccuracyValues(BufferedWriter w, ExperimentResult r) {
+        
+        try{     
+            int iter = 0;
+            
+            for(float accuracy : r.getAccuracyValues()) {
+                iter++;
+                w.write(String.format(
+                    "%d,%f\n",
+                    iter,
+                    accuracy
+                ));
+            }
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // =============================================================================================================
