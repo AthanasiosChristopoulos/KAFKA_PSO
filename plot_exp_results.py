@@ -141,13 +141,13 @@ def main():
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
+        plt.grid(True)
         
         if mode == "MONITORING_ITERATIONS":
             tick_count = 10
             if len(xs_plot) > tick_count:
                 tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
                 plt.xticks([xs_plot[i] for i in tick_idx])
-            plt.grid(True)
         else:
             plt.xticks(xs_plot)
 

@@ -142,8 +142,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic mnist-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist-input --from-beginning
 
 # mnist-test: ======================================================
@@ -156,8 +155,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic mnist-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic mnist-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist-test --from-beginning
 
 # mnist4: ======================================================
@@ -433,8 +431,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic pendigits-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic pendigits-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic pendigits-input --from-beginning
   
 # pendigits-test: ======================================================
@@ -447,8 +444,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic pendigits-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic pendigits-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic pendigits-test --from-beginning
 
 # pendigits-half: ======================================================

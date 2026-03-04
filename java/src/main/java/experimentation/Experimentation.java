@@ -34,7 +34,8 @@ public class Experimentation {
     private static List<Integer> workersList = List.of(6, 18, 24);
 
     // ========================================================================
-    private static List<Integer> filterEnableList = List.of(1, 0);
+    // private static List<Integer> filterEnableList = List.of(1, 0);
+    private static List<Integer> filterEnableList = List.of(1);
 
     // ========================================================================
     // private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);

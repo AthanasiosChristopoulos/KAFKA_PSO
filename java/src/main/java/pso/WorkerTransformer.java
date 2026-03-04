@@ -119,6 +119,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private volatile WeightsMessage pendingPBestMsg = null;
     private long lastPBestForwardMs = 0;
+    private long openedDebounceWindow = 0;
+    private boolean pBestUpdatePending = false;
 
     private int MAX_BATCHES; // expected max updates (for clamping)
     private float TAU; 
@@ -358,6 +360,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // Filtering: is the loss significant enough to be reported ?
         // we cant meassure performance from here ... this is just creating an object and returning it to the one that is going to send it.
+        
         boolean significant_diff = true;
         updateThreshold(ws.countForwardPasses);
 
@@ -397,6 +400,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if(FILTER_ENABLED) {
                 ws.pBestCandidateCount++;
                 pendingPBestMsg = msg;
+                if(pBestUpdatePending == false) {
+                    openedDebounceWindow = System.currentTimeMillis();
+                    pBestUpdatePending = true;
+                }
+
             } else {
                 ws.incrementTotalMessagesSent("pBest");
                 context.forward(keyName, msg);  // context.forward can be called 0 times, 1 time, or many times per input record.
@@ -594,6 +602,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     // r=1:  4  5  6  7
     // r=2:  8  9 10 11 
     // For an id of 10, 11, then it automatically becomes a 0, 1 respectively
+
     //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
@@ -889,12 +898,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (pendingPBestMsg == null) return;
 
         long nowMs = System.currentTimeMillis();
-        if (nowMs - lastPBestForwardMs < cfg.PBEST_DEBOUNCE_MS) return;
+        if (nowMs - openedDebounceWindow  < cfg.PBEST_DEBOUNCE_MS) return; // if there is no significant difference between
+            // when last sent Best / when did I last forward a pBest downstream
+            // don’t forward more than once per debounce interval
 
-        // Snapshot & clear (latest-wins)
+        // Latest-wins
         WeightsMessage msg = pendingPBestMsg;
 
         pendingPBestMsg = null;
+        pBestUpdatePending = false;
         lastPBestForwardMs = nowMs;
 
         // This is the actual emission downstream from the Transformer
