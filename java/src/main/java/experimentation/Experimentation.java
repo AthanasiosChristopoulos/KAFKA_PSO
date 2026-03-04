@@ -246,7 +246,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("MONITORING_ITER,ACCURACY");
+                w.write("MONITORING_ITER,ACCURACY\n");
 
                 CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 

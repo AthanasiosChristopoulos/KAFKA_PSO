@@ -29,7 +29,8 @@ def main():
     if not experimentation_dir:
         raise RuntimeError("EXPERIMENTATION_DIR is not set in java/.env")
 
-    # Choose CSV + x-axis + plots by mode
+    # =================================================================================================
+
     if mode == "THRESHOLD":
         csv_path = Path(f"java/{experimentation_dir}/results_threshold.csv")
         xcol = "LOSS_THRESHOLD_DIFF"
@@ -39,7 +40,9 @@ def main():
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs Threshold (T)", "accuracy"),
             ("PBEST_BYTES_EST", "Estimated pBest bytes", "pBest Bytes vs Threshold (T)", "bytes"),
         ]
-
+    
+    # =================================================================================================
+    
     elif mode == "FILTER_ENABLED":
         csv_path = Path(f"java/{experimentation_dir}/results_filter_enabled.csv")
         xcol = "FILTER_ENABLED"
@@ -50,6 +53,20 @@ def main():
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
         ]
+
+    # =================================================================================================
+
+    elif mode == "MONITORING_ITERATIONS":
+        # put your monitoring csv here, e.g. java/<dir>/monitoring_accuracy.csv
+        csv_path = Path(f"java/{experimentation_dir}/results_monitoring_iterations.csv")
+        xcol = "MONITORING_ITER"
+        xlabel = "MONITORING_ITER"
+        suffix = "monitoring"
+        plots = [
+            ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy"),
+        ]
+
+    # =================================================================================================
 
     else:
         # default: N_WORKERS experiments
@@ -62,6 +79,9 @@ def main():
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs N_WORKERS", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs N_WORKERS", "bytes"),
         ]
+        
+    # =================================================================================================
+
 
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
@@ -72,9 +92,11 @@ def main():
     if xcol not in df.columns:
         raise KeyError(f"CSV missing x column '{xcol}'. Columns: {list(df.columns)}")
 
+    # numeric + sort
     df[xcol] = pd.to_numeric(df[xcol], errors="coerce")
-    df = df.sort_values(xcol)
+    df = df.dropna(subset=[xcol]).sort_values(xcol)
 
+    # pbest estimation only when those columns exist (won't run for MONITORING)
     if "TOTAL_MESSAGES_SENT_PBEST" in df.columns and "TOTAL_MESSAGES_SENT" in df.columns and "TOTAL_BYTES_SENT" in df.columns:
         df["PBEST_BYTES_EST"] = compute_pbest_bytes(df)
 
@@ -85,15 +107,19 @@ def main():
         if ycol not in df.columns:
             raise KeyError(f"CSV missing y column '{ycol}' needed for plot '{title}'. Columns: {list(df.columns)}")
 
-        ys = pd.to_numeric(df[ycol], errors="coerce").fillna(0.0).tolist()
+        ys = pd.to_numeric(df[ycol], errors="coerce")
+        # for monitoring, keep NaNs out rather than forcing to 0
+        mask = ys.notna()
+        xs_plot = df.loc[mask, xcol].tolist()
+        ys_plot = ys.loc[mask].tolist()
 
         plt.figure()
-        plt.plot(xs, ys, marker="o")
+        plt.plot(xs_plot, ys_plot, marker="o")
         plt.ylim(bottom=0)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
-        plt.xticks(xs)  # ok for small number of discrete x values
+        plt.xticks(xs_plot)  # ok for small number of discrete x values
         plt.grid(True)
 
         outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
