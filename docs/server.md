@@ -86,6 +86,7 @@ ls -ld ~/.javacpp ~/.keras  # you can see if they are links or not
 
 # Transfer files
 scp my-pendigits.tra achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data/
+scp -r achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/java/experimental_results_server/mnist_accuracy C:\Users\User\Downloads
 
 # Reset local-weights-topic:
 kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weights-topic
