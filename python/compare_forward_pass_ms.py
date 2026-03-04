@@ -77,6 +77,72 @@ def build_prebuilt_mobilenetv1_base():
     return model
 
 # ---------------------------
+# ResNet 20 Cifar   
+# ---------------------------
+
+def build_cifar_resnet20_base_gap(input_shape=(32, 32, 3)):
+    """
+    CIFAR ResNet-20 backbone + GAP.
+    Output: feature vector of size 64 (after final block).
+    No ImageNet weights. CIFAR-style stem (3x3 conv, no maxpool at start).
+    """
+    def conv_bn_relu(x, filters, kernel_size=3, stride=1):
+        x = layers.Conv2D(filters, kernel_size, strides=stride, padding="same",
+                          use_bias=False, kernel_initializer="he_normal")(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+        return x
+
+    def residual_block(x, filters, stride=1):
+        shortcut = x
+
+        # First conv
+        x = layers.Conv2D(filters, 3, strides=stride, padding="same",
+                          use_bias=False, kernel_initializer="he_normal")(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+
+        # Second conv
+        x = layers.Conv2D(filters, 3, strides=1, padding="same",
+                          use_bias=False, kernel_initializer="he_normal")(x)
+        x = layers.BatchNormalization()(x)
+
+        # Projection if shape changes
+        if stride != 1 or shortcut.shape[-1] != filters:
+            shortcut = layers.Conv2D(filters, 1, strides=stride, padding="same",
+                                     use_bias=False, kernel_initializer="he_normal")(shortcut)
+            shortcut = layers.BatchNormalization()(shortcut)
+
+        x = layers.Add()([x, shortcut])
+        x = layers.ReLU()(x)
+        return x
+
+    inputs = keras.Input(shape=input_shape)
+
+    # CIFAR stem
+    x = conv_bn_relu(inputs, 16, kernel_size=3, stride=1)
+
+    # ResNet-20: 3 stages, each with 3 residual blocks (n=3), total depth = 6n+2 = 20
+    # Stage 1: 16 filters, stride 1
+    for _ in range(3):
+        x = residual_block(x, 16, stride=1)
+
+    # Stage 2: 32 filters, first block stride 2
+    x = residual_block(x, 32, stride=2)
+    for _ in range(2):
+        x = residual_block(x, 32, stride=1)
+
+    # Stage 3: 64 filters, first block stride 2
+    x = residual_block(x, 64, stride=2)
+    for _ in range(2):
+        x = residual_block(x, 64, stride=1)
+
+    x = layers.GlobalAveragePooling2D()(x)
+
+    model = keras.Model(inputs, x, name="cifar_resnet20_base_gap")
+    return model
+
+# ---------------------------
 # Tiny fully-conv + GAP (PSO-friendly)
 # ---------------------------
 def build_tiny_fcn_gap():
@@ -133,6 +199,7 @@ def benchmark_forward(model, x, use_tf_function=True, jit_compile=False):
 # ============================================================================================
 
 def main(): 
+    
     print_env()
     x = get_cifar_batch()
 
@@ -140,6 +207,7 @@ def main():
         ("Prebuilt MobileNetV3Small base+GAP", build_prebuilt_mobilenetv3small_base()),
         ("Prebuilt MobileNetV2 base+GAP",      build_prebuilt_mobilenetv2_base()),
         ("Prebuilt MobileNetV1 base+GAP",      build_prebuilt_mobilenetv1_base()),
+        ("CIFAR ResNet-20 base+GAP",           build_cifar_resnet20_base_gap()),  # <--- add this
         ("Tiny fully-conv + GAP",              build_tiny_fcn_gap()),
         ("Simple Flatten+Dense",               build_simple_flatten_dense()),
     ]

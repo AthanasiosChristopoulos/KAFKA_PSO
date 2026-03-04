@@ -201,7 +201,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 9;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -215,10 +215,11 @@ public class Dl4jModelFactory {
 				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
 				case 4 -> filename = "pretrained_models_dl4j/mobilenetv2_base_224x224.h5";
 				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
-				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_v2.h5";
-				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";
-				case 8 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v6.h5";
-				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";
+				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_v2.h5";		// 50%
+				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
+				case 8 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
+																								// 72% => 100 and 77% pretrained
+				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";			// 67%
 				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
@@ -239,7 +240,7 @@ public class Dl4jModelFactory {
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
 					case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
 					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
-						// 77% accuracy pretrained, 73% new
+						// 77% accuracy pretrained, 75% new head
 
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
