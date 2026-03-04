@@ -33,6 +33,8 @@
 
 		- Τα results και overall experimentation να τα τρεξω για server ή οχι ? ποια να τρεξω σε server και πια οχι ? Μονο αυτα που χρειαζονται ?
 
+		- Για non-differentiable functions που θα βρω το μονο requirement ειναι να δουλευουν as good as cross entropy σωστα ?
+
 
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
