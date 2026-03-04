@@ -34,6 +34,8 @@ public class SimulationRunner {
         double totalElapsedSec = (System.nanoTime() - start) / 1_000_000_000.0;
 
         coordinatorThread.join();
+
+        // Ensure all workers reported (if you want strictness)
         collector.awaitWorkers();
 
         return collector.buildResult(numWorkers, totalElapsedSec);

@@ -14,10 +14,14 @@ import java.time.Duration;
 
 public class Experimentation {
 
+    private static volatile boolean stopRequested = false;
+    private static volatile boolean ctrlCRequested = false;
+
     private static final Config cfg = Config.getInstance();
     private static String bootstrap = cfg.KAFKA_HOST;
     private static float LOSS_THRESHOLD_MIN_ORIGINAL;
     private static float LOSS_THRESHOLD_MAX_ORIGINAL;
+
     // private static List<Integer> workersList = List.of(2, 4, 6);
     // private static List<Integer> workersList = List.of(2, 6, 12);
     // private static List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_WORKER_DATA_PROCESSING == false
@@ -45,7 +49,29 @@ public class Experimentation {
 
     // ========================================================================
 
+    private static void installSigintHandler() {
+        try {
+            // HotSpot: available on most JDKs (including Windows)
+            sun.misc.Signal.handle(new sun.misc.Signal("INT"), sig -> {
+                if (ctrlCRequested) return;
+                ctrlCRequested = true;
+
+                System.out.println("\n[Experimentation] Ctrl+C caught -> stopping current run (not exiting JVM)");
+                // Ask your system to stop (workers/coordinator are already polling this)
+                CoordinatorControl.getInstance().requestStopFinal();
+
+                // Interrupt the thread currently blocked in join/await so runOnce() can return
+            });
+        } catch (Throwable t) {
+            // Fallback: if Signal not available, you can't prevent JVM exit on Ctrl+C.
+            System.out.println("[Experimentation] WARNING: sun.misc.Signal not available; Ctrl+C will terminate JVM.");
+        }
+    }
+
+    // ========================================================================
+
     public static void main(String[] args) throws Exception {
+        installSigintHandler();
 
         cfg.LOSS_THRESHOLD_MAX = 0.05f;
         cfg.LOSS_THRESHOLD_MIN = 0.005f;
@@ -267,13 +293,15 @@ public class Experimentation {
                 KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
 
                 // =================================================================================================
+                ExperimentResult r = null;
 
-                ExperimentResult r = SimulationRunner.runOnce(cfg);
+                r = SimulationRunner.runOnce(cfg);
 
                 // writeExperimentData(w, r, -1, -1, -1);
                 writeAccuracyValues(w, r);
 
                 w.flush();
+
                 System.out.println("===============================================================================================");
                 System.out.println("End of experiment with MONITORING_ITERATIONS");
                 System.out.println("===============================================================================================");

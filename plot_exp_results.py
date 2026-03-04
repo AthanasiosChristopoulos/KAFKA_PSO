@@ -4,15 +4,13 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
+import numpy as np
 
 load_dotenv("java/.env")
 
+# ============================================================================================
 
 def compute_pbest_bytes(df: pd.DataFrame) -> pd.Series:
-    """
-    Estimate pBest bytes when CSV only has TOTAL_BYTES_SENT overall.
-    Assumes average bytes/message applies to pBest too.
-    """
     total_bytes = df["TOTAL_BYTES_SENT"].astype(float)
     total_msgs = df["TOTAL_MESSAGES_SENT"].astype(float).replace(0, pd.NA)
     pbest_msgs = df["TOTAL_MESSAGES_SENT_PBEST"].astype(float)
@@ -21,6 +19,15 @@ def compute_pbest_bytes(df: pd.DataFrame) -> pd.Series:
     pbest_bytes = pbest_msgs * bytes_per_msg
     return pbest_bytes
 
+# ============================================================================================
+
+def downsample_df(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
+    n = len(df)
+    if n <= max_rows:
+        return df
+    idx = np.linspace(0, n - 1, num=max_rows, dtype=int)
+    return df.iloc[idx].copy()
+# ============================================================================================
 
 def main():
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
@@ -103,6 +110,7 @@ def main():
     xs = df[xcol].tolist()
 
     saved = []
+    
     for ycol, ylabel, title, tag in plots:
         if ycol not in df.columns:
             raise KeyError(f"CSV missing y column '{ycol}' needed for plot '{title}'. Columns: {list(df.columns)}")
@@ -113,14 +121,35 @@ def main():
         xs_plot = df.loc[mask, xcol].tolist()
         ys_plot = ys.loc[mask].tolist()
 
+        if mode == "MONITORING_ITERATIONS":
+            
+            MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
+
+            plot_df = df.loc[mask, [xcol, ycol]].copy()
+            plot_df = plot_df.sort_values(xcol)
+            plot_df = downsample_df(plot_df, MAX_POINTS)
+
+            xs_plot = plot_df[xcol].tolist()
+            ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
+
         plt.figure()
-        plt.plot(xs_plot, ys_plot, marker="o")
+        if mode == "MONITORING_ITERATIONS":
+            plt.plot(xs_plot, ys_plot)
+        else:
+            plt.plot(xs_plot, ys_plot, marker="o")
         plt.ylim(bottom=0)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
-        plt.xticks(xs_plot)  # ok for small number of discrete x values
-        plt.grid(True)
+        
+        if mode == "MONITORING_ITERATIONS":
+            tick_count = 10
+            if len(xs_plot) > tick_count:
+                tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
+                plt.xticks([xs_plot[i] for i in tick_idx])
+            plt.grid(True)
+        else:
+            plt.xticks(xs_plot)
 
         outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
         plt.savefig(outpath, dpi=200, bbox_inches="tight")
