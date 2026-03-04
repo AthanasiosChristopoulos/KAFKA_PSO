@@ -211,8 +211,13 @@ public class LossFunction {
     public static float compute_loss_hinge(float[] probs, int label) {
 
         float py = probs[label];
-
         float maxOther = -Float.MAX_VALUE;
+
+        // L=max(0,1−ys)
+        // If 𝑦𝑠≥1 inside is ≤ 0 → loss = 0
+        // Meaning: “this example is already good enough; don’t waste effort making it even larger.”
+        // If ys<1: inside is positive → loss grows linearly (the more wrong the quess was)
+        // Meaning: “penalize violations of the margin.”
 
         for (int i = 0; i < probs.length; i++) {
             if (i == label) continue;
