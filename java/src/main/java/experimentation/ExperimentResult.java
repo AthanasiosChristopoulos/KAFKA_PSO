@@ -36,7 +36,13 @@ public final class ExperimentResult {
         }
         return max;
     }
+    
+    // ===============================================================================
 
+    public List<Float> getAccuracyValues() {
+        return coordinator.accuracyValues;
+    }
+    
     // ===============================================================================
 
     public long sumMessagesSent() {
