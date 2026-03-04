@@ -224,7 +224,8 @@ public class Coordinator implements Runnable {
 
                 if(collector != null) {
                     collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, 
-                        control.getBestGlobalModelAccuracy(), control.getBestGlobalModelLoss()));
+                        control.getBestGlobalModelAccuracy(), control.getBestGlobalModelLoss(),
+                        control.accuracyValues));
                 }
 
                 System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()

@@ -1,11 +1,13 @@
 package experimentation;
 
+import java.util.*;
+
 public final class CoordinatorMetrics {
     private final double elapsedSec;
     private final float globalBestAcc;
     private final float globalBestLoss;
-
-    public CoordinatorMetrics(double elapsedSec, float globalBestAcc, float globalBestLoss) {
+    
+    public CoordinatorMetrics(double elapsedSec, float globalBestAcc, float globalBestLoss, List<Float> accuracyValues) {
         this.elapsedSec = elapsedSec;
         this.globalBestAcc = globalBestAcc;
         this.globalBestLoss = globalBestLoss;

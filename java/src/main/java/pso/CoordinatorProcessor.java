@@ -261,6 +261,8 @@ public void onAllWorkersReported() {
     forwardPassNs += accLoss[4];
     countForwardPass += 1;
 
+    control.accuracyValues.add(accuracy);
+    
     // update bestGlobalModelAccuracy + bestLoss ========================================================
 
     if(accuracy > control.getBestGlobalModelAccuracy()) {    
