@@ -114,7 +114,6 @@ public final class WorkerStatic {
         if(logger.isEnabled(2)) logger.log("Affinity: " + Nd4j.getAffinityManager().getClass().getName());
         if(logger.isEnabled(2)) logger.log("Params buffer class: " + model.params().data().getClass().getName());
         if(logger.isEnabled(2)) logger.log("Params is on device? " + model.params().isAttached());
-            // isAttached() == false ⇒ it is not currently attached to a specific device / not resident on device right now, at the moment you printed it.
     }
 
     // ===========================================================================

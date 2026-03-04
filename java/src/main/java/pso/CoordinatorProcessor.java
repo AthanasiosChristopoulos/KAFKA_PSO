@@ -512,10 +512,9 @@ public void onAllWorkersReported() {
 
     // private List<DataMessage> readNextBatchFromStore(int batchSize) {
 
-    //     // Wait until store has at least batchSize rows (or at least something)
     //     for (int tries = 0; tries < WAIT_MAX_TRIES; tries++) {
     //         int sz = approximateStoreSize();
-    //         if (sz >= Math.min(batchSize, MIN_TEST_ROWS)) {  // MIN_TEST_ROWS is your existing constant
+    //         if (sz >= Math.min(batchSize, MIN_TEST_ROWS)) {  
     //             break;
     //         }
     //         try { Thread.sleep(WAIT_SLEEP_MS); }
@@ -525,46 +524,30 @@ public void onAllWorkersReported() {
     //     int storeSize = approximateStoreSize();
     //     if (storeSize <= 0) return null;
 
-    //     // If store size changed a lot, keep cursor in range
     //     if (evalCursor >= storeSize) evalCursor = 0;
-
-    //     // We will take [evalCursor, evalCursor + batchSize)
-    //     // wrapping around at storeSize.
     //     int toTake = Math.min(batchSize, storeSize);
-
-    //     // If you care about deterministic order, use sampleIndex ordering.
-    //     // We'll do a 2-pass scan that collects the needed indices without loading everything.
 
     //     int startIdx = evalCursor;
     //     int endExclusive = evalCursor + toTake;
 
     //     List<DataMessage> out = new ArrayList<>(toTake);
 
-    //     // Pass 1: collect from startIdx to storeSize-1
     //     int wantFrom1 = Math.min(toTake, storeSize - startIdx);
     //     if (wantFrom1 > 0) {
     //         collectBySortedIndexRange(out, startIdx, startIdx + wantFrom1);
     //     }
 
-    //     // Pass 2: wrap around: collect from 0 to remaining-1
     //     int remaining = toTake - out.size();
     //     if (remaining > 0) {
     //         collectBySortedIndexRange(out, 0, remaining);
     //     }
 
-    //     // Advance cursor for next time
     //     evalCursor = (evalCursor + toTake) % storeSize;
 
     //     return out;
     // }
 
-    // //=========================================================================================================================
-
     // private void collectBySortedIndexRange(List<DataMessage> out, int startInclusive, int endExclusive) {
-
-    //     // We need elements in order of sampleIndex.
-    //     // We do this by collecting all keys/samplesIndex pairs, sorting, then reading only those in range.
-    //     // If you have a better store key (like sampleIndex as key), we can make this O(batch) instead.
 
     //     List<DataMessage> tmp = new ArrayList<>();
 
@@ -577,7 +560,6 @@ public void onAllWorkersReported() {
     //         }
     //     }
 
-    //     // Sort deterministically by sampleIndex (you already have it)
     //     tmp.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
 
     //     int n = tmp.size();

@@ -39,7 +39,6 @@ public class DataMessageDeserializer implements Deserializer<DataMessage> {
             return new DataMessage(sampleIndex, features, label);
 
         } catch (Exception e) {
-            // If you prefer "fail fast", rethrow. If you prefer "drop bad records", return null.
             e.printStackTrace();
             return null;
         }

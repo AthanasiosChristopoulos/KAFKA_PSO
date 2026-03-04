@@ -196,7 +196,6 @@ public class Coordinator implements Runnable {
 
                 try {
                     safeClose(gbestStreams);
-                    // You can decide whether to stop MAIN too; I usually do:
                     safeClose(mainStreams);
                 } finally {
                     latch.countDown();

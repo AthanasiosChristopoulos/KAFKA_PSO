@@ -15,7 +15,6 @@
     <!-- DL4J / ND4J -->
     <dl4j.version>1.0.0-M2.1</dl4j.version>
 
-    <!-- Bytedeco CUDA preset version you are already using -->
     <bytedeco.cuda.version>11.6-8.3-1.5.7</bytedeco.cuda.version>
   </properties>
 

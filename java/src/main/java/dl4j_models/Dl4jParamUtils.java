@@ -30,7 +30,6 @@ public class Dl4jParamUtils {
     public static String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;
 
     //=====================================================================================================
-    // Decode / Encode Model Number 1 (both of your methods include the biases as well.):
     // model.params() => both weights and biases (actually all other trainable parameters)
 
     public static float[] modelToFlatList(PsoModel model) {    // Serializa model into float[]

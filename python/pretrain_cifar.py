@@ -18,9 +18,6 @@ CINIC_CLASSES = [
 ]
 @contextmanager
 def tee_output(log_path: str):
-    """
-    Mirror everything printed to stdout/stderr to a log file, while still showing it in the terminal.
-    """
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
     class Tee:
@@ -34,7 +31,7 @@ def tee_output(log_path: str):
             for s in self.streams:
                 s.flush()
 
-    with open(log_path, "w", buffering=1) as f:  # line-buffered
+    with open(log_path, "w", buffering=1) as f:
         old_out, old_err = sys.stdout, sys.stderr
         sys.stdout = Tee(old_out, f)
         sys.stderr = Tee(old_err, f)
@@ -46,14 +43,12 @@ def tee_output(log_path: str):
 # ================================================================================================
 
 def export_mobilenetv2_base(save_path="pretrained_model/mobilenetv2_base_32x32.h5"):
-    # Feature extractor only (no classifier head)
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(32, 32, 3),
-        include_top=False,      # <- important
+        include_top=False,     
         weights="imagenet"
     )
 
-    # Freeze it (feature extractor mode)
     base_model.trainable = False
 
     _ = base_model(tf.zeros([1, 32, 32, 3]), training=False)
@@ -72,7 +67,6 @@ def export_mobilenetv2_base(save_path="pretrained_model/mobilenetv2_base_32x32.h
 # ================================================================================================
 
 def export_mobilenetv2_base_224(save_path="pretrained_model/mobilenetv2_base_224x224.h5"):
-    # Feature extractor only (no classifier head)
     base_model = tf.keras.applications.MobileNetV2(input_shape=(224,224,3), include_top=False, weights="imagenet")
 
     base_model.trainable = False
@@ -92,7 +86,6 @@ def export_mobilenetv2_base_224(save_path="pretrained_model/mobilenetv2_base_224
 # ============================================================================================
 
 def export_mobilenet_base_224(save_path="pretrained_model/mobilenet_base_224x224.h5"):
-    # Feature extractor only (no classifier head)
     base_model = tf.keras.applications.MobileNet(input_shape=(224,224,3), include_top=False, weights="imagenet")
 
     base_model.trainable = False
@@ -130,15 +123,12 @@ def export_mobilenetv3small_base(save_path="pretrained_model/mobilenetv3small_32
 def load_cifar10():
     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 
-    # y is shape (N,1) -> make it (N,)
     y_train = y_train.astype("int64").reshape(-1)
     y_test  = y_test.astype("int64").reshape(-1)
 
-    # Normalize to [0,1]
     x_train = x_train.astype("float32") / 255.0
     x_test  = x_test.astype("float32") / 255.0
 
-    # shapes: (N, 32, 32, 3)
     return x_train, y_train, x_test, y_test
 
 # ===============================================================================
@@ -194,7 +184,6 @@ def load_cinic10(
     else:
         test_ds  = make_ds(test_dir, shuffle=False)
 
-    # Normalize to [0,1]
     def norm(x, y):
         x = tf.cast(x, tf.float32) / 255.0
         y = tf.cast(y, tf.int64)
@@ -220,13 +209,11 @@ def _prepare_tinyimagenet_val_folders(tiny_root: str) -> str:
         raise FileNotFoundError(f"Missing {ann_path}")
 
     out_dir = tiny_root / "val_prepared"
-    # If already prepared, reuse it
     if out_dir.exists() and any(out_dir.iterdir()):
         return str(out_dir)
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Parse annotations: each line: <img> <wnid> <x1> <y1> <x2> <y2>
     mapping = {}
     with ann_path.open("r") as f:
         for line in f:
@@ -235,7 +222,6 @@ def _prepare_tinyimagenet_val_folders(tiny_root: str) -> str:
                 img_name, wnid = parts[0], parts[1]
                 mapping[img_name] = wnid
 
-    # Copy images into class folders
     for img_name, wnid in mapping.items():
         src = images_dir / img_name
         if not src.exists():
@@ -278,7 +264,6 @@ def load_tiny_imagenet200(tiny_root: str, batch_size: int = 128, img_size=(64, 6
         shuffle=False,
     )
 
-    # Good practice: normalize + cache/prefetch
     norm = layers.Rescaling(1.0 / 255.0)
 
     def _norm_map(x, y):
@@ -293,23 +278,21 @@ def load_tiny_imagenet200(tiny_root: str, batch_size: int = 128, img_size=(64, 6
 # ===============================================================================
 # Model (Simple CIFAR feature extractor + head)
 
-def build_cifar_base(input_shape=(32, 32, 3), num_classes=10):    # this means NHWC (look at the order in shape input_shape=(32, 32, 3))
-    
+def build_cifar_base(input_shape=(32, 32, 3), num_classes=10):   
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 32 -> 16
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 16 -> 8
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   
 
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
 
-        # Head
-        layers.GlobalAveragePooling2D(),                         # -> (128,)
+        layers.GlobalAveragePooling2D(),              
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -330,14 +313,14 @@ def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(16, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 32->16
+        layers.MaxPooling2D(2), 
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 16->8
+        layers.MaxPooling2D(2), 
 
         layers.Conv2D(feat_dim, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),          # -> (feat_dim,)
+        layers.GlobalAveragePooling2D(),  
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -358,14 +341,14 @@ def build_cifar_base_v2(input_shape=(32, 32, 3), num_classes=10, feat_dim=64):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(16, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 32->16
+        layers.MaxPooling2D(2), 
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 16->8
+        layers.MaxPooling2D(2), 
 
         layers.Conv2D(feat_dim, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),          # -> (feat_dim,)
+        layers.GlobalAveragePooling2D(),      
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -398,7 +381,7 @@ def build_cifar_base_v3(input_shape=(32, 32, 3), num_classes=10):
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 4->2
 
-        layers.Flatten(),        # 2*2*64 = 256
+        layers.Flatten(),   
         layers.Dense(64, activation="relu", use_bias=True),
 
         layers.Dense(num_classes, activation="softmax", use_bias=True),
@@ -420,19 +403,17 @@ def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # 32x32
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 32 -> 16
 
-        # 16x16
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 16 -> 8
 
-        # 8x8
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
+        
         layers.GlobalAveragePooling2D(),  # -> (128,)
 
         layers.Dense(num_classes, activation="softmax", use_bias=True),
@@ -461,28 +442,20 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Base CNN (feature extractor) - CIFAR-ready
-        # 32x32
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
 
-        # 16x16
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
 
-        # 8x8
         layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
 
-        # REQUIRED tail (exact pattern like your MNIST model)
         layers.Flatten(),
 
-        # Optional base representation layer
         layers.Dense(64, activation="relu", use_bias=True),
-
-        # Head for CIFAR pretraining / training
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -500,28 +473,21 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Base CNN (feature extractor) - CIFAR-ready
-        # 32x32
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
 
-        # 16x16
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
 
-        # 8x8
         layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, (3, 3), padding="same", activation="relu", use_bias=True),
 
-        # REQUIRED tail (exact pattern like your MNIST model)
         layers.Flatten(),
 
-        # Optional base representation layer
         layers.Dense(64, activation="relu", use_bias=True),
 
-        # Head for CIFAR pretraining / training
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -538,29 +504,23 @@ def build_cifar_base_v6(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # 32x32
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 32 -> 16
 
-        # 16x16
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 16 -> 8
 
-        # 8x8
         layers.Conv2D(96, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(96, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 8 -> 4
 
-        # 4x4
         layers.Conv2D(96, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(2),  # 4 -> 2
 
-        # REQUIRED tail style: Flatten -> Dense(num_classes)
         layers.Flatten(),
 
-        # FINAL head (params < 5000 guaranteed if num_classes=10)
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -583,8 +543,7 @@ def build_cinic_base_v1(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        aug,  # <-- CINIC pretraining augmentation
-
+        aug, 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 32 -> 16
@@ -614,25 +573,19 @@ def build_tinyimagenet_base_v1(input_shape=(64, 64, 3), num_classes=200):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Block 1
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  # 64 -> 32 (if input 64)
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  
 
-        # Block 2
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  # 32 -> 16
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  
 
-        # Block 3
         layers.Conv2D(256, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(256, 3, padding="same", activation="relu", use_bias=True),
 
-        # Fully-convolutional head:
-        # 1x1 conv to class logits map (H x W x num_classes)
         layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
 
-        # Global average pool across H,W -> (num_classes,)
         layers.GlobalAveragePooling2D(),
 
         layers.Activation("softmax"),
@@ -660,17 +613,12 @@ def load_stl10_32(
 
     os.makedirs(data_dir, exist_ok=True)
 
-    # STL-10 splits in TFDS:
-    # - "train" (5k labeled)
-    # - "test" (8k labeled)
-    # There is also "unlabelled" (100k) if you want later.
     ds_train = tfds.load("stl10", split="train", data_dir=data_dir, as_supervised=True)
     ds_test  = tfds.load("stl10", split="test",  data_dir=data_dir, as_supervised=True)
 
     AUTOTUNE = tf.data.AUTOTUNE
 
     def preprocess(x, y):
-        # x: uint8 [96,96,3] -> float32 [32,32,3] in [0,1]
         x = tf.image.resize(x, (32, 32), method="bilinear", antialias=True)
         x = tf.cast(x, tf.float32) / 255.0
         y = tf.cast(y, tf.int32)
@@ -679,11 +627,8 @@ def load_stl10_32(
     ds_train = ds_train.map(preprocess, num_parallel_calls=AUTOTUNE)
     ds_test  = ds_test.map(preprocess,  num_parallel_calls=AUTOTUNE)
 
-    # Make a validation split from TRAIN
-    # (cardinality is known for tfds STL-10 train = 5000)
     train_count = tf.data.experimental.cardinality(ds_train).numpy()
     if train_count < 0:
-        # fallback (shouldn't happen for STL-10)
         train_count = 5000
 
     val_count = int(train_count * val_split)
@@ -693,7 +638,6 @@ def load_stl10_32(
     ds_val = ds_train.take(val_count)
     ds_train = ds_train.skip(val_count)
 
-    # Batch / prefetch
     ds_train = ds_train.batch(batch_size).prefetch(AUTOTUNE)
     ds_val   = ds_val.batch(batch_size).prefetch(AUTOTUNE)
     ds_test  = ds_test.batch(batch_size).prefetch(AUTOTUNE)
@@ -701,10 +645,7 @@ def load_stl10_32(
     if return_tfdata:
         return ds_train, ds_val, ds_test
 
-    # Convert to numpy (optional)
     x_train, y_train = tfds.as_numpy(tfds.dataset_as_numpy(ds_train.unbatch()))
-    # NOTE: The above line is not correct usage; better to materialize properly:
-    # We'll do a safe conversion via iteration:
 
     def ds_to_numpy(ds):
         xs, ys = [], []
@@ -713,7 +654,6 @@ def load_stl10_32(
             ys.append(yb.numpy())
         return tf.concat(xs, axis=0).numpy(), tf.concat(ys, axis=0).numpy()
 
-    # Rebuild unbatched datasets for conversion (since ds_train/ds_val are batched)
     ds_train_u = tfds.load("stl10", split=f"train[{val_count}:]", data_dir=data_dir, as_supervised=True).map(preprocess)
     ds_val_u   = tfds.load("stl10", split=f"train[:{val_count}]", data_dir=data_dir, as_supervised=True).map(preprocess)
     ds_test_u  = tfds.load("stl10", split="test", data_dir=data_dir, as_supervised=True).map(preprocess)
@@ -736,17 +676,17 @@ def build_stl10_base_v1(input_shape=(32, 32, 3), num_classes=10):
         # 32x32
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 32 -> 16
+        layers.MaxPooling2D(2), 
 
         # 16x16
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),  # 16 -> 8
+        layers.MaxPooling2D(2), 
 
         # 8x8
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
-        layers.GlobalAveragePooling2D(),  # -> (128,)
+        layers.GlobalAveragePooling2D(), 
 
         layers.Dropout(0.2),
         layers.Dense(num_classes, activation="softmax", use_bias=True),
@@ -801,10 +741,7 @@ def pretrain_stl10_and_export(
 # ===============================================================================
 
 def build_stl10_resnet20_v1(input_shape=(32, 32, 3), num_classes=10):
-    """
-    Simple CIFAR ResNet-20 (6n+2 with n=3) for 32x32 images.
-    """
-
+    
     def conv3x3(x, filters, stride=1):
         return layers.Conv2D(
             filters, 3, strides=stride, padding="same",
@@ -823,7 +760,6 @@ def build_stl10_resnet20_v1(input_shape=(32, 32, 3), num_classes=10):
         x = conv3x3(x, filters, stride=1)
         x = layers.BatchNormalization()(x)
 
-        # projection if shape changes
         if stride != 1 or shortcut.shape[-1] != filters:
             shortcut = layers.Conv2D(
                 filters, 1, strides=stride, padding="same",
@@ -837,21 +773,16 @@ def build_stl10_resnet20_v1(input_shape=(32, 32, 3), num_classes=10):
 
     inputs = keras.Input(shape=input_shape)
 
-    # CIFAR stem
     x = layers.Conv2D(16, 3, padding="same", use_bias=False, kernel_initializer="he_normal")(inputs)
     x = bn_relu(x)
-
-    # 3 stages, each with 3 blocks (ResNet-20)
-    # stage 1: 16
+    
     for _ in range(3):
         x = basic_block(x, 16, stride=1)
 
-    # stage 2: 32 (downsample once)
     x = basic_block(x, 32, stride=2)
     for _ in range(2):
         x = basic_block(x, 32, stride=1)
 
-    # stage 3: 64 (downsample once)
     x = basic_block(x, 64, stride=2)
     for _ in range(2):
         x = basic_block(x, 64, stride=1)
@@ -940,7 +871,7 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v6"
 
-        case "v5_cinic":         # NEW: CINIC pretrain version
+        case "v5_cinic": 
 
             model = build_cinic_base_v1(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cinic10_base_plus_head_v1"
@@ -951,7 +882,6 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             name_h5_file = "cifar100_pretrained_base"
 
         case "v1_tinyimagenet":
-            # Pretrain on Tiny ImageNet-200
             model = build_tinyimagenet_base_v1(input_shape=input_shape, num_classes=200)
             name_h5_file = "tinyimagenet200_pretrained_v2"
 
@@ -992,7 +922,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     elif "v1_stl10" in version:     # ================================================================================
         
         pretrain_stl10_and_export(
-            data_dir="./data",          # <- your pwd/data
+            data_dir="./data",       
             out_dir="pretrained_model",
             epochs=20,
             batch_size=128,

@@ -20,12 +20,7 @@ public final class PsoGraphAdapter implements PsoModel {
     }
 
     @Override public INDArray output(INDArray X) {
-        // If your graph has exactly 1 output:
         return model.outputSingle(false, X);
-
-        // If it can have multiple outputs, use:
-        // INDArray[] outs = g.output(false, X);
-        // return outs[0];
     }
 
     @Override public int numParams() {

@@ -31,7 +31,3 @@ public class WeightsMessage {
 //   total weights ≈ 80016 bytes
 
 // Total ≈ 4 + 40 + 4 + 4 + 80016 = 80068 bytes
-
-// ≈ 80 KB per message 
-// The commonly hit limit is around ~1 MB by default => you can increase limit, but it is usually bad performance wise
-// Best: KBs (1–100 KB) per record

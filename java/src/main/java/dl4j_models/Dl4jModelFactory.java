@@ -225,7 +225,6 @@ public class Dl4jModelFactory {
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
-			// 2) same behavior: either load pretrained as-is, OR build PSO-head model from it
 			if (preTrained) {
 				switch (version) {
 					case 1, 3, 6, 7, 8, 9, 10 -> model = pretrainedModelCIFAR(filename);
@@ -274,36 +273,10 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define updater etc.
-		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
 				.build();
-
-		// MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-		// 	.fineTuneConfiguration(ftc)
-		// 	.removeLayersFromOutput(2)
-		// 	.build();
-
-		// int start = (int) truncated.numParams();
-
-		// MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-		// 		.fineTuneConfiguration(ftc)
-		// 		.addLayer(new DenseLayer.Builder()
-		// 				.nIn(inputDim)
-		// 				.nOut(64)
-		// 				.activation(Activation.RELU) // or TANH for PSO smoothness
-		// 				.build())
-		// 		.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-		// 				.nIn(64)           		// for this TF model: 128
-		// 				.nOut(NUM_CLASSES)       	// your target classes
-		// 				.activation(Activation.SOFTMAX)
-		// 				.weightInit(WeightInit.XAVIER)
-		// 				.biasInit(0.0)
-		// 				.build())
-		// 		.build();
-
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
@@ -315,8 +288,8 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(64)           		// for this TF model: 128
-						.nOut(NUM_CLASSES)       	// your target classes
+						.nIn(64)      
+						.nOut(NUM_CLASSES)     
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
@@ -325,8 +298,6 @@ public class Dl4jModelFactory {
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
-	// dense (DenseLayer)                   256,64     16,448        W:{256,64}, b:{64}   
-	// dense_1 (DenseLayer)                 64,10      650           W:{64,10}, b:{10} 
 
 	// ============================================================================
 
@@ -356,7 +327,7 @@ public class Dl4jModelFactory {
 				// .setFeatureExtractor(7)	// look at model.summary()
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
-						.nOut(NUM_CLASSES)       // your target classes
+						.nOut(NUM_CLASSES) 
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
@@ -402,8 +373,8 @@ public class Dl4jModelFactory {
 						.poolingDimensions(1, 2)
 						.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(inputDim)           // for this TF model: 128
-						.nOut(NUM_CLASSES)       // your target classes
+						.nIn(inputDim)       
+						.nOut(NUM_CLASSES)    
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
@@ -568,32 +539,22 @@ public class Dl4jModelFactory {
 			String kerasH5Path
 	) {
 		try {
-			// 1) Import full Keras ResNet20 (includes GAP + Dense(10))
 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
 
-			// Start params: base BEFORE adding new head (we will remove/replace old head)
 			int start = (int) base.numParams();
 
 			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 					.seed(123 + workerId)
-					.updater(new NoOp())     // PSO moves weights; no optimizer
+					.updater(new NoOp())   
 					.build();
 
-			// In your imported summary, GAP layer is named exactly:
-			String featureLayer = "global_average_pooling2d"; // outputs 64 features
+			String featureLayer = "global_average_pooling2d"; 
 
 			ComputationGraph model = new TransferLearning.GraphBuilder(base)
 					.fineTuneConfiguration(ftc)
 
-					// Freeze everything up to GAP output
 					.setFeatureExtractor(featureLayer)
-
-					// Remove the original classifier head ("dense") and replace it
-					// (GraphBuilder has removeVertexAndConnections in newer DL4J;
-					//  if you don't have it, see Option B below)
 					.removeVertexAndConnections("dense")
-
-					// New output head (trainable)
 					.addLayer("new_output",
 							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 									.nIn(64)                 // <-- GAP output channels
@@ -609,21 +570,8 @@ public class Dl4jModelFactory {
 
 			model.init();
 
-			// Head params = 64*numClasses + numClasses
-			int expectedHead = 64 * NUM_CLASSES + NUM_CLASSES;
-			int actualHead = (int) model.numParams() - (start - (64 * 10 + 10)); 
-			// ^ because start included old Dense(10). If you removed it, subtract its params.
-
-			// Safer: compute base-without-head params explicitly:
-			// If you know old head was Dense(10): oldHead = 64*10 + 10 = 650
 			int oldHead = 64 * 10 + 10; // 650
 			int baseNoHead = start - oldHead;
-			int actualHead2 = (int) model.numParams() - baseNoHead;
-
-			if (actualHead2 != expectedHead) {
-				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +
-						" actual=" + actualHead2 + " baseNoHead=" + baseNoHead + " tl.numParams=" + model.numParams());
-			}
 
 			return Pair.of(new PsoGraphAdapter(model), baseNoHead);
 
@@ -715,54 +663,17 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	// public static PsoModel createMNIST_CNN_Pretrained_MNIST(int workerId) {
-
-	// 	MultiLayerNetwork pretrained = pretrainedModelMNIST();
-
-	// 	// We are going to replace the last TWO trainable layers: Dense(64) and Dense(10)
-	// 	int removeCount = removeCountForLastNTrainableLayers(pretrained, 2);
-
-	// 	FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-	// 			.updater(new NoOp())   // PSO controls weights, not SGD
-	// 			.build();
-
-	// 	// After removing Dense(64) and Dense(10), the layer feeding the head is the Flatten output.
-	// 	// In your architecture: 28x28 -> conv valid -> pool -> conv valid -> pool -> flatten = 32*5*5 = 800
-	// 	// If your conv/pool settings match: 28->26->13->11->5 => channels 32 => 32*5*5 = 800
-	// 	final int flattenDim = 32 * 5 * 5;  // 800
-
-	// 	MultiLayerNetwork tl = new TransferLearning.Builder(pretrained)
-	// 			.fineTuneConfiguration(ftc)
-	// 			.removeLayersFromOutput(removeCount)
-	// 			.addLayer(new DenseLayer.Builder()
-	// 					.nIn(flattenDim)
-	// 					.nOut(32)
-	// 					.activation(Activation.RELU) // or TANH for PSO smoothness
-	// 					.build())
-	// 			.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-	// 					.nIn(32)
-	// 					.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
-	// 					.activation(Activation.SOFTMAX)
-	// 					.build())
-	// 			.build();
-
-	// 	return tl;
-	// }
-
-	// ======================================================================================================================
-
 	public static PsoModel createMNIST_CNN_Pretrained_MNIST_v1(int workerId, String fileName) {
 
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp()) 
 				.build();
 
-		// From summary
 		final int flattenDim = 32 * 5 * 5;  // 800
 		MultiLayerNetwork model = new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
@@ -771,11 +682,11 @@ public class Dl4jModelFactory {
 				.addLayer(new DenseLayer.Builder()
 						.nIn(flattenDim)
 						.nOut(64)
-						.activation(Activation.RELU) // or TANH for PSO smoothness
+						.activation(Activation.RELU) 
 						.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(64)
-						.nOut(NUM_CLASSES)           // MNIST=10 or MNIST4=4 depending on cfg
+						.nOut(NUM_CLASSES)       
 						.activation(Activation.SOFTMAX)
 						.build())
 				.build();
@@ -851,7 +762,7 @@ public class Dl4jModelFactory {
 					.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(64)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.nOut(NUM_CLASSES)     
 						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
 														// this depends on the methodology used to define activation layers. They can be embedded or
 														// be external (right afterwards) to dense layers
@@ -878,8 +789,7 @@ public class Dl4jModelFactory {
 				.updater(new NoOp()) 
 				.build();
 
-		int start = (int) new TransferLearning.Builder(pretrained) 	// if you create a temporary model just to compute numParams() and 
-																	// then don’t keep a reference to it
+		int start = (int) new TransferLearning.Builder(pretrained) 
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)
 				.build().numParams();
@@ -924,19 +834,18 @@ public class Dl4jModelFactory {
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				// .setFeatureExtractor(2)
 				.addLayer(new DenseLayer.Builder()
-					.nIn(inputDim)            // IMPORTANT
+					.nIn(inputDim)           
 					.nOut(64)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
 					.biasInit(0.0)
 					.build())
 				.addLayer(new DenseLayer.Builder()
-					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nIn(64)         
 					.nOut(32)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
@@ -944,7 +853,7 @@ public class Dl4jModelFactory {
 					.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(32)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
+						.nOut(NUM_CLASSES)   
 						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
 														// this depends on the methodology used to define activation layers. They can be embedded or
 														// be external (right afterwards) to dense layers
@@ -977,19 +886,18 @@ public class Dl4jModelFactory {
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.setFeatureExtractor(5)
 				.addLayer(new DenseLayer.Builder()
-					.nIn(inputDim)            // IMPORTANT
+					.nIn(inputDim)        
 					.nOut(64)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
 					.biasInit(0.0)
 					.build())
 				.addLayer(new DenseLayer.Builder()
-					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nIn(64)          
 					.nOut(32)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
@@ -997,10 +905,8 @@ public class Dl4jModelFactory {
 					.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(32)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.nOut(NUM_CLASSES)    
+						.activation(Activation.SOFTMAX)	
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -1017,20 +923,18 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())  
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(2)	// its 2 because for some reason the activation layers counts as well
+			.removeLayersFromOutput(2)
 			.build();
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.setFeatureExtractor(7)
@@ -1043,10 +947,8 @@ public class Dl4jModelFactory {
 					.build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(64)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.nOut(NUM_CLASSES)   
+						.activation(Activation.SOFTMAX)	
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -1063,29 +965,25 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())  
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)	// its 2 because for some reason the activation layers counts as well
+			.removeLayersFromOutput(1)
 			.build();
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.setFeatureExtractor(8)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.nOut(NUM_CLASSES)    
+						.activation(Activation.SOFTMAX)	
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -1128,11 +1026,7 @@ public class Dl4jModelFactory {
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
 						.build())
-				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
-				// truncated has 4 layers => new OutputLayer is index 4
 				.setInputPreProcessor(4, new NhwcToFeedForwardPreProcessor(7, 7, 64))
-					// this preproccessor executes right before the layer index (4) you attach it to 
-					// so right before the output layer
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -1304,11 +1198,7 @@ public class Dl4jModelFactory {
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
 						.build())
-				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
-				// truncated has 4 layers => new OutputLayer is index 4
 				.setInputPreProcessor(4, new NhwcToFeedForwardPreProcessor(7, 7, 64))
-					// this preproccessor executes right before the layer index (4) you attach it to 
-					// so right before the output layer
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -1326,8 +1216,7 @@ public class Dl4jModelFactory {
 				.updater(new NoOp())
 				.build();
 		
-		int start = (int) new TransferLearning.Builder(pretrained) 	// if you create a temporary model just to compute numParams() and 
-																	// then don’t keep a reference to it
+		int start = (int) new TransferLearning.Builder(pretrained) 
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(2 + cfg.FREEZE_INDEX)
 				.build().numParams();
@@ -1351,11 +1240,7 @@ public class Dl4jModelFactory {
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
 						.build())
-				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
-				// truncated has 4 layers => new OutputLayer is index 4
 				.setInputPreProcessor(5, new NhwcToFeedForwardPreProcessor(7, 7, 10))
-					// this preproccessor executes right before the layer index (4) you attach it to 
-					// so right before the output layer
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -1374,8 +1259,7 @@ public class Dl4jModelFactory {
 				.updater(new NoOp())
 				.build();
 		
-		int start = (int) new TransferLearning.Builder(pretrained) 	// if you create a temporary model just to compute numParams() and 
-																	// then don’t keep a reference to it
+		int start = (int) new TransferLearning.Builder(pretrained)
 				.fineTuneConfiguration(ftc)
 				.removeLayersFromOutput(2 + cfg.FREEZE_INDEX)
 				.build().numParams();
@@ -1406,11 +1290,7 @@ public class Dl4jModelFactory {
 						.weightInit(WeightInit.XAVIER)
 						.biasInit(0.0)
 						.build())
-				// IMPORTANT: layer index of the *added* layer is (numLayersBeforeAdd)
-				// truncated has 4 layers => new OutputLayer is index 4
 				.setInputPreProcessor(5, new NhwcToFeedForwardPreProcessor(7, 7, 10))
-					// this preproccessor executes right before the layer index (4) you attach it to 
-					// so right before the output layer
 				.build();
 
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
@@ -1509,16 +1389,13 @@ public class Dl4jModelFactory {
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
 				.setFeatureExtractor(7)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(500)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.nOut(NUM_CLASSES)     
+						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -1543,10 +1420,9 @@ public class Dl4jModelFactory {
 		}
 		
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
@@ -1556,7 +1432,6 @@ public class Dl4jModelFactory {
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
 				.setFeatureExtractor(4)
@@ -1568,10 +1443,8 @@ public class Dl4jModelFactory {
 				.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG).build())
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(50)
-						.nOut(NUM_CLASSES)     // 4 or 10 depending on your cfg
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.nOut(NUM_CLASSES) 
+						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -1596,22 +1469,20 @@ public class Dl4jModelFactory {
 		}
 		
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())  
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(5)	// its 2 because for some reason the activation layers counts as well
+			.removeLayersFromOutput(5)
 			.build();
 
 		int start = (int) truncated.numParams();
 
-		// From your summary: last classifier layer had nIn=500
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
+				.fineTuneConfiguration(ftc)
 				.setFeatureExtractor(4)
 				.addLayer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 					.name("maxpool2")
@@ -1620,7 +1491,7 @@ public class Dl4jModelFactory {
 					.build())
 				.addLayer(new GlobalPoolingLayer.Builder(PoolingType.AVG).build())  // -> (N, 50)
 				.addLayer(new DenseLayer.Builder()
-					.nIn(50)            // IMPORTANT
+					.nIn(50)           
 					.nOut(64)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
@@ -1628,7 +1499,7 @@ public class Dl4jModelFactory {
 					.build())
 
 				.addLayer(new DenseLayer.Builder()
-					.nIn(64)            // add this to prevent nIn=0 inference issues
+					.nIn(64)       
 					.nOut(32)
 					.activation(Activation.RELU)
 					.weightInit(WeightInit.XAVIER)
@@ -1636,7 +1507,7 @@ public class Dl4jModelFactory {
 					.build())
 
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-					.nIn(32)            // also explicit
+					.nIn(32)         
 					.nOut(NUM_CLASSES)
 					.activation(Activation.SOFTMAX)
 					.weightInit(WeightInit.XAVIER)
@@ -1882,7 +1753,7 @@ public class Dl4jModelFactory {
 				.layer(0, new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
 						.nOut(32)
-						.activation(Activation.TANH) // smooth for PSO, like you used elsewhere
+						.activation(Activation.TANH) 
 						.build())
 				.layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
 						.nIn(32)
@@ -2029,23 +1900,17 @@ public class Dl4jModelFactory {
 						.nOut(32)
 						.activation(Activation.RELU)
 						.build())
-
-				// MaxPooling2D(pool=2x2, stride=2, valid)
 				.layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 						.kernelSize(2, 2)
 						.stride(2, 2)
 						.padding(0, 0)
 						.build())
-
-				// Conv2D(filters=64, kernel=3x3, stride=1, padding=valid=0, relu)
 				.layer(2, new ConvolutionLayer.Builder(3, 3)
 						.stride(1, 1)
 						.padding(0, 0)
 						.nOut(64)
 						.activation(Activation.RELU)
 						.build())
-
-				// MaxPooling2D(pool=2x2, stride=2, valid)
 				.layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
 						.kernelSize(2, 2)
 						.stride(2, 2)
@@ -2055,14 +1920,11 @@ public class Dl4jModelFactory {
 						.nOut(128)
 						.activation(Activation.SIGMOID)
 						.build())
-
-				// Output(10, softmax, MCXENT)
 				.layer(6, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
 						.nOut(nOut)
 						.activation(Activation.SOFTMAX)
 						.build())
 
-				// If you feed flattened 784 vectors, DL4J will reshape to 1x28x28
 				.setInputType(InputType.convolutionalFlat(height, width, channels))
 				.build();
 

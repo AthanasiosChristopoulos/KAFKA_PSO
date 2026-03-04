@@ -55,8 +55,6 @@ public final class KafkaTopicManager {
             if (!anyStillThere) return;
             Thread.sleep(200);
         }
-        // If it times out, you can still attempt create with --if-not-exists behavior,
-        // but it's better to fail fast so experiments are consistent.
         throw new RuntimeException("Timed out waiting for topics to delete: " + topics);
     }
 

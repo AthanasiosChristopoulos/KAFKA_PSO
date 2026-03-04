@@ -159,7 +159,6 @@ public class BatchPrediction {
 
     //         INDArray y = model.output(x, false);
 
-    //         // y is allocated in workspace; if you need it after ws closes:
     //         INDArray yDetached = y.detach(); // safe copy out of workspace
     //         Nd4j.getExecutioner().commit();
     //         return yDetached;
@@ -180,14 +179,12 @@ public class BatchPrediction {
     // }
 
     // public INDArray outputWithWorkspace(PsoModel model, INDArray x) {
-    //     // Open a workspace scope yourself...
     //     try (MemoryWorkspace ws = Nd4j.getWorkspaceManager()
     //             .getAndActivateWorkspace(WS_CONF, "INFERENCE_WS_" + this.workerId)) {
 
-    //         // IMPORTANT: pass ws INTO output(...), don't call output(x,false) directly
     //         INDArray y = model.asMultiLayerNetwork().output(x, false, ws);
     //         Nd4j.getExecutioner().commit();
-    //         // probs = y;
+    //         probs = y;
     //         return y.detach(); // valid ONLY while ws is still open
     //     }
     // }
@@ -351,9 +348,7 @@ public class BatchPrediction {
         } else {
 
             // ==============================================================================================================
-            // Alternative 2) Costs Less Memory (Reuses / Overwrites the same buffer => Stable memory footprint), but costs more on Average Forward Pass Ms
-            // Much slower because scalar filling is the slowest possible way to build an INDArray (You call into ND4J once per element => goes Java → ND4J)
-            // .create() is not “doing the same thing.” It’s doing it in one big vectorized move, not millions of function calls.
+            // Alternative 2)
 
             if (nSamples > EXPECTED_SIZE) {
                 if (logger.isEnabled(2)) logger.log("Batch bigger than EXPECTED_SIZE: nSamples=" + nSamples + " EXPECTED_SIZE=" + EXPECTED_SIZE + " -> clipping");
@@ -565,9 +560,6 @@ public class BatchPrediction {
                     for (int c = 0; c < outDim; c++) {
                         probabilities[c] = flatProps[base + c];     // this will be used to calculate loss
                     }
-                    //  System.out.println("probabilities: " + Arrays.toString(probabilities));
-                    // IMPORTANT: ensure your loss function expects the same outDim as the model output.
-                    // If your labels are in [0..NUM_CLASSES-1] but outDim != NUM_CLASSES, you must reconcile that elsewhere.
                     sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
                 }
                 // for (int i = 0; i < nSamples; i++) {
@@ -649,7 +641,6 @@ public class BatchPrediction {
 
             } else if ("GROUP_LASSO".equals(cfg.REGULARIZER) && argument_model.asMultiLayerNetwork() != null) {
                 loss += (float) (cfg.LAMBDA_VALUE * LossFunction.groupLassoNeuronPenalty(argument_model.asMultiLayerNetwork(), true));
-                // or groupLassoFromFlatGroups(ws.flatModel, groups) if you predefine neuron groups
 
             }  else if ("SLOPE".equals(cfg.REGULARIZER)) {
 

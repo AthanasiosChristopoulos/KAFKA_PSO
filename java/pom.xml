@@ -42,7 +42,6 @@
         <nd4j.backend>nd4j-cuda-11.6-platform</nd4j.backend>
       </properties>
       <dependencies>
-        <!-- EXACTLY your current GPU dependency -->
         <dependency>
           <groupId>org.nd4j</groupId>
           <artifactId>nd4j-cuda-11.6-platform</artifactId>

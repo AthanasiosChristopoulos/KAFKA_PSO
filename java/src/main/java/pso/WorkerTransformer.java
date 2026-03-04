@@ -593,7 +593,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     // r=0:  0  1  2  3
     // r=1:  4  5  6  7
     // r=2:  8  9 10 11 
-    // If you get an id of 10, 11, then it automatically becomes a 0, 1 respectively
+    // For an id of 10, 11, then it automatically becomes a 0, 1 respectively
     //=========================================================================================================================
 
     private List<NeighborPBest> readPBestStore() {     // for FULLY_INFORMED bestStore
@@ -694,7 +694,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
                 if (bestMsg == null) return null;
 
-                // Keep your stats updates
                 if (bestMsg.loss < ws.local_gBestLoss) {
                     ws.local_gBestLoss = bestMsg.loss;
                     ws.local_gBestAccuracy = bestMsg.accuracy;

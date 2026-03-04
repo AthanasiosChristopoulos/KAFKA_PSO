@@ -41,7 +41,6 @@ def build_fmnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Base CNN (feature extractor)
         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
@@ -50,10 +49,7 @@ def build_fmnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
         layers.Flatten(),
 
-        # Optional base representation layer
         layers.Dense(64, activation="relu", use_bias=True),
-
-        # Head for Fashion-MNIST pretraining
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -75,7 +71,6 @@ def build_fmnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Base CNN (feature extractor)
         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
@@ -104,21 +99,16 @@ def build_fmnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Backbone (same as your v3)
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
 
-        # CNN-only classification head (NO Dense):
-        # 1x1 conv maps channels -> num_classes at each spatial location
         layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
 
-        # Pool spatially to get class logits vector
         layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
 
-        # Softmax for probabilities
         layers.Activation("softmax"),
     ])
 
@@ -140,7 +130,6 @@ def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Base CNN (feature extractor)
         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
@@ -149,10 +138,7 @@ def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
         layers.Flatten(),
 
-        # Optional base representation layer
         layers.Dense(64, activation="relu", use_bias=True),
-
-        # Head for Fashion-MNIST pretraining
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -174,7 +160,6 @@ def build_mnist_base_plus_head_v2(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Base CNN (feature extractor)
         layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
 
@@ -210,7 +195,6 @@ def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
 
-        # Head
         layers.GlobalAveragePooling2D(),                         # -> (128,)
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
@@ -322,21 +306,16 @@ def build_mnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Backbone (same as your v3)
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
 
-        # CNN-only classification head (NO Dense):
-        # 1x1 conv maps channels -> num_classes at each spatial location
         layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
 
-        # Pool spatially to get class logits vector
         layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
 
-        # Softmax for probabilities
         layers.Activation("softmax"),
     ])
 
@@ -357,21 +336,16 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        # Backbone (same as your v3)
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
 
-        # CNN-only classification head (NO Dense):
-        # 1x1 conv maps channels -> num_classes at each spatial location
         layers.Conv2D(10, 3, padding="same", activation="relu", use_bias=True),
 
-        # Pool spatially to get class logits vector
         layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
 
-        # Softmax for probabilities
         layers.Activation("softmax"),
     ])
 
@@ -448,6 +422,9 @@ def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
 
 if __name__ == "__main__":
     train_and_export()
+
+
+
 
 
 # ===============================================================================

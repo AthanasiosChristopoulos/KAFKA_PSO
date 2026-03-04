@@ -433,7 +433,7 @@ public class PsoUpdater {
                 if(GIVE_HALF_TO_SELF && ws.workerId == nb.workerId) {
                     continue;
                 }
-                float Wk = Math.max(EPS, nb.accuracy); // your W(k)=accuracy
+                float Wk = Math.max(EPS, nb.accuracy); 
                 accWk += Wk;
 
                 float[] Pk = nb.pBest;
@@ -612,7 +612,7 @@ public class PsoUpdater {
 
         wCurrent = clamp(wCurrent, W_MIN_ADAPT, W_MAX_ADAPT);
 
-        INERTIA_CURRENT = wCurrent;  // keep your existing variable as the "source of truth"
+        INERTIA_CURRENT = wCurrent; 
     }
 
     //================================================================================================
