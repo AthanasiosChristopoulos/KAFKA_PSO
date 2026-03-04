@@ -113,6 +113,9 @@ Standard PSO works this way:
  - Smoothness / a dense signal is important because you want PSO to detect loss differences when weights change, even a little. 
  - If its a discrete signal, then PSO gets no gradient like guidance, weights change and loss remains the same flat (not informative, doesnt give a direction)
 
+ - Ruggedness usually means “lots of ups/downs / frequent oscillations / many local optima” as you move in the search space.
+    So ruggedness is about shape, not about continuity.
+ - Neutrality is basically plateaus / flat regions where many different points have the same (or almost the same) fitness.
 
 ## ============================================================================================
 ## Generall Aspects / Topics of this Thesis (they are combined with each other):
