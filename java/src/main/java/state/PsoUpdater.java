@@ -44,7 +44,7 @@ public class PsoUpdater {
     private float c;  
 
     private final int NUM_SAMPLES = cfg.NUM_SAMPLES;
-    private final int MAX_PSO_UPDATES; // expected max updates (for clamping)
+    private final int MAX_UPDATES; // expected max updates (for clamping)
 
     private final int C1_MID_UPDATE;
 
@@ -121,15 +121,15 @@ public class PsoUpdater {
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);   // (* 3): This is necessary because othewise it will never converge. 
+            MAX_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);   // (* 3): This is necessary because othewise it will never converge. 
                                                                 // We dont actually need to be exploring for that long
         } else {
-            MAX_PSO_UPDATES = NUM_SAMPLES / (N_WORKERS * BATCH_SIZE);
+            MAX_UPDATES = NUM_SAMPLES / (N_WORKERS * BATCH_SIZE);
         }
-        C1_MID_UPDATE = (int) Math.round(MAX_PSO_UPDATES / 1.6);
+        C1_MID_UPDATE = (int) Math.round(MAX_UPDATES / 1.6);
 
         if (logger.isEnabled(2)) logger.log("PsoUpdater: Number of weights (dimensionality): " + 
-                dimensionality + ", MAX_PSO_UPDATES: " + MAX_PSO_UPDATES + 
+                dimensionality + ", MAX_UPDATES: " + MAX_UPDATES + 
                 ", C1_MID_UPDATE: " + C1_MID_UPDATE + ", NUM_SAMPLES = " + NUM_SAMPLES);
 
         // this.rnd = new Random(1234L + workerId);    // for extra randomness in between workers
@@ -561,29 +561,29 @@ public class PsoUpdater {
 
     private void updateParametersSchedule() {
 
-        float updateIndex = Math.min(count_updates, MAX_PSO_UPDATES); // makes updateIndex not surpass MAX_PSO_UPDATES
+        float updateIndex = Math.min(count_updates, MAX_UPDATES); // makes updateIndex not surpass MAX_UPDATES
 
         // float sigmoidSteepness = (float)(2.0 * Math.log(9.0) / C1_DROP_WIDTH);
         // float retentionFactor = (float)(1.0 / (1.0 + Math.exp(sigmoidSteepness * (updateIndex - C1_MID_UPDATE))));
         // c1 = C1_END + (C1_START - C1_END) * retentionFactor;
             // this is exponential fall, right around the middle
 
-        float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;   
+        float progressFactor = updateIndex / (float) MAX_UPDATES;   
         INERTIA_CURRENT = INERTIA_START + progressFactor * (INERTIA_END - INERTIA_START);  // t = [0, 1]
             // when t = 1, then INERTIA_CURRENT == INERTIA_END. This is linear fall of INERTIA
         // Mathematicall equivalent: 
         // INERTIA_CURRENT = INERTIA_END + progressFactor * (INERTIA_START - INERTIA_END);  
-        // float progressFactor = (MAX_PSO_UPDATES - updateIndex) / (float) MAX_PSO_UPDATES;      // T = MAX_PSO_UPDATES. 
+        // float progressFactor = (MAX_UPDATES - updateIndex) / (float) MAX_UPDATES;      // T = MAX_UPDATES. 
         // INERTIA_CURRENT = INERTIA_MIN + progressFactor * (INERTIA_MAX - INERTIA_MIN);  // from IEEE PSO survey
-        // if progressFactor = 0 (if updateIndex == MAX_PSO_UPDATES), then INERTIA_CURRENT = INERTIA_MIN
+        // if progressFactor = 0 (if updateIndex == MAX_UPDATES), then INERTIA_CURRENT = INERTIA_MIN
     }
 
     //================================================================================================
 
     private void updateC1C2Schedule() {
 
-        float updateIndex = Math.min(count_updates, MAX_PSO_UPDATES); // makes updateIndex not surpass MAX_PSO_UPDATES
-        float progressFactor = updateIndex / (float) MAX_PSO_UPDATES;  
+        float updateIndex = Math.min(count_updates, MAX_UPDATES); // makes updateIndex not surpass MAX_UPDATES
+        float progressFactor = updateIndex / (float) MAX_UPDATES;  
         
         c1 = (C1_END - C1_START) * progressFactor + C1_START;
         c2 = (C2_END - C2_START) * progressFactor + C2_START;

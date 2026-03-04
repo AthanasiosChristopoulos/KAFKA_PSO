@@ -122,7 +122,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long openedDebounceWindow = 0;
     private boolean pBestUpdatePending = false;
 
-    private int MAX_BATCHES; // expected max updates (for clamping)
+    private int MAX_UPDATES; // expected max updates (for clamping)
     private float TAU; 
     private final float LOSS_THRESHOLD_MAX = cfg.LOSS_THRESHOLD_MAX;           // e.g. 0.10f (10%)
     private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
@@ -177,25 +177,23 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if(FILTER_ENABLED) {
         
             if(cfg.INDEPENDENT_WORKER_DATA_PROCESSING == true) {
-                MAX_BATCHES = cfg.NUM_SAMPLES / BATCH_SIZE;
+                MAX_UPDATES = cfg.NUM_SAMPLES / BATCH_SIZE;
                 
             } else {
 
-                MAX_BATCHES = cfg.NUM_SAMPLES / (cfg.N_WORKERS * BATCH_SIZE);
+                MAX_UPDATES = cfg.NUM_SAMPLES / (cfg.N_WORKERS * BATCH_SIZE);
             }
 
             double epsEnd = 1e-3;
             double diff = (double) LOSS_THRESHOLD_MAX - (double) LOSS_THRESHOLD_MIN;
-            double tau = (double) MAX_BATCHES / Math.log(diff / epsEnd);
-            logger.log("tau=" + tau + ", diff=" + diff);
+            double tau = (double) MAX_UPDATES / Math.log(diff / epsEnd);
+            logger.log("tau = " + tau + ", diff = " + diff);
 
             if (Double.isNaN(tau) || Double.isInfinite(tau) || tau < 1.0) tau = 1.0;    // so its valid
 
             this.TAU = (float) tau;
 
-            logger.log("MAX_BATCHES=" + MAX_BATCHES + ", TAU=" + TAU);
-
-
+            logger.log("MAX_UPDATES = " + MAX_UPDATES + ", TAU = " + TAU);
         }
     }
 
@@ -925,7 +923,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private void updateThreshold(int t) {     // threshold(t)=threshold_min + (threshold_max - threshold_min) * exp(-t / tau)
 
-        int tc = Math.min(t, MAX_BATCHES);
+        int tc = Math.min(t, MAX_UPDATES);
 
         double expTerm = Math.exp(-(double) tc / (double) TAU);     // -t/tau
         double threshold = (double) LOSS_THRESHOLD_MIN + ((double) LOSS_THRESHOLD_MAX - (double) LOSS_THRESHOLD_MIN) * expTerm;
@@ -940,14 +938,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private void updateMonitoringThreshold(int iter) {
         // iter: ws.countForwardPasses (global per worker)
-        int T = Math.max(1, MAX_BATCHES);
+        int T = Math.max(1, MAX_UPDATES);
         double p = Math.min(1.0, (double) iter / (double) T);
 
         double val = MONITORING_THRESHOLD_MAX + (MONITORING_THRESHOLD_MIN - MONITORING_THRESHOLD_MAX) * p;
+
+        monitoring_threshold = (int) Math.round(val);
         logger.log("monitoring_threshold: " + monitoring_threshold + ", MONITORING_THRESHOLD_MAX: " +
             MONITORING_THRESHOLD_MAX + ", MONITORING_THRESHOLD_MIN: " + MONITORING_THRESHOLD_MIN
         );
-        monitoring_threshold = (int) Math.round(val);
     }
 
     //=========================================================================================================================

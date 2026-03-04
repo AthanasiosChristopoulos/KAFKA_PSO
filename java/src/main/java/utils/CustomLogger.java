@@ -22,6 +22,8 @@ public class CustomLogger {
 
     private static boolean clearedLogsDir = false;
 
+    //=====================================================================================
+
     public CustomLogger(int workerId) {
 
         BufferedWriter w = null;
@@ -91,7 +93,24 @@ public class CustomLogger {
 
         return logger;
     }
+    //=====================================================================================\
 
+    public static void refreshAll() {
+        // Close existing writers
+        if (coordinatorInstance != null) {
+            coordinatorInstance.close();
+            coordinatorInstance = null;
+        }
+
+        for (CustomLogger l : workerInstances.values()) {
+            if (l != null) l.close();
+        }
+        workerInstances.clear();
+
+        clearLogsDirectory();
+
+        clearedLogsDir = true; 
+    }
     //=====================================================================================\
 
     private static void clearLogsDirectory() {
@@ -154,4 +173,15 @@ public class CustomLogger {
         }
     }
 
+    //=====================================================================================
+
+    public void close() {
+        if (!ENABLE_LOGGING || logWriter == null) return;
+        try {
+            logWriter.flush();
+            logWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

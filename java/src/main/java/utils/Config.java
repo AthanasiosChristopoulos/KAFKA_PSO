@@ -399,6 +399,11 @@ public class Config {
             LOSS_THRESHOLD_MAX = Float.parseFloat(getenv(dotenv, "LOSS_THRESHOLD_MAX", "0.1"));
             LOSS_THRESHOLD_MIN = Float.parseFloat(getenv(dotenv, "LOSS_THRESHOLD_MIN", "0.005"));
         }
+
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        System.out.println("MONITORING_THRESHOLD_MAX: " + MONITORING_THRESHOLD_MAX);
+        System.out.println("MONITORING_THRESHOLD_MIN: " + MONITORING_THRESHOLD_MIN);
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     }
 
     // ==================================================================================================================================

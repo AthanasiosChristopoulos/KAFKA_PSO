@@ -35,7 +35,8 @@ public class Experimentation {
 
     // ========================================================================
     // private static List<Integer> filterEnableList = List.of(1, 0);
-    private static List<Integer> filterEnableList = List.of(1);
+    private static List<Integer> filterEnableList = List.of(0, 1);
+    // private static List<Integer> filterEnableList = List.of(1);
 
     // ========================================================================
     // private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
@@ -100,6 +101,7 @@ public class Experimentation {
                 for (int n : workersList) {
                     
                     cfg.refreshRunId();
+                    CustomLogger.refreshAll();
                     cfg.N_WORKERS = n;
                     CoordinatorControl.getInstance().resetForNewRun(n);
 
@@ -163,7 +165,7 @@ public class Experimentation {
                     }
 
                     cfg.refreshFilterEnabled();
-
+                    CustomLogger.refreshAll();
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
@@ -218,6 +220,7 @@ public class Experimentation {
 
                     cfg.FILTER_ENABLED = true;
                     cfg.refreshRunId();
+                    CustomLogger.refreshAll();
                     cfg.refreshFilterEnabled();
 
                     cfg.LOSS_THRESHOLD_MIN = LOSS_THRESHOLD_MIN_ORIGINAL + theshold_offset;
@@ -276,6 +279,7 @@ public class Experimentation {
                 w.write("MONITORING_ITER,ACCURACY\n");
 
                 CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+                CustomLogger.refreshAll();
 
                 System.out.println("===============================================================================================");
                 System.out.println("New RUN_ID: " + cfg.RUN_ID);
@@ -310,30 +314,6 @@ public class Experimentation {
             }
         } 
         
-    }
-
-    // =============================================================================================================
-
-    private static Path createUniqueCsvPath(String baseDirName, String baseFileName) throws IOException {
-
-        Path dir = Path.of(baseDirName);
-        Files.createDirectories(dir);
-
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        int rnd = ThreadLocalRandom.current().nextInt(1000, 10000); // 4 digits
-
-        Path csv = dir.resolve(baseFileName + "_" + ts + "_" + rnd + ".csv");
-
-        int attempt = 0;
-        while (Files.exists(csv)) {
-            rnd = ThreadLocalRandom.current().nextInt(1000, 10000);
-            csv = dir.resolve(baseFileName + "_" + ts + "_" + rnd + ".csv");
-            
-            if (++attempt > 50) throw new IOException("Could not create unique CSV under " + baseDirName);
-        }
-
-        return csv;
-
     }
 
     // =============================================================================================================
@@ -396,27 +376,4 @@ public class Experimentation {
         }
     }
 
-    // =============================================================================================================
-
-    private static Path createUniqueResultsFiles(String baseDirName) throws IOException {
-
-        Files.createDirectories(Path.of(baseDirName));
-
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        int rnd = ThreadLocalRandom.current().nextInt(1000, 10000); // 4 digits
-
-        Path runDir = Path.of(baseDirName, "run_" + ts + "_" + rnd);
-
-        int attempt = 0;
-
-        while (Files.exists(runDir)) {
-            rnd = ThreadLocalRandom.current().nextInt(1000, 10000);
-            runDir = Path.of(baseDirName, "run_" + ts + "_" + rnd);
-            if (++attempt > 50) throw new IOException("Could not create unique run directory under " + baseDirName);
-        }
-
-        Files.createDirectories(runDir);
-
-        return runDir;
-    }
 }
