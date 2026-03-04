@@ -800,6 +800,115 @@ def pretrain_stl10_and_export(
 
 # ===============================================================================
 
+def build_stl10_resnet20_v1(input_shape=(32, 32, 3), num_classes=10):
+    """
+    Simple CIFAR ResNet-20 (6n+2 with n=3) for 32x32 images.
+    """
+
+    def conv3x3(x, filters, stride=1):
+        return layers.Conv2D(
+            filters, 3, strides=stride, padding="same",
+            use_bias=False, kernel_initializer="he_normal"
+        )(x)
+
+    def bn_relu(x):
+        x = layers.BatchNormalization()(x)
+        return layers.ReLU()(x)
+
+    def basic_block(x, filters, stride=1):
+        shortcut = x
+
+        x = conv3x3(x, filters, stride=stride)
+        x = bn_relu(x)
+        x = conv3x3(x, filters, stride=1)
+        x = layers.BatchNormalization()(x)
+
+        # projection if shape changes
+        if stride != 1 or shortcut.shape[-1] != filters:
+            shortcut = layers.Conv2D(
+                filters, 1, strides=stride, padding="same",
+                use_bias=False, kernel_initializer="he_normal"
+            )(shortcut)
+            shortcut = layers.BatchNormalization()(shortcut)
+
+        x = layers.Add()([x, shortcut])
+        x = layers.ReLU()(x)
+        return x
+
+    inputs = keras.Input(shape=input_shape)
+
+    # CIFAR stem
+    x = layers.Conv2D(16, 3, padding="same", use_bias=False, kernel_initializer="he_normal")(inputs)
+    x = bn_relu(x)
+
+    # 3 stages, each with 3 blocks (ResNet-20)
+    # stage 1: 16
+    for _ in range(3):
+        x = basic_block(x, 16, stride=1)
+
+    # stage 2: 32 (downsample once)
+    x = basic_block(x, 32, stride=2)
+    for _ in range(2):
+        x = basic_block(x, 32, stride=1)
+
+    # stage 3: 64 (downsample once)
+    x = basic_block(x, 64, stride=2)
+    for _ in range(2):
+        x = basic_block(x, 64, stride=1)
+
+    x = layers.GlobalAveragePooling2D()(x)
+    outputs = layers.Dense(num_classes, activation="softmax", use_bias=True)(x)
+
+    model = keras.Model(inputs, outputs, name="stl10_resnet20_v1")
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
+
+def pretrain_stl10_resnet20_and_export(
+    data_dir="./data",
+    out_dir="pretrained_model",
+    epochs=20,
+    batch_size=128,
+):
+    train_ds, val_ds, test_ds = load_stl10_32(
+        data_dir=data_dir,
+        batch_size=batch_size,
+        return_tfdata=True
+    )
+
+    model = build_stl10_resnet20_v1(input_shape=(32, 32, 3), num_classes=10)
+
+    callbacks = [
+        keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
+        keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
+    ]
+
+    history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=epochs,
+        verbose=2,
+        callbacks=callbacks,
+    )
+
+    test_loss, test_acc = model.evaluate(test_ds, verbose=0)
+    print(f"\nSTL-10 (downsampled 32x32) test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
+
+    os.makedirs(out_dir, exist_ok=True)
+    h5_path = os.path.join(out_dir, "stl10_pretrained_resnet20_v1.h5")
+    model.save(h5_path)
+    print("Saved Keras H5:", h5_path)
+
+    return model, history
+
+# ===============================================================================
+
 def build_model_by_version(version: str, input_shape, num_classes: int):
 
     match version:
@@ -860,8 +969,9 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v1_tinyimagenet"
-    version = "v1_stl10"
-
+    # version = "v1_stl10"
+    version = "v1_stl10_resnet20"
+    
     EPOCHS = 20
 
     if "cinic" in version: # ================================================================================
@@ -869,6 +979,15 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)
             model, name_h5_file = build_model_by_version(version, (32,32,3), 10)
             history = model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
+            
+    elif "v1_stl10_resnet20" in version:
+        pretrain_stl10_resnet20_and_export(
+            data_dir="./data",
+            out_dir="pretrained_model",
+            epochs=EPOCHS,
+            batch_size=batch_size,
+        )
+        exit(0)
 
     elif "v1_stl10" in version:     # ================================================================================
         

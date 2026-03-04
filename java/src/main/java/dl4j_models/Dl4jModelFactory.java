@@ -201,7 +201,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 7;
+			int version = 8;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -221,6 +221,7 @@ public class Dl4jModelFactory {
 																								// 72% => 100 and 77% pretrained
 				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";			// 67%
 				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
+				case 11 -> filename = "pretrained_models_dl4j/stl10_pretrained_resnet20_v1.h5";	// 60%
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
@@ -228,7 +229,7 @@ public class Dl4jModelFactory {
 			if (preTrained) {
 				switch (version) {
 					case 1, 3, 6, 7, 8, 9, 10 -> model = pretrainedModelCIFAR(filename);
-					case 2, 4, 5 -> model = pretrainedModelMobileNetV2(filename);
+					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
@@ -242,7 +243,8 @@ public class Dl4jModelFactory {
 					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
 						// 77% accuracy pretrained, 75% new head
 
-					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename);
+					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename); 
+					case 11-> pair = createCifarFromResNet20Stl10(workerId, filename);
 					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
 					default -> throw new IllegalStateException("Unknown ???");
 				}
@@ -453,6 +455,7 @@ public class Dl4jModelFactory {
 // 			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
 // 		}
 // 	}
+
 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
 		try {
 
@@ -558,6 +561,76 @@ public class Dl4jModelFactory {
 		}
 	}
 
+	// ===================================================================================================
+
+	public static Pair<PsoModel, Integer> createCifarFromResNet20Stl10(
+			int workerId,
+			String kerasH5Path
+	) {
+		try {
+			// 1) Import full Keras ResNet20 (includes GAP + Dense(10))
+			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(kerasH5Path, false);
+
+			// Start params: base BEFORE adding new head (we will remove/replace old head)
+			int start = (int) base.numParams();
+
+			FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+					.seed(123 + workerId)
+					.updater(new NoOp())     // PSO moves weights; no optimizer
+					.build();
+
+			// In your imported summary, GAP layer is named exactly:
+			String featureLayer = "global_average_pooling2d"; // outputs 64 features
+
+			ComputationGraph model = new TransferLearning.GraphBuilder(base)
+					.fineTuneConfiguration(ftc)
+
+					// Freeze everything up to GAP output
+					.setFeatureExtractor(featureLayer)
+
+					// Remove the original classifier head ("dense") and replace it
+					// (GraphBuilder has removeVertexAndConnections in newer DL4J;
+					//  if you don't have it, see Option B below)
+					.removeVertexAndConnections("dense")
+
+					// New output head (trainable)
+					.addLayer("new_output",
+							new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+									.nIn(64)                 // <-- GAP output channels
+									.nOut(NUM_CLASSES)
+									.activation(Activation.SOFTMAX)
+									.weightInit(WeightInit.XAVIER)
+									.biasInit(0.0)
+									.build(),
+							featureLayer)
+
+					.setOutputs("new_output")
+					.build();
+
+			model.init();
+
+			// Head params = 64*numClasses + numClasses
+			int expectedHead = 64 * NUM_CLASSES + NUM_CLASSES;
+			int actualHead = (int) model.numParams() - (start - (64 * 10 + 10)); 
+			// ^ because start included old Dense(10). If you removed it, subtract its params.
+
+			// Safer: compute base-without-head params explicitly:
+			// If you know old head was Dense(10): oldHead = 64*10 + 10 = 650
+			int oldHead = 64 * 10 + 10; // 650
+			int baseNoHead = start - oldHead;
+			int actualHead2 = (int) model.numParams() - baseNoHead;
+
+			if (actualHead2 != expectedHead) {
+				throw new IllegalStateException("Head param mismatch. expected=" + expectedHead +
+						" actual=" + actualHead2 + " baseNoHead=" + baseNoHead + " tl.numParams=" + model.numParams());
+			}
+
+			return Pair.of(new PsoGraphAdapter(model), baseNoHead);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to import and build transfer model from: " + kerasH5Path, e);
+		}
+	}
 	// ===================================================================================================
 
 	public static Pair<PsoModel, Integer> createCifarFromMobileNet(int workerId, String kerasH5Path) {
