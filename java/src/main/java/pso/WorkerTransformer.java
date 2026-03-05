@@ -467,7 +467,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         per_task_count++; ws.countForwardPasses++; countForwardPassesStatic++;
 
         flushPendingPBest();    // this may send the actuall pBest
-                
+        
+        // if(out != null) {
+        //     System.out.println("[WorkerId " + workerId + "] Sending current weights topic");
+        // }
+        
         return out; // like this pBest and current_weights can be sent in the same transform() call
                     // Kafka Streams takes the one KeyValue<K,V> returned from transform() and sends it downstream.
     }               // it may be null

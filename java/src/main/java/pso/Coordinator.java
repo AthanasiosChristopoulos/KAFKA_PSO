@@ -134,7 +134,7 @@ public class Coordinator implements Runnable {
         // Shared base properties (we will clone and override app.id / threads per instance)
         Properties baseProps = new Properties();
         baseProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST);
-        baseProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        baseProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         baseProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5MB
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0);
@@ -208,7 +208,7 @@ public class Coordinator implements Runnable {
         Thread controlThread = new Thread(() -> {
 
             try {
-                while (!control.isStopRequested(-1)) {
+                while (!control.isStopRequested(-1) || !control.processedAtLeastOne) {
                     Thread.sleep(50); 
                 }
 

@@ -101,7 +101,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private static final int MIN_TEST_ROWS = 200;
     private static final long WAIT_SLEEP_MS = 50;
-    private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
+    private static final int WAIT_MAX_TRIES = 50; // 200 * 100ms = 20s max
 
     private int start;
 
@@ -167,6 +167,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
         start_time = System.nanoTime();
         updateTime();
+        control.processedAtLeastOne = true;
 
         if (control.isStopRequested(-1)) {
             // onAllWorkersReported();
@@ -194,7 +195,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         if (weights == null) {
             return;
         }
-        
+
         if(control.getBestTrainingAccuracy() < msg.accuracy) {
             control.setBestTrainingAccuracy(msg.accuracy);
         }
@@ -251,7 +252,7 @@ public void onAllWorkersReported() {
         evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
         logConsumerOffsets();   
     }
-
+    
     float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel, false);  // inference / evaluate every time all workers current models arrive
                                                                         // monitor how training is going
     accuracy = accLoss[0];
@@ -320,6 +321,7 @@ public void onAllWorkersReported() {
     //     } 
     // }
     //=================================================================================
+
     weightsBuffer.entrySet().removeIf(e -> {
         int wid;
         try {
@@ -656,7 +658,12 @@ public void onAllWorkersReported() {
                 + avgForwardPassMs);
 
         if(control.getBestGlobalModelAccuracy() == -1f) { // coordinator never evaluated local state
-            onAllWorkersReported();
+            if(weightsBuffer.size() != 0) {
+                onAllWorkersReported();
+            } else {
+                if(logger.isEnabled(2)) logger.log("weightsBuffer empty, skipping final evaluation");
+                System.out.println("[Coordinator] weightsBuffer empty, skipping final evaluation");
+            }
         }   
 
         this.logger.flush();

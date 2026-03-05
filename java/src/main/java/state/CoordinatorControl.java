@@ -22,6 +22,8 @@ public class CoordinatorControl {
     public final List<Float> accuracyValues =
         java.util.Collections.synchronizedList(new java.util.ArrayList<>());
         
+    public boolean processedAtLeastOne = false;
+
     // =================================================================================================
 
     private CoordinatorControl() {
@@ -107,6 +109,9 @@ public class CoordinatorControl {
 
         workerStopRequested = new AtomicBoolean[nWorkers];
         for (int i = 0; i < nWorkers; i++) workerStopRequested[i] = new AtomicBoolean(false);
+        
+        processedAtLeastOne = false;
+
     }
         // =================================================================================================
 

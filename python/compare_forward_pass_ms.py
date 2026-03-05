@@ -163,7 +163,6 @@ def build_simple_flatten_dense():
     return keras.Sequential([
         layers.Input(shape=(32, 32, 3)),
         layers.Conv2D(16, 3, padding="valid", activation="relu", use_bias=True),
-        layers.MaxPooling2D(),
         layers.Conv2D(32, 3, padding="valid", activation="relu", use_bias=True),
         layers.MaxPooling2D(),
         layers.Flatten(),

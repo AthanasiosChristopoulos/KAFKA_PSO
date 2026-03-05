@@ -141,10 +141,12 @@ public class Config {
         System.out.println("DATASET: " + DATASET + ", DATA_TOPIC: " + DATA_TOPIC + ", TEST_TOPIC: " + TEST_TOPIC);        
         
         NUM_SAMPLES = 400000;
+        N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
         
         if("iris".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
+            N_BATCHES = 1;
         
         } else if("wine".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
@@ -276,7 +278,6 @@ public class Config {
 
         if(FILTER_ENABLED == false) {
             SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
-            N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
             // N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 5;
             LOSS_THRESHOLD_MAX = 0f;
             LOSS_THRESHOLD_MIN = 0f;
@@ -285,7 +286,6 @@ public class Config {
 
         } else {
             SIGNIFICANT_LOSS_DIFF = Float.parseFloat(getenv(dotenv, "SIGNIFICANT_LOSS_DIFF", "0.01"));
-            N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30")) * 4;
             MONITORING_THRESHOLD_MAX = Integer.parseInt(getenv(dotenv, "MONITORING_THRESHOLD_MAX", "60"));
             MONITORING_THRESHOLD_MIN = Integer.parseInt(getenv(dotenv, "MONITORING_THRESHOLD_MIN", "10"));
 

@@ -54,7 +54,7 @@ public class Dl4jModelFactory {
 
 		if("iris".equals(DATASET)) {
 			// model = createIrisModel(workerId);
-			model = createIrisModelSimpler(workerId);
+			model = createDenseSimpleModel(workerId);
 
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
@@ -89,10 +89,12 @@ public class Dl4jModelFactory {
 			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
 			// model = createPendigitsModelSmaller_2(workerId);
-			model = createPendigitsModelSmaller_3(workerId);
+			model = createDenseSimpleModel(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
-			model = createWineQualityModel(workerId);
+			System.out.println("NEURAL_OUTPUT: " + NEURAL_OUTPUT);
+			// model = createWineQualityModel(workerId);
+			model = createDenseSimpleModel(workerId);
 
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
@@ -1623,17 +1625,28 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createIrisModelSimpler(int workerId) {	
+	public static PsoModel createDenseSimpleModel(int workerId) {	
 		if (printModel) System.out.println("Model: createIrisModelSimpler");  
+
+		Activation act = Activation.SOFTMAX;
+		LossFunctions.LossFunction loss; 
+
+		if (NEURAL_OUTPUT == 1) {
+			act = Activation.SIGMOID;
+			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
+		} else {
+			act = Activation.SOFTMAX;
+			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+				.layer(0, new OutputLayer.Builder(loss)
 						.nIn(NUM_FEATURES)
 						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SOFTMAX)
+						.activation(act)
 						.build())
 				.build();
 
@@ -1641,6 +1654,7 @@ public class Dl4jModelFactory {
 		model.init();
 		return new PsoMultiLayerAdapter(model);
 	}
+	
 
 	// ======================================================================================================================
 	// Wine Dataset Model Architecture 

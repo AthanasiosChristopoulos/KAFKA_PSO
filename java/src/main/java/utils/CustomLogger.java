@@ -110,7 +110,9 @@ public class CustomLogger {
         clearLogsDirectory();
 
         clearedLogsDir = true; 
+
     }
+
     //=====================================================================================\
 
     private static void clearLogsDirectory() {

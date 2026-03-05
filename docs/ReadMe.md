@@ -79,6 +79,7 @@ git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit
 
 git fetch --prune origin    # fetch does NOT modify your code or merge anything.
                             # It only updates Git’s knowledge of the remote.
+                            
 git branch -r       # This command shows remote-tracking branches that your local repo currently knows about.
 
 git branch -vv      # Shows branches on local and what they track on remote     
