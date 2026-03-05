@@ -188,6 +188,7 @@ public class LossFunction {
 
     // =============================================================================================
     // Absolute Margin Loss
+    // non-diff at margin = 1 because max switches branch.
 
     public static float compute_loss_margin_abs(float[] probs, int label) { // is non differentiable at 0
         // penalizes margin violations (largest wrong class probability)
@@ -201,12 +202,13 @@ public class LossFunction {
         }
 
         // Implement L= ∣1 − (py​−pmax_other​)∣
-        float margin = py - maxOther;
-        return Math.abs(1f - margin);
+        float margin = py - maxOther;   // if the margin grows larger than 1, the loss increases again.
+        return Math.abs(1f - margin);   // too small margins, too large margins
+                                        // margin ≈ 1
     }
 
     // =============================================================================================
-    // Hinge Loss
+    // Hinge Loss (just use this its better)
 
     public static float compute_loss_hinge(float[] probs, int label) {
 
@@ -225,8 +227,7 @@ public class LossFunction {
         }
 
         float margin = py - maxOther;
-
-        return Math.max(0f, 1f - margin);
+        return Math.max(0f, 1f - margin);   // once the prediction is confident enough, no more penalty
     }
 
     // =============================================================================================
