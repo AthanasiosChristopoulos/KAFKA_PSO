@@ -36,6 +36,7 @@ import org.apache.kafka.streams.state.ValueAndTimestamp;
 import java.time.Duration;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import utils.*;
 import state.*;
@@ -72,16 +73,17 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
     private final String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;   
 
-    private final KafkaConsumer<String, DataMessage> consumer;
+    // private KafkaConsumer<String, DataMessage> consumer;
 
     private final CoordinatorControl control;
 
     private final CustomLogger logger;
 
     private long t0;
+    private AtomicLong t_actually_started = new AtomicLong(t0);
     private long t1;
     private double lastActivitySeconds = 0.0;
-    private long start_time = System.nanoTime();
+    private long start_time;
     private long end = System.nanoTime();
     private long sumElapsedNs = 0;
     private int evaluation_count = 0;
@@ -108,16 +110,19 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int evalCursor = 0;                       // rolling start index into store
     private int cachedStoreSize = -1;                 // optional: track size changes
 
+
+
     // ================================================================================================================
 
-
     public CoordinatorProcessor(PsoModel globalModel, PsoModel bestGlobalModel, 
-            long t0, long t1, String testStoreName, PsoModel preTrainedModel, int start) {
+            long t0, AtomicLong t_actually_started, long t1, String testStoreName, PsoModel preTrainedModel, int start) {
 
         this.logger = CustomLogger.getInstanceForCoordinator();
 
         this.t0 = t0;
+        this.t_actually_started = t_actually_started;
         this.t1 = t1;
+        logger.log("Starting Delay 0: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
 
         this.control = CoordinatorControl.getInstance();
 
@@ -132,20 +137,20 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.globalPredictor = BatchPrediction.getInstanceForCoordinator(globalModel, bestGlobalModel, logger);
 
         this.testStoreName = testStoreName;
-
-        Properties consumerProps = new Properties();
-        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST);
-        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);
-        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
-        consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-
         if (logger.isEnabled(2)) logger.log(taskInstance + " thread = " + Thread.currentThread().getName()
             + " TEST_TOPIC = " + TEST_TOPIC + " testStoreName = " + testStoreName);
-            
-        this.consumer = new KafkaConsumer<>(consumerProps);
-        this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
+
+        // Properties consumerProps = new Properties();
+        // consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST);
+        // consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "pso-coordinator-eval-" + RUN_ID);
+        // consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        // consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DataMessageDeserializer.class.getName());
+        // consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // applies only when we dont commit the offset
+        // consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");            
+        // this.consumer = new KafkaConsumer<>(consumerProps);
+        // this.consumer.subscribe(Collections.singletonList(TEST_TOPIC));    
+
+        this.start_time = System.nanoTime();
     }
 
     // ================================================================================================================
@@ -157,7 +162,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.taskTag = "task = " + context.taskId() + " thread = " + Thread.currentThread().getName();
         if (logger.isEnabled(2)) logger.log(taskInstance + " INIT " + taskTag 
                 + " store = " + testStoreName);
-
     }
 
     // ================================================================================================================
@@ -165,24 +169,26 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     @Override
     public void process(Record<String, WeightsMessage> record) {
 
-        start_time = System.nanoTime();
-        updateTime();
-        control.processedAtLeastOne = true;
-
         if (control.isStopRequested(-1)) {
             // onAllWorkersReported();
             return;
         }
 
         if(evaluation_count == 0) {
-
+            t_actually_started.set(System.nanoTime());
             context.recordMetadata().ifPresent(meta -> {
                 if (logger.isEnabled(2)) {
                     logger.log(taskInstance + ", Starting Meta Data: " + meta.topic() + 
                     ", Partition: " + meta.partition() + ", Offset: " + meta.offset());
+                    logger.log("Stating Delay 1: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
+                    logger.log("Starting Delay 2: " + (System.nanoTime() - this.start_time) / 1_000_000_000.0);
                 }
             });
         }
+
+        start_time = System.nanoTime();
+        updateTime();
+        control.processedAtLeastOne = true;
 
         WeightsMessage msg = record.value();
         if (msg == null) {
@@ -223,7 +229,8 @@ public void onAllWorkersReported() {
     } else {
         Dl4jParamUtils.updateModel(globalModel, avgWeights);
     }            
-    List<DataMessage> evalBatch;
+
+    List<DataMessage> evalBatch = null;
 
     if (TEST_SIZE == -1) {
         List<DataMessage> full = loadAndCacheTestSet(MIN_TEST_ROWS);     // new using stateStore
@@ -247,11 +254,13 @@ public void onAllWorkersReported() {
         }
 
         evalCursor = (evalCursor + batchSize) % total;
-    } else {
+    } 
+    
+    // else {
 
-        evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
-        logConsumerOffsets();   
-    }
+    //     evalBatch = readExactlyTestSizeBatch(TEST_SIZE);    // old, using Kafka consumer
+    //     logConsumerOffsets();   
+    // }
     
     float[] accLoss = globalPredictor.callPredictionsBatch(evalBatch, globalModel, false);  // inference / evaluate every time all workers current models arrive
                                                                         // monitor how training is going
@@ -312,23 +321,14 @@ public void onAllWorkersReported() {
     sumElapsedNs += (end - start_time);
     evaluation_count++;           
 
-    //=================================================================================
-    // weightsBuffer.clear();
-    //=================================================================================
-    // for(int workerId = weightsBuffer.keyes; i++) {
-    //     if(control.isStopRequested(workerId) == false) {
-    //         weightsBuffer[i].remove();
-    //     } 
-    // }
-    //=================================================================================
-
-    weightsBuffer.entrySet().removeIf(e -> {
+    weightsBuffer.entrySet().removeIf(e -> {    // if isStopRequested then dont remove it
         int wid;
         try {
             wid = Integer.parseInt(e.getKey());
         } catch (NumberFormatException ex) {
             return true;
         }
+
         return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
     });
     //=================================================================================
@@ -337,49 +337,12 @@ public void onAllWorkersReported() {
 //=========================================================================================================================
 //=========================================================================================================================
 //=========================================================================================================================
-    //=========================================================================================================================
 
     private void updateTime() {
         
         t1 = System.nanoTime();
         lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
-
-    //=========================================================================================================================
-
-    private List<DataMessage> readExactlyTestSizeBatch(int testSize) {
-        List<DataMessage> evalBatch = new ArrayList<>(testSize);
-
-        // Use leftover test samples from previous poll
-        while (evalBatch.size() < testSize && !carry.isEmpty()) {
-            evalBatch.add(carry.removeFirst());
-        }
-
-        while (evalBatch.size() < testSize) {
-            ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
-
-            if (records.isEmpty()) {
-                if (resetToBeginningIfAtEnd()) {
-                    continue; 
-                }
-                continue;
-            }
-
-            for (ConsumerRecord<String, DataMessage> rec : records) {
-                DataMessage dm = rec.value();
-                if (dm == null) continue;
-
-                if (evalBatch.size() < testSize) {
-                    evalBatch.add(dm);
-                } else {
-                    carry.addLast(dm);
-                }
-            }
-        }
-
-        return evalBatch;
-    }
-
     // ===============================================================================================
 
     private int approximateStoreSize() {
@@ -392,47 +355,6 @@ public void onAllWorkersReported() {
             }
         }
         return countLocal;
-    }
-
-    //=========================================================================================================================
-
-    private boolean resetToBeginningIfAtEnd() {
-
-        Set<TopicPartition> asg = consumer.assignment();
-        if (asg == null || asg.isEmpty()) {
-            return false;
-        }
-
-        Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
-
-        boolean allAtEnd = true;
-        for (TopicPartition tp : asg) {
-            long pos = consumer.position(tp);
-            long end = ends.getOrDefault(tp, -1L);
-
-            // If end is unknown, treat as "not at end"
-            if (end < 0) {
-                allAtEnd = false;
-                break;
-            }
-
-            if (pos < end) {
-                allAtEnd = false;
-                break;
-            }
-        }
-
-        if (allAtEnd) {
-
-            carry.clear();
-            consumer.seekToBeginning(asg);
-            consumer.poll(Duration.ZERO);
-            if (logger.isEnabled(2)) logger.log(taskInstance + 
-                ", Reached end-of-topic; resetting consumer to beginning (offset 0).");
-            return true;
-        }
-
-        return false;
     }
 
     //=========================================================================================================================
@@ -513,6 +435,146 @@ public void onAllWorkersReported() {
         return cachedTestSet;
     }
 
+
+    //=========================================================================================================================
+
+    private static float[] averageWeights(List<float[]> bufs) {
+        if (bufs == null || bufs.isEmpty()) return new float[0];
+
+        int numWorkers = bufs.size();
+        int len = bufs.get(0).length;
+        float[] average = new float[len];
+
+        for (float[] arr : bufs) {
+            for (int i = 0; i < len; i++) {
+                average[i] += arr[i];
+            }
+        }
+        
+        for (int i = 0; i < len; i++) {
+            average[i] /= numWorkers;
+        }
+        return average;
+    }
+    
+    //========================================================================================================================
+
+    public static class DesiredAccuracyReachedException extends RuntimeException {
+        public DesiredAccuracyReachedException(String message) {
+            super(message);
+        }
+    }
+    
+    // ==================================================================================================================================
+
+    @Override
+    public void close() {
+        // try {
+        //     consumer.wakeup();                // breaks poll safely
+        // } catch (Exception ignored) {}
+
+        // try {
+        //     consumer.close(Duration.ofSeconds(5));
+        // } catch (Exception ignored) {
+
+        // }
+
+        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start);         // save final solution
+        double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
+        double avgForwardPassMs = forwardPassNs / countForwardPass;
+
+        if (logger.isEnabled(2)) logger.log(taskInstance + 
+                ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
+                + " over " + evaluation_count + " batches" + ", average forwardPassMs: " 
+                + avgForwardPassMs);
+
+        if(control.getBestGlobalModelAccuracy() == -1f) { // coordinator never evaluated local state
+            if(weightsBuffer.size() != 0) {
+                onAllWorkersReported();
+            } else {
+                if(logger.isEnabled(2)) logger.log("weightsBuffer empty, skipping final evaluation");
+                System.out.println("[Coordinator] weightsBuffer empty, skipping final evaluation");
+            }
+        }   
+
+        this.logger.flush();
+    }
+    //=========================================================================================================================
+
+    // private List<DataMessage> readExactlyTestSizeBatch(int testSize) {
+    //     List<DataMessage> evalBatch = new ArrayList<>(testSize);
+
+    //     // Use leftover test samples from previous poll
+    //     while (evalBatch.size() < testSize && !carry.isEmpty()) {
+    //         evalBatch.add(carry.removeFirst());
+    //     }
+
+    //     while (evalBatch.size() < testSize) {
+    //         ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(100));
+
+    //         if (records.isEmpty()) {
+    //             if (resetToBeginningIfAtEnd()) {
+    //                 continue; 
+    //             }
+    //             continue;
+    //         }
+
+    //         for (ConsumerRecord<String, DataMessage> rec : records) {
+    //             DataMessage dm = rec.value();
+    //             if (dm == null) continue;
+
+    //             if (evalBatch.size() < testSize) {
+    //                 evalBatch.add(dm);
+    //             } else {
+    //                 carry.addLast(dm);
+    //             }
+    //         }
+    //     }
+
+    //     return evalBatch;
+    // }
+
+    //=========================================================================================================================
+
+    // private boolean resetToBeginningIfAtEnd() {
+
+    //     Set<TopicPartition> asg = consumer.assignment();
+    //     if (asg == null || asg.isEmpty()) {
+    //         return false;
+    //     }
+
+    //     Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+
+    //     boolean allAtEnd = true;
+    //     for (TopicPartition tp : asg) {
+    //         long pos = consumer.position(tp);
+    //         long end = ends.getOrDefault(tp, -1L);
+
+    //         // If end is unknown, treat as "not at end"
+    //         if (end < 0) {
+    //             allAtEnd = false;
+    //             break;
+    //         }
+
+    //         if (pos < end) {
+    //             allAtEnd = false;
+    //             break;
+    //         }
+    //     }
+
+    //     if (allAtEnd) {
+
+    //         carry.clear();
+    //         consumer.seekToBeginning(asg);
+    //         consumer.poll(Duration.ZERO);
+    //         if (logger.isEnabled(2)) logger.log(taskInstance + 
+    //             ", Reached end-of-topic; resetting consumer to beginning (offset 0).");
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
+
     //=========================================================================================================================
 
     // private List<DataMessage> readNextBatchFromStore(int batchSize) {
@@ -578,215 +640,31 @@ public void onAllWorkersReported() {
 
     //=========================================================================================================================
 
-    private void logConsumerOffsets() {
-        try {
-            Set<TopicPartition> asg = consumer.assignment();
+    // private void logConsumerOffsets() {
+    //     try {
+    //         Set<TopicPartition> asg = consumer.assignment();
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("Consumer position: ");
+    //         StringBuilder sb = new StringBuilder();
+    //         sb.append("Consumer position: ");
 
-            Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
+    //         Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
 
-            for (TopicPartition tp : asg) {
-                long pos = consumer.position(tp);   // current offset (position == offset)
-                long end = ends.getOrDefault(tp, -1L);
-
-                sb.append("[")
-                    .append(tp.topic()).append("-").append(tp.partition())
-                    .append(" pos = ").append(pos)
-                    .append(" end = ").append(end)
-                    .append("] ");
-            }
-
-            if (logger.isEnabled(1)) logger.log(sb.toString());
-        } catch (Exception e) {
-            if (logger.isEnabled(2)) logger.log(taskInstance + 
-                ", Coordinator failed to log consumer offsets: " + e.getMessage());
-        }
-    }
-   
-    //=========================================================================================================================
-
-    private static float[] averageWeights(List<float[]> bufs) {
-        if (bufs == null || bufs.isEmpty()) return new float[0];
-
-        int numWorkers = bufs.size();
-        int len = bufs.get(0).length;
-        float[] average = new float[len];
-
-        for (float[] arr : bufs) {
-            for (int i = 0; i < len; i++) {
-                average[i] += arr[i];
-            }
-        }
-        
-        for (int i = 0; i < len; i++) {
-            average[i] /= numWorkers;
-        }
-        return average;
-    }
-    
-    //========================================================================================================================
-
-    public static class DesiredAccuracyReachedException extends RuntimeException {
-        public DesiredAccuracyReachedException(String message) {
-            super(message);
-        }
-    }
-    
-    // ==================================================================================================================================
-
-    @Override
-    public void close() {
-        try {
-            consumer.wakeup();                // breaks poll safely
-        } catch (Exception ignored) {}
-
-        try {
-            consumer.close(Duration.ofSeconds(5));
-        } catch (Exception ignored) {
-
-        }
-
-        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start);         // save final solution
-        double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
-        double avgForwardPassMs = forwardPassNs / countForwardPass;
-
-        if (logger.isEnabled(2)) logger.log(taskInstance + 
-                ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
-                + " over " + evaluation_count + " batches" + ", average forwardPassMs: " 
-                + avgForwardPassMs);
-
-        if(control.getBestGlobalModelAccuracy() == -1f) { // coordinator never evaluated local state
-            if(weightsBuffer.size() != 0) {
-                onAllWorkersReported();
-            } else {
-                if(logger.isEnabled(2)) logger.log("weightsBuffer empty, skipping final evaluation");
-                System.out.println("[Coordinator] weightsBuffer empty, skipping final evaluation");
-            }
-        }   
-
-        this.logger.flush();
-    }
-}
-
-    // ===============================================================================================
-
-    // private List<DataMessage> getAllTestRowsFromStoreOnce() {
-
-    //     if (cachedTestSet != null) return cachedTestSet;
-
-    //     // Wait for the global store to populate (size stabilizes)
-    //     int lastSize = -1;
-    //     int stableCount = 0;
-
-    //     for (int tries = 0; tries < 50; tries++) { // ~50 * 100ms = 5s max
-    //         int sz = approximateStoreSize();
-    //         if (sz == lastSize && sz > 0) {
-    //             stableCount++;
-    //             if (stableCount >= 5) break; // stable for 5 checks
-    //         } else {
-    //             stableCount = 0;
-    //             lastSize = sz;
-    //         }
-
-    //         try { Thread.sleep(50);  } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
-    //     }
-
-    //     List<DataMessage> all = new ArrayList<>();
-    //     try (var it = testStore.all()) {
-    //         while (it.hasNext()) {
-    //             var kv = it.next();
-    //             ValueAndTimestamp<DataMessage> vat = kv.value;
-    //             if (vat != null && vat.value() != null) {
-    //                 all.add(vat.value());
-    //             }
-    //         }
-    //     }
-
-    //     all.sort(Comparator.comparingInt(dm -> dm.sampleIndex));
-    //     cachedTestSet = Collections.unmodifiableList(all);
-
-    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + ", loaded TEST_STORE into memory. Total test rows = " + cachedTestSet.size());
-    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i));
-    //     }
-
-    //     return cachedTestSet;
-    // }
-
-    // private int approximateStoreSize() {
-    //     int count = 0;
-    //     try (var it = testStore.all()) {
-    //         while (it.hasNext()) {
-    //             var kv = it.next();
-    //             var vat = kv.value;
-    //             if (vat != null && vat.value() != null) count++;
-    //         }
-    //     }
-    //     return count;
-    // }
-
-    // ======================================================================================================================
-
-    // private List<DataMessage> loadAllTestDataOnce() {
-
-    //     if (cachedTestSetLoaded && cachedTestSet != null) {
-    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", Using cached Test Set");
-    //         return cachedTestSet;
-    //     }
-
-    //     consumer.poll(Duration.ZERO);
-    //     Set<TopicPartition> asg = consumer.assignment();
-
-    //     if (asg == null || asg.isEmpty()) {
-    //         // poll again to get assignment
-    //         consumer.poll(Duration.ofMillis(100));
-    //         asg = consumer.assignment();
-    //     }
-    //     if (asg == null || asg.isEmpty()) {
-    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", Could not get assignment for TEST_TOPIC; cannot cache test set.");
-    //         return null;
-    //     }
-
-    //     consumer.seekToBeginning(asg);
-    //     consumer.poll(Duration.ZERO);
-
-    //     Map<TopicPartition, Long> ends = consumer.endOffsets(asg);
-
-    //     List<DataMessage> all = new ArrayList<>(4096);
-
-    //     while (true) {   // Read until all partitions reach end offsets
-
-    //         ConsumerRecords<String, DataMessage> records = consumer.poll(Duration.ofMillis(200));
-
-    //         for (ConsumerRecord<String, DataMessage> rec : records) {
-    //             DataMessage dm = rec.value();
-    //             if (dm != null) all.add(dm);
-    //         }
-
-    //         boolean allAtEnd = true;
     //         for (TopicPartition tp : asg) {
-    //             long pos = consumer.position(tp);
+    //             long pos = consumer.position(tp);   // current offset (position == offset)
     //             long end = ends.getOrDefault(tp, -1L);
 
-    //             if (pos < end) {    // if not yet at end
-    //                 allAtEnd = false;
-    //                 break;
-    //             }
+    //             sb.append("[")
+    //                 .append(tp.topic()).append("-").append(tp.partition())
+    //                 .append(" pos = ").append(pos)
+    //                 .append(" end = ").append(end)
+    //                 .append("] ");
     //         }
 
-    //         if (allAtEnd) break;    // if at end break
+    //         if (logger.isEnabled(1)) logger.log(sb.toString());
+    //     } catch (Exception e) {
+    //         if (logger.isEnabled(2)) logger.log(taskInstance + 
+    //             ", Coordinator failed to log consumer offsets: " + e.getMessage());
     //     }
-
-    //     cachedTestSet = Collections.unmodifiableList(all);
-    //     cachedTestSetLoaded = true;
-
-    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", Cached full TEST_TOPIC into memory. Total test rows = " + cachedTestSet.size());
-    //     if (logger.isEnabled(0)) logger.log(taskInstance + ", First 5 TEST samples:");
-    //     for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
-    //         if (logger.isEnabled(0)) logger.log(taskInstance + ", TEST[" + i + "]: " + cachedTestSet.get(i).toString());
-    //     }
-
-    //     return cachedTestSet;
     // }
+   
+}

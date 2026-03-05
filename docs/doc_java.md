@@ -112,3 +112,17 @@ probs.getRow(i).toFloatVector();    // this function allocates new memory
 probs.data().asFloat();             // this one overwrites memory
 
 ```
+
+
+## Misc ===============================================================
+
+nanoTime() is guaranteed to:
+
+✔ always increase
+✔ never go backwards
+✔ not affected by system clock adjustments
+It only has meaning relative to another nanoTime() call.
+long elapsed = t1 - t0;
+This makes it ideal for performance measurement.
+
+System.nanoTime => 324234234234234 no meaning number

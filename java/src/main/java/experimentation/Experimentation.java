@@ -401,7 +401,7 @@ public class Experimentation {
                 "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f\n",
                 filterEnabled,
                 nWorkers,
-                r.getTotalElapsedSec(),
+                r.lastWorkerElapsedSec(),               // r.getTotalElapsedSec()
                 r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN,
                 r.lastWorkerElapsedSec(),
                 r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,

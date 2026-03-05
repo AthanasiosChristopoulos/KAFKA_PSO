@@ -122,14 +122,6 @@ public class Simulation {
             System.out.println("Started worker thread " + i);
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {     // shutdown hook to keep it from printing
-
-            double elapsedTimeSec = (System.nanoTime() - startNs) / 1_000_000_000.0;
-            System.out.printf("[Simulation] Execution interupted, JVM is stopping, workers will close.");
-            System.out.printf("============= Training is over, ElapsedTime: %.3f seconds =============%n", elapsedTimeSec);
-
-        }, "shutdown-hook"));
-
         for (Thread t : workerThreads) {
             t.join();
         }

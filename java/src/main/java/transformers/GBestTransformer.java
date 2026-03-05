@@ -37,6 +37,8 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     private long t0;
     private double lastActivitySeconds = 0.0;
 
+    private int count = 0;
+
     // =====================================================================================================================
 
     public GBestTransformer(CustomLogger logger, long t0) {
@@ -58,6 +60,10 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, WeightsMessage msg) {
         
+        if(count == 0) {
+            logger.log("[gBest Logger] Starting Delay: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
+        }
+        count++;
         updateTime();
 
         if (msg == null) return null;
@@ -80,8 +86,10 @@ public class GBestTransformer implements Transformer<String, WeightsMessage, Key
             if (!significant_improvement) {
                 return null;
             }
-
+            
             return new KeyValue<>("gBest", gBestMsg);
+
+        
         }
 
         return null;

@@ -71,6 +71,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private int nCorrect = 0;
 
     private long t0;
+    private AtomicLong t_actually_started;
     private final AtomicLong t1;
     private double lastActivitySeconds = 0.0;
     
@@ -130,16 +131,17 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     // ====================================================================================================================
     
-    public WorkerTransformer(int workerId, long t0, AtomicLong t1, WorkerStatic ws) {
+    public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
+
+        this.logger = CustomLogger.getWorkerInstance(workerId);
 
         this.workerId = workerId;
         this.t0 = t0;
+        this.t_actually_started = t_actually_started;
         this.t1 = t1;
 
         this.ws = ws;
         ws.numberOfTasks += 1;
-
-        this.logger = CustomLogger.getWorkerInstance(workerId);
 
         if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + 
         " WorkerTransformer started");
@@ -241,13 +243,21 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
 
         if (!printedOffset) {
+            long now = System.nanoTime();
+            t_actually_started.set(now);
+
+            logger.log("t_actually_started: " + t_actually_started);
+            logger.log("t0: " + t0);
+
             printedOffset = true;
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Starting at -> " + 
                             "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
             if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", Sample DataMessage: " + value.toStringFull());
-            
+
+            logger.log("Starting Delay: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
+
             seenPartitions.add(context.partition());    // if no records processed, this never runs
         }
 

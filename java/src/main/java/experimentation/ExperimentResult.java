@@ -29,11 +29,17 @@ public final class ExperimentResult {
 
     public double lastWorkerElapsedSec() {
         double max = Double.NaN;
+        
         for (WorkerMetrics wm : workers) {
             if (wm == null) continue;
+            
             double t = wm.getElapsedSec();
-            if (Double.isNaN(max) || t > max) max = t;
+
+            if (Double.isNaN(max) || t > max) {
+                max = t;
+            }
         }
+
         return max;
     }
     

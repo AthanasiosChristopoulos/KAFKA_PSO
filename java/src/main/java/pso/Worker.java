@@ -55,6 +55,7 @@ public class Worker implements Runnable {
     private final CoordinatorControl control;   // the coordinator is the one who finished when he has exhausted all the testing data
                                                 // the he requestStop on the control and everything closes
     private long t0 = System.nanoTime();
+    private final AtomicLong t_actually_started = new AtomicLong(t0);
     private final AtomicLong t1  = new AtomicLong(t0);
 
     private WorkerStatic ws;
@@ -88,6 +89,12 @@ public class Worker implements Runnable {
     @Override
     public void run() {
         try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Waking up");
+        try {
             runInternal();
         } catch (Throwable t) {
             System.err.println("[Worker " + workerId + "] FATAL in worker thread:");
@@ -95,6 +102,7 @@ public class Worker implements Runnable {
             CoordinatorControl.getInstance().requestStopFinal();
         }
     }
+
     // ==========================================================================================
 
     private void runInternal() throws Exception {
@@ -176,7 +184,7 @@ public class Worker implements Runnable {
         );
 
         KStream<String, WeightsMessage> dataStream = rawDataStream
-            .transform(() -> new WorkerTransformer(workerId, t0, t1, ws))
+            .transform(() -> new WorkerTransformer(workerId, t0, t_actually_started, t1, ws))
             .filter((k, v) -> v != null);
 
         KStream<String, WeightsMessage>[] branches = dataStream.branch(
@@ -258,8 +266,12 @@ public class Worker implements Runnable {
         }
         streams.close();
 
-        double seconds = (t1.get() - t0) / 1_000_000_000.0;    
-        System.out.printf("[Worker %d] Elapsed time: %.3f seconds, exiting run()%n", workerId, seconds);
+        // double seconds = (t1.get() - t0) / 1_000_000_000.0;    
+        double seconds = (t1.get() - t_actually_started.get()) / 1_000_000_000.0;    
+        double starting_delay = (t_actually_started.get() - t0) / 1_000_000_000.0;    
+        System.out.println("[Worker %d] t_actually_started: " + t_actually_started);
+        System.out.println("[Worker %d] t0: " + t0);
+        System.out.printf("[Worker %d] Elapsed time: %.3f seconds, starting delay: %.3f, exiting run()%n", workerId, seconds, starting_delay);
         float bestAcc = ws.stats.getBestAccuracy();
         float bestLoss = ws.stats.getPBestLoss();   
 

@@ -15,6 +15,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 
@@ -36,6 +37,7 @@ import java.util.Properties;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import utils.*; 
 import state.*;
@@ -70,6 +72,7 @@ public class Coordinator implements Runnable {
     private final BatchPrediction predictor;
 
     private long t0 = System.nanoTime();
+    private final AtomicLong t_actually_started = new AtomicLong(t0);
     private long t1 = System.nanoTime();
     private double lastActivitySeconds = 0.0;
 
@@ -122,16 +125,11 @@ public class Coordinator implements Runnable {
     @Override
     public void run() {
 
-        this.t0 = System.nanoTime();
-        this.t1 = System.nanoTime();
-
         System.out.println(instanceTag + " started with RUN_ID: " + RUN_ID);
 
-        // Serdes
         Serde<DataMessage> dataSerde = new DataMessageSerde();
         Serde<WeightsMessage> weightsSerde = new WeightsMessageSerde();
 
-        // Shared base properties (we will clone and override app.id / threads per instance)
         Properties baseProps = new Properties();
         baseProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST);
         baseProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -139,14 +137,12 @@ public class Coordinator implements Runnable {
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.MAX_REQUEST_SIZE_CONFIG), 5 * 1024 * 1024); // 5MB
         baseProps.put(StreamsConfig.producerPrefix(ProducerConfig.LINGER_MS_CONFIG), 0);
 
-        // MAIN instance props fdfdf
         Properties mainProps = new Properties();
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
         mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
         mainProps.put(StreamsConfig.STATE_DIR_CONFIG, cfg.KAFKA_TMP_DIR + "/main-" + RUN_ID);
 
-        // GBEST instance props (separate app.id!)
         Properties gbestProps = new Properties();
         gbestProps.putAll(baseProps);
         gbestProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-gbest-relay-" + RUN_ID);
@@ -220,7 +216,8 @@ public class Coordinator implements Runnable {
                 latch.countDown();
 
                 t1 = System.nanoTime();
-                final double seconds = (t1 - t0) / 1_000_000_000.0;
+                double seconds = (t1 - t_actually_started.get()) / 1_000_000_000.0;    
+                double starting_delay = (t_actually_started.get() - t0) / 1_000_000_000.0;    
 
                 if(collector != null) {
                     collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, 
@@ -231,7 +228,7 @@ public class Coordinator implements Runnable {
                 System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()
                      + ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
 
-                System.out.printf("[Coordinator] Elapsed time: %.3f seconds%n", seconds);
+                System.out.printf("[Coordinator] Elapsed time: %.3f seconds, Starting Delay: %.3f %n", seconds, starting_delay);
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
@@ -300,7 +297,7 @@ public class Coordinator implements Runnable {
             TEST_TOPIC,
             Consumed.with(Serdes.String(), dataSerde)
                 .withOffsetResetPolicy(Topology.AutoOffsetReset.EARLIEST),
-            Materialized.<String, DataMessage, KeyValueStore<Bytes, byte[]>>as(TEST_STORE)
+            Materialized.<String, DataMessage>as(Stores.inMemoryKeyValueStore(TEST_STORE))
                 .withKeySerde(Serdes.String())
                 .withValueSerde(dataSerde)
         );
@@ -312,7 +309,7 @@ public class Coordinator implements Runnable {
             Consumed.with(Serdes.String(), weightsSerde)
         );
         
-        localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t1, 
+        localWeightsStream.process(() -> new CoordinatorProcessor(globalModel, bestGlobalModel, t0, t_actually_started, t1, 
                 TEST_STORE, this.preTrainedModel, this.start));
 
         // Inference Task ==================================================================================================
@@ -330,8 +327,7 @@ public class Coordinator implements Runnable {
     }
 
     // ==========================================================================================================
-    // GBEST RELAY TOPOLOGY (separate instance)
-    // ==========================================================================================================
+    // GBEST RELAY TOPOLOGY
 
     private Topology buildGBestRelayTopology(Serde<WeightsMessage> weightsSerde) {
 
@@ -376,8 +372,9 @@ public class Coordinator implements Runnable {
         } catch (Exception ex) { 
             ex.printStackTrace(); 
         }
-
     }
+
+    // ==========================================================================================================
 
     private static void printThreadsAndTasks(KafkaStreams streams) {
         for (ThreadMetadata tm : streams.localThreadsMetadata()) {
@@ -387,6 +384,8 @@ public class Coordinator implements Runnable {
             }
         }
     }
+
+    // ==========================================================================================================
 
     private void updateTime() {
         lastActivitySeconds = Math.round(((System.nanoTime() - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
