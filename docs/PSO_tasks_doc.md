@@ -29,61 +29,50 @@
 				- Measure of distance με προηγουμενη κατασταση (αμα εχει αλλαξει significantly ή κατασταση)
 
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
-		
-	40) You need to measure exactly how much communication costs time wise (like you did for Kafka record processing / forward passes)
-		- communication here isnt data record reading, but weight messages exchanged between coordinator and worker
 
 	2) Experimentation:
-		- Different models
 		- Different Non - Differentiable Loss Functions
 		- Different Datasets, Different sizes: INDEPENDENT_DATA_PROCESSING true or false
-		- Measure performance and latencies
-		- Explain the Experimentation Setup:
-			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
-				- Actually mention / analyse the specs
-				- Run on both highend and lowend devices 
-			- Use and test as many different:
-				- model / method parameters as possible
-				- measurement methods (error definitions) 
 			
 		- Measure / Diagrams of (For these kinds of experiments set a paradigm where the samish correct solution is found => need data and convergence criteria):
 
-			- x: training samples / epochs / updatesX 	| y: loss / accuracy / F1 score	
-				- based on data you need to adjust parameters every time (find an automatic function for that)
-			- x: N_WORKERS 								| y: accuracy / time
-			- x: N_WORKERS 								| y: number of messages / number of bytes
-
-			- Number of workers => increases parallelization / speed (throughput) - how much data the pipeline can process, bytes (records) per second
-			- how much time on average does it take you to process one record 
-				- this is supposed to be a streaming application: input_mbps < process_mbps
-
-			# =================================================================
-			# New:
-
-			- Με απλα Datasets:
-				- Sweet spot of N_WORKERS (να σταματησει να αυξανει το accuracy significantly, τοτε δεν εχει νοημα η αυξηση του N_WORKERS, καθως αυξανουμε την επικοινωνια):
-					- Fixed Threshold
-					- x: N_WORKERS / y: accuracy vs communication(Number of messages)  
-
-			- x: Dimensionality / y: Accuracy
 			- x: Different Topologies / y: Accuracy
 
 			# =================================================================
 
 			- With Filters: 
 				- Δεν πειραζει ο χρονος να μην πεφτει εχουμε bottlenecks τα forward passes και το Disk / Broker I/O
-				- x: FILTER_ENABLED / y: ολα τα αλλα 
-				- x: SEVERITY_OF_FILTER / y: ολα τα αλλα (! SEVERITY_OF_FILTER needs to convrol three stuff at once)
 
 				- Threshold Sensitivity (Also Sweet Spot of threshold): 
 					- Fixed N_WORKERS
 					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
-					- x: threshold T (increasing) | y: accuracy (hopefully decreasing)
-					- x: threshold T (increasing) | y: communication (hopefully decreasing)
-					
 					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
+
+	66) We want following diagrams:
+
+		- 1) x: Dimensionality 				| y: accuracy
+		- 2) x: Different Topologies 		| y: accuracy
+
+		- 3) x: N_WORKERS  					| y: accuracy / time / number of bytes
+		- 4) x: N_WORKERS  					| y: accuracy / time / number of bytes (with Filter)
+		- 5) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
+			If not:
+			=> x: FILTER_ENABLED 	| y: accuracy / time / number of bytes
+			=> x: threshold T		| y: accuracy / number of bytes
+
+			=> Repeat 3, 4, 5 for all 4 Datasets (also for the one from mnist to fmnist) (ειναι 3 απλα datasets και fmnist <--> mnist)
+
+		- Ευρεση SWEET SPOTS => υπαρχει ενα trade-off σε καποια parameters δεν ειναι flattly good, ποιο ειναι το καλυτερo number of workers
+			- N_WORKERS ανεβαζει το accuracy, αλλα ανεβαζει επισης τα Bytes sent	
+
+		- End) x: Iterations 				| y: Accuracy	(with recommended SWEET SPOTS, filter and N_WORKERS ?)
+			=> For all Datasets (and cases of interest)
+
+		- Final Part 2) For one (hard - image) Dataset:
+			- x: Iterations 				| y: Accuracy	(differentialable Loss Function)
+			- x: Iterations 				| y: Accuracy	(non differentialable Loss Function)
 
 	# ========================================================================================
 
@@ -117,8 +106,22 @@
 			due to the nature of PSO this is not possible  to use ImageNet type models 
 
 	64) More Transfer Learning Experimentation:
+		1)
 		- mnist (GD) -> fashion mnist (PSO) 
+		2)
+		"Self Transfer Learning":
+		- Not transfer learning (by definition means transfering from task 1 to task 2)
 		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen
+		- Motivation for self transfer learning:
+			- Αλλαξε η συναρτηση
+			- Αλλαξαν τα δεδομενα
+			- Εφαρμογη ενος προεκπεδευμενου μοντελλου (πανω σε ιστορικα δεδομενα - Historic Data) που μετα το β
+			- Ειδικο scenario transfer learning
+
+		- Αρα δοκιμαζεις:
+			- NSFW
+			- CIFAR5 <--> CIFAR10 και CIFAR10 <--> CIFAR10 
+			- New Image Dataset of difficulty between MNIST and Cifar10
 
 	60) Write dimplomatiki:
 
@@ -128,12 +131,30 @@
 			- 3) Pendigits (Highly seperable / Easy dataset, High Samples, High Number of Classes) => How do we scale with higher amount of number of classes
 			- 4) MNIST (More complicated / Image dataset, High Samples, High Number of Classes) => How do we scale with more complex dataset ?
 
-	65) More non differentiable Functions, with requirements:
+	65) non differentiable Functions, with requirements:
 		- Continious, but non differentiable
 		- Πρεπει να εχουν χρησιμοποιηθει σε καποιο καλο paper
 		- Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
-	
+	## =======================================================================================
+
+	69) Prediction Models:
+		
+		- Static:
+			- μεχρι τωρα κανω το static οποτε στελνω γενικα οταν αλλαζει το pBest
+
+		- Linear Growth:
+			- υποθετω οτι το pBest μου αλλαζει με formula με τον χρονο / round
+			- (t/ts) * vi(ts)	// ts = 15 (τελευταιο round που σταλθηκε pBest)
+			- Πχ: t = 20, ts = 15 (20/15) * vi(15) (το vi(15) ειναι το pBest που ειχα)
+			- εχεις 20 Workers. Ο καθεενας χρησιμοποιει ως pBest για ολους τους Workers το vi(t) = (t/ts) * vi(ts)
+				=> οταν το διαβαζεις απλως το κανεις scale, αλλα κατα τα αλλα ο ιδιος ο Worker δεν κανει τιποτα
+				=> Σκεψου οτι οταν το πρωτοπερνεις εχεις vi(t) = (t/ts) * vi(ts) = vi(ts) (t == ts)
+
+			- Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
+
+		Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+		
 ## =======================================================================================
 
 	Backlog Tasks:

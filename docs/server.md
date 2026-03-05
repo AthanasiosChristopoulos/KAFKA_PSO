@@ -59,6 +59,8 @@ which kafka-topics.sh
 ## Try listening on see if it works:
 kafka-topics.sh --bootstrap-server localhost:19092 --list
 
+ss -ltnp | egrep ':19092|:19093|:9092|:9093'  # Check port being used
+
 # where will kafka log ?
 cd /mnt/nas_drive/achristopoulos/kafka-local/config/kraf
 nano server.properties # look for the log.dirs= ... variable

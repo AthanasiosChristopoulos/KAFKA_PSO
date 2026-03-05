@@ -44,7 +44,7 @@ public class Experimentation {
 
     // ========================================================================
 
-    public static String header_1 = "FILTER_ENABLED,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
+    public static String header_1 = "`,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
                     "GBEST_ACC,GBEST_LOSS," + 
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX\n";
@@ -312,8 +312,74 @@ public class Experimentation {
                 System.out.println("===============================================================================================");
 
             }
-        } 
-        
+        } else if (cfg.EXPERIMENTATION_MODE.equals("SEVERITY_OF_FILTER")) {
+
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_severity_of_filter.csv");
+
+            // Choose which severities to test
+            var severities = List.of(
+                FilterSeverity.Level.OFF,
+                FilterSeverity.Level.EASY,
+                FilterSeverity.Level.MEDIUM,
+                FilterSeverity.Level.HARD
+            );
+
+            // Add a column for severity so you can plot it later
+            String header = "SEVERITY_CODE,SEVERITY_NAME," + header_1; // prepend your existing header_1
+
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write(header);
+
+                for (FilterSeverity.Level level : severities) {
+
+                    cfg.refreshRunId();
+                    CustomLogger.refreshAll();
+
+                    // Apply severity (this sets FILTER_ENABLED + all related thresholds)
+                    FilterSeverity.apply(cfg, level);
+
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("SEVERITY: " + level + " (code=" + level.code + ")");
+                    System.out.println("FILTER_ENABLED: " + cfg.FILTER_ENABLED);
+                    System.out.println("LOSS_THRESHOLD_MIN=" + cfg.LOSS_THRESHOLD_MIN + ", LOSS_THRESHOLD_MAX=" + cfg.LOSS_THRESHOLD_MAX);
+                    System.out.println("PBEST_DEBOUNCE_MS=" + cfg.PBEST_DEBOUNCE_MS);
+                    System.out.println("MONITORING_THRESHOLD_MIN=" + cfg.MONITORING_THRESHOLD_MIN +
+                                    ", MONITORING_THRESHOLD_MAX=" + cfg.MONITORING_THRESHOLD_MAX);
+                    System.out.println("RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // Restart Kafka topic(s) like you already do
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                    }
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    // Write severity info + existing metrics
+                    w.write(String.format("%d,%s,", level.code, level.name()));
+                    writeExperimentData(w, r, -1, (cfg.FILTER_ENABLED ? 1 : 0), -1);
+
+                    w.flush();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with SEVERITY: " + level);
+                    System.out.println("===============================================================================================");
+                }
+            }
+        }
     }
 
     // =============================================================================================================

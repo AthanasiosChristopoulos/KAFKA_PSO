@@ -52,10 +52,6 @@ exit 0
 
 #  ==============================================================
 
-# docker exec -it broker /opt/kafka/bin/kafka-topics.sh \
-#   --bootstrap-server localhost:9092 \
-#   --create --topic iris-input --partitions 3 --if-not-exists
-
 kafka-topics.sh --bootstrap-server localhost:19092 --list 
 
 # Delete old StateStores ===================================================================
