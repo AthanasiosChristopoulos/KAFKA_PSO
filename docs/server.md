@@ -49,7 +49,7 @@ export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
 export PATH="$KAFKA_HOME/bin:$PATH"     # this isnt overriding PATH, this is are prepending to it (appending to the beggining of the list)
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-ssd.properties
-
+kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties 2>&1 | grep -Ei "error|warn"
 # see differences between disks:
 df -hT /home/achristopoulos/kafka-logs
 df -hT /mnt/nas_drive/achristopoulos
@@ -74,6 +74,9 @@ kafka-storage.sh format \
   -t TZnQLupIQNKrZbEwke1-cw \
   -c /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-ssd.properties
 
+# Change Logger Level in log4j.properties
+sed -i 's/=INFO/=ERROR/g' /mnt/nas_drive/achristopoulos/kafka-local/config/log4j.properties
+
 # ========================================================================================
 
 export JAVA_HOME=/mnt/nas_drive/achristopoulos/jdks/jdk-17.0.18+8
@@ -97,6 +100,22 @@ kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weig
 watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
 
 ```
+
+## Error with log.dirs =================================================================
+
+log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs => μιλαμε για μεσα σε αυτο εδω το .dir
+
+What Kafka KRaft stores in log.dirs. In KRaft mode, log.dirs is not only “topic data”. 
+  It also contains the cluster’s brain:
+  - the cluster.id (unique id for the KRaft cluster)
+  - this node’s node.id
+  - the controller quorum metadata log (the log that drives elections + metadata)
+  - epochs / incarnation ids used to prove “I am the current controller” and to prevent split-brain
+
+In KRaft, only the currently elected controller is allowed to accept and commit certain controller operations.
+
+NotControllerException: The active controller appears to be node 1 means:
+“The node that received this request is not currently the active controller (or it can’t prove it is), so it refuses to handle the controller request.”
 
 ## .bashrc ==========================================================================
 

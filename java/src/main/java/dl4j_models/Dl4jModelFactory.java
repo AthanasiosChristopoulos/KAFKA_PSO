@@ -53,7 +53,8 @@ public class Dl4jModelFactory {
 		Pair<PsoModel, Integer> pair = null;
 
 		if("iris".equals(DATASET)) {
-			model = createIrisModel(workerId);
+			// model = createIrisModel(workerId);
+			model = createIrisModelSimpler(workerId);
 
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
@@ -1621,6 +1622,27 @@ public class Dl4jModelFactory {
         // 403 weights all in all
 
 	// ======================================================================================================================
+
+	public static PsoModel createIrisModelSimpler(int workerId) {	
+		if (printModel) System.out.println("Model: createIrisModelSimpler");  
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(NUM_FEATURES)
+						.nOut(NEURAL_OUTPUT)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model);
+	}
+
+	// ======================================================================================================================
 	// Wine Dataset Model Architecture 
 
 	public static PsoModel createWineModel(int workerId) {
@@ -2759,19 +2781,15 @@ public class Dl4jModelFactory {
 	public static PsoModel createPendigitsModelSmaller_3(int workerId) {	// no hidden layer just weights connecting input and output layer ...
 		if (printModel) System.out.println("Using PenDigits Ultra-Simple Model (no hidden)");
 
-		int nIn = 16;           
-		int nOut = NEURAL_OUTPUT;    
-
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
 				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(nIn)
-						.nOut(nOut)
+						.nIn(NUM_FEATURES)
+						.nOut(NEURAL_OUTPUT)
 						.activation(Activation.SOFTMAX)
 						.build())
-				.setInputType(InputType.feedForward(nIn)) 
 				.build();
 
 		MultiLayerNetwork model = new MultiLayerNetwork(conf);

@@ -80,8 +80,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic iris-input
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic iris-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic iris-input --from-beginning
   
 # iris-test: ======================================================
@@ -94,10 +93,8 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic iris-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic iris-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic iris-test --from-beginning
-  
 
 # wine: ======================================================
 
@@ -109,8 +106,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic wine-input
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic wine-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic wine-input --from-beginning
   
 # wine-test: ======================================================
@@ -123,8 +119,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic wine-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic wine-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic wine-test --from-beginning
 
 # mnist: ======================================================
@@ -165,8 +160,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic mnist4-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist4-input --from-beginning
 
 # mnist4-test: ======================================================
@@ -179,8 +173,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic mnist4-tes
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic mnist4-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist4-test --from-beginning
 
 # fashion_mnist: ======================================================
@@ -194,8 +187,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic fashion_mnist-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic fashion_mnist-input --from-beginning
 
 # fashion_mnist-test: ======================================================
@@ -208,8 +200,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic fashion_mn
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic fashion_mnist-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic fashion_mnist-test --from-beginning
 
 # susy: ======================================================
@@ -227,8 +218,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic susy-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic susy-input --from-beginning
 
 # susy test: ======================================================
@@ -242,8 +232,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic susy-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic susy-test --from-beginning
 
 # winequality: ======================================================
@@ -257,8 +246,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic winequality-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic winequality-input --from-beginning
 
 # winequality test: ======================================================
@@ -272,8 +260,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic winequality-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic winequality-test --from-beginning
 
 
@@ -287,8 +274,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic letter-inp
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic letter-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic letter-input --from-beginning
   
 # letter-test: ======================================================
@@ -301,8 +287,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic letter-tes
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic letter-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic letter-test --from-beginning
 
 # bank: ======================================================
@@ -315,8 +300,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic bank-input
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic bank-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic bank-input --from-beginning
 
 # bank test: ======================================================
@@ -329,8 +313,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic bank-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic bank-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic bank-test --from-beginning
 
 # adult: ======================================================
@@ -343,8 +326,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic adult-inpu
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic adult-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic adult-input --from-beginning
 
 # adult test: ======================================================
@@ -357,8 +339,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic adult-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic adult-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic adult-test --from-beginning
 
 # covertype: ======================================================
@@ -371,8 +352,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic covertype-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic covertype-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic covertype-input --from-beginning
 
 # covertype test: ======================================================
@@ -385,8 +365,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic covertype-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic covertype-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic covertype-test --from-beginning
 
 # har: ======================================================
@@ -399,8 +378,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic har-input
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic har-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic har-input --from-beginning
   
 # har-test: ======================================================
@@ -413,8 +391,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic har-test
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic har-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic har-test --from-beginning
 
 # pendigits: ======================================================
@@ -453,8 +430,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic pendigits-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic pendigits-half-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic pendigits-half-input --from-beginning
   
 # pendigits-half-test: ======================================================
@@ -467,8 +443,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic pendigits-
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic pendigits-half-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic pendigits-half-test --from-beginning
 
 # cifar3: ======================================================
@@ -481,8 +456,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar3-inp
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar3-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar3-input --from-beginning
   
 # cifar3-test: ======================================================
@@ -495,8 +469,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar3-tes
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar3-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar3-test --from-beginning
 
 # cifar5: ======================================================
@@ -509,8 +482,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar5-inp
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar5-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar5-input --from-beginning
   
 # cifar5-test: ======================================================
@@ -523,8 +495,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar5-tes
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar5-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar5-test --from-beginning
 
 # cifar10: ======================================================
@@ -537,8 +508,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10-in
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar10-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar10-input --from-beginning
   
 # cifar10-test: ======================================================
@@ -551,8 +521,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10-te
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic cifar10-test
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar10-test --from-beginning
 
 # ========================================================================
@@ -570,8 +539,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic pbest-weig
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic pbest-weights-topic
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic pbest-weights-topic --from-beginning
 
     docker exec -i broker bash -lc '
@@ -590,8 +558,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic local-weig
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic local-weights-topic
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic local-weights-topic --from-beginning
 
 # GPEST_WEIGHTS_TOPIC ==============================================================
@@ -604,8 +571,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic global-wei
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic global-weights-topic
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic global-weights-topic --from-beginning
 
 # PREDICTION_INPUT_TOPIC ==============================================================
@@ -618,8 +584,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 
 kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic prediction-input
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic prediction-input
 
 # PREDICTION_OUTPUT_TOPIC ==============================================================
@@ -630,6 +595,5 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --delete --topic prediction-output
 
-docker exec -it broker /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic prediction-output

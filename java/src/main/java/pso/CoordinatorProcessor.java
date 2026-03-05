@@ -100,7 +100,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private String taskTag = "task=UNKNOWN";
 
     private static final int MIN_TEST_ROWS = 200;
-    private static final long WAIT_SLEEP_MS = 100;
+    private static final long WAIT_SLEEP_MS = 50;
     private static final int WAIT_MAX_TRIES = 200; // 200 * 100ms = 20s max
 
     private int start;
@@ -487,6 +487,7 @@ public void onAllWorkersReported() {
         if (logger.isEnabled(2)) logger.log("Done waiting on loadAndCacheTestSet, has been loaded into memory");
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
+
         if(false && cfg.USING_PRETRAINED_MODEL && cfg.TESTABLE_PRETRAINED_MODEL) {
             float[] accLoss;
             accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel, true);

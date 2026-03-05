@@ -36,49 +36,39 @@ NUMBER_OF_DATA_REPEATS_TEST = 1
 
 # ==============================================================================================
 
-if(DATASET == "iris" or DATASET == "wine"):
-    NUMBER_OF_DATA_REPEATS = 2500
-    NUMBER_OF_DATA_REPEATS_TEST = 2
+if(DATASET == "iris" or DATASET == "wine"):     # 150 samples
+    NUMBER_OF_DATA_REPEATS = 37
+    NUMBER_OF_DATA_REPEATS_TEST = 3
 
 if(DATASET == "winequality"):
     NUMBER_OF_DATA_REPEATS = 37     
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "letter"):
     NUMBER_OF_DATA_REPEATS = 20
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "pendigits"):
     NUMBER_OF_DATA_REPEATS = 40
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "pendigits-half"):
     NUMBER_OF_DATA_REPEATS = 80
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "cifar3"):
     NUMBER_OF_DATA_REPEATS = 27
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "cifar5"):
     NUMBER_OF_DATA_REPEATS = 16
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "cifar10"):
     NUMBER_OF_DATA_REPEATS = 9
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "mnist"):
     NUMBER_OF_DATA_REPEATS = 7
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "mnist4"):
     NUMBER_OF_DATA_REPEATS = 17
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
-    NUMBER_OF_DATA_REPEATS_TEST = 1
 
 # ==============================================================================================
 
@@ -193,7 +183,10 @@ def load_dataset():
     global NUMBER_OF_DATA_REPEATS, NUMBER_OF_DATA_REPEATS_TEST
     X = y = class_names = None
     
+    # ==================================================================================================
+
     if DATASET == "iris":
+        
         iris = load_iris()
         X, y = shuffle(iris.data, iris.target)
         class_names = iris.target_names.tolist()
