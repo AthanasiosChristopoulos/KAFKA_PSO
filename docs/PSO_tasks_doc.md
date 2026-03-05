@@ -87,17 +87,12 @@
 
 			- x: Dimensionality / y: Accuracy
 			- x: Different Topologies / y: Accuracy
-			
+			- x: FILTER_ENABLED / y: ολα τα αλλα 
+			- x: SEVERITY_OF_FILTER / y: ολα τα αλλα (! SEVERITY_OF_FILTER needs to convrol three stuff at once)
+
 	# ========================================================================================
 
-	43) PSO Tranfer Learning:
-		- Ευρεση καταλληλου base model for MNIST and CIFAR + trainable End Layers
-		- Θα πρεπει να βρεις additional Layers + Non Differentiable Loss Functions, ωστε:
-			- το base model να μην δουλευει καλα
-			- να κανεις train το frozen base model  το trainable End Layers, ωστε να δουλευει καλυτερα απο το σκετο base model
-			- συνηθως δεν πας να κανεις train from scratch
-
-	57) This isnt fully GD / PSO hybrid. This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
+	57) PSO Tranfer Learning: This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
 		- A) Remove more Layers
 		- B) Unfreeze / Fine-Tune base network (train the highly specific / class specific / last conv layers (paper))
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
@@ -126,40 +121,9 @@
 
 			due to the nature of PSO this is not possible  to use ImageNet type models 
 
-			i need to use models of this  complexity 
-
-			def build_cifar_base_v4(input_shape=(32, 32, 3), num_classes=10):
-				model = keras.Sequential([
-					layers.Input(shape=input_shape),
-
-					# 32x32
-					layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-					layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-					layers.MaxPooling2D(2),  # 32 -> 16
-
-					# 16x16
-					layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-					layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-					layers.MaxPooling2D(2),  # 16 -> 8
-
-					# 8x8
-					layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
-					layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
-					layers.GlobalAveragePooling2D(),  # -> (128,)
-
-					layers.Dense(num_classes, activation="softmax", use_bias=True),
-				])
-
-				model.compile(
-					optimizer=keras.optimizers.Adam(1e-3),
-					loss="sparse_categorical_crossentropy",
-					metrics=["accuracy"],
-				)
-				return model
-
-			Also i need to use 32X32 i dont know if youwould recomend downlsampling in this case .... 
-
-
+	64) More Transfer Learning Experimentation:
+		- mnist (GD) -> fashion mnist (PSO) 
+		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen
 
 	60) Write dimplomatiki
 

@@ -103,7 +103,7 @@ Standard PSO works this way:
     xid= xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
-## Non DIfferentiable Loss Functions: =======================================================
+## Non Differentiable Loss Functions: =======================================================
 
  - Review - Ranking:
     - ZERO_ONE is too discrete. Losses out on information.
