@@ -58,7 +58,7 @@ Creating Repository:
 git init
 git remote add origin https://github.com/AthanasiosChristopoulos/WifiDoctor.git
 
-Using git:
+# Using git:
 
 git add .
 git add Documentantion.txt
@@ -71,12 +71,22 @@ git log (View Commits)
 git reset --soft HEAD~1   # Removes commit but keeps changes
 git reset --hard HEAD~1   # Removes commit AND changes
 
+# Relationship to Remote - Githup repo ===================================================================
 git push -u origin main
 git push --force origin main (so you dont have to pull first / be up to date)
 
 git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit 
 
-git checkout main
+git fetch --prune origin    # fetch does NOT modify your code or merge anything.
+                            # It only updates Git’s knowledge of the remote.
+git branch -r       # This command shows remote-tracking branches that your local repo currently knows about.
+
+git branch -vv      # Shows branches on local and what they track on remote     
+
+# Restricted fetch configuration in .git/config:
+git config --get remote.origin.fetch    # Which branches are allowed to be tracked
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    # Set to be able to fetch everything
+
 
 git config --global user.name "AthanasiosChristopoulos"
 git config --global user.email "athanasioschristopoulos61@gmail.com"
