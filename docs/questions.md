@@ -29,11 +29,7 @@
 		
 		- Federated Learning or Distributed Learning ?
 			=> Αρκει να αλλαξω το dataset σε NON-IDD ?
-			=> Αρκει οτι το συστημα εχει μονο το capacity να το κανει αυτο και οτι απλως δεν το εξεταζουμε / δεν το τρεχουμε ετσι για διευκολυνση ?
-
-		- Τα results και overall experimentation να τα τρεξω για server ή οχι ? ποια να τρεξω σε server και πια οχι ? Μονο αυτα που χρειαζονται ?
-
-		- Για non-differentiable functions που θα βρω το μονο requirement ειναι να δουλευουν as good as cross entropy σωστα ?
+			=> Αρκει οτι το συστημα εχει μονο το capability να το κανει αυτο και οτι απλως δεν το εξεταζουμε / δεν το τρεχουμε ετσι για διευκολυνση ?
 
 		- Για τα διαγραμματα να τα τρεξω στο pendigits ? Η καπου πιο δυσκολα ? 
 

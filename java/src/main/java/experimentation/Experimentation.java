@@ -24,7 +24,7 @@ public class Experimentation {
 
     // private static List<Integer> workersList = List.of(2, 4, 6);
     // private static List<Integer> workersList = List.of(2, 6, 12);
-    // private static List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_WORKER_DATA_PROCESSING == false
+    // private static List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
     // private static List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
     // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
     // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 

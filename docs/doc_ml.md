@@ -64,6 +64,23 @@ CNNs have smoother valeys ?
 - Data Augmentation is there to help reduce overfitting
     - This is a natural preprcossesing of the data => like flipping / rotation of the image
 
+## Scaling with difficulty Datasets ====================================================================
+
+    - In distributed systems and ML, scaling = how performance changes when the workload increases
+        => What you need to do until you reach the best possible accuracy, the desired accuracy
+
+    | What increases     | What becomes harder           
+    | ------------------ | --------------------------------------------------------------------------------------- 
+    1) Iris                                             
+    | Number of samples  | more training computation        => more training time (if you keep the epochs stable)   
+    | Number of features | larger model                     => use easier model for iris as opposed to winequality
+    2) Winequality                
+    | Number of classes  | harder classification problem    => more epochs / more data / more training time / increased amount of workers
+    3) Pendigits
+    | Data complexity    | harder decision boundary    
+    4) MNIST      
+
+
 ## Different Types of Neural Networks: ============================================
 
  - FNN (Feed Forward NN - the basic Neural Network - Basically the Dense Neural Network)
@@ -92,6 +109,7 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
 )
 
 ```
+
 ## CNNs =========================================================================
  
  - Dimensionality after conv layer:

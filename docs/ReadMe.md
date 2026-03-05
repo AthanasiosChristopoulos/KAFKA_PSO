@@ -421,6 +421,7 @@ Iris => 150
     4 Features
 
 ### Susy: ========================================================
+
     2 Classes
     Balanced
     80% on Gradient Descent, 72% on PSO
@@ -725,11 +726,11 @@ improve the ability to escape local minima
     - Increasing N_WORKERS adds compute cost and may proove detrimental, for FULLY INFORMED especially
     - At the same time, N_WORKERS can help expanding the search space (this is more begenficial for neighborhood best), exploration increases.
     - As N_WORKERS increases, number of  data (batches) decreases per worker. This means: number of updates decreases, which means worse less reliable / convergence and number of times reporting current weights (for monitoring) decreases. 
-        => As long as INDEPENDENT_WORKER_DATA_PROCESSING=false => count_updates decreases
+        => As long as INDEPENDENT_DATA_PROCESSING=false => count_updates decreases
     - In practice, increasing N_WORKERS is a net positive (both on time and accuracy), as long as:
         - Data per worker doesnt get reduced (happens if data is already plentiful and convergence happens already before data runs out)
             - Stable number of updates
-            - Still using INDEPENDENT_WORKER_DATA_PROCESSING=false
+            - Still using INDEPENDENT_DATA_PROCESSING=false
         - Using neighborhoods (so as to not dialute the direction)
         - You can ensure true parallelism between the workers or at least this isnt computationaly too heavy
 

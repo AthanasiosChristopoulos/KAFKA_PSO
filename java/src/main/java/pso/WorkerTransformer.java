@@ -176,7 +176,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(FILTER_ENABLED) {
         
-            if(cfg.INDEPENDENT_WORKER_DATA_PROCESSING == true) {
+            if(cfg.INDEPENDENT_DATA_PROCESSING == true) {
                 MAX_UPDATES = cfg.NUM_SAMPLES / BATCH_SIZE;
                 
             } else {

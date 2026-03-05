@@ -27,7 +27,7 @@ public class PsoUpdater {
     private final int N_WORKERS = cfg.N_WORKERS;
     private final int BATCH_SIZE = cfg.BATCH_SIZE;
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
-    public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
+    public final boolean INDEPENDENT_DATA_PROCESSING = cfg.INDEPENDENT_DATA_PROCESSING;
     public final boolean GIVE_HALF_TO_SELF = cfg.GIVE_HALF_TO_SELF;
     public final boolean WEIGHTS_ON_UPDATEX = cfg.WEIGHTS_ON_UPDATEX;
 
@@ -120,7 +120,7 @@ public class PsoUpdater {
 
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
-        if(INDEPENDENT_WORKER_DATA_PROCESSING == true) {
+        if(INDEPENDENT_DATA_PROCESSING == true) {
             MAX_UPDATES = NUM_SAMPLES / (3 * BATCH_SIZE);   // (* 3): This is necessary because othewise it will never converge. 
                                                                 // We dont actually need to be exploring for that long
         } else {

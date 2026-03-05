@@ -96,8 +96,9 @@
 #### 7.2.3 Fully Informed vs Classical PSO
 #### 7.2.4 Increasing Number of Workers
 #### 7.2.5 Using and Adjusting Filters
+#### 7.2.6 Final Recommended System Requirements
 
-### 7.3 Server Execution
+### 7.3 Execution
 #### 7.3.1 Datasets and Models
 #### 7.3.2 Final Results
 #### 7.3.3 Discussion
@@ -106,6 +107,8 @@
 ### 8.1 PSO Algorithmic Improvements
 ### 8.2 System Improvements
 ### 8.3 Further Experimental Testing
+### 8.4 Saving Memory PSO
+
 
 ## Appendix A: Additional Material
 ### A.1 Fully Informed Velocity Update Mathematical Proof

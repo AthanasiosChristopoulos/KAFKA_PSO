@@ -47,7 +47,7 @@ public class Worker implements Runnable {
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
     private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
-    public final boolean INDEPENDENT_WORKER_DATA_PROCESSING = cfg.INDEPENDENT_WORKER_DATA_PROCESSING;
+    public final boolean INDEPENDENT_DATA_PROCESSING = cfg.INDEPENDENT_DATA_PROCESSING;
 
     private String stateStoreName;
     private String keyName;
@@ -105,7 +105,7 @@ public class Worker implements Runnable {
 
         Properties props = new Properties();
         String applicationID;
-        if (INDEPENDENT_WORKER_DATA_PROCESSING) {
+        if (INDEPENDENT_DATA_PROCESSING) {
             applicationID = "pso-worker-" + workerId + "_" + RUN_ID;
         } else {
             applicationID = "pso-worker-_" + RUN_ID;
@@ -131,7 +131,7 @@ public class Worker implements Runnable {
         // props.put("statestore.cache.max.bytes", 0L);
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0); // e.g. flush every 100ms
 
-        if(INDEPENDENT_WORKER_DATA_PROCESSING) {
+        if(INDEPENDENT_DATA_PROCESSING) {
             props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 10 * 60 * 1000); // 10 minutes
             props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);
             props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 10000);

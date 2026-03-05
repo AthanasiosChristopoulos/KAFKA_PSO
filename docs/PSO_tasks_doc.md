@@ -36,7 +36,7 @@
 	2) Experimentation:
 		- Different models
 		- Different Non - Differentiable Loss Functions
-		- Different Datasets, Different sizes: INDEPENDENT_WORKER_DATA_PROCESSING true or false
+		- Different Datasets, Different sizes: INDEPENDENT_DATA_PROCESSING true or false
 		- Measure performance and latencies
 		- Explain the Experimentation Setup:
 			- Hardware (Laptop / Server (Cloud) / Raspberry Pis)
@@ -57,16 +57,6 @@
 			- how much time on average does it take you to process one record 
 				- this is supposed to be a streaming application: input_mbps < process_mbps
 
-			- Limit communication:
-				- Run without => identify latency (and number of messages)
-				- Run with	  => makes training more efficient / faster, identify reduction in number of messages.
-
-			- This is affected by Model Size (Number of Weights - NN?K) / Number of workers / BATCH_SIZE / FULLY_INFORMED (PROTOCOL used) / Loss Function:
-				- How much time until reached DESIRED_ACCURACY (Training Time) ?
-				- How much data until reached DESIRED_ACCURACY - How many epochs ?
-				- Αμα το αφησεις να παει οσο παει, τοτε πιο ειναι το ελαχιστο loss / μεγιστο Accuracy που μπορει να φτασει ?
-			- Performance and Accuracy Comparison with Gradient Descent
-
 			# =================================================================
 			# New:
 
@@ -74,7 +64,17 @@
 				- Sweet spot of N_WORKERS (να σταματησει να αυξανει το accuracy significantly, τοτε δεν εχει νοημα η αυξηση του N_WORKERS, καθως αυξανουμε την επικοινωνια):
 					- Fixed Threshold
 					- x: N_WORKERS / y: accuracy vs communication(Number of messages)  
-				
+
+			- x: Dimensionality / y: Accuracy
+			- x: Different Topologies / y: Accuracy
+
+			# =================================================================
+
+			- With Filters: 
+				- Δεν πειραζει ο χρονος να μην πεφτει εχουμε bottlenecks τα forward passes και το Disk / Broker I/O
+				- x: FILTER_ENABLED / y: ολα τα αλλα 
+				- x: SEVERITY_OF_FILTER / y: ολα τα αλλα (! SEVERITY_OF_FILTER needs to convrol three stuff at once)
+
 				- Threshold Sensitivity (Also Sweet Spot of threshold): 
 					- Fixed N_WORKERS
 					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
@@ -84,11 +84,6 @@
 					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
-
-			- x: Dimensionality / y: Accuracy
-			- x: Different Topologies / y: Accuracy
-			- x: FILTER_ENABLED / y: ολα τα αλλα 
-			- x: SEVERITY_OF_FILTER / y: ολα τα αλλα (! SEVERITY_OF_FILTER needs to convrol three stuff at once)
 
 	# ========================================================================================
 
@@ -125,8 +120,20 @@
 		- mnist (GD) -> fashion mnist (PSO) 
 		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen
 
-	60) Write dimplomatiki
+	60) Write dimplomatiki:
 
+		- In Datasets section we need to show the datasets in increasing difficulty order.
+			- 1) Iris (Highly seperable / Easy dataset, Low Samples, Low Number of Classes)
+			- 2) Winequality (Highly seperable / Easy dataset, High Samples, Low Number of Classes) => How do we scale with higher amount of samples
+			- 3) Pendigits (Highly seperable / Easy dataset, High Samples, High Number of Classes) => How do we scale with higher amount of number of classes
+			- 4) MNIST (More complicated / Image dataset, High Samples, High Number of Classes) => How do we scale with more complex dataset ?
+
+	65) More non differentiable Functions, with requirements:
+		- Continious, but non differentiable
+		- Πρεπει να εχουν χρησιμοποιηθει σε καποιο καλο paper
+		- Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
+
+	
 ## =======================================================================================
 
 	Backlog Tasks:

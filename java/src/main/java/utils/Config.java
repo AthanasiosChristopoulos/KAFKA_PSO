@@ -75,7 +75,7 @@ public class Config {
     public boolean INCLUDE_SELF;
     public String NEIGHBORHOOD_TOPOLOGY;
 
-    public boolean INDEPENDENT_WORKER_DATA_PROCESSING;
+    public boolean INDEPENDENT_DATA_PROCESSING;
     public boolean GIVE_HALF_TO_SELF;
 
     public boolean ENABLE_LOGGING;
@@ -307,7 +307,7 @@ public class Config {
         INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
         NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
 
-        INDEPENDENT_WORKER_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_WORKER_DATA_PROCESSING", "false"));
+        INDEPENDENT_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_DATA_PROCESSING", "false"));
 
         GIVE_HALF_TO_SELF = Boolean.parseBoolean(getenv(dotenv, "GIVE_HALF_TO_SELF", "false"));
 
