@@ -250,6 +250,7 @@ public class Coordinator implements Runnable {
 
         try {
             mainStreams.start();
+            t0 = System.nanoTime();
             if (gbestStreams != null) gbestStreams.start();
 
             System.out.println("[Coordinator] started. FULLY_INFORMED = " + FULLY_INFORMED);

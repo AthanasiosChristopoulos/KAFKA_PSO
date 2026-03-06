@@ -234,6 +234,7 @@ public class Worker implements Runnable {
         }));
 
         streams.start();
+        t0 = System.nanoTime();
         if(KAFKA_METRICS_ENABLED) {
             startMetricsLogger(streams);
         } 
@@ -267,8 +268,8 @@ public class Worker implements Runnable {
         }
         streams.close();
 
-        // double seconds = (t1.get() - t0) / 1_000_000_000.0;    
-        double seconds = (t1.get() - t_actually_started.get()) / 1_000_000_000.0;    
+        double seconds = (t1.get() - t0) / 1_000_000_000.0;    
+        // double seconds = (t1.get() - t_actually_started.get()) / 1_000_000_000.0;    
         double starting_delay = (t_actually_started.get() - t0) / 1_000_000_000.0;    
         // System.out.printf("[Worker %d] t_actually_started: " + t_actually_started, workerId);
         // System.out.printf("[Worker %d] t0: " + t0, workerId);
