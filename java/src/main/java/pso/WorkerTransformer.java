@@ -99,7 +99,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private double eps = 1e-12;
 
     private static final long IDLE_MS = cfg.IDLE_MS; 
-    private static final long CHECK_EVERY_MS = 100; // how often we check
+    private static final long CHECK_EVERY_MS = 100; 
     private static final long IDLE_GRACE_MS = 8000;
 
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);

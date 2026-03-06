@@ -1,5 +1,6 @@
 package pso;
 
+import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
@@ -34,7 +35,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 
 import java.time.Duration;
-
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -90,6 +91,10 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private float forwardPassNs = 0;
     private int countForwardPass = 0;
 
+    private static final long IDLE_MS = cfg.IDLE_MS; 
+    private static final long CHECK_EVERY_MS = 100; 
+    private static final long IDLE_GRACE_MS = 8000;
+
     private final Deque<DataMessage> carry = new ArrayDeque<>();
 
     private final String testStoreName;
@@ -122,6 +127,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.t0 = t0;
         this.t_actually_started = t_actually_started;
         this.t1 = t1;
+        updateTime();
         logger.log("Starting Delay 0: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
 
         this.control = CoordinatorControl.getInstance();
@@ -162,6 +168,23 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
         this.taskTag = "task = " + context.taskId() + " thread = " + Thread.currentThread().getName();
         if (logger.isEnabled(2)) logger.log(taskInstance + " INIT " + taskTag 
                 + " store = " + testStoreName);
+        
+        context.schedule(Duration.ofMillis(CHECK_EVERY_MS), PunctuationType.WALL_CLOCK_TIME, timestamp -> {
+
+            long sinceStartNs = System.nanoTime() - t0;
+            if (sinceStartNs < TimeUnit.MILLISECONDS.toNanos(IDLE_GRACE_MS)) {
+                return; 
+            }
+
+            long idleNs = System.nanoTime() - t1;
+            
+            if (idleNs >= TimeUnit.MILLISECONDS.toNanos(IDLE_MS)) {
+                if (logger.isEnabled(2)) logger.log(taskInstance + 
+                    ", Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
+                System.out.println("[Coordinator] Closed, because of idleness for " + (idleNs / 1_000_000) + " ms");
+                CoordinatorControl.getInstance().requestStopFinal();
+            }
+        });
     }
 
     // ================================================================================================================
@@ -339,10 +362,10 @@ public void onAllWorkersReported() {
 //=========================================================================================================================
 
     private void updateTime() {
-        
         t1 = System.nanoTime();
         lastActivitySeconds = Math.round(((t1 - t0) / 1_000_000_000.0) * 1000.0) / 1000.0;
     }
+
     // ===============================================================================================
 
     private int approximateStoreSize() {

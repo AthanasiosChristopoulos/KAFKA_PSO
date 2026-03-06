@@ -51,21 +51,6 @@ public final class FilterSeverity {
     // ===========================================================================================================================
 
     public static void apply(Config cfg, Level level) {
-        if (level == Level.OFF) {
-            
-            cfg.FILTER_ENABLED = false;
-
-            // You can set these to 0 or keep them unchanged; choose one.
-            cfg.LOSS_THRESHOLD_MIN = 0.0f;
-            cfg.LOSS_THRESHOLD_MAX = 0.0f;
-            cfg.PBEST_DEBOUNCE_MS = 0;
-            cfg.MONITORING_THRESHOLD_MIN = 0;
-            cfg.MONITORING_THRESHOLD_MAX = 0;
-
-            cfg.refreshFilterEnabled();
-
-            return;
-        }
 
         cfg.FILTER_ENABLED = true;
 
@@ -75,8 +60,6 @@ public final class FilterSeverity {
         cfg.PBEST_DEBOUNCE_MS = p.pbestDebounceMs;
         cfg.MONITORING_THRESHOLD_MIN = p.monitoringMin;
         cfg.MONITORING_THRESHOLD_MAX = p.monitoringMax;
-
-        cfg.refreshFilterEnabled();
     }
 
     private FilterSeverity() {}

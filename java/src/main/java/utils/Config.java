@@ -142,7 +142,7 @@ public class Config {
         
         NUM_SAMPLES = 400000;
         N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
-        
+
         if("iris".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
@@ -400,10 +400,8 @@ public class Config {
             LOSS_THRESHOLD_MIN = Float.parseFloat(getenv(dotenv, "LOSS_THRESHOLD_MIN", "0.005"));
         }
 
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         System.out.println("MONITORING_THRESHOLD_MAX: " + MONITORING_THRESHOLD_MAX);
         System.out.println("MONITORING_THRESHOLD_MIN: " + MONITORING_THRESHOLD_MIN);
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     }
 
     // ==================================================================================================================================

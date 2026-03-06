@@ -22,32 +22,13 @@ public class Experimentation {
     private static float LOSS_THRESHOLD_MIN_ORIGINAL;
     private static float LOSS_THRESHOLD_MAX_ORIGINAL;
 
-    // private static List<Integer> workersList = List.of(2, 4, 6);
-    // private static List<Integer> workersList = List.of(2, 6, 12);
-    // private static List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
-    // private static List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
-    // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
-    // private static List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
-
-    // ========================================================================
-    // Scenario with high workers:
-    private static List<Integer> workersList = List.of(6, 18, 24);
-
-    // ========================================================================
-    // private static List<Integer> filterEnableList = List.of(1, 0);
-    private static List<Integer> filterEnableList = List.of(0, 1);
-    // private static List<Integer> filterEnableList = List.of(1);
-
-    // ========================================================================
-    // private static List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
-    private static List<Float> theshold_offset_list = List.of(0.00f, 0.05f, 0.1f, 0.15f);
-
     // ========================================================================
 
     public static String header_1 = "`,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
                     "GBEST_ACC,GBEST_LOSS," + 
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
-                    "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX\n";
+                    "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
+                    "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX\n";
 
     // ========================================================================
 
@@ -89,6 +70,17 @@ public class Experimentation {
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_n_workers.csv");
+            // List<Integer> workersList = List.of(2, 4, 6);
+            // List<Integer> workersList = List.of(2, 6, 12);
+            // List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
+            // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
+            List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
+            // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
+
+            // ========================================================================
+            // Scenario with high workers:
+            
+            // List<Integer> workersList = List.of(6, 18, 24);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -132,7 +124,6 @@ public class Experimentation {
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with N_WORKERS: " + n);
                     System.out.println("===============================================================================================");
-
                 }
             } 
         
@@ -145,6 +136,11 @@ public class Experimentation {
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_filter_enabled.csv");
 
+            // ========================================================================
+            // List<Integer> filterEnableList = List.of(1, 0);
+            List<Integer> filterEnableList = List.of(0, 1);
+            // List<Integer> filterEnableList = List.of(1);
+            
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
                     StandardOpenOption.CREATE,
@@ -207,6 +203,10 @@ public class Experimentation {
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_threshold.csv");
+
+            // ========================================================================
+            // List<Float> theshold_offset_list = List.of(0.00f, 0.1f, 0.2f);
+            List<Float> theshold_offset_list = List.of(0.00f, 0.05f, 0.1f, 0.15f);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -313,6 +313,10 @@ public class Experimentation {
 
             }
 
+        // =========================================================================================================================================
+        // =========================================================================================================================================
+        // =========================================================================================================================================
+
         } else if (cfg.EXPERIMENTATION_MODE.equals("SEVERITY_OF_FILTER")) {
 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
@@ -325,6 +329,7 @@ public class Experimentation {
             //     FilterSeverity.Level.MEDIUM,
             //     FilterSeverity.Level.HARD
             // );
+
            var severities = List.of(
                 // FilterSeverity.Level.OFF,
                 FilterSeverity.Level.HARD
@@ -384,6 +389,7 @@ public class Experimentation {
         }
     }
 
+
     // =============================================================================================================
 
     private static void writeExperimentData(BufferedWriter w, ExperimentResult r, int nWorkers_arg, 
@@ -400,7 +406,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d\n",
                 filterEnabled,
                 nWorkers,
                 r.lastWorkerElapsedSec(),               // r.getTotalElapsedSec()
@@ -414,7 +420,11 @@ public class Experimentation {
                 r.sumBytesSent(),
                 theshold_offset,
                 (double) cfg.LOSS_THRESHOLD_MIN,
-                (double) cfg.LOSS_THRESHOLD_MAX
+                (double) cfg.LOSS_THRESHOLD_MAX,
+                cfg.PBEST_DEBOUNCE_MS,
+                cfg.MONITORING_THRESHOLD_MIN,
+                cfg.MONITORING_THRESHOLD_MAX
+
             ));
 
         } catch(Exception e) {
