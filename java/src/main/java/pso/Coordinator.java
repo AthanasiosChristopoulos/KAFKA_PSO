@@ -140,7 +140,7 @@ public class Coordinator implements Runnable {
         Properties mainProps = new Properties();
         mainProps.putAll(baseProps);
         mainProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-coordinator-" + RUN_ID);
-        mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "2");
+        mainProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         mainProps.put(StreamsConfig.STATE_DIR_CONFIG, cfg.KAFKA_TMP_DIR + "/main-" + RUN_ID);
 
         Properties gbestProps = new Properties();
@@ -233,6 +233,7 @@ public class Coordinator implements Runnable {
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
+
         }, "coordinator-control-thread");
         controlThread.setDaemon(true);
         controlThread.start();
@@ -333,7 +334,6 @@ public class Coordinator implements Runnable {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // State store ONLY for this instance
         StoreBuilder<KeyValueStore<String, Float>> gBestEmitStore =
             Stores.keyValueStoreBuilder(
                 Stores.inMemoryKeyValueStore("gBestEmitStore"),     // Stores.persistentKeyValueStore("gBestEmitStore"), KeyValueStore is an interface

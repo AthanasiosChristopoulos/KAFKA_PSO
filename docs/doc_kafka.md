@@ -131,6 +131,10 @@ There are TWO retention policies that Kafka supports:
 
 ## Kafka Rebalancing: ====================================================
 
+A rebalance is Kafka’s way of answering:
+“Who in this group owns which partitions/tasks right now?”
+    => rebalancing means assign partitions within that group
+    => Whenever group membership changes (a member joins, leaves, crashes) => Kafka must compute a new assignment.
 group.initial.rebalance.delay.ms explained:
 
 Kafka consumers work in groups of an application. A group is how Kafka decides which consumer gets which partitions.
@@ -143,6 +147,11 @@ A moment later consumer B joins, Kafka must revoke and reassign again.
 That is a good tradeoff for long-running services, where saving a few startup seconds matters less than avoiding churn
 Kafka is trading startup latency for assignment stability.
 
+Why more threads matter:
+In Kafka Streams, each stream thread is not “just a Java helper thread.” It is part of the processing membership/assignment machinery.
+    => Its essentuially a whole new consumer, a Kafka stream thread is basically a consumer
+    => Each StreamThread owns its own KafkaConsumer.
+    
 ## Broker Parallelism / Multiple Brokers: ====================================================
 
 In Kafka single node means single machine.

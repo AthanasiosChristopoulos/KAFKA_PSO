@@ -190,7 +190,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     @Override
     public void process(Record<String, WeightsMessage> record) {
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAA");
         if (control.isStopRequested(-1)) {
             // onAllWorkersReported();
             return;
