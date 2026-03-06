@@ -79,7 +79,7 @@ git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit
 
 git fetch --prune origin    # fetch does NOT modify your code or merge anything.
                             # It only updates Git’s knowledge of the remote.
-                            
+
 git branch -r       # This command shows remote-tracking branches that your local repo currently knows about.
 
 git branch -vv      # Shows branches on local and what they track on remote     
@@ -124,9 +124,27 @@ Standard PSO works this way:
  - Smoothness / a dense signal is important because you want PSO to detect loss differences when weights change, even a little. 
  - If its a discrete signal, then PSO gets no gradient like guidance, weights change and loss remains the same flat (not informative, doesnt give a direction)
 
- - Ruggedness usually means “lots of ups/downs / frequent oscillations / many local optima” as you move in the search space.
-    So ruggedness is about shape, not about continuity.
- - Neutrality is basically plateaus / flat regions where many different points have the same (or almost the same) fitness.
+==============================================================================================
+## Landscape and stuff:
+
+The paper studies how properties of the fitness landscape affect PSO performance. These properties are:
+    - Ruggedness, Funnels, Gradient steepness
+Fitness Landscape is determined by the loss function: f(x)
+
+ - Ruggedness: 
+    - lots of ups and downs, many local minima
+    - So ruggedness is about shape, not about continuity (doesnt characterize continiouty).
+
+ - Neutrality:
+    - is basically plateaus / flat regions where many different points have the same (or almost the same) fitness.
+
+ - Funnels:
+    - macro structure of the landscape (large scale behavior)
+    - many local minima, but they all lead toward the same global basin
+    - PSO performs well on funnel landscapes because local optima guide particles toward the global optimum.
+
+ - Multi-funnel landscape:
+    - Many Basins => there are global basins (the ones we need to find) and (local basins, that can mislead)
 
 ## ============================================================================================
 ## Generall Aspects / Topics of this Thesis (they are combined with each other):

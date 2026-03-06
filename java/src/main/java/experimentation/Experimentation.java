@@ -107,9 +107,9 @@ public class Experimentation {
 
                     List<String> topics;
                     if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     }
 
                     KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
@@ -174,9 +174,9 @@ public class Experimentation {
 
                     List<String> topics;
                     if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     }
 
                     KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
@@ -240,9 +240,9 @@ public class Experimentation {
 
                     List<String> topics;
                     if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     }
 
                     KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
@@ -290,9 +290,9 @@ public class Experimentation {
 
                 List<String> topics;
                 if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                    topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                    topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                 } else {
-                    topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                    topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                 }
 
                 KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
@@ -323,17 +323,25 @@ public class Experimentation {
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_severity_of_filter.csv");
 
-            // var severities = List.of(
-            //     FilterSeverity.Level.OFF,
-            //     FilterSeverity.Level.EASY,
-            //     FilterSeverity.Level.MEDIUM,
-            //     FilterSeverity.Level.HARD
-            // );
-
-           var severities = List.of(
-                // FilterSeverity.Level.OFF,
+            var severities = List.of(
+                FilterSeverity.Level.OFF,
+                FilterSeverity.Level.EASY,
+                FilterSeverity.Level.MEDIUM,
                 FilterSeverity.Level.HARD
             );
+            
+            // var severities = List.of(
+            //     FilterSeverity.Level.OFF,
+            //     FilterSeverity.Level.EASY
+            // );
+
+            // var severities = List.of(
+            //     FilterSeverity.Level.OFF
+            // );
+
+            // var severities = List.of(
+            //     FilterSeverity.Level.EASY
+            // );
 
             String header = "SEVERITY_CODE,SEVERITY_NAME," + header_1; 
 
@@ -367,9 +375,9 @@ public class Experimentation {
                     // Restart Kafka topic(s) like you already do
                     List<String> topics;
                     if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC);
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     }
                     KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
 
@@ -409,7 +417,8 @@ public class Experimentation {
                 "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d\n",
                 filterEnabled,
                 nWorkers,
-                r.lastWorkerElapsedSec(),               // r.getTotalElapsedSec()
+                r.getTotalElapsedSec(),
+                // r.lastWorkerElapsedSec(),               // r.getTotalElapsedSec(),
                 r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN,
                 r.lastWorkerElapsedSec(),
                 r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,

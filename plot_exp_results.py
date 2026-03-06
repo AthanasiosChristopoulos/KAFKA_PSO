@@ -60,6 +60,19 @@ def main():
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
         ]
+        
+    # =================================================================================================
+    
+    elif mode == "SEVERITY_OF_FILTER":
+        csv_path = Path(f"java/{experimentation_dir}/results_severity_of_filter.csv")
+        xcol = "SEVERITY_CODE"  # This is what is needed for the pandas to find the correct code
+        xlabel = "SEVERITY_CODE"
+        suffix = "severity_of_filter"
+        plots = [
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+        ]
 
     # =================================================================================================
 

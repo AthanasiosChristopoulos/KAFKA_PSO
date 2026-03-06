@@ -42,9 +42,9 @@ public final class FilterSeverity {
     public static Preset preset(Level level) {
         return switch (level) {
             case OFF    -> new Preset(0.0f, 0.0f, 0, 0, 0);
-            case EASY   -> new Preset(0.15f, 0.05f, 25, 10, 40);
-            case MEDIUM -> new Preset(0.01f, 0.10f, 75, 15, 60);
-            case HARD   -> new Preset(0.05f, 0.15f, 75, 35, 80);
+            case EASY   -> new Preset(0.01f, 0.10f, 25, 5, 20);
+            case MEDIUM -> new Preset(0.01f, 0.15f, 50, 10, 40);
+            case HARD   -> new Preset(0.05f, 0.15f, 75, 15, 60);
         };
     }
 
@@ -52,7 +52,12 @@ public final class FilterSeverity {
 
     public static void apply(Config cfg, Level level) {
 
-        cfg.FILTER_ENABLED = true;
+        if(level == Level.OFF) {
+            cfg.FILTER_ENABLED = false;
+        } else {
+            cfg.FILTER_ENABLED = true;
+        }
+        
 
         Preset p = preset(level);
         cfg.LOSS_THRESHOLD_MIN = p.lossMin;
