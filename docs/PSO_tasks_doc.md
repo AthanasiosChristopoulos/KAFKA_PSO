@@ -133,7 +133,10 @@
 
 	65) non differentiable Functions, with requirements:
 		- Continious, but non differentiable
-		- Πρεπει να εχουν χρησιμοποιηθει σε καποιο καλο paper
+		- Πρεπει να εχουν χρησιμοποιηθει σε καποιο καλο paper / καλο venue (χώρος δημοσίευσης)
+			=> In research, venue means the place where the work was published. 
+				=> basically a journal or a conference
+
 		- Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
 	## =======================================================================================

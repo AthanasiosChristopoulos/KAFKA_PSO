@@ -30,10 +30,10 @@ public class LossFunction {
         } else if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
             return compute_loss_zero_one(probs, label);
 
-        } else if ("ABSOLUTE_MARGIN_LOSS".equals(LOSS_FUNCTION)) {
+        } else if ("ABSOLUTE_MARGIN".equals(LOSS_FUNCTION)) {
             return compute_loss_margin_abs(probs, label);
 
-        } else if ("HINGE_LOSS".equals(LOSS_FUNCTION)) {
+        } else if ("HINGE".equals(LOSS_FUNCTION)) {
             return compute_loss_hinge(probs, label);
         }
 
@@ -50,6 +50,9 @@ public class LossFunction {
         
         } else if("MAE".equals(LOSS_FUNCTION)) {
             return compute_loss_MAE_binary(prob, label);
+
+        } else if("HINGE".equals(LOSS_FUNCTION)) {
+            return compute_loss_hinge_binary(prob, label);
 
         } else {
             return compute_loss_CE_binary(prob, label);
@@ -92,6 +95,20 @@ public class LossFunction {
         return loss;
     }
 
+    // =============================================================================================
+
+    public static float compute_loss_hinge_binary(float prob, int label) {
+
+        // convert label {0,1} → {-1,+1}
+        int y = (label == 1) ? 1 : -1;
+
+        // convert probability to score [-1,1]
+        float score = 2f * prob - 1f;
+
+        // hinge loss: L = max(0, 1 - y f(x))
+        return Math.max(0f, 1f - y * score);
+    }
+    
     // =============================================================================================
     
     public static float compute_loss_MSE(float[] probs, int label) {

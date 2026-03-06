@@ -37,7 +37,7 @@ NUMBER_OF_DATA_REPEATS_TEST = 1
 # ==============================================================================================
 
 if(DATASET == "iris" or DATASET == "wine"):     # 150 samples
-    NUMBER_OF_DATA_REPEATS = 37
+    NUMBER_OF_DATA_REPEATS = 37 * 3
     NUMBER_OF_DATA_REPEATS_TEST = 3
 
 if(DATASET == "winequality"):

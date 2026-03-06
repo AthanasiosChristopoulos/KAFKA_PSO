@@ -134,6 +134,12 @@ Fitness Landscape is determined by the loss function: f(x)
  - Ruggedness: 
     - lots of ups and downs, many local minima
     - So ruggedness is about shape, not about continuity (doesnt characterize continiouty).
+    - high Gradient Steepness => how fast loss changes when position changes, large fitness changes from small position changes
+    - ruggedness becomes more problematic for PSO as dimensionality increases.
+    - is generally BAD for PSO: 
+        - noisy landscape
+        - frequent changes in neighboring fitness values
+        - convergence becomes slower or premature
 
  - Neutrality:
     - is basically plateaus / flat regions where many different points have the same (or almost the same) fitness.
@@ -142,9 +148,14 @@ Fitness Landscape is determined by the loss function: f(x)
     - macro structure of the landscape (large scale behavior)
     - many local minima, but they all lead toward the same global basin
     - PSO performs well on funnel landscapes because local optima guide particles toward the global optimum.
-
- - Multi-funnel landscape:
-    - Many Basins => there are global basins (the ones we need to find) and (local basins, that can mislead)
+        => Generally GOOD for PSO, but:
+        => If the global optimum basin is large, particles are likely to be pulled toward it (good)
+        - Multi-funnel landscape:
+            - Many Basins => there are global basins (the ones we need to find) and (local basins, that can mislead)
+            - If local basins for local optima are large, particles may be pulled away from the global optimum.
+            - This is what is being mentioned as deception
+    - large global basin → PSO succeeds
+    - large local basins → PSO struggles
 
 ## ============================================================================================
 ## Generall Aspects / Topics of this Thesis (they are combined with each other):
