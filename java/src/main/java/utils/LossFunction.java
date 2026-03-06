@@ -94,8 +94,10 @@ public class LossFunction {
 
         return loss;
     }
-
     // =============================================================================================
+    // Non Differentiable Functions
+    // =============================================================================================
+    // Hinge Loss
 
     public static float compute_loss_hinge_binary(float prob, int label) {
 
@@ -108,7 +110,58 @@ public class LossFunction {
         // hinge loss: L = max(0, 1 - y f(x))
         return Math.max(0f, 1f - y * score);
     }
-    
+
+    // =============================================================================================
+
+    public static float compute_loss_hinge(float[] probs, int label) {
+
+        float py = probs[label];
+        float maxOther = -Float.MAX_VALUE;
+
+        // L=max(0,1−ys)
+        // If 𝑦𝑠≥1 inside is ≤ 0 → loss = 0
+        // Meaning: “this example is already good enough; don’t waste effort making it even larger.”
+        // If ys<1: inside is positive → loss grows linearly (the more wrong the quess was)
+        // Meaning: “penalize violations of the margin.”
+
+        for (int i = 0; i < probs.length; i++) {
+            if (i == label) continue;
+            if (probs[i] > maxOther) maxOther = probs[i];
+        }
+
+        float margin = py - maxOther;
+        return Math.max(0f, 1f - margin);   // once the prediction is confident enough, no more penalty
+    }
+
+    // =============================================================================================
+    // ε-insensitive loss
+
+    public static float compute_loss_epsilon_insensitive_binary(float prob, int label) {
+        float eps = 0.1f; // tune this
+        float target = (float) label;   // label in {0,1}
+        float err = Math.abs(prob - target);
+        return Math.max(0f, err - eps);
+    }
+
+    // =============================================================================================
+
+    public static float compute_loss_epsilon_insensitive(float[] probs, int label) {
+        float eps = 0.1f; // tune this
+
+        if (probs == null || probs.length == 0) return -1f;
+
+        float sum = 0f;
+        int C = probs.length;
+
+        for (int c = 0; c < C; c++) {
+            float target = (c == label) ? 1f : 0f;
+            float err = Math.abs(probs[c] - target);
+            sum += Math.max(0f, err - eps);
+        }
+
+        return sum / C;
+    }
+
     // =============================================================================================
     
     public static float compute_loss_MSE(float[] probs, int label) {
@@ -222,29 +275,6 @@ public class LossFunction {
         float margin = py - maxOther;   // if the margin grows larger than 1, the loss increases again.
         return Math.abs(1f - margin);   // too small margins, too large margins
                                         // margin ≈ 1
-    }
-
-    // =============================================================================================
-    // Hinge Loss (just use this its better)
-
-    public static float compute_loss_hinge(float[] probs, int label) {
-
-        float py = probs[label];
-        float maxOther = -Float.MAX_VALUE;
-
-        // L=max(0,1−ys)
-        // If 𝑦𝑠≥1 inside is ≤ 0 → loss = 0
-        // Meaning: “this example is already good enough; don’t waste effort making it even larger.”
-        // If ys<1: inside is positive → loss grows linearly (the more wrong the quess was)
-        // Meaning: “penalize violations of the margin.”
-
-        for (int i = 0; i < probs.length; i++) {
-            if (i == label) continue;
-            if (probs[i] > maxOther) maxOther = probs[i];
-        }
-
-        float margin = py - maxOther;
-        return Math.max(0f, 1f - margin);   // once the prediction is confident enough, no more penalty
     }
 
     // =============================================================================================

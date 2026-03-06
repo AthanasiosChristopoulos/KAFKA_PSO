@@ -72,6 +72,8 @@ public final class WorkerStatic {
     public long TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS = 0;
     public long TOTAL_BYTES_SENT = 0;
     public static long BYTES_PER_WEIGHTSMESSAGE = 0;
+    
+    public boolean firstActive = false;
 
     // ========================================================
 

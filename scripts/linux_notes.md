@@ -284,3 +284,19 @@ performance
 echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 cat /sys/devices/system/cpu/intel_pstate/no_turbo	# This needs to output 1
 ```
+
+## Signals =============================================================
+
+Method						Signal		Behavior
+-------------------------------------------------------------------
+Ctrl + C					SIGINT		polite request to stop
+Ctrl + Z					SIGTSTP		suspend
+VSCode Kill (trash icon)	SIGKILL		forced termination 
+
+Equivalent toL kill -9 <pid> (every terminal is a unique process)
+SIGKILL cannot be ignored by programs. Program does not Because it’s a hard kill,the program does not run cleanup code.
+	=> All child processes (Java, Kafka Streams, Python, etc.) are also terminated.
+	=> The operating system immediately reclaims all memory used by those processes.
+	=> File descriptors, sockets, memory pages, threads — everything is freed by the kernel.
+But: application-level cleanup, Like .close() and frees() and Java shutdown hooks in code will not execute 
+		=> This go bad application level, not system level

@@ -54,7 +54,7 @@ public class Dl4jModelFactory {
 
 		if("iris".equals(DATASET)) {
 			// model = createIrisModel(workerId);
-			model = createDenseSimpleModel(workerId);
+			model = createDenseModel_1(workerId);
 
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
@@ -85,16 +85,16 @@ public class Dl4jModelFactory {
 			model = createHarModel(workerId);
 
 		} else if (DATASET.contains("pendigits")) {
-			// model = createPendigitsModel(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			// model = createDenseModel_1(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
 			// model = createPendigitsModelSmaller_2(workerId);
-			model = createDenseSimpleModel(workerId);
+			model = createDenseModel_4(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			System.out.println("NEURAL_OUTPUT: " + NEURAL_OUTPUT);
 			// model = createWineQualityModel(workerId);
-			model = createDenseSimpleModel(workerId);
+			model = createDenseModel_1(workerId);
 
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
@@ -136,9 +136,9 @@ public class Dl4jModelFactory {
 
 				String filename;
 				switch (version) {
-					// case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
+					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-					case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
+					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
 							// protinomeno
 					case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 					case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
@@ -162,9 +162,9 @@ public class Dl4jModelFactory {
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 						case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
+						case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-						case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 80% Partial Freeze
+						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 80% Partial Freeze
 						case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
 						case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
 						case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
@@ -1625,7 +1625,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createDenseSimpleModel(int workerId) {	
+	public static PsoModel createDenseModel_1(int workerId) {	
 		if (printModel) System.out.println("Model: createIrisModelSimpler");  
 
 		Activation act = Activation.SOFTMAX;
@@ -2650,7 +2650,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
 
-	public static PsoModel createPendigitsModel(int workerId) {
+	public static PsoModel createDenseModel_4(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}

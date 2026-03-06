@@ -132,12 +132,12 @@
 			- 4) MNIST (More complicated / Image dataset, High Samples, High Number of Classes) => How do we scale with more complex dataset ?
 
 	65) non differentiable Functions, with requirements:
-		- Continious, but non differentiable
-		- Πρεπει να εχουν χρησιμοποιηθει σε καποιο καλο paper / καλο venue (χώρος δημοσίευσης)
+		- 1) Continious, but non differentiable
+		- 2) Πρεπει να εχουν χρησιμοποιηθει σε καποιο γνωστο / οχι οτι να ναι venue (χώρος δημοσίευσης)
+			=> Να αναφερεται οτι ειναι non differentiable 
 			=> In research, venue means the place where the work was published. 
 				=> basically a journal or a conference
-
-		- Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
+		- 3) Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
 	## =======================================================================================
 

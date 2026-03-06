@@ -356,9 +356,9 @@ public class Config {
         }
         
         IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000"));
-        if(DATASET.contains("cifar") || DATASET.contains("mnist")) {
-            IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 10;
-        }
+        // if(DATASET.contains("cifar") || DATASET.contains("mnist")) {
+        //     IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 10;
+        // }
 
         EXPERIMENTATION_MODE = getenv(dotenv, "EXPERIMENTATION_MODE", "N_WORKERS");
         EXPERIMENTATION_DIR = getenv(dotenv, "EXPERIMENTATION_DIR", "experimental_results_server");

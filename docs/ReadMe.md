@@ -154,6 +154,7 @@ Fitness Landscape is determined by the loss function: f(x)
             - Many Basins => there are global basins (the ones we need to find) and (local basins, that can mislead)
             - If local basins for local optima are large, particles may be pulled away from the global optimum.
             - This is what is being mentioned as deception
+            
     - large global basin → PSO succeeds
     - large local basins → PSO struggles
 

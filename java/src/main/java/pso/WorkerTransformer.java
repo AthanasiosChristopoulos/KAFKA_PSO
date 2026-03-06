@@ -129,6 +129,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
     private float loss_threshold;
 
+    
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
@@ -241,12 +242,16 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return null;
         }
 
-        if (!printedOffset) {
-            long now = System.nanoTime();
-            t_actually_started.set(now);
-
+        if(ws.firstActive == false) {
+            t_actually_started.set(System.nanoTime());
             logger.log("t_actually_started: " + t_actually_started);
             logger.log("t0: " + t0);
+            ws.firstActive = true;
+        }
+
+
+        if (!printedOffset) {
+
 
             printedOffset = true;
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Starting at -> " + 

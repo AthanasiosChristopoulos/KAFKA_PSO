@@ -14,7 +14,7 @@ import java.time.Duration;
 
 public class Experimentation {
 
-    private static volatile boolean stopRequested = false;
+    private static volatile boolean experimentationStopRequested = false;
     private static volatile boolean ctrlCRequested = false;
 
     private static final Config cfg = Config.getInstance();
@@ -43,7 +43,7 @@ public class Experimentation {
                 // Ask your system to stop (workers/coordinator are already polling this)
                 CoordinatorControl.getInstance().requestStopFinal();
 
-                // Interrupt the thread currently blocked in join/await so runOnce() can return
+                experimentationStopRequested = true;
             });
         } catch (Throwable t) {
             // Fallback: if Signal not available, you can't prevent JVM exit on Ctrl+C.
@@ -74,9 +74,9 @@ public class Experimentation {
             // List<Integer> workersList = List.of(2, 6, 12);
             // List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
-            List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
+            // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
-
+            List<Integer> workersList = List.of(1, 16);
             // ========================================================================
             // Scenario with high workers:
             
@@ -124,6 +124,10 @@ public class Experimentation {
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with N_WORKERS: " + n);
                     System.out.println("===============================================================================================");
+
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
                 }
             } 
         
@@ -191,7 +195,9 @@ public class Experimentation {
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with FILTER_ENABLED: " + cfg.FILTER_ENABLED);
                     System.out.println("===============================================================================================");
-
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
                 }
             } 
         
@@ -257,7 +263,9 @@ public class Experimentation {
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with theshold_diff: " + theshold_offset);
                     System.out.println("===============================================================================================");
-
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
                 }   
             }
 
@@ -310,7 +318,9 @@ public class Experimentation {
                 System.out.println("===============================================================================================");
                 System.out.println("End of experiment with MONITORING_ITERATIONS");
                 System.out.println("===============================================================================================");
-
+                if(experimentationStopRequested == true) {
+                    System.exit(0);
+                }
             }
 
         // =========================================================================================================================================
@@ -392,6 +402,10 @@ public class Experimentation {
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with SEVERITY: " + level);
                     System.out.println("===============================================================================================");
+
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
                 }
             }
         }
@@ -417,8 +431,8 @@ public class Experimentation {
                 "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d\n",
                 filterEnabled,
                 nWorkers,
-                r.getTotalElapsedSec(),
-                // r.lastWorkerElapsedSec(),               // r.getTotalElapsedSec(),
+                // r.getTotalElapsedSec(),
+                r.lastWorkerElapsedSec(),        
                 r.getCoordinator() != null ? r.getCoordinator().getElapsedSec() : Double.NaN,
                 r.lastWorkerElapsedSec(),
                 r.getCoordinator() != null ? r.getCoordinator().getGlobalBestAcc() : Double.NaN,
