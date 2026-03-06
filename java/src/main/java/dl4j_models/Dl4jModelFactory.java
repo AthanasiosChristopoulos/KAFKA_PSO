@@ -132,13 +132,12 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 1;
+				int version = 9;
 
 				String filename;
 				switch (version) {
 					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
 					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze
 							// protinomeno
 					case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 					case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
@@ -147,26 +146,27 @@ public class Dl4jModelFactory {
 					case 6 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v6.h5";
 					case 7 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v7.h5";
 					case 8 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
+					case 9 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
 				if (preTrained) {
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
-						case 1, 2, 3, 4, 5, 6, 7, 8 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3, 4, 5, 6, 7, 8, 9 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
+
 				} else {
 					switch (version) {
 						case -2 -> pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);		// 0.9
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 						case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-						case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(workerId, filename, 800); // 80% Partial Freeze
-						case 2 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 32 * 5 * 5);
-						case 3 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler(workerId, filename, 128);		// 0.89
+						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 32 * 5 * 5);
+						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 128);		// 0.89
 						case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
 						case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
 						case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6(workerId, filename, 256);	// 0.53
@@ -180,6 +180,7 @@ public class Dl4jModelFactory {
 						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(workerId, filename);	// 0.84, 0.86 with freeze index 1
 						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(workerId, filename, 64);	// 0.23
 						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
+						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
 
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
@@ -699,43 +700,6 @@ public class Dl4jModelFactory {
 	
 	// ===========================================================================================
 
-	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler(int workerId, String fileName, int inputDim) {
-
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
-
-		// ============================================================================
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())  
-				.build();
-
-		int start = (int) new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)	
-			.build().numParams();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)	
-			.build();
-
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)     
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(inputDim)
-						.nOut(NUM_CLASSES) 
-						.activation(Activation.SOFTMAX)		
-						.weightInit(WeightInit.XAVIER)
-    					.biasInit(0.0)
-						.build())
-				.build();
-
-		return Pair.of(new PsoMultiLayerAdapter(model, false), start);
-	}
-
-	// ===========================================================================================
-
 	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler_v1(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
@@ -779,7 +743,7 @@ public class Dl4jModelFactory {
 
 	// ===========================================================================================
 
-	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler_v1_1(int workerId, String fileName, int inputDim) {
+	public static Pair<PsoModel, Integer>  createCNNModel_1_Layer(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
 

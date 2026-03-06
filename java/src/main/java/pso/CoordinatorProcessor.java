@@ -89,7 +89,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private long sumElapsedNs = 0;
     private int evaluation_count = 0;
     private float forwardPassNs = 0;
-    private int countForwardPass = 0;
 
     private static final long IDLE_MS = cfg.IDLE_MS; 
     private static final long CHECK_EVERY_MS = 100; 
@@ -197,6 +196,15 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
 
+        switch (cfg.DATASET) {
+            case "mnist":
+                if (evaluation_count > 200) {
+                    control.requestStopFinal();
+                    return;
+                }
+                break;
+        }
+
         if(evaluation_count == 0) {
             t_actually_started.set(System.nanoTime());
             context.recordMetadata().ifPresent(meta -> {
@@ -292,7 +300,6 @@ public void onAllWorkersReported() {
     nSamples = (int) accLoss[2];
     nCorrect = (int) accLoss[3];
     forwardPassNs += accLoss[4];
-    countForwardPass += 1;
 
     control.accuracyValues.add(accuracy);
     
@@ -354,6 +361,7 @@ public void onAllWorkersReported() {
 
         return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
     });
+
     //=================================================================================
 } 
 
@@ -504,7 +512,7 @@ public void onAllWorkersReported() {
 
         Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
-        double avgForwardPassMs = forwardPassNs / countForwardPass;
+        double avgForwardPassMs = forwardPassNs / evaluation_count;
 
         if (logger.isEnabled(2)) logger.log(taskInstance + 
                 ", average elapsed time per batch: " + String.format("%.3f ms", avgMs)
