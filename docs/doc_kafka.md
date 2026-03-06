@@ -129,6 +129,19 @@ There are TWO retention policies that Kafka supports:
 
  - Kafka log storage works in a per log.segment.bytes=1073741824 basis. Logs are stored in segments of 1GB chucks. This means that retention will effectively work in ~1GB chunks, meaning a Kafka broker cant delete less than that (no fine-turning).
 
+## Kafka Rebalancing: ====================================================
+
+group.initial.rebalance.delay.ms explained:
+
+Kafka consumers work in groups of an application. A group is how Kafka decides which consumer gets which partitions.
+    => This assignment of partitions is called a rebalance 
+Kafka waits briefly when a brand-new group, so that it wont have to do many rebalances afterwards
+
+Without the delay, consumer A joins, Kafka assigns partitions.
+A moment later consumer B joins, Kafka must revoke and reassign again.
+
+That is a good tradeoff for long-running services, where saving a few startup seconds matters less than avoiding churn
+Kafka is trading startup latency for assignment stability.
 
 ## Broker Parallelism / Multiple Brokers: ====================================================
 

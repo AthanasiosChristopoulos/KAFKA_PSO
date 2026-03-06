@@ -65,10 +65,11 @@ ss -ltnp | egrep ':19092|:19093|:9092|:9093'  # Check port being used
 cd /mnt/nas_drive/achristopoulos/kafka-local/config/kraf
 nano server.properties # look for the log.dirs= ... variable
 
-# Set the following:
+# Set the following for this implementation:
 log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs
 log.retention.hours=-1
 log.retention.bytes=2221225472
+group.initial.rebalance.delay.ms=500
 
 kafka-storage.sh format \
   -t TZnQLupIQNKrZbEwke1-cw \
