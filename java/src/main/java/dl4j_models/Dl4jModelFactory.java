@@ -85,11 +85,11 @@ public class Dl4jModelFactory {
 			model = createHarModel(workerId);
 
 		} else if (DATASET.contains("pendigits")) {
-			// model = createDenseModel_1(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
 			// model = createPendigitsModelTanh(workerId);
 			// model = createPendigitsModelSmaller(workerId);
 			// model = createPendigitsModelSmaller_2(workerId);
-			model = createDenseModel_4(workerId);
+			model = createDenseModel_1(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			// model = createDenseModel_4(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
 			System.out.println("NEURAL_OUTPUT: " + NEURAL_OUTPUT);

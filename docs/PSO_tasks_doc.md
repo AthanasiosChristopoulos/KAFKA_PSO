@@ -52,15 +52,16 @@
 
 	66) We want following diagrams:
 
+		- 0) x: gBest / pBest				| y: accuracy
 		- 1) x: Dimensionality 				| y: accuracy
 		- 2) x: Different Topologies 		| y: accuracy
 
 		- 3) x: N_WORKERS  					| y: accuracy / time / number of bytes
-		- 4) x: N_WORKERS  					| y: accuracy / time / number of bytes (with Filter)
-		- 5) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
+		- 4) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
 			If not:
 			=> x: FILTER_ENABLED 	| y: accuracy / time / number of bytes
 			=> x: threshold T		| y: accuracy / number of bytes
+		- 5) x: N_WORKERS  					| y: accuracy / time / number of bytes (with Filter)
 
 			=> Repeat 3, 4, 5 for all 4 Datasets (also for the one from mnist to fmnist) (ειναι 3 απλα datasets και fmnist <--> mnist)
 
@@ -130,6 +131,8 @@
 			- 2) Winequality (Highly seperable / Easy dataset, High Samples, Low Number of Classes) => How do we scale with higher amount of samples
 			- 3) Pendigits (Highly seperable / Easy dataset, High Samples, High Number of Classes) => How do we scale with higher amount of number of classes
 			- 4) MNIST (More complicated / Image dataset, High Samples, High Number of Classes) => How do we scale with more complex dataset ?
+
+	## =======================================================================================
 
 	65) non differentiable Functions, with requirements:
 		- 1) Continious, but non differentiable
