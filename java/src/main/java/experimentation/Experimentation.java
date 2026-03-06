@@ -408,6 +408,66 @@ public class Experimentation {
                     }
                 }
             }
+
+        // ================================================================================================
+
+        } else if (cfg.EXPERIMENTATION_MODE.equals("FULLY_INFORMED_VS_CLASSICAL")) {
+
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_fully_informed_vs_classical.csv");
+
+            List<Boolean> fully_informed_list = List.of(false, true);
+        
+            String header = "FULLY_INFORMED," + header_1; 
+
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write(header);
+
+                for (Boolean fully_informed : fully_informed_list) {
+
+                    cfg.refreshRunId();
+                    CustomLogger.refreshAll();
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                    cfg.FULLY_INFORMED = fully_informed;
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("FULLY_INFORMED: " + cfg.FULLY_INFORMED);
+                    System.out.println("RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // Restart Kafka topic(s) like you already do
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    }
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    // Write severity info + existing metrics
+                    w.write(String.format("%b,", cfg.FULLY_INFORMED));
+                    writeExperimentData(w, r, -1, -1, -1);
+
+                    w.flush();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with cfg.FULLY_INFORMED: " + cfg.FULLY_INFORMED);
+                    System.out.println("===============================================================================================");
+
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
+                }
+            }
         }
     }
 

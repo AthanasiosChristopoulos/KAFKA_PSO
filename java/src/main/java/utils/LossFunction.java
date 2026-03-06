@@ -35,6 +35,10 @@ public class LossFunction {
 
         } else if ("HINGE".equals(LOSS_FUNCTION)) {
             return compute_loss_hinge(probs, label);
+
+        } else if ("RAMP".equals(LOSS_FUNCTION)) {
+            // System.out.println("AAAAAAAAAAAAAAAAAAAA");
+            return compute_loss_ramp(probs, label);
         }
 
         System.out.println("No valid loss function selected");
@@ -53,6 +57,9 @@ public class LossFunction {
 
         } else if("HINGE".equals(LOSS_FUNCTION)) {
             return compute_loss_hinge_binary(prob, label);
+
+        } else if("RAMP".equals(LOSS_FUNCTION)) {
+            return compute_loss_ramp_binary(prob, label);
 
         } else {
             return compute_loss_CE_binary(prob, label);
@@ -94,6 +101,7 @@ public class LossFunction {
 
         return loss;
     }
+
     // =============================================================================================
     // Non Differentiable Functions
     // =============================================================================================
@@ -163,7 +171,49 @@ public class LossFunction {
     }
 
     // =============================================================================================
-    
+    // Ramp Loss
+
+    public static float compute_loss_ramp_binary(float prob, int label) {
+        float marginTarget = 1f;
+
+        // label {0,1} -> {-1,+1}
+        int y = (label == 1) ? 1 : -1;
+
+        // probability [0,1] -> score [-1,1]
+        float score = 2f * prob - 1f;
+
+        float z = marginTarget - y * score;
+
+        return Math.max(0f, Math.min(1f, z));
+    }
+
+    // =============================================================================================
+
+    public static float compute_loss_ramp(float[] probs, int label) {
+        float marginTarget = 1f;
+
+        if (probs == null || probs.length == 0) return -1f;
+
+        float py = probs[label];
+        float maxOther = -Float.MAX_VALUE;
+
+        for (int i = 0; i < probs.length; i++) {
+            if (i == label) continue;
+            if (probs[i] > maxOther) maxOther = probs[i];
+        }
+
+        // multiclass margin analogue
+        float margin = py - maxOther;
+        float z = marginTarget - margin;
+
+        return Math.max(0f, Math.min(1f, z));
+    }
+
+    // =============================================================================================
+    // Differentiable Functions
+    // =============================================================================================
+    // MSE
+
     public static float compute_loss_MSE(float[] probs, int label) {
 
         if(probs.length == 0) {

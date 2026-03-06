@@ -73,7 +73,20 @@ def main():
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
         ]
-
+        
+    # =================================================================================================
+    
+    elif mode == "FULLY_INFORMED_VS_CLASSICAL":
+        csv_path = Path(f"java/{experimentation_dir}/results_fully_informed_vs_classical.csv")
+        xcol = "FULLY_INFORMED"  # This is what is needed for the pandas to find the correct code
+        xlabel = "FULLY_INFORMED"
+        suffix = "fully_informed_vs_classical"
+        plots = [
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+        ]
+        
     # =================================================================================================
 
     elif mode == "MONITORING_ITERATIONS":

@@ -52,15 +52,15 @@
 
 	66) We want following diagrams:
 
-		- 0) x: gBest / pBest				| y: accuracy
-		- 1) x: Dimensionality 				| y: accuracy
-		- 2) x: Different Topologies 		| y: accuracy
+		- 0) x: classical / fully_informed	| y: accuracy	=> conclusion: fully informed better
+		- 1) x: Dimensionality 				| y: accuracy	=> conclusion: high dimensionality bad
+		- 2) x: Different Topologies 		| y: accuracy	=> Trade off between neighborhoods
 
 		- 3) x: N_WORKERS  					| y: accuracy / time / number of bytes
 		- 4) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
 			If not:
-			=> x: FILTER_ENABLED 	| y: accuracy / time / number of bytes
-			=> x: threshold T		| y: accuracy / number of bytes
+			=> x: FILTER_ENABLED 			| y: accuracy / time / number of bytes
+			=> x: threshold T				| y: accuracy / number of bytes
 		- 5) x: N_WORKERS  					| y: accuracy / time / number of bytes (with Filter)
 
 			=> Repeat 3, 4, 5 for all 4 Datasets (also for the one from mnist to fmnist) (ειναι 3 απλα datasets και fmnist <--> mnist)
