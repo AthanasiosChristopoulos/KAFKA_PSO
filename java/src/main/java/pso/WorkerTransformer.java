@@ -100,7 +100,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private static final long IDLE_MS = cfg.IDLE_MS; 
     private static final long CHECK_EVERY_MS = 100; // how often we check
-    private static final long IDLE_GRACE_MS = 5000;
+    private static final long IDLE_GRACE_MS = 8000;
 
     private static final AtomicInteger INSTANCE_SEQ = new AtomicInteger(0);
     private final int instanceNo = INSTANCE_SEQ.incrementAndGet();
@@ -132,7 +132,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
-
         this.logger = CustomLogger.getWorkerInstance(workerId);
 
         this.workerId = workerId;
@@ -212,7 +211,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             long sinceStartNs = System.nanoTime() - t0;
             if (sinceStartNs < TimeUnit.MILLISECONDS.toNanos(IDLE_GRACE_MS)) {
-                return; // don't check yet
+                return; 
             }
 
             long idleNs = System.nanoTime() - t1.get();
@@ -294,8 +293,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         sumElapsedNsPredict += (System.nanoTime() - startPredict);
 
-        buffer.clear();
         ws.batchesRead++;
+        ws.incrementBatchesRead++;
+        ws.incrementSamplesRead += buffer.size();
+
+        buffer.clear();
 
         if (loss == 0f) {
             System.out.println("Loss Invalid");
@@ -1027,6 +1029,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (logger.isEnabled(2)) logger.log("improved_pBest_count: "+ ws.improved_pBest_count + ", significant_pBest_count: " + ws.significant_pBest_count);
             if (logger.isEnabled(2)) logger.log("pBestCandidateCount: "+ ws.pBestCandidateCount + ", pBestForwardedCount: " + ws.pBestForwardedCount);
+
+            if (logger.isEnabled(2)) logger.log("incrementBatchesRead: " + ws.incrementBatchesRead + ", incrementSamplesRead: " + ws.incrementSamplesRead );
+            if (logger.isEnabled(2)) logger.log("printBatchesReadSummary: " + WorkerStatic.printBatchesReadSummary());
 
             if (logger.isEnabled(2)) logger.log("Closing Report ============================================================");
 

@@ -312,22 +312,25 @@ public class Experimentation {
                 System.out.println("===============================================================================================");
 
             }
+
         } else if (cfg.EXPERIMENTATION_MODE.equals("SEVERITY_OF_FILTER")) {
 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_severity_of_filter.csv");
 
-            // Choose which severities to test
-            var severities = List.of(
-                FilterSeverity.Level.OFF,
-                FilterSeverity.Level.EASY,
-                FilterSeverity.Level.MEDIUM,
+            // var severities = List.of(
+            //     FilterSeverity.Level.OFF,
+            //     FilterSeverity.Level.EASY,
+            //     FilterSeverity.Level.MEDIUM,
+            //     FilterSeverity.Level.HARD
+            // );
+           var severities = List.of(
+                // FilterSeverity.Level.OFF,
                 FilterSeverity.Level.HARD
             );
 
-            // Add a column for severity so you can plot it later
-            String header = "SEVERITY_CODE,SEVERITY_NAME," + header_1; // prepend your existing header_1
+            String header = "SEVERITY_CODE,SEVERITY_NAME," + header_1; 
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -342,7 +345,6 @@ public class Experimentation {
                     cfg.refreshRunId();
                     CustomLogger.refreshAll();
 
-                    // Apply severity (this sets FILTER_ENABLED + all related thresholds)
                     FilterSeverity.apply(cfg, level);
 
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);

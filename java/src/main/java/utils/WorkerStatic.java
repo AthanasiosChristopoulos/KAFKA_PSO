@@ -25,6 +25,8 @@ import state.*;
 
 public final class WorkerStatic {
 
+    private static final ConcurrentHashMap<Integer, WorkerStatic> INSTANCES = new ConcurrentHashMap<>();
+
     private static Config cfg = Config.getInstance();
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
 
@@ -44,6 +46,9 @@ public final class WorkerStatic {
     public float local_gBestAccuracy = -1f;
 
     public int batchesRead = 0;
+    public int incrementBatchesRead = 0;
+    public long incrementSamplesRead = 0;
+
     public boolean printedReport = false;
     public boolean endedWorker = false;
 
@@ -71,7 +76,7 @@ public final class WorkerStatic {
     // ========================================================
 
     public WorkerStatic(int workerId) {
-        
+        INSTANCES.put(workerId, this);
         this.workerId = workerId;
         this.logger = CustomLogger.getWorkerInstance(workerId);
         this.TOTAL_MESSAGES_SENT = 0;
@@ -142,7 +147,38 @@ public final class WorkerStatic {
         valueSer.close();
         BYTES_PER_WEIGHTSMESSAGE = val.length;
     }
+    
+    // =========================================================================================================
 
+    public static String printBatchesReadSummary() {
+        long sum = 0;
+        long sum_samples = 0;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("[WorkerStatic] batchesRead per instance:\n");
+
+        for (Map.Entry<Integer, WorkerStatic> e : INSTANCES.entrySet()) {
+            int wid = e.getKey();
+            WorkerStatic ws = e.getValue();
+            int br = ws.incrementBatchesRead;
+            long sr = ws.incrementSamplesRead;
+
+            sum += br; 
+            sum_samples += sr;
+
+            sb.append("  workerId=").append(wid)
+            .append(" incrementBatchesRead=").append(br)
+            .append(" incrementSamplesRead=").append(sr)
+            .append(" tasks=").append(ws.numberOfTasks)
+            .append(" inactivePartitions=").append(ws.inactivePartitions)
+            .append('\n');
+        }
+
+        sb.append("[WorkerStatic] SUM(batchesRead = ").append(sum).append(", samplesRead = ").append(sum_samples)
+        .append(") across ").append(INSTANCES.size()).append(" instances");
+
+        return sb.toString();
+}
 }
 
 // paramTable(): =========================================================================================================

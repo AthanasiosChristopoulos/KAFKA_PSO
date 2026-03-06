@@ -19,6 +19,8 @@ public final class FilterSeverity {
         }
     }
 
+    // ===========================================================================================================================
+
     public static final class Preset {
         public final float lossMin;
         public final float lossMax;
@@ -35,26 +37,22 @@ public final class FilterSeverity {
         }
     }
 
-    // Put your “profiles” here.
-    // NOTE: “severity” meaning is your choice; I’m assuming higher severity = stricter/more aggressive filtering.
+    // ===========================================================================================================================
+
     public static Preset preset(Level level) {
         return switch (level) {
             case OFF    -> new Preset(0.0f, 0.0f, 0, 0, 0);
-
-            // Example EASY: wide-ish loss window, small debounce, relaxed monitoring
             case EASY   -> new Preset(0.15f, 0.05f, 25, 10, 40);
-
-            // Your "Medium" values (from your .env snippet)
             case MEDIUM -> new Preset(0.01f, 0.10f, 75, 15, 60);
-
-            // Your "Hard" values (from your commented .env snippet)
             case HARD   -> new Preset(0.05f, 0.15f, 75, 35, 80);
         };
     }
 
-    /** Apply severity to Config in one place (single knob). */
+    // ===========================================================================================================================
+
     public static void apply(Config cfg, Level level) {
         if (level == Level.OFF) {
+            
             cfg.FILTER_ENABLED = false;
 
             // You can set these to 0 or keep them unchanged; choose one.
@@ -65,6 +63,7 @@ public final class FilterSeverity {
             cfg.MONITORING_THRESHOLD_MAX = 0;
 
             cfg.refreshFilterEnabled();
+
             return;
         }
 

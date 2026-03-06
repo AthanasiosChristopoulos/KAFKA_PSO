@@ -93,7 +93,7 @@ public class Worker implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Waking up");
+
         try {
             runInternal();
         } catch (Throwable t) {
@@ -269,8 +269,8 @@ public class Worker implements Runnable {
         // double seconds = (t1.get() - t0) / 1_000_000_000.0;    
         double seconds = (t1.get() - t_actually_started.get()) / 1_000_000_000.0;    
         double starting_delay = (t_actually_started.get() - t0) / 1_000_000_000.0;    
-        System.out.println("[Worker %d] t_actually_started: " + t_actually_started);
-        System.out.println("[Worker %d] t0: " + t0);
+        // System.out.printf("[Worker %d] t_actually_started: " + t_actually_started, workerId);
+        // System.out.printf("[Worker %d] t0: " + t0, workerId);
         System.out.printf("[Worker %d] Elapsed time: %.3f seconds, starting delay: %.3f, exiting run()%n", workerId, seconds, starting_delay);
         float bestAcc = ws.stats.getBestAccuracy();
         float bestLoss = ws.stats.getPBestLoss();   
