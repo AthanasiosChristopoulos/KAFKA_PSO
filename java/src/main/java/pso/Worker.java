@@ -106,6 +106,8 @@ public class Worker implements Runnable {
     // ==========================================================================================
 
     private void runInternal() throws Exception {
+        
+        t_actually_started.set(System.nanoTime());
 
         this.ws = new WorkerStatic(workerId);
         System.out.println("[Worker " + workerId + "] with RUN_ID = " + RUN_ID + ", Thread: " + Thread.currentThread().getName());

@@ -51,14 +51,14 @@ public class Simulation {
         // =================================================================================================
         // Restart the Kafka Parititions
         
-        List<String> topics;
-        if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-            topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-        } else {
-            topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-        }
+        // List<String> topics;
+        // if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+        //     topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+        // } else {
+        //     topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+        // }
 
-        KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+        // KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
 
         // =================================================================================================
 
@@ -114,17 +114,17 @@ public class Simulation {
         // Thread.sleep(100000000);     // 1277 MiB are loaded into VRAM before the workers even start. This is so all the CUDA/cuDNN code can be brought to memory
                                         // 1GB of allocations for Buffers
                                         
-        for (int i = 0; i < numWorkers; i++) {
-            Worker worker = new Worker(i, null);
-            Thread workerThread = new Thread(worker, "worker-thread-" + i);
-            workerThread.start();
-            workerThreads.add(workerThread);
-            System.out.println("Started worker thread " + i);
-        }
+        // for (int i = 0; i < numWorkers; i++) {
+        //     Worker worker = new Worker(i, null);
+        //     Thread workerThread = new Thread(worker, "worker-thread-" + i);
+        //     workerThread.start();
+        //     workerThreads.add(workerThread);
+        //     System.out.println("Started worker thread " + i);
+        // }
 
-        for (Thread t : workerThreads) {
-            t.join();
-        }
+        // for (Thread t : workerThreads) {
+        //     t.join();
+        // }
 
         double elapsedTimeSec = (System.nanoTime() - startNs) / 1_000_000_000.0; // 10^9, so this is converting to seconds    
         System.out.printf("============= Training is over, ElapsedTime: %.3f seconds =============%n", elapsedTimeSec);

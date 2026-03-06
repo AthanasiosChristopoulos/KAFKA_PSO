@@ -15,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from typing import Tuple, Optional
 from sklearn.datasets import load_iris as sk_load_iris
 from sklearn.preprocessing import LabelEncoder
+import time
 
 from dotenv import load_dotenv
 env_path = os.path.join("..", "java", ".env")
@@ -1721,6 +1722,8 @@ def run_wine_type():
     model = build_winequality_model(input_dim=X_train.shape[1])
 
     print("\nTraining...")
+    t0 = time.perf_counter()
+
     model.fit(
         X_train, y_train,
         validation_split=0.2,
@@ -1732,7 +1735,8 @@ def run_wine_type():
             keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=3, restore_best_weights=True),
         ]
     )
-
+    t1 = time.perf_counter()
+    print(f"fit() took {t1 - t0:.3f} seconds")
     print("\nEvaluating on test set...")
     test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
     print(f"Test loss: {test_loss:.4f}")

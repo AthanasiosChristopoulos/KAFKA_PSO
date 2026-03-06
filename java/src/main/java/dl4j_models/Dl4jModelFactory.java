@@ -53,8 +53,10 @@ public class Dl4jModelFactory {
 		Pair<PsoModel, Integer> pair = null;
 
 		if("iris".equals(DATASET)) {
-			// model = createIrisModel(workerId);
-			model = createDenseModel_1(workerId);
+			model = createIrisModel(workerId);
+			// model = createDenseModel_1(workerId);
+			model = createDenseModel_2(workerId);
+			// model = createDenseModel_3(workerId);
 
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
@@ -86,15 +88,16 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("pendigits")) {
 			// model = createPendigitsModelTanh(workerId);
-			// model = createPendigitsModelSmaller(workerId);
-			// model = createPendigitsModelSmaller_2(workerId);
 			model = createDenseModel_1(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
+			// model = createDenseModel_2(workerId);
+			// model = createDenseModel_3(workerId);
 			// model = createDenseModel_4(workerId);
 
 		} else if ("winequality".equals(DATASET)) {
-			System.out.println("NEURAL_OUTPUT: " + NEURAL_OUTPUT);
 			// model = createWineQualityModel(workerId);
-			model = createDenseModel_1(workerId);
+			// model = createDenseModel_1(workerId);
+			// model = createDenseModel_2(workerId);
+			model = createDenseModel_3(workerId);
 
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
@@ -2696,30 +2699,38 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createPendigitsModelSmaller(int workerId) {
-		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH)");
+	public static PsoModel createDenseModel_3(int workerId) {
+
+		if (printModel) System.out.println("Using createDenseModel_3");
+		Activation act = Activation.SOFTMAX;
+		LossFunctions.LossFunction loss; 
+
+		if (NEURAL_OUTPUT == 1) {
+			act = Activation.SIGMOID;
+			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
+		} else {
+			act = Activation.SOFTMAX;
+			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
+		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-				// 16 -> 64
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)     // 16
 						.nOut(64)
 						.activation(Activation.TANH)
 						.build())
-				// 64 -> 64
 				.layer(new DenseLayer.Builder()
 						.nIn(64)
 						.nOut(64)
 						.activation(Activation.TANH)
 						.build())
-				// 64 -> 10
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+				.layer(new OutputLayer.Builder(loss)
 						.nIn(64)
 						.nOut(NEURAL_OUTPUT)   // 10
-						.activation(Activation.SOFTMAX)
+						.activation(act)
 						.build())
 				.build();
 
@@ -2730,9 +2741,19 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createPendigitsModelSmaller_2(int workerId) {	// single hidden layer
-		if (printModel) System.out.println("Using PenDigits PSO-friendly Model (TANH, small)");
+	public static PsoModel createDenseModel_2(int workerId) {	// single hidden layer
+		if (printModel) System.out.println("Using createDenseModel_2");
 
+		Activation act = Activation.SOFTMAX;
+		LossFunctions.LossFunction loss; 
+
+		if (NEURAL_OUTPUT == 1) {
+			act = Activation.SIGMOID;
+			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
+		} else {
+			act = Activation.SOFTMAX;
+			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
+		}
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
@@ -2742,10 +2763,10 @@ public class Dl4jModelFactory {
 						.nOut(32)
 						.activation(Activation.TANH)
 						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+				.layer(new OutputLayer.Builder(loss)
 						.nIn(32)
 						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SOFTMAX)
+						.activation(act)
 						.build())
 				.build();
 
