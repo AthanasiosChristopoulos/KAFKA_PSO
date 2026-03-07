@@ -1489,3 +1489,24 @@ sudo apt install -y python3.11 python3.11-venv python3.11-dev
 
 source ~/venvs/tf215/bin/activate
 ```
+
+# Prediction Models ===============================================================================
+		
+    - ts => last synchronization happened at time
+    - After time ts (synchronization) sites keep receiving updates locally at time t => vi(t).
+
+    - Static:
+        - μεχρι τωρα κανω το static οποτε στελνω γενικα οταν αλλαζει το pBest
+
+    - Linear Growth:
+        - υποθετω οτι το pBest μου αλλαζει με formula με τον χρονο / round
+        - (t/ts) * vi(ts)	// ts = 15 (τελευταιο round που σταλθηκε pBest)
+        - Πχ: t = 20, ts = 15 (20/15) * vi(15) (το vi(15) ειναι το pBest που ειχα)
+        - εχεις 20 Workers. Ο καθεενας χρησιμοποιει ως pBest για ολους τους Workers το vi(t) = (t/ts) * vi(ts)
+            => οταν το διαβαζεις απλως το κανεις scale, αλλα κατα τα αλλα ο ιδιος ο Worker δεν κανει τιποτα
+            => Σκεψου οτι οταν το πρωτοπερνεις εχεις vi(t) = (t/ts) * vi(ts) = vi(ts) (t == ts)
+
+        - Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
+
+    Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+    
