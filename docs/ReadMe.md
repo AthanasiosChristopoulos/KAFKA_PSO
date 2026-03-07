@@ -1494,10 +1494,18 @@ source ~/venvs/tf215/bin/activate
 		
     - ts => last synchronization happened at time
     - After time ts (synchronization) sites keep receiving updates locally at time t => vi(t).
+    - In the original geometric monitoring framework, every site measures drift relative to the last exact synchronized value.
+        => But maybe many of those changes are actually predictable.
+    
+    - Introduce local predictor vi_p(t) // the site’s prediction of what its local vector will be at time t. 
+        => The coordinator uses for his weighted averages vi_p(t) as well, to calculate the global vector e_p(t)
+        => If predictions are good vi​(t)≈vip​(t) => e_p(t)≈ve(t)
+        => This means small deviation from predicted vi​(t)
 
     - Static:
         - μεχρι τωρα κανω το static οποτε στελνω γενικα οταν αλλαζει το pBest
-
+        - Other predictors are real predictors: a predictor is defined as “good” if its better than simply assuming static prediction.
+        
     - Linear Growth:
         - υποθετω οτι το pBest μου αλλαζει με formula με τον χρονο / round
         - (t/ts) * vi(ts)	// ts = 15 (τελευταιο round που σταλθηκε pBest)
