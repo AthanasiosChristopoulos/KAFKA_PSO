@@ -135,7 +135,7 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 9;
+				int version = 1;
 
 				String filename;
 				switch (version) {
