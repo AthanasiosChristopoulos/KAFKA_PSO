@@ -35,6 +35,7 @@ public final class WorkerStatic {
     public final PsoModel model;
     public float[] flatModel;
     public float[] pBestWeights;
+    public float[] velocity;
 
     public final Stats stats;
     public final PsoUpdater psoUpdater;
@@ -74,6 +75,7 @@ public final class WorkerStatic {
     public static long BYTES_PER_WEIGHTSMESSAGE = 0;
     
     public boolean firstActive = false;
+    public volatile long simulationStartMs = 0L;
 
     // ========================================================
 
@@ -101,7 +103,9 @@ public final class WorkerStatic {
         } else {
             this.flatModel = Dl4jParamUtils.modelToFlatList(model); 
         }
-  
+
+        this.velocity = new float[this.flatModel.length];
+
         if(logger.isEnabled(2)) {
             this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
             Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);

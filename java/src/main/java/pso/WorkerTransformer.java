@@ -58,8 +58,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private CustomLogger logger;
     private final WorkerStatic ws;
         
-    private float[] velocity;
-
     private boolean printedOffset = false;
 
     private String stateStoreName;
@@ -139,6 +137,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private long predictorTsMonitoring = -1L;
     private boolean predictorInitializedMonitoring = false;
 
+    public float[] predictorRefPsoVelocityMonitoring;
+
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
@@ -154,8 +154,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + 
         " WorkerTransformer started");
-
-        this.velocity =  new float[ws.pBestWeights.length];
 
         if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
@@ -205,6 +203,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             this.TAU = (float) tau;
 
             logger.log("MAX_UPDATES = " + MAX_UPDATES + ", TAU = " + TAU);
+
+            this.predictorRefPsoVelocityMonitoring = new float[ws.flatModel.length];
         }
     }
 
@@ -241,8 +241,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         //     });
         // }
     }
-
     //=========================================================================================================================
+    // Prediction Model Stuff
+    //=========================================================================================================================
+
     private double rmsDiff(float[] a, float[] b) {
         if (a == null || b == null || a.length != b.length) return Double.NaN;
 
@@ -271,17 +273,46 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
     //=========================================================================================================================
 
+    private float[] estimateVelocity(float[] newer, long newerMs, float[] older, long olderMs) {
+        float[] vel = new float[newer.length];
+        long dtMs = Math.max(1L, newerMs - olderMs);
+
+        for (int i = 0; i < newer.length; i++) {
+            vel[i] = (float) (((double) newer[i] - (double) older[i]) / (double) dtMs);
+        }
+        return vel;
+    }
+    //=========================================================================================================================
+
     private long currentSimulationTimeMs() {
         long now = java.time.Instant.now().toEpochMilli();
-        long start = Simulation.getSimulationStartMs();
-        long simT = now - start;
+        // long start = Simulation.getSimulationStartMs();
+
+        long simT = now - ws.simulationStartMs;
         return Math.max(simT, 1L);
+    }
+    
+    //=========================================================================================================================
+
+    private float[] psoVelocityPredict(float[] refWeights, float[] refVelocity) {
+        float[] pred = new float[refWeights.length];
+
+        if (refVelocity == null || refVelocity.length != refWeights.length) {
+            System.arraycopy(refWeights, 0, pred, 0, refWeights.length);
+            return pred;
+        }
+
+        for (int i = 0; i < refWeights.length; i++) {
+            pred[i] = refWeights[i] + refVelocity[i];
+        }
+
+        return pred;
     }
     //=========================================================================================================================
 
     private void compareStaticVsLinearForPBest(float[] currentPBest) {
-        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
-        long t = currentSimulationTimeMs();
+        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        // long t = currentSimulationTimeMs();
         
         if (!predictorInitializedPBest) {
             predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
@@ -318,16 +349,19 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
         predictorTsPBest = t;
     }
+
     //=========================================================================================================================
 
     private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
-        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
-        long t = currentSimulationTimeMs();
+        
+        long t = Math.max(1L, (long) ws.countForwardPasses + 1L); 
+        // long t = currentSimulationTimeMs();
 
         if (!predictorInitializedMonitoring) {
             predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
             predictorTsMonitoring = t;
             predictorInitializedMonitoring = true;
+            predictorRefPsoVelocityMonitoring = (ws.velocity == null) ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
 
             if (logger.isEnabled(1)) {
                 logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + predictorTsMonitoring);
@@ -337,28 +371,38 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] staticPred = predictorRefWeightsMonitoring;
         float[] linearPred = linearGrowthPredict(predictorRefWeightsMonitoring, t, predictorTsMonitoring);
+        float[] psoVelPred = psoVelocityPredict(predictorRefWeightsMonitoring, predictorRefPsoVelocityMonitoring);
 
         double staticErr = rmsDiff(currentWeights, staticPred);
         double linearErr = rmsDiff(currentWeights, linearPred);
+        double psoVelErr = rmsDiff(currentWeights, psoVelPred);
 
-        PredictorComparisonRegistry.record(
-            PredictorComparisonRegistry.Kind.MONITORING,
-            staticErr,
-            linearErr
-        );
+        PredictorComparisonRegistry.recordMonitoring(staticErr, linearErr, psoVelErr);
 
         if (logger.isEnabled(1)) {
+            String winner;
+            double min = Math.min(staticErr, Math.min(linearErr, psoVelErr));
+            double eps = 1e-12;
+
+            if (Math.abs(staticErr - min) <= eps) winner = "STATIC";
+            else if (Math.abs(linearErr - min) <= eps) winner = "LINEAR";
+            else winner = "PSO_VELOCITY";
+
             logger.log(taskInstance +
                 ", MONITORING predictor compare: t = " + t +
                 ", ts = " + predictorTsMonitoring +
                 ", staticErr = " + staticErr +
                 ", linearErr = " + linearErr +
-                ", winner = " + (linearErr < staticErr ? "LINEAR" : (staticErr < linearErr ? "STATIC" : "TIE")));
+                ", psoVelErr = " + psoVelErr +
+                ", winner = " + winner);
         }
 
         predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
         predictorTsMonitoring = t;
+        predictorRefPsoVelocityMonitoring = (ws.velocity == null) ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
     }
+    //=========================================================================================================================
+    //=========================================================================================================================
     //=========================================================================================================================
 
     @Override
@@ -372,9 +416,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             t_actually_started.set(System.nanoTime());
             logger.log("t_actually_started: " + t_actually_started);
             logger.log("t0: " + t0);
+
+            ws.simulationStartMs = java.time.Instant.now().toEpochMilli();
+            
             ws.firstActive = true;
         }
-
 
         if (!printedOffset) {
 
@@ -451,7 +497,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             ws.improved_pBest_count++;
-            compareStaticVsLinearForPBest(ws.pBestWeights);
+            // compareStaticVsLinearForPBest(ws.pBestWeights);
 
             // if (logger.isEnabled(1)) logger.log(taskInstance + 
             //     ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
@@ -471,9 +517,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (neighborList == null || neighborList.isEmpty()) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", No neighbor pBest found; skipping social update this round.");
-                velocity = ws.psoUpdater.updateX(null, accuracy, taskInstance);
+                ws.velocity = ws.psoUpdater.updateX(null, accuracy, taskInstance);
             } else {
-                velocity = ws.psoUpdater.updateX(neighborList, accuracy, taskInstance);
+                ws.velocity = ws.psoUpdater.updateX(neighborList, accuracy, taskInstance);
             }
 
         } else {
@@ -482,7 +528,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (gBestWeights == null) {     // gBestWeights not yet initialized
                 gBestWeights = new float[ws.pBestWeights.length];
-                velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
+                ws.velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
 
             } else {
 
@@ -490,7 +536,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     Dl4jParamUtils.sampleFlat(gBestWeights, SAMPLING_CONSTANT) + ", gBest Accuracy: " 
                     + ws.local_gBestAccuracy + ", lastActivitySeconds: " + lastActivitySeconds);
 
-                velocity = ws.psoUpdater.updateX(ws.pBestWeights, gBestWeights, accuracy, taskInstance);
+                ws.velocity = ws.psoUpdater.updateX(ws.pBestWeights, gBestWeights, accuracy, taskInstance);
 
             }
         }
@@ -569,6 +615,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
+            
             compareStaticVsLinearForMonitoring(snapshot);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
@@ -585,9 +632,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         
         if (logger.isEnabled(0)) logger.log(taskInstance + 
                 ", Time: " + lastActivitySeconds + ", with accuracy: " + accuracy +
-                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) + 
+                ", with loss: " + loss + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(ws.velocity, 100) + 
                 ", updated Model to: " + Dl4jParamUtils.sampleFlat(ws.flatModel, SAMPLING_CONSTANT) +
-                ", with Velocities: " + Dl4jParamUtils.sampleFlat(velocity, SAMPLING_CONSTANT) +
+                ", with Velocities: " + Dl4jParamUtils.sampleFlat(ws.velocity, SAMPLING_CONSTANT) +
                 ", loss_threshold: " + loss_threshold + 
                 ", monitoring_threshold: " + monitoring_threshold);  
         // * 100 is for the user, just scale it upwards 
@@ -1027,12 +1074,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if(verbose) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + " dist = " + String.format("%.4f", dist)
                         + " radius = " + Dl4jParamUtils.round((float) radius, 4)
-                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
+                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(ws.velocity, 100) 
                         + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
 
                 System.out.println("[Worker " + workerId + "] Dist = " + String.format("%.4f", dist)
                         + ", Radius = " + Dl4jParamUtils.round((float) radius, 4)
-                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(velocity, 100) 
+                        + ", with velocity (magnitude): " + Dl4jParamUtils.rmsScaled(ws.velocity, 100) 
                         + " => " + (converged ? "CONVERGED" : "NOT_CONVERGED"));
             }
 

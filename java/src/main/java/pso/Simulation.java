@@ -50,6 +50,7 @@ public class Simulation {
     public static void main(String[] args) throws Exception {
         System.out.println("OK Running");
         simulationStartMs = java.time.Instant.now().toEpochMilli();
+        System.out.println("Starting simulation at: " + simulationStartMs);
         // =================================================================================================
         // Restart the Kafka Parititions
         

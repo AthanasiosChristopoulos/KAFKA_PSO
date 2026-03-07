@@ -1540,8 +1540,21 @@ source ~/venvs/tf215/bin/activate
         - attempt to capture both the scaling and directional change that vi(t) may undertake
         - veli is info passed from the worker to the coordinator
         - It is easy to see that the flexibility provided by the VA predictor comes at the cost of the transmission of veli (along with vi(t)) during each synchronization
+        - How it works:
+            - start from the last reference vector 𝑣𝑖(𝑡𝑠) 
+            - move it forward using an estimated velocity (veli)
+            - optionally curve it using estimated acceleration (acceli) 
+                => estimated rate of change of the velocity
+        
+        - veli calculation (withing time window):
+            - the oldest vector in the window is 𝑣𝑖(𝑡𝑎) 
+            - the newest/current is 𝑣𝑖(𝑡𝑏) 
+            - then estimate: vel 𝑖 ≈ (𝑣𝑖(𝑡𝑏) − 𝑣𝑖(𝑡𝑎))/(𝑡𝑏 − 𝑡𝑎) ​
 
-
+        - How i should define VA Prediction for PSO:
+            - x^vel​(t) = x(ts​) + Δt * v(ts​)
+            - Δt = number of PSO updates since reference (Δt=t−ts​)
+            
     - Reasons why Prediction Models are useless in this case:
         - no sync protocol
             => t / ts needs to be time defined, otherwise wont work.
@@ -1549,5 +1562,6 @@ source ~/venvs/tf215/bin/activate
 
         - current weights is basically unpredictable, because velocity changes all the time
         - pBest is by definition unpredictable. It doesnt just depend on the velocity, but it depends on the particles evaluation 
+            => pBest changes only on improvements, so it is jumpy and irregular
             => pBest should probably considered static
-        - 
+
