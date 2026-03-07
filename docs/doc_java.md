@@ -115,7 +115,7 @@ probs.data().asFloat();             // this one overwrites memory
 
 
 ## Misc ===============================================================
-
+1)
 nanoTime() is guaranteed to:
 
 ✔ always increase
@@ -126,3 +126,25 @@ long elapsed = t1 - t0;
 This makes it ideal for performance measurement.
 
 System.nanoTime => 324234234234234 no meaning number
+
+2)
+
+AtomicLong is a thread-safe long counter from java.util.concurrent.atomic.
+It lets multiple threads update the same number safely without using synchronized or locks.
+
+Normally: 
+counter++ is actually three operations:
+    read value
+    add 1
+    write value
+Exampl how it could go wrong: 
+    Thread A reads 5
+    Thread B reads 5
+    Thread A writes 6
+    Thread B writes 6
+
+Instead, AtomicLong performs the operation atomically (in one CPU instruction)
+
+AtomicLong counter = new AtomicLong(0);
+counter.incrementAndGet();  // Now multiple threads can safely update it.
+long value = totalComparisons.get();    // Just reading the value

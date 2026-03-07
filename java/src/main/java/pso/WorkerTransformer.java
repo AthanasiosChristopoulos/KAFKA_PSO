@@ -129,7 +129,16 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
     private float loss_threshold;
 
-    
+    // Predictor comparison experiment: pBest ===================================
+    private float[] predictorRefWeightsPBest = null;
+    private long predictorTsPBest = -1L;
+    private boolean predictorInitializedPBest = false;
+
+    // Predictor comparison experiment: monitoring/current_weights ================
+    private float[] predictorRefWeightsMonitoring = null;
+    private long predictorTsMonitoring = -1L;
+    private boolean predictorInitializedMonitoring = false;
+
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
@@ -234,6 +243,113 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
+    private double rmsDiff(float[] a, float[] b) {
+        if (a == null || b == null || a.length != b.length) return Double.NaN;
+
+        double sumSq = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            double d = (double) a[i] - (double) b[i];
+            sumSq += d * d;
+        }
+        return Math.sqrt(sumSq / a.length);
+    }
+    //=========================================================================================================================
+
+    private float[] linearGrowthPredict(float[] ref, long t, long ts) {
+        float[] pred = new float[ref.length];
+
+        if (ts <= 0) {
+            System.arraycopy(ref, 0, pred, 0, ref.length);
+            return pred;
+        }
+
+        double scale = (double) t / (double) ts;
+        for (int i = 0; i < ref.length; i++) {
+            pred[i] = (float) (scale * ref[i]);
+        }
+        return pred;
+    }
+    //=========================================================================================================================
+
+    private void compareStaticVsLinearForPBest(float[] currentPBest) {
+        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+
+        if (!predictorInitializedPBest) {
+            predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
+            predictorTsPBest = t;
+            predictorInitializedPBest = true;
+
+            if (logger.isEnabled(1)) {
+                logger.log(taskInstance + ", PBEST predictor baseline initialized at t_s = " + predictorTsPBest);
+            }
+            return;
+        }
+
+        float[] staticPred = predictorRefWeightsPBest;
+        float[] linearPred = linearGrowthPredict(predictorRefWeightsPBest, t, predictorTsPBest);
+
+        double staticErr = rmsDiff(currentPBest, staticPred);
+        double linearErr = rmsDiff(currentPBest, linearPred);
+
+        state.PredictorComparisonRegistry.record(
+            state.PredictorComparisonRegistry.Kind.PBEST,
+            staticErr,
+            linearErr
+        );
+
+        if (logger.isEnabled(1)) {
+            logger.log(taskInstance +
+                ", PBEST predictor compare: t = " + t +
+                ", ts = " + predictorTsPBest +
+                ", staticErr = " + staticErr +
+                ", linearErr = " + linearErr +
+                ", winner = " + (linearErr < staticErr ? "LINEAR" : (staticErr < linearErr ? "STATIC" : "TIE")));
+        }
+
+        predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
+        predictorTsPBest = t;
+    }
+    //=========================================================================================================================
+
+    private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
+        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+
+        if (!predictorInitializedMonitoring) {
+            predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
+            predictorTsMonitoring = t;
+            predictorInitializedMonitoring = true;
+
+            if (logger.isEnabled(1)) {
+                logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + predictorTsMonitoring);
+            }
+            return;
+        }
+
+        float[] staticPred = predictorRefWeightsMonitoring;
+        float[] linearPred = linearGrowthPredict(predictorRefWeightsMonitoring, t, predictorTsMonitoring);
+
+        double staticErr = rmsDiff(currentWeights, staticPred);
+        double linearErr = rmsDiff(currentWeights, linearPred);
+
+        state.PredictorComparisonRegistry.record(
+            state.PredictorComparisonRegistry.Kind.MONITORING,
+            staticErr,
+            linearErr
+        );
+
+        if (logger.isEnabled(1)) {
+            logger.log(taskInstance +
+                ", MONITORING predictor compare: t = " + t +
+                ", ts = " + predictorTsMonitoring +
+                ", staticErr = " + staticErr +
+                ", linearErr = " + linearErr +
+                ", winner = " + (linearErr < staticErr ? "LINEAR" : (staticErr < linearErr ? "STATIC" : "TIE")));
+        }
+
+        predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
+        predictorTsMonitoring = t;
+    }
+    //=========================================================================================================================
 
     @Override
     public KeyValue<String, WeightsMessage> transform(String key, DataMessage value) {
@@ -325,6 +441,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             ws.improved_pBest_count++;
+            compareStaticVsLinearForPBest(ws.pBestWeights);
 
             // if (logger.isEnabled(1)) logger.log(taskInstance + 
             //     ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
@@ -442,6 +559,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             String msgIndex = java.util.UUID.randomUUID().toString();
 
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
+            compareStaticVsLinearForMonitoring(snapshot);
 
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
             
@@ -1018,8 +1136,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(ws.printedReport == false) {
 
+            
             if (logger.isEnabled(2)) logger.log("Opening Report ============================================================");
-
+            System.out.println(PredictorComparisonRegistry.summary());
+            
             checkConvergence(false, true);
 
             if(countForwardPass != 0) {

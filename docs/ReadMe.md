@@ -1492,8 +1492,16 @@ source ~/venvs/tf215/bin/activate
 
 # Prediction Models ===============================================================================
 		
-    - ts => last synchronization happened at time
+    - 𝑡s: when the coordinator last collected exact vectors from all sites 𝑡 
+    - t: the current moment when a site is evaluating whether it should communicate
     - After time ts (synchronization) sites keep receiving updates locally at time t => vi(t).
+
+    - We are tracking vi(t), which is the sites / particles current position. This can only influnce current_weights communication, not pBest communication (since that is unpredictable).
+
+    - In my case:
+        - System.nanoTime(): monotonic local timer, not comparable across machines
+            => numbers that only mean something when compared to each other in the same process
+
     - In the original geometric monitoring framework, every site measures drift relative to the last exact synchronized value.
         => But maybe many of those changes are actually predictable.
     
@@ -1501,14 +1509,23 @@ source ~/venvs/tf215/bin/activate
         => The coordinator uses for his weighted averages vi_p(t) as well, to calculate the global vector e_p(t)
         => If predictions are good vi​(t)≈vip​(t) => e_p(t)≈ve(t)
         => This means small deviation from predicted vi​(t)
-
+    
     - Static:
+        - A site holds its own prediction: The simplest guess a site may take regarding the evolution of its local measurements vector is that its coordinates will remain unchanged with respect to the values they possessed in the last synchronization:
+            => This prediction is also executed in the coordinator
+        - requires no additional information to be transmitted upon a synchronization
         - μεχρι τωρα κανω το static οποτε στελνω γενικα οταν αλλαζει το pBest
         - Other predictors are real predictors: a predictor is defined as “good” if its better than simply assuming static prediction.
-        
+            => If ∥vi​(t)−vip​(t)∥≤∥vi​(t)−vi​(ts​)∥, then good predictor
+
+        - The static predictor may be a good choice only in settings where the evolution of the values in each local measurements vector is unpredictable, or local measurements vectors change rarely.
+
     - Linear Growth:
         - υποθετω οτι το pBest μου αλλαζει με formula με τον χρονο / round
         - (t/ts) * vi(ts)	// ts = 15 (τελευταιο round που σταλθηκε pBest)
+        - requires no additional information to be transmitted upon a synchronization
+        - We can deduce that the linear growth predictor is built on the assumption that vi(t) vectors evolve, but that their evolution involves no direction alterations.
+
         - Πχ: t = 20, ts = 15 (20/15) * vi(15) (το vi(15) ειναι το pBest που ειχα)
         - εχεις 20 Workers. Ο καθεενας χρησιμοποιει ως pBest για ολους τους Workers το vi(t) = (t/ts) * vi(ts)
             => οταν το διαβαζεις απλως το κανεις scale, αλλα κατα τα αλλα ο ιδιος ο Worker δεν κανει τιποτα
@@ -1516,5 +1533,18 @@ source ~/venvs/tf215/bin/activate
 
         - Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
 
-    Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+        - Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
     
+    - The Velocity/Acceleration Predictor:
+        - vi_p(t) = vi(ts) + (t − ts) * veli + (t − ts)^2 * accel
+        - attempt to capture both the scaling and directional change that vi(t) may undertake
+        - veli is info passed from the worker to the coordinator
+        - It is easy to see that the flexibility provided by the VA predictor comes at the cost of the transmission of veli (along with vi(t)) during each synchronization
+
+
+    - Reasons why Prediction Models are useless in this case:
+        - no sync protocol
+        - current weights is basically unpredictable, because velocity changes all the time
+        - pBest is by definition unpredictable. It doesnt just depend on the velocity, but it depends on the particles evaluation 
+            => pBest should probably considered static
+        - 
