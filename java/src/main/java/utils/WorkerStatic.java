@@ -77,6 +77,24 @@ public final class WorkerStatic {
     public boolean firstActive = false;
     public volatile long simulationStartMs = 0L;
 
+    // Predictor Stuff ==========================================================
+    // Predictor comparison experiment: pBest ===================================
+
+    public float[] predictorRefWeightsPBest = null;
+    public long predictorTsPBest = -1L;
+    public boolean predictorInitializedPBest = false;
+
+    // Predictor comparison experiment: monitoring/current_weights ================
+    public float[] predictorRefWeightsMonitoring = null;
+    public long predictorTsMonitoring = -1L;
+    public boolean predictorInitializedMonitoring = false;
+
+    public float[] predictorRefPsoVelocityMonitoring;
+
+    public TimedWeightsSnapshot monPrev1 = null;   // most recent previous monitoring snapshot
+    public TimedWeightsSnapshot monPrev2 = null;   // one before that
+    public TimedWeightsSnapshot monPrev3 = null;   // one before that
+    
     // ========================================================
 
     public WorkerStatic(int workerId) {

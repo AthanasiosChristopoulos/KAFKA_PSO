@@ -127,18 +127,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
     private float loss_threshold;
 
-    // Predictor comparison experiment: pBest ===================================
-    private float[] predictorRefWeightsPBest = null;
-    private long predictorTsPBest = -1L;
-    private boolean predictorInitializedPBest = false;
-
-    // Predictor comparison experiment: monitoring/current_weights ================
-    private float[] predictorRefWeightsMonitoring = null;
-    private long predictorTsMonitoring = -1L;
-    private boolean predictorInitializedMonitoring = false;
-
-    public float[] predictorRefPsoVelocityMonitoring;
-
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
@@ -204,7 +192,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             logger.log("MAX_UPDATES = " + MAX_UPDATES + ", TAU = " + TAU);
 
-            this.predictorRefPsoVelocityMonitoring = new float[ws.flatModel.length];
+            this.ws.predictorRefPsoVelocityMonitoring = new float[ws.flatModel.length];
         }
     }
 
@@ -282,6 +270,52 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         return vel;
     }
+
+    //=========================================================================================================================
+
+    private float[] estimateAcceleration(float[] velNew, long tNew, float[] velOld, long tOld) {
+        float[] acc = new float[velNew.length];
+        long dtMs = Math.max(1L, tNew - tOld);
+
+        for (int i = 0; i < velNew.length; i++) {
+            acc[i] = (float) (((double) velNew[i] - (double) velOld[i]) / (double) dtMs);
+        }
+        return acc;
+    }
+
+    //=========================================================================================================================
+
+    private float[] velocityAccelerationPredict(float[] refWeights, long refTimeMs, float[] vel, float[] acc, long nowMs) {
+
+        float[] pred = new float[refWeights.length];
+        long dt = Math.max(0L, nowMs - refTimeMs);
+
+        for (int i = 0; i < refWeights.length; i++) {
+            pred[i] = (float) (
+                (double) refWeights[i]
+                + (double) dt * (double) vel[i]
+                + (double) dt * (double) dt * (double) acc[i]
+            );
+        }
+
+        return pred;
+    }
+
+    //=========================================================================================================================
+
+    private float[] observedVelocityPredict(float[] refWeights, long refTimeMs, float[] vel,long nowMs) {
+
+        float[] pred = new float[refWeights.length];
+        long dt = Math.max(0L, nowMs - refTimeMs);
+
+        for (int i = 0; i < refWeights.length; i++) {
+            pred[i] = (float) (
+                (double) refWeights[i] + (double) dt * (double) vel[i]
+            );
+        }
+
+        return pred;
+    }
     //=========================================================================================================================
 
     private long currentSimulationTimeMs() {
@@ -291,10 +325,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         long simT = now - ws.simulationStartMs;
         return Math.max(simT, 1L);
     }
-    
+
     //=========================================================================================================================
 
-    private float[] psoVelocityPredict(float[] refWeights, float[] refVelocity) {
+    private float[] psoVelocityPredict(float[] refWeights, float[] refVelocity, long t, long ts) {
+
         float[] pred = new float[refWeights.length];
 
         if (refVelocity == null || refVelocity.length != refWeights.length) {
@@ -302,31 +337,34 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             return pred;
         }
 
+        long dt = Math.max(0L, t - ts);
+
         for (int i = 0; i < refWeights.length; i++) {
-            pred[i] = refWeights[i] + refVelocity[i];
+            pred[i] = (float) (refWeights[i] + dt * refVelocity[i]);
         }
 
         return pred;
     }
+
     //=========================================================================================================================
 
     private void compareStaticVsLinearForPBest(float[] currentPBest) {
         long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
         // long t = currentSimulationTimeMs();
         
-        if (!predictorInitializedPBest) {
-            predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
-            predictorTsPBest = t;
-            predictorInitializedPBest = true;
+        if (!ws.predictorInitializedPBest) {
+            ws.predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
+            ws.predictorTsPBest = t;
+            ws.predictorInitializedPBest = true;
 
             if (logger.isEnabled(1)) {
-                logger.log(taskInstance + ", PBEST predictor baseline initialized at t_s = " + predictorTsPBest);
+                logger.log(taskInstance + ", PBEST predictor baseline initialized at t_s = " + ws.predictorTsPBest);
             }
             return;
         }
 
-        float[] staticPred = predictorRefWeightsPBest;
-        float[] linearPred = linearGrowthPredict(predictorRefWeightsPBest, t, predictorTsPBest);
+        float[] staticPred = ws.predictorRefWeightsPBest;
+        float[] linearPred = linearGrowthPredict(ws.predictorRefWeightsPBest, t, ws.predictorTsPBest);
 
         double staticErr = rmsDiff(currentPBest, staticPred);
         double linearErr = rmsDiff(currentPBest, linearPred);
@@ -340,67 +378,107 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (logger.isEnabled(1)) {
             logger.log(taskInstance +
                 ", PBEST predictor compare: t = " + t +
-                ", ts = " + predictorTsPBest +
+                ", ts = " + ws.predictorTsPBest +
                 ", staticErr = " + staticErr +
                 ", linearErr = " + linearErr +
                 ", winner = " + (linearErr < staticErr ? "LINEAR" : (staticErr < linearErr ? "STATIC" : "TIE")));
         }
 
-        predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
-        predictorTsPBest = t;
+        ws.predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
+        ws.predictorTsPBest = t;
     }
 
     //=========================================================================================================================
 
     private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
-        
-        long t = Math.max(1L, (long) ws.countForwardPasses + 1L); 
+        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
         // long t = currentSimulationTimeMs();
 
-        if (!predictorInitializedMonitoring) {
-            predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
-            predictorTsMonitoring = t;
-            predictorInitializedMonitoring = true;
-            predictorRefPsoVelocityMonitoring = (ws.velocity == null) ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
+        // current snapshot for future history update
+        TimedWeightsSnapshot currentSnap = new TimedWeightsSnapshot(Arrays.copyOf(currentWeights, currentWeights.length), t);
+
+        // first ever monitoring snapshot -> only initialize
+        if (!ws.predictorInitializedMonitoring) {
+            ws.predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
+            ws.predictorTsMonitoring = t;
+            ws.predictorInitializedMonitoring = true;
+            ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
+                ? null
+                : Arrays.copyOf(ws.velocity, ws.velocity.length);
+
+            ws.monPrev1 = currentSnap;
 
             if (logger.isEnabled(1)) {
-                logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + predictorTsMonitoring);
+                logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + ws.predictorTsMonitoring);
             }
             return;
         }
 
-        float[] staticPred = predictorRefWeightsMonitoring;
-        float[] linearPred = linearGrowthPredict(predictorRefWeightsMonitoring, t, predictorTsMonitoring);
-        float[] psoVelPred = psoVelocityPredict(predictorRefWeightsMonitoring, predictorRefPsoVelocityMonitoring);
+        float[] staticPred = ws.predictorRefWeightsMonitoring;
+        float[] linearPred = linearGrowthPredict(ws.predictorRefWeightsMonitoring, t, ws.predictorTsMonitoring);
+        float[] psoVelPred = psoVelocityPredict(ws.predictorRefWeightsMonitoring, ws.predictorRefPsoVelocityMonitoring, t, ws.predictorTsMonitoring);
 
         double staticErr = rmsDiff(currentWeights, staticPred);
         double linearErr = rmsDiff(currentWeights, linearPred);
         double psoVelErr = rmsDiff(currentWeights, psoVelPred);
 
-        PredictorComparisonRegistry.recordMonitoring(staticErr, linearErr, psoVelErr);
+        // defaults when not enough history exists
+        double observedVelErr = Double.POSITIVE_INFINITY;
+        double vaErr = Double.POSITIVE_INFINITY;
+
+        if (ws.monPrev1 != null && ws.monPrev2 != null) {
+            logger.log("ws.monPrev1 and ws.monPrev2 arent null");
+
+            float[] velObserved = estimateVelocity(ws.monPrev1.weights, ws.monPrev1.timeMs, ws.monPrev2.weights, ws.monPrev2.timeMs);
+            float[] observedVelPred = observedVelocityPredict(ws.monPrev1.weights, ws.monPrev1.timeMs, velObserved, t);
+
+            observedVelErr = rmsDiff(currentWeights, observedVelPred);
+
+            if (ws.monPrev3 != null) {
+                float[] velPrev = estimateVelocity(ws.monPrev2.weights, ws.monPrev2.timeMs, ws.monPrev3.weights, ws.monPrev3.timeMs);
+
+                float[] accObserved = estimateAcceleration(velObserved, ws.monPrev1.timeMs, velPrev, ws.monPrev2.timeMs);
+
+                float[] vaPred = velocityAccelerationPredict(ws.monPrev1.weights, ws.monPrev1.timeMs,velObserved, accObserved, t);
+
+                vaErr = rmsDiff(currentWeights, vaPred);
+            }
+        } else {
+            logger.log("ws.monPrev1 and ws.monPrev2 are null");
+        }
+
+        PredictorComparisonRegistry.recordMonitoring(
+            staticErr,
+            linearErr,
+            psoVelErr,
+            observedVelErr,
+            vaErr
+        );
 
         if (logger.isEnabled(1)) {
-            String winner;
-            double min = Math.min(staticErr, Math.min(linearErr, psoVelErr));
-            double eps = 1e-12;
-
-            if (Math.abs(staticErr - min) <= eps) winner = "STATIC";
-            else if (Math.abs(linearErr - min) <= eps) winner = "LINEAR";
-            else winner = "PSO_VELOCITY";
-
             logger.log(taskInstance +
                 ", MONITORING predictor compare: t = " + t +
-                ", ts = " + predictorTsMonitoring +
+                ", ts = " + ws.predictorTsMonitoring +
                 ", staticErr = " + staticErr +
                 ", linearErr = " + linearErr +
                 ", psoVelErr = " + psoVelErr +
-                ", winner = " + winner);
+                ", observedVelErr = " + observedVelErr +
+                ", vaErr = " + vaErr);
         }
 
-        predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
-        predictorTsMonitoring = t;
-        predictorRefPsoVelocityMonitoring = (ws.velocity == null) ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
+        // update baseline for static/linear/pso-velocity
+        ws.predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
+        ws.predictorTsMonitoring = t;
+        ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
+            ? null
+            : Arrays.copyOf(ws.velocity, ws.velocity.length);
+
+        // shift snapshot history for observed velocity / VA
+        ws.monPrev3 = ws.monPrev2;
+        ws.monPrev2 = ws.monPrev1;
+        ws.monPrev1 = currentSnap;
     }
+
     //=========================================================================================================================
     //=========================================================================================================================
     //=========================================================================================================================
