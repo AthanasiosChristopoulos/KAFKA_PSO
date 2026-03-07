@@ -75,8 +75,8 @@ public class Experimentation {
             // List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
-            // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
-            List<Integer> workersList = List.of(1, 16);
+            List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
+            // List<Integer> workersList = List.of(1, 16);
             // ========================================================================
             // Scenario with high workers:
             

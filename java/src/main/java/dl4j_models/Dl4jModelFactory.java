@@ -53,9 +53,9 @@ public class Dl4jModelFactory {
 		Pair<PsoModel, Integer> pair = null;
 
 		if("iris".equals(DATASET)) {
-			model = createIrisModel(workerId);
-			// model = createDenseModel_1(workerId);
-			model = createDenseModel_2(workerId);
+			// model = createIrisModel(workerId);
+			model = createDenseModel_1(workerId);
+			// model = createDenseModel_2(workerId);
 			// model = createDenseModel_3(workerId);
 
 		} else if ("wine".equals(DATASET)) {
