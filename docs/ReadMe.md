@@ -1544,6 +1544,9 @@ source ~/venvs/tf215/bin/activate
 
     - Reasons why Prediction Models are useless in this case:
         - no sync protocol
+            => t / ts needs to be time defined, otherwise wont work.
+            => this is bad in this case => (t - ts) * veli. This should be the integer number of updates that have happend since sync, but in my async protocol there is no way (even considering the time) for my workers to actually predict how many updates the other workers have done.
+
         - current weights is basically unpredictable, because velocity changes all the time
         - pBest is by definition unpredictable. It doesnt just depend on the velocity, but it depends on the particles evaluation 
             => pBest should probably considered static

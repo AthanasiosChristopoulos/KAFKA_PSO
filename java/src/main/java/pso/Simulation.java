@@ -45,9 +45,11 @@ public class Simulation {
 
     private static String bootstrap = cfg.KAFKA_HOST;
     private static volatile long startNs = 0L;
+    private static volatile long simulationStartMs = 0L;
 
     public static void main(String[] args) throws Exception {
         System.out.println("OK Running");
+        simulationStartMs = java.time.Instant.now().toEpochMilli();
         // =================================================================================================
         // Restart the Kafka Parititions
         
@@ -148,6 +150,12 @@ public class Simulation {
                 }
 
             });
+    }
+
+    // ===================================================================================================
+    
+    public static long getSimulationStartMs() {
+        return simulationStartMs;
     }
 
     // ===================================================================================================

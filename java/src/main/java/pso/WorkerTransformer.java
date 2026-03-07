@@ -271,9 +271,18 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
     //=========================================================================================================================
 
-    private void compareStaticVsLinearForPBest(float[] currentPBest) {
-        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+    private long currentSimulationTimeMs() {
+        long now = java.time.Instant.now().toEpochMilli();
+        long start = Simulation.getSimulationStartMs();
+        long simT = now - start;
+        return Math.max(simT, 1L);
+    }
+    //=========================================================================================================================
 
+    private void compareStaticVsLinearForPBest(float[] currentPBest) {
+        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        long t = currentSimulationTimeMs();
+        
         if (!predictorInitializedPBest) {
             predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
             predictorTsPBest = t;
@@ -291,8 +300,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         double staticErr = rmsDiff(currentPBest, staticPred);
         double linearErr = rmsDiff(currentPBest, linearPred);
 
-        state.PredictorComparisonRegistry.record(
-            state.PredictorComparisonRegistry.Kind.PBEST,
+        PredictorComparisonRegistry.record(
+            PredictorComparisonRegistry.Kind.PBEST,
             staticErr,
             linearErr
         );
@@ -312,7 +321,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
-        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        long t = currentSimulationTimeMs();
 
         if (!predictorInitializedMonitoring) {
             predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
@@ -331,8 +341,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         double staticErr = rmsDiff(currentWeights, staticPred);
         double linearErr = rmsDiff(currentWeights, linearPred);
 
-        state.PredictorComparisonRegistry.record(
-            state.PredictorComparisonRegistry.Kind.MONITORING,
+        PredictorComparisonRegistry.record(
+            PredictorComparisonRegistry.Kind.MONITORING,
             staticErr,
             linearErr
         );
