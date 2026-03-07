@@ -61,14 +61,6 @@ public class Dl4jModelFactory {
 		} else if ("wine".equals(DATASET)) {
 			model = createWineModel(workerId);
 
-		} else if ("fashion_mnist".equals(DATASET)) {
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			model = createMNIST4Cnn_New_Simpler(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST4Cnn_New(workerId);
-
 		} else if ("susy".equals(DATASET)) {
 			// model = createSUSYModel_SOFTMAX(workerId);
 			model = createSUSYModel(workerId);
@@ -140,8 +132,7 @@ public class Dl4jModelFactory {
 				String filename;
 				switch (version) {
 					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
-					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-							// protinomeno
+					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v1.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
 					case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
 					case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
 					case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
@@ -150,6 +141,7 @@ public class Dl4jModelFactory {
 					case 7 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v7.h5";
 					case 8 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
 					case 9 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+						// recomendation
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
@@ -161,6 +153,7 @@ public class Dl4jModelFactory {
 					}
 
 				} else {
+
 					switch (version) {
 						case -2 -> pair = createMNIST_CNN_PretrainedLeNet_v1(workerId);		// 0.9
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
@@ -168,7 +161,7 @@ public class Dl4jModelFactory {
 
 						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 32 * 5 * 5);
+						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
 						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 128);		// 0.89
 						case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
 						case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
@@ -192,6 +185,43 @@ public class Dl4jModelFactory {
 
 		// ======================================================================================================================	
 
+		} else if ("fashion_mnist".equals(DATASET)) {
+
+			cfg.USING_PRETRAINED_MODEL = true;
+
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			// model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNISTCnn_New_2(workerId);
+			// model = createMNISTCnn(workerId);
+			// model = createMNIST4Cnn_New(workerId);
+			
+			// pretrained =============================================================================================
+			
+			if(cfg.USING_PRETRAINED_MODEL) {
+
+				int version = 1;
+
+				String filename;
+				switch (version) {
+					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";	
+					default -> filename = "no_pretrained_file_chosen";
+				}
+				
+				if (preTrained) {
+					System.out.println("NIGGGGGGGGGGGGGGGGER");
+					switch (version) {
+						case 1 -> model = pretrainedModelMNIST(filename);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+
+				} else {
+					switch (version) {
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+				}
+			}
 		} else if (DATASET.contains("cifar")) {
 
 			// model = createCifar3Model_PSO_Simple(workerId);

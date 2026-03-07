@@ -51,6 +51,7 @@ public class Simulation {
         System.out.println("OK Running");
         simulationStartMs = java.time.Instant.now().toEpochMilli();
         System.out.println("Starting simulation at: " + simulationStartMs);
+
         // =================================================================================================
         // Restart the Kafka Parititions
         
@@ -73,7 +74,6 @@ public class Simulation {
         // System.out.println("Xmx = " + Runtime.getRuntime().maxMemory());
         // System.out.println("maxbytes = " + System.getProperty("org.bytedeco.javacpp.maxbytes"));
         // System.out.println("maxphysicalbytes = " + System.getProperty("org.bytedeco.javacpp.maxphysicalbytes"));
-
 
         // Test: =====================================================================
 

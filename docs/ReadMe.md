@@ -1510,6 +1510,9 @@ source ~/venvs/tf215/bin/activate
         => If predictions are good vi​(t)≈vip​(t) => e_p(t)≈ve(t)
         => This means small deviation from predicted vi​(t)
     
+    - Filtering Implementation:
+        Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
+    
     - Static:
         - A site holds its own prediction: The simplest guess a site may take regarding the evolution of its local measurements vector is that its coordinates will remain unchanged with respect to the values they possessed in the last synchronization:
             => This prediction is also executed in the coordinator

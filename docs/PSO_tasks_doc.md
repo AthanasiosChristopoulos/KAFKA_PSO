@@ -50,6 +50,8 @@
 						- Strict: Hard to pass the filter, LESS communication
 						- Loose: Easy to pass the filter, MORE communication
 
+	# ========================================================================================
+
 	66) We want following diagrams:
 
 		- 0) x: classical / fully_informed	| y: accuracy	=> conclusion: fully informed better
@@ -89,6 +91,7 @@
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
 		Solution_1: 
+
 			- Find a model in GD (trained in tensorflow) that doesnt perform well (below 70% on MNIST) and has no dense layer (it relies solely on Convolutional Layer)
 			- Go to DL4J / PSO and add those Layers achieving a higher accuracy
 			- The idea is that GD will create a great CNN feature extractor and PSO will be able to use it and training its own classification layer on top of it
@@ -99,12 +102,15 @@
 				=> no ImageNet models
 				
 		Solution_2:
+
 			- Find a Dataset that is similar but different to the target dataset
 			- Train the model on that dataset
 			- Transfer it to the other dataset, replacing its classification layers and using the other data + PSO to train it
 			- no ImageNet models
 
 			due to the nature of PSO this is not possible  to use ImageNet type models 
+			
+	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
 		1)
@@ -134,7 +140,7 @@
 
 	## =======================================================================================
 
-	65) non differentiable Functions, with requirements:
+	65) Non differentiable Functions, with requirements:
 		- 1) Continious, but non differentiable
 		- 2) Πρεπει να εχουν χρησιμοποιηθει σε καποιο γνωστο / οχι οτι να ναι venue (χώρος δημοσίευσης)
 			=> Να αναφερεται οτι ειναι non differentiable 
@@ -145,20 +151,6 @@
 	## =======================================================================================
 
 	69) Prediction Models:
-		
-		- Static:
-			- μεχρι τωρα κανω το static οποτε στελνω γενικα οταν αλλαζει το pBest
-
-		- Linear Growth:
-			- υποθετω οτι το pBest μου αλλαζει με formula με τον χρονο / round
-			- (t/ts) * vi(ts)	// ts = 15 (τελευταιο round που σταλθηκε pBest)
-			- Πχ: t = 20, ts = 15 (20/15) * vi(15) (το vi(15) ειναι το pBest που ειχα)
-			- εχεις 20 Workers. Ο καθεενας χρησιμοποιει ως pBest για ολους τους Workers το vi(t) = (t/ts) * vi(ts)
-				=> οταν το διαβαζεις απλως το κανεις scale, αλλα κατα τα αλλα ο ιδιος ο Worker δεν κανει τιποτα
-				=> Σκεψου οτι οταν το πρωτοπερνεις εχεις vi(t) = (t/ts) * vi(ts) = vi(ts) (t == ts)
-
-			- Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
-
 		Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
 		
 ## =======================================================================================
