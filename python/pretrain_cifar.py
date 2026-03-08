@@ -467,7 +467,8 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
     return model
 
 # ===============================================================================
-
+# Epoch 19/20
+# 352/352 - 4s - loss: 0.0053 - accuracy: 0.9998 - val_loss: 1.5402 - val_accuracy: 0.7860 - lr: 1.5625e-05 - 4s/epoch - 10ms/step
 def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
 
     model = keras.Sequential([
@@ -487,6 +488,63 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
         layers.Flatten(),
 
         layers.Dense(64, activation="relu", use_bias=True),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
+# Epoch 20/20
+# 352/352 - 5s - loss: 0.2228 - accuracy: 0.9230 - val_loss: 0.4664 - val_accuracy: 0.8574 - lr: 3.1250e-05 - 5s/epoch - 13ms/step
+def build_cifar_base_v5_1(input_shape=(32, 32, 3), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # Block 1
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
+        layers.Dropout(0.25),
+
+        # Block 2
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
+        layers.Dropout(0.30),
+
+        # Block 3
+        layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Flatten(),
+
+        layers.Dense(64, use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.Dropout(0.40),
 
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
@@ -862,7 +920,11 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
         case "v5":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5"
-
+            
+        case "v5_1":
+            model = build_cifar_base_v5_1(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v5_1"
+            
         case "v5_cifar100":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
             name_h5_file = "cifar100_base_plus_head_v5"
@@ -895,12 +957,12 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    # version = "v6"
+    version = "v5_1"
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v1_tinyimagenet"
     # version = "v1_stl10"
-    version = "v1_stl10_resnet20"
+    # version = "v1_stl10_resnet20"
     
     EPOCHS = 20
 

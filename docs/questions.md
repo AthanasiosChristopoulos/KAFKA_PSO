@@ -30,6 +30,8 @@
 				=> My pretrained model on the same dataset removing only last layer maybe more
 					=> or a lightweight model of the same size, but of a different / more generall dataset
 
+		- the 5-class NSFW dataset is actually harder than CIFAR-10
+		
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

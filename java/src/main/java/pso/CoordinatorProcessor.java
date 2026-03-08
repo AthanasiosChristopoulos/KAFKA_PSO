@@ -360,8 +360,6 @@ public void onAllWorkersReported() {
 
         return !control.isStopRequested(wid);   // if isStopRequested then dont remove it
     });
-
-    //=================================================================================
 } 
 
 //=========================================================================================================================
@@ -433,6 +431,7 @@ public void onAllWorkersReported() {
 
         if (logger.isEnabled(2)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + 
                 ", cached TEST_STORE. Total rows = " + cachedTestSet.size());
+
         for (int i = 0; i < Math.min(5, cachedTestSet.size()); i++) {
             if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", TEST[" + i + "]: " + cachedTestSet.get(i));
@@ -461,7 +460,6 @@ public void onAllWorkersReported() {
             preTrainedModel = null;
         }
         
-
         return cachedTestSet;
     }
 

@@ -238,7 +238,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 8;
+			int version = 12;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -259,12 +259,13 @@ public class Dl4jModelFactory {
 				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";			// 67%
 				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
 				case 11 -> filename = "pretrained_models_dl4j/stl10_pretrained_resnet20_v1.h5";	// 60%
+				case 12 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5_1.h5";	
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6, 7, 8, 9, 10 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7, 8, 9, 10, 12 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
@@ -278,6 +279,7 @@ public class Dl4jModelFactory {
 					case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
 					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
 						// 77% accuracy pretrained, 75% new head
+					case 12 -> pair = createCNN_1_L(workerId, filename, 64, 25); 
 
 					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename); 
 					case 11-> pair = createCifarFromResNet20Stl10(workerId, filename);
@@ -362,6 +364,46 @@ public class Dl4jModelFactory {
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
 				// .setFeatureExtractor(7)	// look at model.summary()
+				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nIn(inputDim)           // for this TF model: 128
+						.nOut(NUM_CLASSES) 
+						.activation(Activation.SOFTMAX)
+						.weightInit(WeightInit.XAVIER)
+						.biasInit(0.0)
+						.build())
+				.build();
+
+		model.init(); 
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+
+	// ============================================================================
+
+	public static Pair<PsoModel, Integer> createCNN_1_L(int workerId, String fileName, int inputDim, int freeze_index) {
+
+		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp())
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
+				.inferenceWorkspaceMode(WorkspaceMode.NONE)
+				.build();
+
+		int start = (int) new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)
+			.build().numParams();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+			.fineTuneConfiguration(ftc)
+			.removeLayersFromOutput(1)
+			.build();
+		
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc)
+				.setFeatureExtractor(freeze_index)			// look at model.summary()
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES) 

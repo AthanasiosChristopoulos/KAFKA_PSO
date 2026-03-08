@@ -237,63 +237,118 @@ val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 # ============================================================
 
-def build_custom_cnn(input_shape=(32, 32, 3), num_classes=5,  image_size=32):
+# def build_custom_cnn(input_shape=(32, 32, 3), num_classes=5,  image_size=32):
     
-    inputs = keras.Input(shape=input_shape)
+#     inputs = keras.Input(shape=input_shape)
 
-    # Block 1: 32 -> 16
-    x = layers.Conv2D(32, 3, padding="same", use_bias=False)(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     # Block 1: 32 -> 16
+#     x = layers.Conv2D(32, 3, padding="same", use_bias=False)(inputs)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(32, 3, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     x = layers.Conv2D(32, 3, padding="same", use_bias=False)(x)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+#     x = layers.MaxPooling2D(pool_size=(2, 2))(x)
 
-    # Block 2: 16 -> 8
-    x = layers.Conv2D(64, 3, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     # Block 2: 16 -> 8
+#     x = layers.Conv2D(64, 3, padding="same", use_bias=False)(x)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(64, 3, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     x = layers.Conv2D(64, 3, padding="same", use_bias=False)(x)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+#     x = layers.MaxPooling2D(pool_size=(2, 2))(x)
 
-    # Block 3: 8 -> 4
-    x = layers.Conv2D(96, 3, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     # Block 3: 8 -> 4
+#     x = layers.Conv2D(96, 3, padding="same", use_bias=False)(x)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(128, 3, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+#     x = layers.Conv2D(128, 3, padding="same", use_bias=False)(x)
+#     x = layers.BatchNormalization()(x)
+#     x = layers.ReLU()(x)
 
-    x = layers.MaxPooling2D(pool_size=(2, 2))(x)   # -> 4x4x128
+#     x = layers.MaxPooling2D(pool_size=(2, 2))(x)   # -> 4x4x128
 
-    x = layers.Flatten()(x)                        # 2048
+#     x = layers.Flatten()(x)                        # 2048
 
-    # Dense layer 1: keep this small for PSO-friendly transfer
-    x = layers.Dense(64, activation="relu")(x)
+#     # Dense layer 1: keep this small for PSO-friendly transfer
+#     x = layers.Dense(64, activation="relu")(x)
 
-    # GD-only regularization
-    x = layers.Dropout(0.30)(x)
+#     # GD-only regularization
+#     x = layers.Dropout(0.30)(x)
 
-    # Dense layer 2: final classifier
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
+#     # Dense layer 2: final classifier
+#     outputs = layers.Dense(num_classes, activation="softmax")(x)
 
-    return keras.Model(inputs, outputs, name="nsfw_cnn_flat_32_two_dense")
+#     return keras.Model(inputs, outputs, name="nsfw_cnn_flat_32_two_dense")
 
+def build_custom_cnn(input_shape=(32, 32, 3), num_classes=5, image_size=32):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # Block 1
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
+        layers.Dropout(0.25),
+
+        # Block 2
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
+        layers.Dropout(0.30),
+
+        # Block 3
+        layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        # Optional extra pooling only for 64x64 version
+        # For 32x32 this stays at 8x8x128
+        # For 64x64 it becomes 8x8 after one extra pool if desired
+        # but for your current 32x32 setup this branch does nothing
+        # and keeps the representation larger.
+        # if image_size == 64:
+        #     layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+
+        layers.Flatten(),
+
+        layers.Dense(64, use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.Dropout(0.40),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    return model
 
 model = build_custom_cnn(
     input_shape=(IMG_HEIGHT, IMG_WIDTH, 3),
     num_classes=num_classes,
     image_size=IMAGE_SIZE,
 )
-
 model.summary()
 
 # ============================================================
