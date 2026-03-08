@@ -88,8 +88,8 @@ public class Dl4jModelFactory {
 		} else if ("winequality".equals(DATASET)) {
 			// model = createWineQualityModel(workerId);
 			// model = createDenseModel_1(workerId);
-			// model = createDenseModel_2(workerId);
-			model = createDenseModel_3(workerId);
+			model = createDenseModel_2(workerId);
+			// model = createDenseModel_3(workerId);
 
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
@@ -127,7 +127,7 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 1;
+				int version = 2;
 
 				String filename;
 				switch (version) {
@@ -209,7 +209,7 @@ public class Dl4jModelFactory {
 				}
 				
 				if (preTrained) {
-					System.out.println("NIGGGGGGGGGGGGGGGGER");
+
 					switch (version) {
 						case 1 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);

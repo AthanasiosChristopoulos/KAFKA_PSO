@@ -581,12 +581,31 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         
     - Forward pass cost: CPU => 200ms / GPU => 30ms  
 
+    - Typical CNN accuracy: >99%
+        => MNIST is considered very easy.
+
 ### FASHION-MNIST: ====================================================================
 
     - Train - Samples: 60000, Features => 28 x 28 x 1, 784 features flattend
     - 10 classes, different types of clothing
+    - Typical CNN accuracy: 90–94%
+        => Fashion-MNIST was specifically created to replace MNIST because MNIST was too easy.
+    
+### Tranfer Learning thing comparison:
 
-### CIRAR10: ========================================================================
+    FMNIST -> MNIST: 75% (if we are being fair)
+    - The model learns more complex visual features from Fashion-MNIST, since its the harder dataset
+        => edges, shapes, textures, curves, object structure
+
+    - Digits are simpler shapes, so these features still work.
+        => Needed to build stronger feature extractor CNN network
+    
+    MNIST → Fashion-MNIST: 70%
+    - model on MNIST learns simpler features
+        => strokes, loops, digit curves, simple edges
+    - Fashion-MNIST requires more complex CNN features 
+
+### CIRAR10: =======================================================================
 
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)

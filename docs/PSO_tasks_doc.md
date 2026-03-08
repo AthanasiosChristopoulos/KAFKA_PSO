@@ -30,7 +30,10 @@
 
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 
+	## ===========================================================================================================================
+
 	2) Experimentation:
+
 		- Different Non - Differentiable Loss Functions
 		- Different Datasets, Different sizes: INDEPENDENT_DATA_PROCESSING true or false
 			
@@ -80,6 +83,7 @@
 	# ========================================================================================
 
 	57) PSO Tranfer Learning: This is transfer learning between GD and PSO, where last layer never touches GD, because we want non differentiable Transfer Function. Try harder on the pretrained model, in these levels:
+
 		- A) Remove more Layers
 		- B) Unfreeze / Fine-Tune base network (train the highly specific / class specific / last conv layers (paper))
 		- C) Semi train pretrained model, rather than fully train (smaller amount of epochs)
@@ -91,7 +95,6 @@
 		=> το (C) να χρησιμοποιεις pretrained μοντελλο πανω στο ιδιο dataset ειναι ξεχωριστο scenario οχι αναγκαστηκα προβλημα
 
 		Solution_1: 
-
 			- Find a model in GD (trained in tensorflow) that doesnt perform well (below 70% on MNIST) and has no dense layer (it relies solely on Convolutional Layer)
 			- Go to DL4J / PSO and add those Layers achieving a higher accuracy
 			- The idea is that GD will create a great CNN feature extractor and PSO will be able to use it and training its own classification layer on top of it
@@ -102,14 +105,13 @@
 				=> no ImageNet models
 				
 		Solution_2:
-
 			- Find a Dataset that is similar but different to the target dataset
 			- Train the model on that dataset
 			- Transfer it to the other dataset, replacing its classification layers and using the other data + PSO to train it
 			- no ImageNet models
 
 			due to the nature of PSO this is not possible  to use ImageNet type models 
-			
+
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
@@ -129,6 +131,8 @@
 			- NSFW
 			- CIFAR5 <--> CIFAR10 και CIFAR10 <--> CIFAR10 
 			- New Image Dataset of difficulty between MNIST and Cifar10
+
+	# ========================================================================================
 
 	60) Write dimplomatiki:
 
@@ -151,7 +155,7 @@
 	## =======================================================================================
 
 	69) Prediction Models:
-		Θα υλοποιησεις το Linear Growth κκαι θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+		Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
 		
 ## =======================================================================================
 
