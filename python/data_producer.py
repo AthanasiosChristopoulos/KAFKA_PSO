@@ -18,6 +18,7 @@ import pandas as pd
 import struct
 from array import array
 from sklearn.preprocessing import LabelEncoder
+from PIL import Image
 
 # ========================================================================================
 # Env + Args =============================================================================
@@ -72,7 +73,7 @@ if(DATASET == "fashion_mnist"):
 
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "mnist", "mnist4", "fashion_mnist")
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist4", "fashion_mnist")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -730,6 +731,109 @@ def load_dataset():
         evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
 
         return X_train, y_train, X_test, y_test, class_names
+
+    # ==================================================================================================
+
+    elif DATASET == "nsfw":
+
+        NSFW_CLASS_NAMES = ["drawings", "hentai", "neutral", "porn", "sexy"]
+        TEST_SAMPLES = 500
+        IMAGE_SIZE = 32
+        
+        if IMAGE_SIZE not in (32, 64):
+            raise ValueError("For NSFW, IMAGE_SIZE must be 32 or 64")
+
+        DATA_DIR = "../data/nsfw_dataset_v1"
+
+        def load_and_preprocess_image(img_path, image_size):
+            try:
+                with Image.open(img_path) as img:
+                    img = img.convert("RGB")
+                    img = img.resize((image_size, image_size), Image.BILINEAR)
+                    arr = np.asarray(img, dtype=np.float32) / 255.0
+                return arr
+            except Exception as e:
+                print(f"[WARNING] Skipping corrupt image: {img_path} -> {e}")
+                return None
+
+        X_all = []
+        y_all = []
+
+        class_names = []
+        class_to_idx = {}
+
+        # Read classes in fixed order
+        for class_idx, class_name in enumerate(NSFW_CLASS_NAMES):
+            class_dir = os.path.join(dataset_dir, class_name)
+
+            if not os.path.isdir(class_dir):
+                print(f"[WARNING] Missing class folder: {class_dir}")
+                continue
+
+            class_names.append(class_name)
+            class_to_idx[class_name] = len(class_names) - 1
+
+            filenames = sorted(os.listdir(class_dir))
+
+            for fname in filenames:
+                fpath = os.path.join(class_dir, fname)
+
+                if not os.path.isfile(fpath):
+                    continue
+
+                lower = fname.lower()
+                if not lower.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+                    continue
+
+                arr = load_and_preprocess_image(fpath, IMAGE_SIZE)
+                if arr is None:
+                    continue
+
+                X_all.append(arr)
+                y_all.append(class_to_idx[class_name])
+
+        if len(X_all) == 0:
+            raise ValueError(f"No images were loaded from dataset_dir={dataset_dir}")
+
+        X_all = np.asarray(X_all, dtype=np.float32)
+        y_all = np.asarray(y_all, dtype=np.int64)
+
+        rng = np.random.default_rng(123)
+        idx = rng.permutation(len(X_all))
+        X_all = X_all[idx]
+        y_all = y_all[idx]
+
+        if len(X_all) < TEST_SAMPLES:
+            raise ValueError(
+                f"Dataset has only {len(X_all)} samples, cannot create test set of {TEST_SAMPLES}"
+            )
+
+        X_test = X_all[:TEST_SAMPLES]
+        y_test = y_all[:TEST_SAMPLES]
+
+        X_train = X_all[TEST_SAMPLES:]
+        y_train = y_all[TEST_SAMPLES:]
+
+        print(f"Selected classes: {class_names}")
+        print(f"Image size: {IMAGE_SIZE}x{IMAGE_SIZE}")
+        print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"X_test : {X_test.shape}, y_test : {y_test.shape}")
+
+        # Optional label distribution print
+        train_counts = np.bincount(y_train, minlength=len(class_names))
+        test_counts = np.bincount(y_test, minlength=len(class_names))
+
+        print("Train distribution:")
+        for i, name in enumerate(class_names):
+            print(f"  {name:10s}: {train_counts[i]}")
+
+        print("Test distribution:")
+        for i, name in enumerate(class_names):
+            print(f"  {name:10s}: {test_counts[i]}")
+
+        evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+
+        return X_train, y_train, X_test, y_test, class_names
     
     # ==================================================================================================
     # No datasets chosen / enviromental variable is wrong
@@ -781,6 +885,7 @@ def main():
                 for index in range(len(X_train)):
                     
                     if(DATASET in CNN_DATASETS):
+                        
                         features = X_train[index].ravel().astype(np.float32)    # This is float type
                         # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
                         # .ravel() in C-order flattens the last axis fastest

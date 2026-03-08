@@ -524,6 +524,32 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar10-test --from-beginning
 
+# nsfw: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic nsfw-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic nsfw-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic nsfw-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic nsfw-input --from-beginning
+  
+# nsfw-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic nsfw-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic nsfw-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic nsfw-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic nsfw-test --from-beginning
+
 # ========================================================================
 # ========================================================================
 # ========================================================================
