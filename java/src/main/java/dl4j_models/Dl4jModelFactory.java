@@ -238,7 +238,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 12;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -260,6 +260,8 @@ public class Dl4jModelFactory {
 				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
 				case 11 -> filename = "pretrained_models_dl4j/stl10_pretrained_resnet20_v1.h5";	// 60%
 				case 12 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5_1.h5";	
+					// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
+
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 

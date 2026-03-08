@@ -610,6 +610,18 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
 
+### CIFAR 10 Alternatives: =========================================================
+
+    Difficulty scale (asceding):
+        - MNIST
+        - FASHION MNIST
+        - CIFAR10
+        - NSFW
+
+
+
+    - SVHN (Street View House Numbers) => same theme with mnist
+
 ## ================================================================================================
 ## CNNs - Image Datasets: =========================================================================
 
@@ -1401,6 +1413,7 @@ watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,te
     - Swap = “RAM overflow to disk” (very slow), if Swap and RAM is huge => problem
 
  - Kill Zombie Java processes:
+
 ```bash
 ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 25   # detect them
 sudo pkill -2 java
