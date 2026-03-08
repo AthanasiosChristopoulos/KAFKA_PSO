@@ -133,6 +133,35 @@ def load_cifar10():
 
 # ===============================================================================
 
+# def load_cifar5(classes=(0, 1, 2, 3, 4)):
+def load_cifar5(classes=(0, 1, 4, 8, 9)): # airplane, automobile, deer, ship, truck
+    
+    print(f"Loading classes {classes}")
+    
+    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+
+    y_train = y_train.astype("int64").reshape(-1)
+    y_test  = y_test.astype("int64").reshape(-1)
+
+    classes = np.array(classes, dtype=np.int64)
+
+    train_mask = np.isin(y_train, classes)
+    test_mask  = np.isin(y_test, classes)
+
+    x_train = x_train[train_mask].astype("float32") / 255.0
+    y_train = y_train[train_mask]
+
+    x_test = x_test[test_mask].astype("float32") / 255.0
+    y_test = y_test[test_mask]
+
+    remap = {int(c): i for i, c in enumerate(classes.tolist())}
+    y_train = np.vectorize(remap.get)(y_train).astype(np.int64)
+    y_test  = np.vectorize(remap.get)(y_test).astype(np.int64)
+
+    return x_train, y_train, x_test, y_test
+
+# ===============================================================================
+
 def load_cifar100():
     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar100.load_data(label_mode="fine")
 
@@ -616,6 +645,9 @@ def build_cifar_base_v5_2(input_shape=(32, 32, 3), num_classes=10):
     return model
 
 # ===============================================================================
+# Epoch 18/20
+# 352/352 - 3s - loss: 0.0043 - accuracy: 1.0000 - val_loss: 1.5378 - val_accuracy: 0.7862 - lr: 6.2500e-05 - 3s/epoch - 10ms/step
+# Overfitting in the orphan shack
 
 def build_cifar_base_v6(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
@@ -987,7 +1019,30 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
         case "v5_2":
             model = build_cifar_base_v5_2(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5_2"
+ 
+        case "v5_cifar5":
+            model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar5_base_plus_head_v5_56789"
+
+        # Epoch 20/20
+        # 176/176 - 2s - loss: 0.1005 - accuracy: 0.9660 - val_loss: 0.2971 - val_accuracy: 0.9108 - lr: 2.5000e-04 - 2s/epoch - 9ms/step  
+        case "v5_1_cifar5":
+            model = build_cifar_base_v5_1(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar5_base_plus_head_v5_1"
             
+        # Epoch 20/20
+        # 176/176 - 2s - loss: 0.0822 - accuracy: 0.9744 - val_loss: 0.1975 - val_accuracy: 0.9404 - lr: 3.1250e-05 - 2s/epoch - 12ms/step
+
+        case "v5_1_cifar5":
+            model = build_cifar_base_v5_1(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar5_base_plus_head_v5_1"
+                        
+        # Epoch 20/20
+        # 176/176 - 2s - loss: 0.3430 - accuracy: 0.9048 - val_loss: 0.3606 - val_accuracy: 0.9028 - lr: 0.0010 - 2s/epoch - 10ms/step
+        case "v5_2_cifar5":
+            model = build_cifar_base_v5_2(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar5_2_base_plus_head_v4"
+                        
         case "v5_cifar100":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
             name_h5_file = "cifar100_base_plus_head_v5"
@@ -1020,20 +1075,27 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    version = "v6"
+    # version = "v6"
     # version = "v5_cinic"
     # version = "v5_cifar100"
+    # version = "v4_cifar5"
+    version = "v5_cifar5"
+    # version = "v5_1_cifar5"
+    # version = "v5_2_cifar5"
     # version = "v1_tinyimagenet"
     # version = "v1_stl10"
     # version = "v1_stl10_resnet20"
     
+    # classes_for_cifar5 = (0, 1, 4, 8, 9)
+    classes_for_cifar5 = (5, 6, 7, 8, 9)
+
     EPOCHS = 20
 
     if "cinic" in version: # ================================================================================
 
-            train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)
-            model, name_h5_file = build_model_by_version(version, (32,32,3), 10)
-            history = model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
+        train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)
+        model, name_h5_file = build_model_by_version(version, (32,32,3), 10)
+        history = model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
             
     elif "v1_stl10_resnet20" in version:
         pretrain_stl10_resnet20_and_export(
@@ -1073,10 +1135,17 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
 
         if "cifar100" in version: 
             x_train, y_train, x_test, y_test = load_cifar100()
+            num_classes = 100
+            
+        elif "cifar5" in version:
+            x_train, y_train, x_test, y_test = load_cifar5(classes_for_cifar5)
+            num_classes = 5
+        
         else:
             x_train, y_train, x_test, y_test = load_cifar10()
+            num_classes = 10
 
-        model, name_h5_file = build_model_by_version(version, (32,32,3), 10)
+        model, name_h5_file = build_model_by_version(version, (32,32,3), num_classes)
         
         callbacks = [
             keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
@@ -1091,6 +1160,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             verbose=2,
             callbacks=callbacks
         )
+        
         test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
         print(f"\nCIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
 

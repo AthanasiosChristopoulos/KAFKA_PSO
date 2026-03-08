@@ -610,6 +610,13 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
     - Images are bigger => CIFAR is (32×32×3) more data input / heavy in comparison to  MNIST => has more channels (3x)
 
+| Model               | Accuracy |
+| ------------------- | -------- |
+| Simple CNN          | 70–80%   |
+| Regularized CNN     | 80–90%   |
+| ResNet / modern CNN | 92–96%   |
+
+
 ### CIFAR 10 Alternatives: =========================================================
 
     Difficulty scale (asceding):
@@ -617,8 +624,6 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         - FASHION MNIST
         - CIFAR10
         - NSFW
-
-
 
     - SVHN (Street View House Numbers) => same theme with mnist
 
