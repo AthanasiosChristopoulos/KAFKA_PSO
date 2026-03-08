@@ -32,7 +32,7 @@ cd /mnt/nas_drive/achristopoulos/projects/KAFKA_PSO_4
 df -h .     # Disk Storage overall
 du -sh .    # how much space your current folder uses
 du -sh ~/.m2    # Directory and what space it takes
-du -sh * .[!.]* | sort -rh
+du -sh * .[!.]* | sort -rh  # Show all of them ... hidden and normal files
 du -sh * | sort -rh     # all of them individually
 du -sh .m2 m2repo
 

@@ -12,8 +12,8 @@ from tensorflow.keras import layers
 
 DATA_DIR = "../data/nsfw_dataset_v1"    
 
-# IMAGE_SIZE = 32          # set to 64 or 32
-IMAGE_SIZE = 64          # set to 64 or 32
+IMAGE_SIZE = 32          # set to 64 or 32
+# IMAGE_SIZE = 64          # set to 64 or 32
 
 BATCH_SIZE = 32
 SEED = 123
@@ -238,6 +238,7 @@ val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 # ============================================================
 
 def build_custom_cnn(input_shape=(32, 32, 3), num_classes=5,  image_size=32):
+    
     inputs = keras.Input(shape=input_shape)
 
     # Block 1: 32 -> 16
@@ -285,6 +286,7 @@ def build_custom_cnn(input_shape=(32, 32, 3), num_classes=5,  image_size=32):
     outputs = layers.Dense(num_classes, activation="softmax")(x)
 
     return keras.Model(inputs, outputs, name="nsfw_cnn_flat_32_two_dense")
+
 
 model = build_custom_cnn(
     input_shape=(IMG_HEIGHT, IMG_WIDTH, 3),

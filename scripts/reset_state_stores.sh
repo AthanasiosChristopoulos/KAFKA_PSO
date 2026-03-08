@@ -2,22 +2,17 @@
 set -euo pipefail
 
 BROKER="broker"
-BOOTSTRAP="localhost:9092"
+BOOTSTRAP="localhost:19092"
 
 # Match either prefix
 PREFIX_REGEX="(pso-coordinator|pso-gbest)"
-SUFFIX="-gBestEmitStore-changelog"
+SUFFIX_REGEX="(-gBestEmitStore-changelog|-test-data-store-changelog)"
 
 echo "Searching for topics matching:"
-echo "  ${PREFIX_REGEX}*${SUFFIX}"
+echo "  ${PREFIX_REGEX}*${SUFFIX_REGEX}"
 echo
 
-TOPICS=$(
-  docker exec -i "$BROKER" /opt/kafka/bin/kafka-topics.sh \
-    --bootstrap-server "$BOOTSTRAP" \
-    --list \
-  | grep -E "^${PREFIX_REGEX}.*${SUFFIX}$" || true
-)
+TOPICS=$(kafka-topics.sh --bootstrap-server "$BOOTSTRAP" --list | grep -E "^${PREFIX_REGEX}.*${SUFFIX_REGEX}$" || true)
 
 if [[ -z "$TOPICS" ]]; then
   echo "No matching topics found."
@@ -30,7 +25,7 @@ echo
 
 for topic in $TOPICS; do
   echo "Deleting: $topic"
-  docker exec -i "$BROKER" /opt/kafka/bin/kafka-topics.sh \
+  kafka-topics.sh \
     --bootstrap-server "$BOOTSTRAP" \
     --delete \
     --topic "$topic" || true
