@@ -19,7 +19,13 @@ achristopoulos@polytechnix:~$  === achristopoulos@polytechnix:/home/achristopoul
 # Check also with 
 pwd
 
-pkill -9 -u achristopoulos -f java 
+# Dont use it, it will destroy kafka, because kafka is a fragile little bitch
+# pkill -9 -u achristopoulos -f java 
+
+# Run instead: 
+ps -ef | grep -i kafka | grep -v grep
+kill -TERM <kafka_pid>
+# Or just Ctrl + C
 
 ```
 
@@ -101,6 +107,18 @@ kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weig
 kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
 watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
+
+```
+
+## Restore KRaft: =====================================================
+```bash
+rm -rf /mnt/nas_drive/achristopoulos/kafka-kraft/logs/*
+cd /mnt/nas_drive/achristopoulos/kafka-local
+bin/kafka-storage.sh random-uuid  ## whatever you got from there 
+bin/kafka-storage.sh format \
+  --cluster-id <PASTE_UUID_HERE> \
+  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+
 
 ```
 

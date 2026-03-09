@@ -3,6 +3,7 @@ package dl4j_models;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.WorkspaceMode;
 import org.deeplearning4j.nn.conf.CNN2DFormat;
+import org.deeplearning4j.nn.conf.CacheMode;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -222,6 +223,7 @@ public class Dl4jModelFactory {
 					}
 				}
 			}
+
 		} else if (DATASET.contains("cifar")) {
 
 			// model = createCifar3Model_PSO_Simple(workerId);
@@ -238,7 +240,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 13;
+			int version = 14;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -262,20 +264,21 @@ public class Dl4jModelFactory {
 				case 12 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5_1.h5";	
 					// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
 				case 13 -> filename = "pretrained_models_dl4j/cifar5_base_plus_head_v5_56789.h5";	
+				case 14 -> filename = "pretrained_models_dl4j/cifar5_base_plus_head_v4_56789.h5";	
 
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6, 7, 8, 9, 10, 12, 13 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
-					case 1, 3, 10 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3, 10, 14 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 7, 13 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 						// cifar 10 trained 75%, cifar 5 optimized 90%
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
@@ -350,8 +353,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.inferenceWorkspaceMode(WorkspaceMode.NONE)
 				.build();
 
 		int start = (int) new TransferLearning.Builder(pretrained)

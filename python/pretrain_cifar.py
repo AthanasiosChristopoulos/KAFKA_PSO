@@ -1020,6 +1020,10 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             model = build_cifar_base_v5_2(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5_2"
  
+        case "v4_cifar5":
+            model = build_cifar_base_v4(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar5_base_plus_head_v4_56789"
+            
         case "v5_cifar5":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar5_base_plus_head_v5_56789"
@@ -1078,8 +1082,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v6"
     # version = "v5_cinic"
     # version = "v5_cifar100"
-    # version = "v4_cifar5"
-    version = "v5_cifar5"
+    version = "v4_cifar5"
+    # version = "v5_cifar5"
     # version = "v5_1_cifar5"
     # version = "v5_2_cifar5"
     # version = "v1_tinyimagenet"
