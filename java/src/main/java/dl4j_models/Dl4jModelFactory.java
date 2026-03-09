@@ -308,6 +308,8 @@ public class Dl4jModelFactory {
 				}
 			}
 
+		// ======================================================================================================================	
+
 		} else if ("svhn".equals(DATASET)) {
 
 			cfg.USING_PRETRAINED_MODEL = true;

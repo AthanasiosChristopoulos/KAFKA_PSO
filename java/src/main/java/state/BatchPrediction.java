@@ -126,7 +126,7 @@ public class BatchPrediction {
         if (MODEL_IS_CNN) {
             if (DATASET.contains("mnist")) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if (DATASET.contains("cifar")) {
+            } else if (DATASET.contains("cifar") || DATASET.contains("svhn")) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }
@@ -303,7 +303,7 @@ public class BatchPrediction {
             
             // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
-                if(DATASET.contains("cifar")) {
+                if(DATASET.contains("cifar") || DATASET.contains("svhn")) {
 
                     X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
                         // (nSamples, 3072)
@@ -373,7 +373,7 @@ public class BatchPrediction {
                             Xbuffer.putScalar(new int[]{i, 0, row, col}, features[j]);
                         }
 
-                    } else if (DATASET.contains("cifar")) {
+                    } else if (DATASET.contains("cifar") || DATASET.contains("svhn")) {
 
                         for (int j = 0; j < NUM_FEATURES; j++) {
                             // int channel = j / (32 * 32);
@@ -428,12 +428,12 @@ public class BatchPrediction {
                 X = Xbuffer;
             } else {
                 if (MODEL_IS_CNN) {
-                    if ((DATASET.contains("cifar")) && argument_model.isNhWC()) {
+                    if ((DATASET.contains("cifar") || DATASET.contains("svhn")) && argument_model.isNhWC()) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all());
-                    } else if (DATASET.contains("cifar")) {
+                    } else if (DATASET.contains("cifar") || DATASET.contains("svhn")) {
                         X = Xbuffer.get(NDArrayIndex.interval(0, nSamples),
                                         NDArrayIndex.all(),
                                         NDArrayIndex.all(),

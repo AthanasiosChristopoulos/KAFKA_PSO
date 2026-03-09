@@ -81,7 +81,8 @@ public class Config {
     public boolean ENABLE_LOGGING;
     public int LOGGER_LEVEL; 
 
-    public boolean STOP_ON_CONVERGENCE;
+    public boolean EARLY_STOPPING;
+    public int MAX_NO_IMPROVEMENT_ROUNDS;
     public float CONVERGENCE_STRICTNESS_FACTOR; 
 
     public boolean WEIGHTS_ON_UPDATEX;
@@ -318,7 +319,8 @@ public class Config {
         ENABLE_LOGGING = Boolean.parseBoolean(getenv(dotenv, "ENABLE_LOGGING", "true"));
         LOGGER_LEVEL = Integer.parseInt(getenv(dotenv, "LOGGER_LEVEL", "0"));
 
-        STOP_ON_CONVERGENCE = Boolean.parseBoolean(getenv(dotenv, "STOP_ON_CONVERGENCE", "true"));
+        EARLY_STOPPING = Boolean.parseBoolean(getenv(dotenv, "EARLY_STOPPING", "true"));
+        MAX_NO_IMPROVEMENT_ROUNDS = Integer.parseInt(getenv(dotenv, "MAX_NO_IMPROVEMENT_ROUNDS", "30"));
         CONVERGENCE_STRICTNESS_FACTOR = Float.parseFloat(getenv(dotenv, "CONVERGENCE_STRICTNESS_FACTOR", "0.5")); 
 
         WEIGHTS_ON_UPDATEX = Boolean.parseBoolean(getenv(dotenv, "WEIGHTS_ON_UPDATEX", "true"));
@@ -360,7 +362,7 @@ public class Config {
         }
         
         IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000"));
-        if(DATASET.contains("cifar") || DATASET.contains("mnist")) {
+        if(DATASET.contains("cifar") || DATASET.contains("mnist") || DATASET.contains("svhn")) {
             IDLE_MS = Long.parseLong(getenv(dotenv, "IDLE_MS", "3000")) * 4;
         }
 

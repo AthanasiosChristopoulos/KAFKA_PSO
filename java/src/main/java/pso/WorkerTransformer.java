@@ -46,7 +46,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final String NEIGHBORHOOD_TOPOLOGY = cfg.NEIGHBORHOOD_TOPOLOGY;
-    public final boolean STOP_ON_CONVERGENCE = cfg.STOP_ON_CONVERGENCE;
+    public final boolean EARLY_STOPPING = cfg.EARLY_STOPPING;
     private final float CONVERGENCE_STRICTNESS_FACTOR = cfg.CONVERGENCE_STRICTNESS_FACTOR;
 
     private ProcessorContext context;
@@ -721,7 +721,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // =========================================================================================================
         // Check Convergence
 
-        if(STOP_ON_CONVERGENCE && checkConvergence(true, false)) {
+        if(EARLY_STOPPING && checkConvergence(true, false)) {
             consecutiveConvergence++;
             if(consecutiveConvergence >= CONSECUTIVE_CONVERGENCE_REQUIRED) {
                 if (logger.isEnabled(2)) logger.log("Closed, because determined convergence");

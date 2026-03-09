@@ -73,7 +73,8 @@ if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
     
 if(DATASET == "svhn"):
-    NUMBER_OF_DATA_REPEATS = 1
+    NUMBER_OF_DATA_REPEATS = 5
+    
 # ==============================================================================================
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist4", "fashion_mnist", "svhn")
@@ -884,10 +885,6 @@ def load_dataset():
         idx = rng.permutation(len(X_test))
         X_test, y_test = X_test[idx], y_test[idx]
         
-        MAX_TRAIN_SAMPLES = 40000
-
-        X_train = X_train[:MAX_TRAIN_SAMPLES]
-        y_train = y_train[:MAX_TRAIN_SAMPLES]
         X_test = X_test[:MAX_TEST_SAMPLES]
         y_test = y_test[:MAX_TEST_SAMPLES]
 

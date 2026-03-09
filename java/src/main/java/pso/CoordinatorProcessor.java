@@ -114,7 +114,7 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private int evalCursor = 0;                       // rolling start index into store
     private int cachedStoreSize = -1;                 // optional: track size changes
 
-
+    private int roundsWithoutImprovement = 0;
 
     // ================================================================================================================
 
@@ -314,9 +314,12 @@ public void onAllWorkersReported() {
 
         control.setBestGlobalModelAccuracy(accuracy);
         control.setBestGlobalModelLoss(loss);
+        roundsWithoutImprovement = 0;
 
         if (logger.isEnabled(1)) logger.log(taskInstance + 
             ", New bestGlobalModel accuracy = " + control.getBestGlobalModelAccuracy());
+    } else {
+        roundsWithoutImprovement++;
     }
 
     if(loss < bestLoss) {    
@@ -330,7 +333,8 @@ public void onAllWorkersReported() {
                 ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                 ", nCorrect: " + nCorrect + " loss: " + loss + 
                 ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
+                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
+                ", noImprovementRounds: " + roundsWithoutImprovement);
 
     System.out.println(evaluation_count + 
                 ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
@@ -338,10 +342,21 @@ public void onAllWorkersReported() {
                 ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
                 ", nCorrect: " + nCorrect + " loss: " + loss + 
                 ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
-                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy());
+                ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
+                ", noImprovementRounds: " + roundsWithoutImprovement);
 
     if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
         Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
+        control.requestStopFinal();
+        return;
+    }
+
+    if (roundsWithoutImprovement >= cfg.MAX_NO_IMPROVEMENT_ROUNDS) {
+        if (logger.isEnabled(1)) logger.log(taskInstance +
+            ", Early stopping: bestAccuracy has not improved for " +
+            roundsWithoutImprovement + " rounds");
+        System.out.println("[Coordinator] Early stopping: bestAccuracy has not improved for " +
+            roundsWithoutImprovement + " rounds");
         control.requestStopFinal();
         return;
     }
@@ -441,7 +456,7 @@ public void onAllWorkersReported() {
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
 
-        if(true && cfg.USING_PRETRAINED_MODEL && cfg.TESTABLE_PRETRAINED_MODEL) {
+        if(false && cfg.USING_PRETRAINED_MODEL && cfg.TESTABLE_PRETRAINED_MODEL) {
             float[] accLoss;
             accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel, true);
             accuracy = accLoss[0];
