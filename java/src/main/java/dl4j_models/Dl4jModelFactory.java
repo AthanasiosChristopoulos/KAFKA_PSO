@@ -262,6 +262,8 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("cifar")) {
 
+			cfg.USING_PRETRAINED_MODEL = true;
+
 			// model = createCifar3Model_PSO_Simple(workerId);
 			// model = createCifar3Model(workerId);
 			// model = createCifar3Model_New(workerId);	
@@ -271,69 +273,71 @@ public class Dl4jModelFactory {
 			// model = createCifar3Model_New_Simpler_4(workerId);
 			// model = createMNIST5Cnn_New_Simpler(workerId);
 			// model = buildCifarNCHW(3);
+			// model = createCifarCnn_New_13(workerId);	// failure !!!
 
 			// pretrained =============================================================================================
 
-			cfg.USING_PRETRAINED_MODEL = true;
+			if(cfg.USING_PRETRAINED_MODEL) {
 
-			int version = 13;
-			String filename;
-			
-			if(version == 4 || version == 5) {
-				cfg.TRANSFORM_IMAGE = true;
-				// cfg.TRANSFORM_IMAGE = false;
-			}
-
-			switch (version) {
-				case 1 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4.h5";
-				case 2 -> filename = "../python/pretrained_model/mobilenetv2_base_32x32.h5";
-				case 3 -> filename = "../python/pretrained_model/cifar100_pretrained_base.h5";
-				case 4 -> filename = "../python/pretrained_model/mobilenetv2_base_224x224.h5";
-				case 5 -> filename = "../python/pretrained_model/mobilenet_base_224x224.h5";
-				case 6 -> filename = "../python/pretrained_model/tinyimagenet200_pretrained_v2.h5";		// 50%
-				case 7 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
-					// on cifar10 => 65%, on cifar5 => 83%
-				case 8 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
-																								// 72% => 100 and 77% pretrained
-				case 9 -> filename = "../python/pretrained_model/cifar100_base_plus_head_v5.h5";			// 67%
-				case 10 -> filename = "../python/pretrained_model/stl10_pretrained_base_plus_head_v1.h5";	// 60%
-				case 11 -> filename = "../python/pretrained_model/stl10_pretrained_resnet20_v1.h5";	// 60%
-				case 12 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_1.h5";	
-					// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
-				case 13 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v5_56789.h5";	
-					// 57%
-				case 14 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_56789.h5";	
-					// 55% 
-				case 15 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_01489.h5";	
-					// Failure 53% accuracy at the most
-				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
-			}
-
-			if (preTrained) {
-				System.out.println("Using model version: " + version);
-
-				switch (version) {
-					case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15 -> model = pretrainedModelCIFAR(filename);
-					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
-					default -> throw new IllegalStateException("Unknown ???" );
+				int version = 13;
+				String filename;
+				
+				if(version == 4 || version == 5) {
+					cfg.TRANSFORM_IMAGE = true;
+					// cfg.TRANSFORM_IMAGE = false;
 				}
 
-			} else {
-
 				switch (version) {
-					case 1, 3, 10, 14, 15 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-					case 7, 13 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
-						// cifar 10 trained 75%, cifar 5 optimized 90%
-					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
-					case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
-					case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
-						// 77% accuracy pretrained, 75% new head
-					case 12 -> pair = createCNN_1_L(workerId, filename, 64, 25); 
+					case 1 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4.h5";
+					case 2 -> filename = "../python/pretrained_model/mobilenetv2_base_32x32.h5";
+					case 3 -> filename = "../python/pretrained_model/cifar100_pretrained_base.h5";
+					case 4 -> filename = "../python/pretrained_model/mobilenetv2_base_224x224.h5";
+					case 5 -> filename = "../python/pretrained_model/mobilenet_base_224x224.h5";
+					case 6 -> filename = "../python/pretrained_model/tinyimagenet200_pretrained_v2.h5";		// 50%
+					case 7 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
+						// on cifar10 => 65%, on cifar5 => 83%
+					case 8 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
+																									// 72% => 100 and 77% pretrained
+					case 9 -> filename = "../python/pretrained_model/cifar100_base_plus_head_v5.h5";			// 67%
+					case 10 -> filename = "../python/pretrained_model/stl10_pretrained_base_plus_head_v1.h5";	// 60%
+					case 11 -> filename = "../python/pretrained_model/stl10_pretrained_resnet20_v1.h5";	// 60%
+					case 12 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_1.h5";	
+						// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
+					case 13 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v5_56789.h5";	
+						// 57%
+					case 14 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_56789.h5";	
+						// 55% 
+					case 15 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_01489.h5";	
+						// Failure 53% accuracy at the most
+					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
+				}
 
-					case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename); 
-					case 11-> pair = createCifarFromResNet20Stl10(workerId, filename);
-					case 5 -> pair = createCifarFromMobileNet(workerId, filename);
-					default -> throw new IllegalStateException("Unknown ???");
+				if (preTrained) {
+					System.out.println("Using model version: " + version);
+
+					switch (version) {
+						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15 -> model = pretrainedModelCIFAR(filename);
+						case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
+						default -> throw new IllegalStateException("Unknown ???" );
+					}
+
+				} else {
+
+					switch (version) {
+						case 1, 3, 10, 14, 15 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+						case 7, 13 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
+							// cifar 10 trained 75%, cifar 5 optimized 90%
+						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
+						case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
+						case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
+							// 77% accuracy pretrained, 75% new head
+						case 12 -> pair = createCNN_1_L(workerId, filename, 64, 25); 
+
+						case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename); 
+						case 11-> pair = createCifarFromResNet20Stl10(workerId, filename);
+						case 5 -> pair = createCifarFromMobileNet(workerId, filename);
+						default -> throw new IllegalStateException("Unknown ???");
+					}
 				}
 			}
 
@@ -3705,6 +3709,29 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model);
 	}
 
+	// ======================================================================================================================
+
+	public static PsoModel createCifarCnn_New_13(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(32, 32, 3))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
 
 	// ======================================================================================================================
 

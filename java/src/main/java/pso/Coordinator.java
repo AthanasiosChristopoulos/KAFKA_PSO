@@ -204,7 +204,8 @@ public class Coordinator implements Runnable {
         Thread controlThread = new Thread(() -> {
 
             try {
-                while (!control.isStopRequested(-1) || !control.processedAtLeastOne) {
+                // while (!control.isStopRequested(-1) || !control.processedAtLeastOne) {
+                while (!control.isStopRequested(-1)) {
                     Thread.sleep(50); 
                 }
 

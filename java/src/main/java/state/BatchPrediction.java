@@ -303,6 +303,7 @@ public class BatchPrediction {
             
             // in this part, we need to unflatten the data input in case that it is CNN
             if(MODEL_IS_CNN) {
+
                 if(DATASET.contains("cifar") || DATASET.contains("svhn")) {
 
                     X2d = Nd4j.create(data);                       // [batch, 3072] => 3 * 32 * 32 = 3072
@@ -342,6 +343,7 @@ public class BatchPrediction {
                 }
 
             } else {    // Normal dataset (no image) + no CNN used 
+
                 X = Nd4j.create(data);                     // (nSamples, NUM_FEATURES)
             }
 
