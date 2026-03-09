@@ -1,6 +1,7 @@
 
 package state;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,8 +20,7 @@ public class CoordinatorControl {
     private AtomicBoolean[] workerStopRequested = new AtomicBoolean[cfg.N_WORKERS];
     private AtomicBoolean stopRequestedFinal = new AtomicBoolean(false);
 
-    public final List<Float> accuracyValues =
-        java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    public final List<AccuracyPoint> accuracyValues = new ArrayList<>();
         
     public boolean processedAtLeastOne = false;
 

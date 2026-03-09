@@ -115,10 +115,12 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_6(workerId);		// 86%
 			// model = createMNIST5Cnn_New_7(workerId); 		// 0.37, with GlobalPooling Layer
 			// model = createMNIST5Cnn_New_8(workerId); 		// 0.795
-			model = createMNIST5Cnn_New_9(workerId); 	// 92%
-			// model = createMNIST5Cnn_New_10(workerId); 		// 0.935
+			// model = createMNIST5Cnn_New_9(workerId); 	// 92%
+			model = createMNIST5Cnn_New_10(workerId); 		// 0.935
+			// model = createMNIST5Cnn_New_11(workerId); 		// 0.925
+			// model = createMNIST5Cnn_New_12(workerId);		// 0.935
 
-		// ======================================================================================================================
+	// ======================================================================================================================
 
 		} else if ("mnist".equals(DATASET)) {
 
@@ -134,10 +136,10 @@ public class Dl4jModelFactory {
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
 
-			model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.295
-
+			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.295
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
+			model = createMNIST5Cnn_New_12(workerId);	// 0.475
 
 			// pretrained =============================================================================================
 			
@@ -2860,6 +2862,80 @@ public class Dl4jModelFactory {
 				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x6
 						.kernelSize(2, 2)
 						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_11(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x8
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(1, 1)   // 12x12x8 -> 12x12x4
+						.nOut(4)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_12(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x8
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 12x12x8 -> 10x10x8
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.TANH)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nOut(NUM_CLASSES)

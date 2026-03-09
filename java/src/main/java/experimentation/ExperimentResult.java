@@ -3,6 +3,8 @@ package experimentation;
 import java.util.Collections;
 import java.util.List;
 
+import utils.AccuracyPoint;
+
 public final class ExperimentResult {
     private final int nWorkers;
     private final double totalElapsedSec;
@@ -45,7 +47,7 @@ public final class ExperimentResult {
     
     // ===============================================================================
 
-    public List<Float> getAccuracyValues() {
+    public List<AccuracyPoint> getAccuracyValues() {
         return coordinator.accuracyValues;
     }
     

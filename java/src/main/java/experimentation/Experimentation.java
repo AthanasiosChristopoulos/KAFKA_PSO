@@ -284,7 +284,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("MONITORING_ITER,ACCURACY\n");
+                w.write("MONITORING_ITER,TIME_SEC,ACCURACY\n");
 
                 CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
                 CustomLogger.refreshAll();
@@ -519,22 +519,21 @@ public class Experimentation {
     // =============================================================================================================
 
     private static void writeAccuracyValues(BufferedWriter w, ExperimentResult r) {
-        
-        try{     
+        try {
             int iter = 0;
-            
-            for(float accuracy : r.getAccuracyValues()) {
+
+            for (AccuracyPoint p : r.getAccuracyValues()) {
                 iter++;
                 w.write(String.format(
-                    "%d,%f\n",
+                    "%d,%f,%f\n",
                     iter,
-                    accuracy
+                    p.getElapsedSec(),
+                    p.getAccuracy()
                 ));
             }
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 }

@@ -300,7 +300,7 @@ public void onAllWorkersReported() {
     nCorrect = (int) accLoss[3];
     forwardPassNs += accLoss[4];
 
-    control.accuracyValues.add(accuracy);
+    control.accuracyValues.add(new AccuracyPoint(lastActivitySeconds, accuracy));
     
     // update bestGlobalModelAccuracy + bestLoss ========================================================
 
