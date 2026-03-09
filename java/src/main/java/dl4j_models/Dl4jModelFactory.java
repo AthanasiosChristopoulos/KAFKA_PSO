@@ -106,13 +106,23 @@ public class Dl4jModelFactory {
 			// model = createMNIST5MLP_Reduced(workerId);
 			// model = createMNIST5Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
 			// model = createMNIST5Cnn_New_Simpler(workerId);
-			model = createMNIST5Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+			// model = createMNIST5Cnn_New_2(workerId);		// 0.89
+			// model = createMNIST5Cnn_New_3(workerId);		//
+			// model = createMNIST5Cnn_New_4(workerId);		// 0.915
+			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId);	
+
+			// model = createMNIST5Cnn_New_5(workerId);		// 0.385 with GlobalPooling Layer
+			// model = createMNIST5Cnn_New_6(workerId);		// 86%
+			// model = createMNIST5Cnn_New_7(workerId); 		// 0.37, with GlobalPooling Layer
+			// model = createMNIST5Cnn_New_8(workerId); 		// 0.795
+			model = createMNIST5Cnn_New_9(workerId); 	// 92%
+			// model = createMNIST5Cnn_New_10(workerId); 		// 0.935
 
 		// ======================================================================================================================
 
 		} else if ("mnist".equals(DATASET)) {
 
-			cfg.USING_PRETRAINED_MODEL = true;
+			cfg.USING_PRETRAINED_MODEL = false;
 
 			// cfg.USING_PRETRAINED_MODEL = false;
 			// model = createMNISTModelMLP(workerId);			
@@ -123,6 +133,11 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New(workerId);
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
+
+			model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.295
+
+			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
+			// model = createMNIST5Cnn_New_10(workerId);	// 65%
 
 			// pretrained =============================================================================================
 			
@@ -2477,6 +2492,386 @@ public class Dl4jModelFactory {
 	// 32 * 5 x 5 x 16 + 32= 12832
 	// 32 * 4 + 4 = 132
 	// 80 + 1168 + 12832 + 132 = 14212 trainable parameters
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_3(int workerId) {
+
+		if (printModel) {
+			System.out.println("Using MNIST5 CNN (PSO-feasible)");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
+						.nIn(1)
+						.nOut(8)       
+						.stride(1, 1)
+						.padding(0, 0)							// 26 x 26 x 8
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
+						.nOut(16)     
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new GlobalPoolingLayer.Builder()
+                        .poolingType(PoolingType.AVG)
+                        .build())
+				.layer(new DenseLayer.Builder()
+						.nOut(32)                // keep 32 (good PSO control knob)
+						.activation(Activation.TANH)  // smoother than ReLU for PSO
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+	
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_4(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x6
+						.nIn(1)
+						.nOut(6)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x6
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 11x11x12
+						.nOut(12)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x12
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()             // 300 -> 16
+						.nOut(16)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_4_without_2_Dense(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x6
+						.nIn(1)
+						.nOut(6)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x6
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 11x11x12
+						.nOut(12)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x12
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_5(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x6
+						.nIn(1)
+						.nOut(6)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x6
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 11x11x12
+						.nOut(12)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x12
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new GlobalPoolingLayer.Builder(PoolingType.AVG) // 5x5x12 -> 12
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+	
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_6(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x4
+						.nIn(1)
+						.nOut(4)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x4
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 10x10x8
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()             // 200 -> 12
+						.nOut(12)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_7(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 14x14x6
+						.nIn(1)
+						.nOut(6)
+						.stride(2, 2)
+						.padding(2, 2)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 14x14x6 -> 7x7x10
+						.nOut(10)
+						.stride(2, 2)
+						.padding(1, 1)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new GlobalPoolingLayer.Builder(PoolingType.AVG) // 7x7x10 -> 10
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_8(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x8
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(1, 1)   // 13x13x8 -> 13x13x4
+						.nOut(4)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 6x6x4
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new DenseLayer.Builder()             // 144 -> 10
+						.nOut(10)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_9(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x8
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(1, 1)   // 13x13x8 -> 13x13x4
+						.nOut(4)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 6x6x4
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_10(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x6
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x6
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
 
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
