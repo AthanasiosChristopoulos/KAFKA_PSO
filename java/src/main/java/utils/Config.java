@@ -215,6 +215,10 @@ public class Config {
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR10", "10"));
             NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_CIFAR10", "250000"));
 
+        } else if("svhn".equals(DATASET)) {
+            NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SVHN", "3072"));
+            NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SVHN", "10"));
+
         } else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);   
         }

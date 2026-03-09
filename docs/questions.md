@@ -31,7 +31,8 @@
 					=> or a lightweight model of the same size, but of a different / more generall dataset
 
 		- the 5-class NSFW dataset is actually harder than CIFAR-10
-		
+		- exei νοημα να προσθεσω on top of fmnist -> mnist, το svhn -> mnist ?
+
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
 		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:

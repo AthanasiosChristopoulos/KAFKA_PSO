@@ -77,7 +77,6 @@ public class Simulation {
 
         // Test: =====================================================================
 
-
         PsoModel model = Dl4jModelFactory.createModel(-1, true).getFirst();
 
         System.out.println("OK loaded:");

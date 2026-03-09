@@ -102,7 +102,7 @@ public class BatchPrediction {
         if (MODEL_IS_CNN) {     // Instance Xbuffer based on nature / dimensionality of input data
             if (DATASET.contains("mnist")) {
                 Xbuffer = Nd4j.create(EXPECTED_SIZE, 1, 28, 28);
-            } else if (DATASET.contains("cifar")) {
+            } else if (DATASET.contains("cifar") || DATASET.contains("svhn")) {
                 if (model.isNhWC()) Xbuffer = Nd4j.create(EXPECTED_SIZE, 32, 32, 3);
                 else               Xbuffer = Nd4j.create(EXPECTED_SIZE, 3, 32, 32);
             }

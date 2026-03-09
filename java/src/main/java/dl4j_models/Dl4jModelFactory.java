@@ -128,7 +128,7 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 10;
+				int version = 12;
 
 				String filename;
 				switch (version) {
@@ -144,14 +144,19 @@ public class Dl4jModelFactory {
 					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
 						// recomendation
 					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
-					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v1_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+						// 0.756 accuracy after PSO training, 66.4% in the pretrained
+					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+						// 0.792 PSO training, 0.652 pretrained
+					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+						// 0.785 PSO training, 0.676 pretrained
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
 				if (preTrained) {
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
-						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -162,7 +167,7 @@ public class Dl4jModelFactory {
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 						case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-						case 1, 10 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
 						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
 						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 128);		// 0.89
@@ -180,7 +185,9 @@ public class Dl4jModelFactory {
 						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(workerId, filename, 64);	// 0.23
 						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
 						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
-
+						case 10 -> pair = createCNNModel_1_Layer(workerId, filename, 576);	
+						case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+						case 12 -> pair = createCNNModel_1_Layer(workerId, filename, 198);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 				}
@@ -281,6 +288,7 @@ public class Dl4jModelFactory {
 					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
+
 			} else {
 
 				switch (version) {
@@ -299,6 +307,39 @@ public class Dl4jModelFactory {
 					default -> throw new IllegalStateException("Unknown ???");
 				}
 			}
+
+		} else if ("svhn".equals(DATASET)) {
+
+			cfg.USING_PRETRAINED_MODEL = true;
+
+			// pretrained =============================================================================================
+			if(cfg.USING_PRETRAINED_MODEL) {
+				
+				int version = 1;
+
+				String filename;
+				switch (version) {
+					case 1 -> filename = "../python/pretrained_model/svhn_v4_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					default -> filename = "no_pretrained_file_chosen";
+				}
+				
+				if (preTrained) {
+					switch (version) {
+						case 1 -> model = pretrainedModelMNIST(filename);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+
+				} else {
+
+					switch (version) {
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 96); // 80% Partial Freeze
+
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+				}
+			}
+
+		// ======================================================================================================================	
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
@@ -327,6 +368,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
@@ -747,10 +791,10 @@ public class Dl4jModelFactory {
 					false   // enforceTrainingConfig = false (not using Keras optimizer config)
 			);
 
-			return new PsoMultiLayerAdapter(model);
+			return new PsoMultiLayerAdapter(model, true);
 
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to import Fashion-MNIST Keras .h5 model", e);
+			throw new RuntimeException("Failed to import Keras .h5 model", e);
 		}
 	}
 
@@ -1058,6 +1102,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		// Remove conv2d_2 (1x1), GAP, activation  => keep conv stack ending at 7x7x64
@@ -1098,6 +1145,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		// Remove conv2d_2 (1x1), GAP, activation  => keep conv stack ending at 7x7x64
@@ -1136,6 +1186,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
@@ -1181,6 +1234,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
@@ -1224,6 +1280,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		// Remove conv2d_2 (1x1), GAP, activation  => keep conv stack ending at 7x7x64
@@ -1270,6 +1329,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 		
 		int start = (int) new TransferLearning.Builder(pretrained) 
@@ -1313,6 +1375,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 		
 		int start = (int) new TransferLearning.Builder(pretrained)
@@ -1362,6 +1427,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		// Remove conv2d_2 (1x1), GAP, activation  => keep conv stack ending at 7x7x64
@@ -1479,6 +1547,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
+				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(base)
