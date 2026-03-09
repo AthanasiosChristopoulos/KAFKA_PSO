@@ -6,6 +6,7 @@ import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.Layer;
 import org.deeplearning4j.nn.conf.layers.misc.FrozenLayer;
 import org.deeplearning4j.nn.conf.layers.wrapper.BaseWrapperLayer;
+import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 
 public final class PsoMultiLayerAdapter implements PsoModel {
     private final MultiLayerNetwork model;
@@ -63,7 +64,7 @@ public final class PsoMultiLayerAdapter implements PsoModel {
             break;
         }
 
-        return (l instanceof ConvolutionLayer); // if found a conv layer then it cnn
+        return (l instanceof ConvolutionLayer || l instanceof SubsamplingLayer); // if found a conv layer then it cnn
     }
 
     @Override public boolean isNhWC() { return nhwc; }

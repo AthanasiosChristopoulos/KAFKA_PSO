@@ -336,12 +336,19 @@ public void onAllWorkersReported() {
                 ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
                 ", noImprovementRounds: " + roundsWithoutImprovement);
 
+    // System.out.println(evaluation_count + 
+    //             ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
+    //             ", bestLoss: " + bestLoss + 
+    //             ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
+    //             ", nCorrect: " + nCorrect + " loss: " + loss + 
+    //             ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+    //             ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
+    //             ", noImprovementRounds: " + roundsWithoutImprovement);
+
+    // only accuracies
     System.out.println(evaluation_count + 
                 ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
-                ", bestLoss: " + bestLoss + 
-                ", accuracy: " + accuracy + ", with nSamples: " + nSamples +
-                ", nCorrect: " + nCorrect + " loss: " + loss + 
-                ", weights sample: " + Dl4jParamUtils.sampleFlatSorted(avgWeights, SAMPLING_CONSTANT) +
+                ", accuracy: " + accuracy + 
                 ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
                 ", noImprovementRounds: " + roundsWithoutImprovement);
 

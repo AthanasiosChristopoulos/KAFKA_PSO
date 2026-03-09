@@ -290,7 +290,7 @@ cat /sys/devices/system/cpu/intel_pstate/no_turbo	# This needs to output 1
 Method						Signal		Behavior
 -------------------------------------------------------------------
 Ctrl + C					SIGINT		polite request to stop
-Ctrl + Z					SIGTSTP		suspend
+Ctrl + Z					SIGTSTP		suspends the current foreground process
 VSCode Kill (trash icon)	SIGKILL		forced termination 
 
 Equivalent toL kill -9 <pid> (every terminal is a unique process)
@@ -300,3 +300,11 @@ SIGKILL cannot be ignored by programs. Program does not Because it’s a hard ki
 	=> File descriptors, sockets, memory pages, threads — everything is freed by the kernel.
 But: application-level cleanup, Like .close() and frees() and Java shutdown hooks in code will not execute 
 		=> This go bad application level, not system level
+
+So when Ctrl+C fails, Ctrl+Z often appears to “work,” but what it really did is freeze the process, not end it.
+
+After Ctrl+Z:
+
+the program may still exist in memory
+
+it may still hold files, sockets, GPU memory, locks, ports, etc.

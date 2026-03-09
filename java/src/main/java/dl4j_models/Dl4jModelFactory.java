@@ -116,9 +116,12 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_7(workerId); 		// 0.37, with GlobalPooling Layer
 			// model = createMNIST5Cnn_New_8(workerId); 		// 0.795
 			// model = createMNIST5Cnn_New_9(workerId); 	// 92%
-			model = createMNIST5Cnn_New_10(workerId); 		// 0.935
+			// model = createMNIST5Cnn_New_10(workerId); 		// 0.935
 			// model = createMNIST5Cnn_New_11(workerId); 		// 0.925
 			// model = createMNIST5Cnn_New_12(workerId);		// 0.935
+			// model = createDenseModel_1(workerId);
+			// model = createMNIST5Cnn_New_13(workerId);		// Accuracy:0.92333335
+			model = createMNIST5Cnn_New_14(workerId);		// Accuracy:0.933
 
 	// ======================================================================================================================
 
@@ -139,7 +142,10 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.295
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
-			model = createMNIST5Cnn_New_12(workerId);	// 0.475
+			// model = createMNIST5Cnn_New_12(workerId);	// 0.6433333
+			model = createMNIST5Cnn_New_13(workerId); // 0.7366667
+			// model = createMNIST5Cnn_New_14(workerId); // bestAccuracy: 0.69
+			// model = createDenseModel_1(workerId);	// 0.6066667
 
 			// pretrained =============================================================================================
 			
@@ -1776,7 +1782,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 
 	public static PsoModel createDenseModel_1(int workerId) {	
-		if (printModel) System.out.println("Model: createIrisModelSimpler");  
+		if (printModel) System.out.println("Model: createDenseModel_1");  
 
 		Activation act = Activation.SOFTMAX;
 		LossFunctions.LossFunction loss; 
@@ -1793,7 +1799,7 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-				.layer(0, new OutputLayer.Builder(loss)
+				.layer(new OutputLayer.Builder(loss)
 						.nIn(NUM_FEATURES)
 						.nOut(NEURAL_OUTPUT)
 						.activation(act)
@@ -2949,6 +2955,57 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_13(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_14(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.AVG) // -> 12x12x8
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
 	// ======================================================================================================================
 	// SUSY Dataset Model Architecture 
 

@@ -32,6 +32,7 @@
 
 		- the 5-class NSFW dataset is actually harder than CIFAR-10
 		- exei νοημα να προσθεσω on top of fmnist -> mnist, το svhn -> mnist ?
+			=> βασικα πως να το παρουσιασω ? πρωτα να κανω my own training (65%) και μετα να πω αρα χρεαιζομαστε tranfer learning με αυτο το dataset ?
 
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 

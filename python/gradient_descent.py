@@ -511,43 +511,43 @@ def load_mnist_data():
 #     return model
 # ===============================================================================
 
-def build_mnist_model(input_shape=(28, 28), num_classes=10):
+# def build_mnist_model(input_shape=(28, 28), num_classes=10):
 
-    model = keras.Sequential([
-        layers.Input(shape=input_shape),
-        layers.Reshape((28, 28, 1)),
-        layers.Conv2D(
-            filters=8,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Conv2D(
-            filters=16,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding="valid",
-            activation="relu",
-            use_bias=True
-        ),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
-        layers.Flatten(),
-        layers.Dense(num_classes, activation="softmax", use_bias=True),
-    ])
+#     model = keras.Sequential([
+#         layers.Input(shape=input_shape),
+#         layers.Reshape((28, 28, 1)),
+#         layers.Conv2D(
+#             filters=8,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Conv2D(
+#             filters=16,
+#             kernel_size=(3, 3),
+#             strides=(1, 1),
+#             padding="valid",
+#             activation="relu",
+#             use_bias=True
+#         ),
+#         layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),
+#         layers.Flatten(),
+#         layers.Dense(num_classes, activation="softmax", use_bias=True),
+#     ])
 
-    model.compile(
-        optimizer=keras.optimizers.Adam(),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
+#     model.compile(
+#         optimizer=keras.optimizers.Adam(),
+#         loss="sparse_categorical_crossentropy",
+#         metrics=["accuracy"],
+#     )
 
-    model.summary()
-    print("Trainable params:", model.count_params())
+#     model.summary()
+#     print("Trainable params:", model.count_params())
 
-    return model
+#     return model
 
 # ===============================================================================
 # Best (From Geeks For Geeks):
@@ -629,6 +629,26 @@ def build_mnist_model(input_shape=(28, 28), num_classes=10):
 #     model.summary()
 #     print("Trainable params:", model.count_params())
 #     return model
+# ===============================================================================
+
+def build_mnist_model(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),                    # add channel dim
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  # 28x28x1 -> 14x14x1
+        layers.Flatten(),                               # 14*14 = 196
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
 
 # ===============================================================================
 
