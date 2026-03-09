@@ -176,6 +176,33 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist4-test --from-beginning
 
+# svhn: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic svhn-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --describe --topic svhn-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic svhn-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic svhn-input --from-beginning
+
+# svhn-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic svhn-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic svhn-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic svhn-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic svhn-test --from-beginning
+
 # fashion_mnist: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \

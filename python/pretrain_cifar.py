@@ -645,6 +645,53 @@ def build_cifar_base_v5_2(input_shape=(32, 32, 3), num_classes=10):
     return model
 
 # ===============================================================================
+
+# Epoch 20/20
+# 352/352 - 3s - loss: 0.4395 - accuracy: 0.8434 - val_loss: 0.5566 - val_accuracy: 0.8186 - lr: 2.5000e-04 - 3s/epoch - 9ms/step
+def build_cifar_base_v5_3(input_shape=(32, 32, 3), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        # Block 1
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 32 -> 16
+        layers.Dropout(0.25),
+
+        # Block 2
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+
+        layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
+        layers.Activation("relu"),
+
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  # 16 -> 8
+        layers.Dropout(0.30),
+
+        layers.Flatten(),
+
+        layers.Dense(64, use_bias=False),
+        layers.BatchNormalization(),
+        layers.Activation("relu"),
+        layers.Dropout(0.40),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
 # Epoch 18/20
 # 352/352 - 3s - loss: 0.0043 - accuracy: 1.0000 - val_loss: 1.5378 - val_accuracy: 0.7862 - lr: 6.2500e-05 - 3s/epoch - 10ms/step
 # Overfitting in the orphan shack
@@ -989,7 +1036,7 @@ def pretrain_stl10_resnet20_and_export(
 
 # ===============================================================================
 
-def build_model_by_version(version: str, input_shape, num_classes: int):
+def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_classes):
 
     match version:
         case "v1":
@@ -1020,33 +1067,34 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
             model = build_cifar_base_v5_2(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5_2"
  
+        case "v5_3":
+            model = build_cifar_base_v5_3(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v5_3"
+            
         case "v4_cifar5":
             model = build_cifar_base_v4(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar5_base_plus_head_v4_56789"
+            name_h5_file = f"cifar5_base_plus_head_v4_{cifar_5_classes}"
             
         case "v5_cifar5":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar5_base_plus_head_v5_56789"
+            name_h5_file = f"cifar5_base_plus_head_v5_{cifar_5_classes}"
 
         # Epoch 20/20
         # 176/176 - 2s - loss: 0.1005 - accuracy: 0.9660 - val_loss: 0.2971 - val_accuracy: 0.9108 - lr: 2.5000e-04 - 2s/epoch - 9ms/step  
         case "v5_1_cifar5":
             model = build_cifar_base_v5_1(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar5_base_plus_head_v5_1"
-            
-        # Epoch 20/20
-        # 176/176 - 2s - loss: 0.0822 - accuracy: 0.9744 - val_loss: 0.1975 - val_accuracy: 0.9404 - lr: 3.1250e-05 - 2s/epoch - 12ms/step
-
-        case "v5_1_cifar5":
-            model = build_cifar_base_v5_1(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar5_base_plus_head_v5_1"
+            name_h5_file = f"cifar5_base_plus_head_v5_1_{cifar_5_classes}"
                         
         # Epoch 20/20
         # 176/176 - 2s - loss: 0.3430 - accuracy: 0.9048 - val_loss: 0.3606 - val_accuracy: 0.9028 - lr: 0.0010 - 2s/epoch - 10ms/step
         case "v5_2_cifar5":
             model = build_cifar_base_v5_2(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar5_2_base_plus_head_v4"
-                        
+            name_h5_file = f"cifar5_base_plus_head_v5_2_{cifar_5_classes}"
+
+        case "v6_cifar5":
+            model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = f"cifar5_base_plus_head_v6_{cifar_5_classes}"
+                              
         case "v5_cifar100":
             model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
             name_h5_file = "cifar100_base_plus_head_v5"
@@ -1079,10 +1127,10 @@ def build_model_by_version(version: str, input_shape, num_classes: int):
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    # version = "v6"
+    version = "v5_3"
     # version = "v5_cinic"
     # version = "v5_cifar100"
-    version = "v4_cifar5"
+    # version = "v4_cifar5"
     # version = "v5_cifar5"
     # version = "v5_1_cifar5"
     # version = "v5_2_cifar5"
@@ -1090,8 +1138,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v1_stl10"
     # version = "v1_stl10_resnet20"
     
-    # classes_for_cifar5 = (0, 1, 4, 8, 9)
-    classes_for_cifar5 = (5, 6, 7, 8, 9)
+    classes_for_cifar5 = (0, 1, 4, 8, 9)
+    # classes_for_cifar5 = (5, 6, 7, 8, 9)
 
     EPOCHS = 20
 
@@ -1149,7 +1197,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             x_train, y_train, x_test, y_test = load_cifar10()
             num_classes = 10
 
-        model, name_h5_file = build_model_by_version(version, (32,32,3), num_classes)
+        model, name_h5_file = build_model_by_version(version, (32,32,3), num_classes, str(classes_for_cifar5))
         
         callbacks = [
             keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),

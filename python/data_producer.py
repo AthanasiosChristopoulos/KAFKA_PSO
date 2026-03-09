@@ -19,6 +19,7 @@ import struct
 from array import array
 from sklearn.preprocessing import LabelEncoder
 from PIL import Image
+from scipy.io import loadmat
 
 # ========================================================================================
 # Env + Args =============================================================================
@@ -70,10 +71,12 @@ if(DATASET == "mnist4"):
 
 if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
-
+    
+if(DATASET == "svhn"):
+    NUMBER_OF_DATA_REPEATS = 1
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist4", "fashion_mnist")
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist4", "fashion_mnist", "svhn")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -830,6 +833,69 @@ def load_dataset():
         print("Test distribution:")
         for i, name in enumerate(class_names):
             print(f"  {name:10s}: {test_counts[i]}")
+
+        evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
+
+        return X_train, y_train, X_test, y_test, class_names
+    
+    # ==================================================================================================
+    # svhn
+
+    elif DATASET == "svhn":
+
+        classes = np.arange(10, dtype=np.int64)
+
+        svhn_dir = "../data/svhn"
+        train_path = os.path.join(svhn_dir, "train_32x32.mat")
+        test_path  = os.path.join(svhn_dir, "test_32x32.mat")
+
+        if not os.path.exists(train_path):
+            raise FileNotFoundError(f"Missing SVHN file: {train_path}")
+        if not os.path.exists(test_path):
+            raise FileNotFoundError(f"Missing SVHN file: {test_path}")
+
+        train_data = loadmat(train_path)
+        test_data  = loadmat(test_path)
+
+        # SVHN format:
+        # X: (32, 32, 3, N)
+        # y: (N, 1), where label 10 means digit 0
+
+        x_train = np.transpose(train_data["X"], (3, 0, 1, 2))
+        y_train = train_data["y"].reshape(-1)
+
+        x_test = np.transpose(test_data["X"], (3, 0, 1, 2))
+        y_test = test_data["y"].reshape(-1)
+
+        # Convert label 10 -> 0
+        y_train[y_train == 10] = 0
+        y_test[y_test == 10] = 0
+
+        y_train = y_train.astype(np.int64)
+        y_test  = y_test.astype(np.int64)
+
+        X_train = x_train.astype(np.float32) / 255.0
+        X_test  = x_test.astype(np.float32) / 255.0
+
+        rng = np.random.default_rng(123)
+        idx = rng.permutation(len(X_train))
+        X_train, y_train = X_train[idx], y_train[idx]
+
+        idx = rng.permutation(len(X_test))
+        X_test, y_test = X_test[idx], y_test[idx]
+        
+        MAX_TRAIN_SAMPLES = 40000
+
+        X_train = X_train[:MAX_TRAIN_SAMPLES]
+        y_train = y_train[:MAX_TRAIN_SAMPLES]
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        class_names = [str(int(c)) for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"X_test : {X_test.shape},  y_test : {y_test.shape}")
 
         evaluate_dataset(X_train, y_train, X_test, y_test, len(class_names))
 

@@ -195,6 +195,15 @@ python -m pip install \
 run-parts /etc/update-motd.d/   # Resee it using this
 ```
 
+
+## ========================================================================================
+## Datasets Installs:
+
+```bash
+# SVHN (Street view house numbers):
+wget http://ufldl.stanford.edu/housenumbers/train_32x32.mat
+wget http://ufldl.stanford.edu/housenumbers/test_32x32.mat
+```
 Enviromental Variables Ubuntu:
 
  - When you type kafka-topics.sh, then Ubuntu looks in the PATH enviroment variable from right to left tries to match the file to the location.

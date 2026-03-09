@@ -451,6 +451,7 @@ public class BatchPrediction {
         }
    
         // System.out.println("NUM_FEATURES = " + NUM_FEATURES);
+        // System.out.println("MODEL_IS_CNN = " + MODEL_IS_CNN);
         // System.out.println("X shape = " + java.util.Arrays.toString(X.shape()));
         // System.out.println("X order = " + X.ordering());
         // System.out.println("Model expects NHWC? " + argument_model.isNhWC());

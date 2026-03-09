@@ -128,28 +128,30 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 2;
+				int version = 10;
 
 				String filename;
 				switch (version) {
-					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v1.h5";	
-					// case 1 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v1.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
-					case 2 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";
-					case 3 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v3.h5";
-					case 4 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v4.h5";
-					case 5 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v5.h5";
-					case 6 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v6.h5";
-					case 7 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v7.h5";
-					case 8 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
-					case 9 -> filename = "pretrained_models_dl4j/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 1 -> filename = "../python/pretrained_model/mnist_base_plus_head_v1.h5";	
+					// case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
+					case 2 -> filename = "../python/pretrained_model/mnist_base_plus_head_v2.h5";
+					case 3 -> filename = "../python/pretrained_model/mnist_base_plus_head_v3.h5";
+					case 4 -> filename = "../python/pretrained_model/mnist_base_plus_head_v4.h5";
+					case 5 -> filename = "../python/pretrained_model/mnist_base_plus_head_v5.h5";
+					case 6 -> filename = "../python/pretrained_model/mnist_base_plus_head_v6.h5";
+					case 7 -> filename = "../python/pretrained_model/mnist_base_plus_head_v7.h5";
+					case 8 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
+					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
 						// recomendation
+					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v1_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
 				if (preTrained) {
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
-						case 1, 2, 3, 4, 5, 6, 7, 8, 9 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -160,7 +162,7 @@ public class Dl4jModelFactory {
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 						case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
+						case 1, 10 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
 						// case 1 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
 						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
 						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 128);		// 0.89
@@ -205,7 +207,7 @@ public class Dl4jModelFactory {
 
 				String filename;
 				switch (version) {
-					case 1 -> filename = "pretrained_models_dl4j/mnist_base_plus_head_v2.h5";	
+					case 1 -> filename = "../python/pretrained_model/mnist_base_plus_head_v2.h5";	
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
@@ -224,6 +226,8 @@ public class Dl4jModelFactory {
 				}
 			}
 
+		// ==============================================================================================
+
 		} else if (DATASET.contains("cifar")) {
 
 			// model = createCifar3Model_PSO_Simple(workerId);
@@ -240,7 +244,7 @@ public class Dl4jModelFactory {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 14;
+			int version = 7;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -249,36 +253,38 @@ public class Dl4jModelFactory {
 			}
 
 			switch (version) {
-				case 1 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v4.h5";
-				case 2 -> filename = "pretrained_models_dl4j/mobilenetv2_base_32x32.h5";
-				case 3 -> filename = "pretrained_models_dl4j/cifar100_pretrained_base.h5";
-				case 4 -> filename = "pretrained_models_dl4j/mobilenetv2_base_224x224.h5";
-				case 5 -> filename = "pretrained_models_dl4j/mobilenet_base_224x224.h5";
-				case 6 -> filename = "pretrained_models_dl4j/tinyimagenet200_pretrained_v2.h5";		// 50%
-				case 7 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
-				case 8 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
+				case 1 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4.h5";
+				case 2 -> filename = "../python/pretrained_model/mobilenetv2_base_32x32.h5";
+				case 3 -> filename = "../python/pretrained_model/cifar100_pretrained_base.h5";
+				case 4 -> filename = "../python/pretrained_model/mobilenetv2_base_224x224.h5";
+				case 5 -> filename = "../python/pretrained_model/mobilenet_base_224x224.h5";
+				case 6 -> filename = "../python/pretrained_model/tinyimagenet200_pretrained_v2.h5";		// 50%
+				case 7 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
+					// on cifar10 => 65%, on cifar5 => 83%
+				case 8 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
 																								// 72% => 100 and 77% pretrained
-				case 9 -> filename = "pretrained_models_dl4j/cifar100_base_plus_head_v5.h5";			// 67%
-				case 10 -> filename = "pretrained_models_dl4j/stl10_pretrained_base_plus_head_v1.h5";	// 60%
-				case 11 -> filename = "pretrained_models_dl4j/stl10_pretrained_resnet20_v1.h5";	// 60%
-				case 12 -> filename = "pretrained_models_dl4j/cifar10_base_plus_head_v5_1.h5";	
+				case 9 -> filename = "../python/pretrained_model/cifar100_base_plus_head_v5.h5";			// 67%
+				case 10 -> filename = "../python/pretrained_model/stl10_pretrained_base_plus_head_v1.h5";	// 60%
+				case 11 -> filename = "../python/pretrained_model/stl10_pretrained_resnet20_v1.h5";	// 60%
+				case 12 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_1.h5";	
 					// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
-				case 13 -> filename = "pretrained_models_dl4j/cifar5_base_plus_head_v5_56789.h5";	
-				case 14 -> filename = "pretrained_models_dl4j/cifar5_base_plus_head_v4_56789.h5";	
-
+				case 13 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v5_56789.h5";	
+				case 14 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_56789.h5";	
+				case 15 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_01489.h5";	
+					// Failure 53% accuracy at the most
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			if (preTrained) {
 				switch (version) {
-					case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14 -> model = pretrainedModelCIFAR(filename);
+					case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 					default -> throw new IllegalStateException("Unknown ???" );
 				}
 			} else {
 
 				switch (version) {
-					case 1, 3, 10, 14 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+					case 1, 3, 10, 14, 15 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 					case 7, 13 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 						// cifar 10 trained 75%, cifar 5 optimized 90%
 					case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
@@ -394,8 +400,9 @@ public class Dl4jModelFactory {
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
 				.updater(new NoOp())
+				.trainingWorkspaceMode(WorkspaceMode.NONE)
+				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
 				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.inferenceWorkspaceMode(WorkspaceMode.NONE)
 				.build();
 
 		int start = (int) new TransferLearning.Builder(pretrained)
@@ -859,7 +866,7 @@ public class Dl4jModelFactory {
 						.build())
 				.build();
 
-		return Pair.of(new PsoMultiLayerAdapter(model, false), start);
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
 	// ======================================================================================================================
