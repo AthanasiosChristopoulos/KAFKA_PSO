@@ -124,6 +124,66 @@ def build_fmnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
+def build_fmnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.20),
+
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.25),
+
+        layers.Conv2D(10, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Flatten(),   # 3x3x10 = 90
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
+def build_fmnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),   # 28 -> 26
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),         # 26 -> 13
+
+        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),    # 13 -> 11
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),         # 11 -> 5
+
+        layers.Flatten(),                                                                 # 5*5*8 = 200
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
     model = keras.Sequential([
@@ -210,7 +270,7 @@ def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
-
+# 422/422 - 2s - loss: 0.4197 - accuracy: 0.8475 - val_loss: 0.3674 - val_accuracy: 0.8668 - lr: 0.0010 - 2s/epoch - 6ms/step
 def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
@@ -241,7 +301,7 @@ def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
     return model
 
 # ===============================================================================
-
+# 422/422 - 2s - loss: 0.4331 - accuracy: 0.8451 - val_loss: 0.4314 - val_accuracy: 0.8420 - lr: 0.0010 - 2s/epoch - 4ms/step
 def build_mnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
@@ -362,10 +422,11 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 # ===============================================================================
 # Train + Export
 
-def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
+def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
     # version = "v8"
-    version = "v3_fmnist"
+    # version = "v3_fmnist"
+    version = "v5_fmnist"
 
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
@@ -379,7 +440,8 @@ def train_and_export(out_dir="pretrained_model", epochs=5, batch_size=128):
         "v1_fmnist": ("fmnist_base_plus_head_v1", build_fmnist_base_plus_head_v1),
         "v2_fmnist": ("fmnist_base_plus_head_v2", build_fmnist_base_plus_head_v2),
         "v3_fmnist": ("fmnist_base_plus_head_v3", build_fmnist_base_plus_head_v3),
-
+        "v4_fmnist": ("fmnist_base_plus_head_v4", build_fmnist_base_plus_head_v4),
+        "v5_fmnist": ("fmnist_base_plus_head_v5", build_fmnist_base_plus_head_v5),
     }
     
     filename, mnist_model_function = model_registry[version]

@@ -127,8 +127,6 @@ public class Dl4jModelFactory {
 
 		} else if ("mnist".equals(DATASET)) {
 
-			cfg.USING_PRETRAINED_MODEL = false;
-
 			// cfg.USING_PRETRAINED_MODEL = false;
 			// model = createMNISTModelMLP(workerId);			
 			// model = createMNISTModelMLPSimple_0(workerId);
@@ -143,15 +141,15 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
 			// model = createMNIST5Cnn_New_12(workerId);	// 0.6433333
-			model = createMNIST5Cnn_New_13(workerId); // 0.7366667
+			// model = createMNIST5Cnn_New_13(workerId); // 0.7366667
 			// model = createMNIST5Cnn_New_14(workerId); // bestAccuracy: 0.69
 			// model = createDenseModel_1(workerId);	// 0.6066667
 
-			// pretrained =============================================================================================
+			cfg.USING_PRETRAINED_MODEL = true;
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 12;
+				int version = 11;
 
 				String filename;
 				switch (version) {
@@ -166,13 +164,21 @@ public class Dl4jModelFactory {
 					case 8 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
 					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
 						// recomendation
-					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
-					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";					
+					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";					
 						// 0.756 accuracy after PSO training, 66.4% in the pretrained
-					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";				
 						// 0.792 PSO training, 0.652 pretrained
-					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";				
 						// 0.785 PSO training, 0.676 pretrained
+					case 13 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";
+						// 0.693333 PSO training UnFreezeLvl = 0
+					case 14 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v5.h5";
+						//  0.62333333,
+					case 15 -> filename = "../python/pretrained_model/svhn_v5_mnist_final.h5";
+						// 0.78
+					case 16 -> filename = "../python/pretrained_model/svhn_v6_mnist_final.h5";
+						// 0.74
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
@@ -181,7 +187,7 @@ public class Dl4jModelFactory {
 
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
-						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -211,8 +217,12 @@ public class Dl4jModelFactory {
 						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
 						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
 						case 10 -> pair = createCNNModel_1_Layer(workerId, filename, 576);	
-						case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+						case 11, 13 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
 						case 12 -> pair = createCNNModel_1_Layer(workerId, filename, 198);
+						case 14 -> pair = createCNNModel_1_Layer(workerId, filename, 200);
+						case 15 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
+						case 16 -> pair = createCNNModel_1_Layer(workerId, filename, 128);
+
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 				}

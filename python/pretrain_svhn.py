@@ -202,6 +202,30 @@ def build_svhn_model_v3_mnist(input_shape=(28, 28, 1), num_classes=10):
 
 # =====================================================================================
 
+def build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10):
+    
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.20),
+
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.25),
+
+        layers.Conv2D(10, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Flatten(),   # 3x3x10 = 90
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    return model
+
+# =====================================================================================
+
 def build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
@@ -222,6 +246,63 @@ def build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10):
     ])
 
     return model
+
+# =====================================================================================
+# 516/516 - 3s - loss: 0.4986 - accuracy: 0.8633 - top2_acc: 0.9297 - val_loss: 0.5489 - val_accuracy: 0.8474 - val_top2_acc: 0.9232 - lr: 0.0010 - 3s/epoch - 6ms/step
+def build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Flatten(),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# =====================================================================================
+
+def build_svhn_model_v6_mnist(input_shape=(28, 28, 1), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),
+
+        layers.Conv2D(32, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(4,4), strides=(4,4)),
+
+        layers.Flatten(),
+
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
 
 # =====================================================================================
 
@@ -361,9 +442,11 @@ def main():
     
     set_seed(SEED)
 
-    MODEL_NAME = "svhn_v2"
+    # MODEL_NAME = "svhn_v2"
+    # MODEL_NAME = "svhn_v5"
+    MODEL_NAME = "svhn_v6"
 
-    convert_to_mnist = False
+    convert_to_mnist = True
 
     if(convert_to_mnist):
         MODEL_NAME += "_mnist"
@@ -373,13 +456,19 @@ def main():
     if convert_to_mnist == True:
         if "v4" in MODEL_NAME:
             model = build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v5" in MODEL_NAME:
+            model = build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10)    
+        elif "v6" in MODEL_NAME:
+            model = build_svhn_model_v6_mnist(input_shape=(28, 28, 1), num_classes=10)    
         elif "v3" in MODEL_NAME:
             model = build_svhn_model_v3_mnist(input_shape=(28, 28, 1), num_classes=10)        
         elif "v2" in MODEL_NAME:
             model = build_svhn_model_v2(input_shape=(28, 28, 1), num_classes=10)
         else:
             print("Something is wrong")
+            
     else:
+        
         if "v4" in MODEL_NAME:
             # Epoch 20/20
             # 516/516 - 3s - loss: 0.5567 - accuracy: 0.8295 - top2_acc: 0.9154 - val_loss: 0.4936 - val_accuracy: 0.8497 - val_top2_acc: 0.9227 - lr: 0.0010 - 3s/epoch - 6ms/step

@@ -358,14 +358,16 @@ public void onAllWorkersReported() {
         return;
     }
 
-    if (roundsWithoutImprovement >= cfg.MAX_NO_IMPROVEMENT_ROUNDS) {
-        if (logger.isEnabled(1)) logger.log(taskInstance +
-            ", Early stopping: bestAccuracy has not improved for " +
-            roundsWithoutImprovement + " rounds");
-        System.out.println("[Coordinator] Early stopping: bestAccuracy has not improved for " +
-            roundsWithoutImprovement + " rounds");
-        control.requestStopFinal();
-        return;
+    if(cfg.EARLY_STOPPING) {
+        if (roundsWithoutImprovement >= cfg.MAX_NO_IMPROVEMENT_ROUNDS) {
+            if (logger.isEnabled(1)) logger.log(taskInstance +
+                ", Early stopping: bestAccuracy has not improved for " +
+                roundsWithoutImprovement + " rounds");
+            System.out.println("[Coordinator] Early stopping: bestAccuracy has not improved for " +
+                roundsWithoutImprovement + " rounds");
+            control.requestStopFinal();
+            return;
+        }
     }
 
     end = System.nanoTime();
