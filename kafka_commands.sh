@@ -149,32 +149,32 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist-test --from-beginning
 
-# mnist4: ======================================================
+# mnist5: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic mnist4-input --partitions 40 --if-not-exists
+  --create --topic mnist5-input --partitions 40 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --describe --topic mnist4-input
+  --describe --topic mnist5-input
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic mnist4-input
+  --delete --topic mnist5-input
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic mnist4-input --from-beginning
+  --topic mnist5-input --from-beginning
 
-# mnist4-test: ======================================================
-
-kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic mnist4-test --partitions 1 --if-not-exists
-
-kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic mnist4-test
+# mnist5-test: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic mnist4-test
+  --create --topic mnist5-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic mnist5-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic mnist5-test
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic mnist4-test --from-beginning
+  --topic mnist5-test --from-beginning
 
 # svhn: ======================================================
 

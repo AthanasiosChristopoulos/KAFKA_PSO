@@ -157,9 +157,9 @@ public class Config {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
 
-        } else if("mnist4".equals(DATASET)) {
-            NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST4", "784"));
-            NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST4", "4"));
+        } else if("mnist5".equals(DATASET)) {
+            NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST5", "784"));
+            NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST5", "5"));
 
         } else if("fashion_mnist".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_FASHION_MNIST", "784"));

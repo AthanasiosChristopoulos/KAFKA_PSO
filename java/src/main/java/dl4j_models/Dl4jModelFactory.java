@@ -96,17 +96,17 @@ public class Dl4jModelFactory {
 			model = createLetterModel(workerId);
 			// model = createLetterModel70K(workerId);
 
-		} else if ("mnist4".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
+		} else if ("mnist5".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 			// model = createMNISTModelMLP(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
 			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNIST4Cnn(workerId);	// 70ms forward pass
-			// model = createMNIST4Cnn_Simple(workerId);	// 25ms forward pass on average
-			// model = createMNIST4MLP(workerId);
-			// model = createMNIST4MLP_Reduced(workerId);
-			// model = createMNIST4Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			// model = createMNIST4Cnn_New_Simpler(workerId);
-			model = createMNIST4Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
+			// model = createMNIST5Cnn(workerId);	// 70ms forward pass
+			// model = createMNIST5Cnn_Simple(workerId);	// 25ms forward pass on average
+			// model = createMNIST5MLP(workerId);
+			// model = createMNIST5MLP_Reduced(workerId);
+			// model = createMNIST5Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
+			// model = createMNIST5Cnn_New_Simpler(workerId);
+			model = createMNIST5Cnn_New_2(workerId);			// this costs a lot less on forwaard pass and gets the same performance (22ms)
 
 		// ======================================================================================================================
 
@@ -120,7 +120,7 @@ public class Dl4jModelFactory {
 			// model = createMNISTModelMLPSimple_1(workerId);
 			// model = createMNISTModelMLPSimple_2(workerId);
 			// model = createMNISTCnn(workerId);
-			// model = createMNIST4Cnn_New(workerId);
+			// model = createMNIST5Cnn_New(workerId);
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
 
@@ -154,6 +154,8 @@ public class Dl4jModelFactory {
 				}
 				
 				if (preTrained) {
+					System.out.println("Using model version: " + version);
+
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
 						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 -> model = pretrainedModelMNIST(filename);
@@ -201,10 +203,10 @@ public class Dl4jModelFactory {
 
 			// model = createMNISTModelMLPSimple_2(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNIST5Cnn_New_Simpler(workerId);
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTCnn(workerId);
-			// model = createMNIST4Cnn_New(workerId);
+			// model = createMNIST5Cnn_New(workerId);
 			
 			// pretrained =============================================================================================
 			
@@ -219,7 +221,7 @@ public class Dl4jModelFactory {
 				}
 				
 				if (preTrained) {
-
+					System.out.println("Using model version: " + version);
 					switch (version) {
 						case 1 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
@@ -244,14 +246,14 @@ public class Dl4jModelFactory {
 			// model = createCifar3Model_New_Simpler_2(workerId);
 			// model = createCifar3Model_New_Simpler_3(workerId);
 			// model = createCifar3Model_New_Simpler_4(workerId);
-			// model = createMNIST4Cnn_New_Simpler(workerId);
+			// model = createMNIST5Cnn_New_Simpler(workerId);
 			// model = buildCifarNCHW(3);
 
 			// pretrained =============================================================================================
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
-			int version = 7;
+			int version = 13;
 			String filename;
 			
 			if(version == 4 || version == 5) {
@@ -276,13 +278,17 @@ public class Dl4jModelFactory {
 				case 12 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_1.h5";	
 					// Report on preTrained Model: 0.832, with nSamples: 500, nCorrect: 416 loss: 0.48254818
 				case 13 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v5_56789.h5";	
+					// 57%
 				case 14 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_56789.h5";	
+					// 55% 
 				case 15 -> filename = "../python/pretrained_model/cifar5_base_plus_head_v4_01489.h5";	
 					// Failure 53% accuracy at the most
 				default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 			}
 
 			if (preTrained) {
+				System.out.println("Using model version: " + version);
+
 				switch (version) {
 					case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15 -> model = pretrainedModelCIFAR(filename);
 					case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
@@ -335,6 +341,7 @@ public class Dl4jModelFactory {
 
 					switch (version) {
 						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 96); // 80% Partial Freeze
+							// 83) bestAccuracy: 0.51
 
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
@@ -1960,7 +1967,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-    public static PsoModel createMNIST4MLP(int workerId) {
+    public static PsoModel createMNIST5MLP(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123 + workerId)
@@ -1999,7 +2006,7 @@ public class Dl4jModelFactory {
 	public static PsoModel createMNISTCnn_New_2(int workerId) {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN (PSO-feasible)");
+			System.out.println("Using MNIST5 CNN (PSO-feasible)");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -2097,7 +2104,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createMNIST4MLP_Reduced(int workerId) {
+	public static PsoModel createMNIST5MLP_Reduced(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2204,12 +2211,12 @@ public class Dl4jModelFactory {
     }
 
 	// ======================================================================================================================
-	// MNIST4CNN
+	// MNIST5CNN
 
 
-	public static PsoModel createMNIST4Cnn(int workerId) {
+	public static PsoModel createMNIST5Cnn(int workerId) {
 		if (printModel) {
-				System.out.println("Using CNN MNIST4 Model");
+				System.out.println("Using CNN MNIST5 Model");
 			}
 
 			MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -2244,7 +2251,7 @@ public class Dl4jModelFactory {
 							.poolingType(PoolingType.AVG)
 							.build())
 					.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	// since not using model.fit(...), this loss function will never be used
-							.nOut(NUM_CLASSES)                   // MNIST4 => 4 Classes 	16 × 4 + 4 = 68, // this project only uses model.output(...)
+							.nOut(NUM_CLASSES)                   // MNIST5 => 4 Classes 	16 × 4 + 4 = 68, // this project only uses model.output(...)
 							.activation(Activation.SOFTMAX)
 							.build())
 					.setInputType(InputType.convolutional(28, 28, 1))
@@ -2259,9 +2266,9 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createMNIST4Cnn_Simple(int workerId) {
+	public static PsoModel createMNIST5Cnn_Simple(int workerId) {
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN SIMPLE");
+			System.out.println("Using MNIST5 CNN SIMPLE");
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -2300,13 +2307,13 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createMNIST4Cnn_New(int workerId) {
+	public static PsoModel createMNIST5Cnn_New(int workerId) {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN");
+			System.out.println("Using MNIST5 CNN");
 		}
 
-		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2365,13 +2372,13 @@ public class Dl4jModelFactory {
 	// total 320 + 18496 + 36928 + 36928 = 92932 params
 	// Reported Dimensionality: 92932
 
-	public static PsoModel createMNIST4Cnn_New_Simpler(int workerId) {
+	public static PsoModel createMNIST5Cnn_New_Simpler(int workerId) {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN");
+			System.out.println("Using MNIST5 CNN");
 		}
 
-		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2416,13 +2423,11 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createMNIST4Cnn_New_2(int workerId) {
+	public static PsoModel createMNIST5Cnn_New_2(int workerId) {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN (PSO-feasible)");
+			System.out.println("Using MNIST5 CNN (PSO-feasible)");
 		}
-
-		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2454,7 +2459,7 @@ public class Dl4jModelFactory {
 						.activation(Activation.TANH)  // smoother than ReLU for PSO
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
-						.nOut(numClasses)
+						.nOut(NUM_CLASSES)
 						.activation(Activation.SOFTMAX)
 						.build())
 
@@ -3403,10 +3408,10 @@ public class Dl4jModelFactory {
 	public static PsoModel createCifar3Model_New_Simpler_4(int workerId) {
 
 		if (printModel) {
-			System.out.println("Using MNIST4 CNN (PSO-feasible)");
+			System.out.println("Using MNIST5 CNN (PSO-feasible)");
 		}
 
-		int numClasses = NUM_CLASSES;   // MNIST4 => 4, MNIST => 10
+		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)

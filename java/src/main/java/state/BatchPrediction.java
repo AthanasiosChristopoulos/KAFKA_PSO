@@ -326,7 +326,7 @@ public class BatchPrediction {
                     }        // (nSamples, 3, 32, 32)
 
 
-                } else { // else if("mnist".equals(DATASET) || "mnist4".equals(DATASET) ) {
+                } else { // else if("mnist".equals(DATASET) || "mnist5".equals(DATASET) ) {
 
                     X2d = Nd4j.create(data);          // (nSamples, 784)
                     

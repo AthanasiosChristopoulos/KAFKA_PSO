@@ -209,7 +209,7 @@
 		- iris (winequality - has 6500 samples)
 		- susy
 		- pendigits
-		- MNIST 	(and / or MNIST4)
+		- MNIST 	(and / or MNIST5)
 		- CIFAR4 	(and / or CIFAR)
 	- On them try out:
 		- baseline (no filtering)

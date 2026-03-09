@@ -659,17 +659,16 @@ def run_mnist():
     # save_all_trainable_as_flat_txt(model)
 
 # ======================================================================
-# MNIST4 DATASET (use only classes 0..3 => classes in total, drop the others)
+# MNIST5 DATASET (use only classes 0..3 => classes in total, drop the others)
 # ======================================================================
 
-def load_mnist4_data(remap_labels=True):
+def load_mnist5_data(remap_labels=True):
 
     print("Loading from tf.keras.datasets.mnist")
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
 
-    # Filter to digits 0..3
-    train_mask = (y_train >= 0) & (y_train <= 3)
-    test_mask  = (y_test  >= 0) & (y_test  <= 3)
+    train_mask = (y_train >= 0) & (y_train <= 4)
+    test_mask  = (y_test  >= 0) & (y_test  <= 4)
 
     X_train, y_train = X_train[train_mask], y_train[train_mask]
     X_test,  y_test  = X_test[test_mask],  y_test[test_mask]
@@ -683,17 +682,17 @@ def load_mnist4_data(remap_labels=True):
         y_train = y_train.astype("int32")
         y_test  = y_test.astype("int32")
 
-    print("MNIST4 Train shape:", X_train.shape, "Labels:", y_train.shape, "classes:", np.unique(y_train))
-    print("MNIST4 Test shape:",  X_test.shape,  "Labels:", y_test.shape,  "classes:", np.unique(y_test))
+    print("MNIST5 Train shape:", X_train.shape, "Labels:", y_train.shape, "classes:", np.unique(y_train))
+    print("MNIST5 Test shape:",  X_test.shape,  "Labels:", y_test.shape,  "classes:", np.unique(y_test))
 
-    class_names = [str(i) for i in range(4)]
+    class_names = [str(i) for i in range(5)]
 
     return X_train, y_train, X_test, y_test, class_names
 
 # ======================================================================
-# SIMPLER (smaller than before) / FASTER CNN for MNIST4
+# SIMPLER (smaller than before) / FASTER CNN for MNIST5
 
-def build_mnist4_model(input_shape=(28, 28), num_classes=4):
+def build_mnist5_model(input_shape=(28, 28), num_classes=5):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
@@ -718,7 +717,7 @@ def build_mnist4_model(input_shape=(28, 28), num_classes=4):
 
 # ======================================================================
 
-# def build_mnist4_model(input_shape=(28, 28), num_classes=4, lr=1e-3):
+# def build_mnist5_model(input_shape=(28, 28), num_classes=4, lr=1e-3):
 
 #     model = keras.Sequential([
 #         layers.Input(shape=input_shape),
@@ -758,14 +757,14 @@ def build_mnist4_model(input_shape=(28, 28), num_classes=4):
 #     return model
 
 # ======================================================================
-# Run MNIST4
+# Run MNIST5
 # ======================================================================
 
-def run_mnist4(epochs=5, batch_size=128, max_train=None, max_test=None):
+def run_mnist5(epochs=5, batch_size=128, max_train=None, max_test=None):
     
-    X_train, y_train, X_test, y_test, class_names = load_mnist4_data()
+    X_train, y_train, X_test, y_test, class_names = load_mnist5_data()
 
-    model = build_mnist4_model(input_shape=X_train.shape[1:], num_classes=4)
+    model = build_mnist5_model(input_shape=X_train.shape[1:], num_classes=5)
 
     print("\nTraining...")
     history = model.fit(
@@ -1812,8 +1811,8 @@ def main():
         run_bank()
     elif DATASET == "mnist":
         run_mnist()
-    elif DATASET == "mnist4":
-        run_mnist4()
+    elif DATASET == "mnist5":
+        run_mnist5()
     elif DATASET == "adult":
         run_adult()
     elif DATASET == "covertype":

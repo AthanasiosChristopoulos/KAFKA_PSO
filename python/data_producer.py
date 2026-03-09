@@ -66,8 +66,8 @@ if(DATASET == "cifar10"):
 if(DATASET == "mnist"):
     NUMBER_OF_DATA_REPEATS = 7
 
-if(DATASET == "mnist4"):
-    NUMBER_OF_DATA_REPEATS = 17
+if(DATASET == "mnist5"):
+    NUMBER_OF_DATA_REPEATS = 15
 
 if(DATASET == "fashion_mnist"):
     NUMBER_OF_DATA_REPEATS = 7
@@ -77,7 +77,7 @@ if(DATASET == "svhn"):
     
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist4", "fashion_mnist", "svhn")
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -238,7 +238,7 @@ def load_dataset():
 
     # ==================================================================================================
 
-    elif DATASET == "mnist4":
+    elif DATASET == "mnist5":
         
         print("Loading from tf.keras.datasets.mnist")
         (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
@@ -246,8 +246,8 @@ def load_dataset():
         X_train = X_train.astype("float32") / 255.0
         X_test  = X_test.astype("float32") / 255.0
 
-        train_mask = (y_train >= 0) & (y_train <= 3)
-        test_mask  = (y_test  >= 0) & (y_test  <= 3)
+        train_mask = (y_train >= 0) & (y_train <= 4)
+        test_mask  = (y_test  >= 0) & (y_test  <= 4)
 
         X_train, y_train = X_train[train_mask], y_train[train_mask]
         X_test,  y_test  = X_test[test_mask],  y_test[test_mask]
@@ -257,12 +257,12 @@ def load_dataset():
 
         X_train, y_train = shuffle(X_train, y_train)
         X_test, y_test = shuffle(X_test, y_test)
+        class_names = [str(i) for i in range(5)]
 
         print("Train shape:", X_train.shape, "Labels:", y_train.shape)
         print("Test shape:", X_test.shape, "Labels:", y_test.shape)
-
-        class_names = [str(i) for i in range(4)]
-
+        print(f"class names: {class_names}")
+        
         return X_train, y_train, X_test, y_test, class_names
     
     # ==================================================================================================
