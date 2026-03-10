@@ -248,6 +248,42 @@ def build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10):
     return model
 
 # =====================================================================================
+
+def build_svhn_model_v7_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(8, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Flatten(),   
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    return model
+
+# =====================================================================================
+
+def build_svhn_model_v8_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(8, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Flatten(),   
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+
+    return model
+
+# =====================================================================================
 # 516/516 - 3s - loss: 0.4986 - accuracy: 0.8633 - top2_acc: 0.9297 - val_loss: 0.5489 - val_accuracy: 0.8474 - val_top2_acc: 0.9232 - lr: 0.0010 - 3s/epoch - 6ms/step
 def build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10):
 
@@ -444,8 +480,10 @@ def main():
 
     # MODEL_NAME = "svhn_v2"
     # MODEL_NAME = "svhn_v5"
-    MODEL_NAME = "svhn_v6"
-
+    # MODEL_NAME = "svhn_v6"
+    # MODEL_NAME = "svhn_v7"
+    MODEL_NAME = "svhn_v8"
+    
     convert_to_mnist = True
 
     if(convert_to_mnist):
@@ -456,6 +494,10 @@ def main():
     if convert_to_mnist == True:
         if "v4" in MODEL_NAME:
             model = build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10)
+        if "v7" in MODEL_NAME:
+            model = build_svhn_model_v7_mnist(input_shape=(28, 28, 1), num_classes=10)
+        if "v8" in MODEL_NAME:
+            model = build_svhn_model_v8_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v5" in MODEL_NAME:
             model = build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10)    
         elif "v6" in MODEL_NAME:

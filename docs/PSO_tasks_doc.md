@@ -2,7 +2,7 @@
 ## =======================================================================================
 ## Important Pending Tasks:
 	
-	1) Limit communication / Communication Efficiency:
+	1) Find better Filters:
 	
 		Geometric Monitoring:
 			- Actuall GM:
@@ -30,24 +30,6 @@
 
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 
-	## ==============================================================
-
-	2) Experimentation:
-			
-		- Measure / Diagrams of (For these kinds of experiments set a paradigm where the samish correct solution is found => need data and convergence criteria):
-
-			# =================================================================
-
-			- With Filters: 
-				- Δεν πειραζει ο χρονος να μην πεφτει εχουμε bottlenecks τα forward passes και το Disk / Broker I/O
-
-				- Threshold Sensitivity (Also Sweet Spot of threshold): 
-					- Fixed N_WORKERS
-					- Define T as: T = MONITORING_THRESHOLD_MAX - MONITORING_THRESHOLD_MIN;
-					- Decreasing => strict to loose: This is about how aggressive your communication filtering is
-						- Strict: Hard to pass the filter, LESS communication
-						- Loose: Easy to pass the filter, MORE communication
-
 	# ========================================================================================
 
 	66) Experimentation - We want following diagrams:
@@ -58,6 +40,7 @@
 
 		- 3) x: N_WORKERS  					| y: accuracy / time / number of bytes
 		- 4) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
+			- Δεν πειραζει ο χρονος να μην πεφτει εχουμε bottlenecks τα forward passes και το Disk / Broker I/O
 			If not:
 			=> x: FILTER_ENABLED 			| y: accuracy / time / number of bytes
 			=> x: threshold T				| y: accuracy / number of bytes
@@ -115,7 +98,6 @@
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
-		2)
 		"Self Transfer Learning":
 		- Not transfer learning (by definition means transfering from task 1 to task 2)
 		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen
@@ -235,3 +217,9 @@
 		- baseline (no filtering)
 		- with filter
 	- 3 Non-Differential Functions
+
+
+## ================================================================================================
+## Papers I have already downloaded:
+
+Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
