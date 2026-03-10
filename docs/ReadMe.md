@@ -124,7 +124,7 @@ Standard PSO works this way:
  - Smoothness / a dense signal is important because you want PSO to detect loss differences when weights change, even a little. 
  - If its a discrete signal, then PSO gets no gradient like guidance, weights change and loss remains the same flat (not informative, doesnt give a direction)
 
-==============================================================================================
+## ==============================================================================================
 ## Landscape and stuff:
 
 The paper studies how properties of the fitness landscape affect PSO performance. These properties are:
@@ -1532,6 +1532,17 @@ source ~/venvs/tf215/bin/activate
     - 𝑡s: when the coordinator last collected exact vectors from all sites 𝑡 
     - t: the current moment when a site is evaluating whether it should communicate
     - After time ts (synchronization) sites keep receiving updates locally at time t => vi(t).
+    
+    During the monitoring task using the geometric approach [Sharfman et al. 2006,
+    2007b], the coordinator may request that all sites transmit their local measurements
+    vectors and subsequently calculates v(t), performs the required check on f(v(t)), and
+    transmits the v(t) vector to all sites. The previous process is referred to as a synchronization step
+    
+    A plausible question is: Could we avoid
+    such a synchronization step, if the changes in the values of the three local measurements vectors could have been predicted fairly accurately? For example, if we could
+    have predicted the change (drift) in the local measurements vectors of each site fairly
+    accurately, then we would have determined that v(t) has probably not moved closer to
+    the threshold surface and thus avoid the synchronization step.
 
     - We are tracking vi(t), which is the sites / particles current position. This can only influnce current_weights communication, not pBest communication (since that is unpredictable).
 
@@ -1546,9 +1557,15 @@ source ~/venvs/tf215/bin/activate
         => The coordinator uses for his weighted averages vi_p(t) as well, to calculate the global vector e_p(t)
         => If predictions are good vi​(t)≈vip​(t) => e_p(t)≈ve(t)
         => This means small deviation from predicted vi​(t)
-    
+
     - Filtering Implementation:
-        Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
+        - Στο Paper:
+            The goal of the filter is to reduce communication from the distributed sites (workers) to the coordinator.
+            Allow sites to locally decide whether a communication to the coordinator is necessary.
+            Suppress communication when the coordinator can still safely assume that the monitored global condition has not changed.
+
+        - Σε εμενα: 
+            Στην αποφαση του Worker να στειλει pBest, θετει ως filter εαν εχει κανει deviate πολυ απο το prediction που τρεχουν ολοι οι αλλοι workers
     
     - Static:
         - A site holds its own prediction: The simplest guess a site may take regarding the evolution of its local measurements vector is that its coordinates will remain unchanged with respect to the values they possessed in the last synchronization:
@@ -1580,6 +1597,7 @@ source ~/venvs/tf215/bin/activate
         - attempt to capture both the scaling and directional change that vi(t) may undertake
         - veli is info passed from the worker to the coordinator
         - It is easy to see that the flexibility provided by the VA predictor comes at the cost of the transmission of veli (along with vi(t)) during each synchronization
+
         - How it works:
             - start from the last reference vector 𝑣𝑖(𝑡𝑠) 
             - move it forward using an estimated velocity (veli)
@@ -1587,21 +1605,38 @@ source ~/venvs/tf215/bin/activate
                 => estimated rate of change of the velocity
         
         - veli calculation (withing time window):
-            - the oldest vector in the window is 𝑣𝑖(𝑡𝑎) 
-            - the newest/current is 𝑣𝑖(𝑡𝑏) 
-            - then estimate: vel 𝑖 ≈ (𝑣𝑖(𝑡𝑏) − 𝑣𝑖(𝑡𝑎))/(𝑡𝑏 − 𝑡𝑎) ​
+            - The site Si (sender) where this originates from, holds a window W of vi values
+                => using them the velocity is calculated inside that site
+            - the oldest vector in the window is 𝑣𝑖(𝑡𝑎) => ta = t_window_start
+            - the newest/current is 𝑣𝑖(t) (again this is calculated by the sender site Si) 
+            - then estimate: vel 𝑖 ≈ (𝑣𝑖(t) − 𝑣𝑖(𝑡𝑎))/(𝑡 − 𝑡𝑎) ​
+
+        - acceli Calculation is performed by receiver site Sj (j != i):
+            => difference between the current velocity and the previous synchronization velocity:
+            => accel_𝑖 ≈ (𝑣el𝑖_current − 𝑣el𝑖_previous)/(𝑡 − 𝑡s) ​
+            => the receiver received those two 𝑣el𝑖_current, 𝑣el𝑖_previous in the past by Si
+                => the velocity computed at the current sync
+                => the velocity known from the previous sync
+                => Basically that means that accel_i is computed at sync, this is why we are using t and ts 
+                => accel_i cant be computed at sync
 
         - How i should define VA Prediction for PSO:
             - x^vel​(t) = x(ts​) + Δt * v(ts​)
             - Δt = number of PSO updates since reference (Δt=t−ts​)
             
     - Reasons why Prediction Models are useless in this case:
+
         - no sync protocol
             => t / ts needs to be time defined, otherwise wont work.
             => this is bad in this case => (t - ts) * veli. This should be the integer number of updates that have happend since sync, but in my async protocol there is no way (even considering the time) for my workers to actually predict how many updates the other workers have done.
+            => paper’s monitoring model is much closer to a synchronous, round-based protocol than to your Kafka-style asynchronous pipeline => t needs rounds
+            => the mechanism is basically built around repeated global synchronization events.
 
-        - current weights is basically unpredictable, because velocity changes all the time
         - pBest is by definition unpredictable. It doesnt just depend on the velocity, but it depends on the particles evaluation 
             => pBest changes only on improvements, so it is jumpy and irregular
-            => pBest should probably considered static
+            => pBest should be considered static (the way it is)
 
+        - current weights is basically unpredictable, because velocity changes all the time:
+            - you can then not consider velocity static and update it concurently, but this would require messages overhead that would defeat the entire purpose of this (Coordinator would need to read pBest weights topic).
+
+            - if i am to be sending the entire velocity for sync purposes, that is essentially the entire message * 2, since a WeightsMessage is basically the weights. This is a complete waste.

@@ -91,10 +91,12 @@ public final class WorkerStatic {
 
     public float[] predictorRefPsoVelocityMonitoring;
 
-    public TimedWeightsSnapshot monPrev1 = null;   // most recent previous monitoring snapshot
-    public TimedWeightsSnapshot monPrev2 = null;   // one before that
-    public TimedWeightsSnapshot monPrev3 = null;   // one before that
-    
+    public TimedWeightsSnapshot snapX1 = null;   // most recent previous monitoring snapshot
+    public TimedWeightsSnapshot snapX2 = null;   // one before that
+    public TimedWeightsSnapshot snapX3 = null;   // one before that
+    public float[] currentVelocity = null;
+    public float[] previousVelocity = null;
+
     // ========================================================
 
     public WorkerStatic(int workerId) {

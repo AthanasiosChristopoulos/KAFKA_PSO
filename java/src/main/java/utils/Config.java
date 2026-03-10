@@ -62,6 +62,7 @@ public class Config {
     public int MONITORING_THRESHOLD_MIN;
     public boolean FILTER_ENABLED;
     public int PBEST_DEBOUNCE_MS;
+    public boolean PREDICTION_MODELS;
 
     public int SAMPLING_CONSTANT;
 
@@ -280,6 +281,7 @@ public class Config {
 
         FILTER_ENABLED = Boolean.parseBoolean(getenv(dotenv, "FILTER_ENABLED", "false"));
         PBEST_DEBOUNCE_MS = Integer.parseInt(getenv(dotenv, "PBEST_DEBOUNCE_MS", "100"));
+        PREDICTION_MODELS = Boolean.parseBoolean(getenv(dotenv, "PREDICTION_MODELS", "false"));
 
         if(FILTER_ENABLED == false) {
             SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter

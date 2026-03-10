@@ -64,6 +64,8 @@
 				- do it on pendigits: using pendigits as generall example (with INDEPENDENT = false / true)
 				to explain generally and then look at each dataset individually all diagrams
 				
+		- Στο Related Work μπαινουν sources / papers που κανω citate στην δικη μου δουλεια ? Η εχει πιο γενικη φυση ?
+		Το Related Work είναι πιο γενικής φύσης, αλλά συνήθως περιλαμβάνει papers που κάνεις cite στη δουλειά σου.
 
 	- Email: ==========================================================================
 

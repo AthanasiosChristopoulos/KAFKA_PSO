@@ -270,7 +270,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         return pred;
     }
+
     //=========================================================================================================================
+    // use simple physics velocity equation, v = (x_2 - x_1) / (t_2 - t_1), to estimate velocity
 
     private float[] estimateVelocity(float[] newer, long newerMs, float[] older, long olderMs) {
         float[] vel = new float[newer.length];
@@ -283,6 +285,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
+    // use simple physics fomula: a = (v2 - v1) / (t2 - t1)
 
     private float[] estimateAcceleration(float[] velNew, long tNew, float[] velOld, long tOld) {
         float[] acc = new float[velNew.length];
@@ -302,9 +305,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         long dt = Math.max(0L, nowMs - refTimeMs);
 
         for (int i = 0; i < refWeights.length; i++) {
-            pred[i] = (float) (
-                (double) refWeights[i]
-                + (double) dt * (double) vel[i]
+            pred[i] = (float) ((double) refWeights[i] + (double) dt * (double) vel[i]
                 + (double) dt * (double) dt * (double) acc[i]
             );
         }
@@ -313,11 +314,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     }
 
     //=========================================================================================================================
+    // basically VA but without the accelaration
 
     private float[] observedVelocityPredict(float[] refWeights, long refTimeMs, float[] vel, long nowMs) {
         
-        // basically VA but without the accelaration
-
         float[] pred = new float[refWeights.length];
         long dt = Math.max(0L, nowMs - refTimeMs);
 
@@ -344,7 +344,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         long dt = Math.max(0L, t - ts);
 
         for (int i = 0; i < refWeights.length; i++) {
-            pred[i] = (float) (refWeights[i] + dt * refVelocity[i]);
+            pred[i] = (float) (refWeights[i] + dt * refVelocity[i]);    // static Velocity
         }
 
         return pred;
@@ -392,6 +392,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     //=========================================================================================================================
 
     private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
+        
         long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
         // long t = currentSimulationTimeMs();
 
@@ -407,7 +408,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ? null
                 : Arrays.copyOf(ws.velocity, ws.velocity.length);
 
-            ws.monPrev1 = currentSnap;
+            ws.snapX1 = currentSnap;
 
             if (logger.isEnabled(1)) {
                 logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + ws.predictorTsMonitoring);
@@ -417,7 +418,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] staticPred = ws.predictorRefWeightsMonitoring;
         float[] linearPred = linearGrowthPredict(ws.predictorRefWeightsMonitoring, t, ws.predictorTsMonitoring);
-        float[] psoVelPred = psoVelocityPredict(ws.predictorRefWeightsMonitoring, ws.predictorRefPsoVelocityMonitoring, t, ws.predictorTsMonitoring);
+        float[] psoVelPred = psoVelocityPredict(ws.predictorRefWeightsMonitoring, 
+            ws.predictorRefPsoVelocityMonitoring, t, ws.predictorTsMonitoring);
 
         double staticErr = rmsDiff(currentWeights, staticPred);
         double linearErr = rmsDiff(currentWeights, linearPred);
@@ -427,23 +429,25 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         double observedVelErr = -1.0;
         double vaErr = -1.0;
 
-        if (ws.monPrev1 != null && ws.monPrev2 != null) {
-            logger.log("ws.monPrev1 and ws.monPrev2 arent null");
+        if (ws.snapX1 != null && ws.snapX2 != null) {
+            logger.log("ws.snapX1 and ws.snapX2 arent null");
 
-            float[] velObserved = estimateVelocity(ws.monPrev1.weights, ws.monPrev1.timeMs, ws.monPrev2.weights, ws.monPrev2.timeMs);
-            float[] observedVelPred = observedVelocityPredict(ws.monPrev1.weights, ws.monPrev1.timeMs, velObserved, t);
+            // use previous 1 and 2 values
+            ws.currentVelocity = estimateVelocity(ws.snapX1.weights, ws.snapX1.timeMs, ws.snapX2.weights, ws.snapX2.timeMs);
+            float[] observedVelPred = observedVelocityPredict(ws.snapX1.weights, ws.snapX1.timeMs, ws.currentVelocity, t);
 
             observedVelErr = rmsDiff(currentWeights, observedVelPred);
 
-            if (ws.monPrev3 != null) {
-                float[] velPrev = estimateVelocity(ws.monPrev2.weights, ws.monPrev2.timeMs, ws.monPrev3.weights, ws.monPrev3.timeMs);
-                float[] accObserved = estimateAcceleration(velObserved, ws.monPrev1.timeMs, velPrev, ws.monPrev2.timeMs);
-                float[] vaPred = velocityAccelerationPredict(ws.monPrev1.weights, ws.monPrev1.timeMs,velObserved, accObserved, t);
+            if (ws.previousVelocity != null) {
+                // essentially we can now utilize the two velocities we have gathered from the 2 snapshots in time
+                // float[] velPrev = estimateVelocity(ws.snapX2.weights, ws.snapX2.timeMs, ws.snapX3.weights, ws.snapX3.timeMs);
+                float[] accObserved = estimateAcceleration(ws.currentVelocity, ws.snapX1.timeMs, ws.previousVelocity, ws.snapX2.timeMs);
+                float[] vaPred = velocityAccelerationPredict(ws.snapX1.weights, ws.snapX1.timeMs,ws.currentVelocity, accObserved, t);
                 vaErr = rmsDiff(currentWeights, vaPred);
             }
 
         } else {
-            logger.log("ws.monPrev1 and ws.monPrev2 are null");
+            logger.log("ws.snapX1 and ws.snapX2 are null");
         }
 
         if(observedVelErr == -1.0) {
@@ -466,17 +470,17 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", vaErr = " + vaErr);
         }
 
-        // update baseline for static/linear/pso-velocity
+        // update baseline for static/linear/pso-velocity:
         ws.predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
         ws.predictorTsMonitoring = t;
         ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
-            ? null
-            : Arrays.copyOf(ws.velocity, ws.velocity.length);
+            ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
 
-        // shift snapshot history for observed velocity / VA
-        ws.monPrev3 = ws.monPrev2;
-        ws.monPrev2 = ws.monPrev1;
-        ws.monPrev1 = currentSnap;
+        // This is for observed velocity / VA:
+        // ws.snapX3 = ws.snapX2;
+        ws.snapX2 = ws.snapX1;
+        ws.snapX1 = currentSnap;
+        ws.previousVelocity = ws.currentVelocity;
     }
 
     //=========================================================================================================================
@@ -606,7 +610,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (gBestWeights == null) {     // gBestWeights not yet initialized
                 gBestWeights = new float[ws.pBestWeights.length];
-                ws.velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance); // social term is ignored effectevly. 
+                ws.velocity = ws.psoUpdater.updateX(ws.pBestWeights, ws.pBestWeights, accuracy, taskInstance);  
+                    // social term is ignored effectevly. 
 
             } else {
 
@@ -694,8 +699,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
             
-            // compareStaticVsLinearForMonitoring(snapshot);
-
+            if(cfg.PREDICTION_MODELS) compareStaticVsLinearForMonitoring(snapshot);
+            
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
             
             ws.incrementTotalMessagesSent("current_weights");
@@ -1274,7 +1279,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             
             if (logger.isEnabled(2)) logger.log("Opening Report ============================================================");
-            // System.out.println(PredictorComparisonRegistry.summary());
+            
+            if(cfg.PREDICTION_MODELS) System.out.println(PredictorComparisonRegistry.summary());
             
             checkConvergence(false, true);
 

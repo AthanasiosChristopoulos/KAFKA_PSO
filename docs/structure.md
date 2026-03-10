@@ -14,6 +14,10 @@
 ### 1.5 Thesis Outline
 
 ## 2. Related Work
+Το Related Work είναι πιο γενικής φύσης, αλλά συνήθως περιλαμβάνει papers που κάνεις cite στη δουλειά. 
+	Papers που κάνουν παρόμοια δουλεια με αυτην (biger picture δουλεια - το distributed PSO)
+	Papers που λύνουν μέρος του προβλήματος
+	Papers που είναι βάση για τη δουλειά σου
 ### 2.1 PSO in Neural Learning
 ### 2.2 Distributed / Federated Neural Learning
 ### 2.3 Kafka-based Training / Inference Pipelines

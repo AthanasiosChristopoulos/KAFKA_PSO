@@ -74,12 +74,8 @@ public final class PredictorComparisonRegistry {
 
     // =====================================================================
 
-    public static void recordMonitoring(
-            double staticErr,
-            double linearErr,
-            double psoVelErr,
-            double observedVelErr,
-            double vaErr) {
+    public static void recordMonitoring(double staticErr, double linearErr, double psoVelErr,
+            double observedVelErr, double vaErr) {
 
         StatsMonitoring s = MONITORING_STATS;
 
@@ -90,12 +86,9 @@ public final class PredictorComparisonRegistry {
         s.observedVelocityErrorSum.add(observedVelErr);
         s.vaErrorSum.add(vaErr);
 
-        double min = Math.min(
-            staticErr,
-            Math.min(
-                linearErr,
-                Math.min(psoVelErr, Math.min(observedVelErr, vaErr))
-            )
+        // this is the minimum error of all Prediction Models
+        double min = Math.min(staticErr,
+            Math.min(linearErr, Math.min(psoVelErr, Math.min(observedVelErr, vaErr)))
         );
 
         double eps = 1e-12;
@@ -107,6 +100,7 @@ public final class PredictorComparisonRegistry {
         if (Math.abs(observedVelErr - min) <= eps) winners++;
         if (Math.abs(vaErr - min) <= eps) winners++;
 
+        // accumulate wins per Prediction method:
         if (winners > 1) {
             s.ties.incrementAndGet();
         } else if (Math.abs(staticErr - min) <= eps) {
@@ -157,6 +151,7 @@ public final class PredictorComparisonRegistry {
     // =======================================================================================
     
     private static String summaryForMonitoring() {
+
         StatsMonitoring s = MONITORING_STATS;
         long n = s.totalComparisons.get();
 
@@ -171,11 +166,11 @@ public final class PredictorComparisonRegistry {
                 || Double.isNaN(avgObsVel) || Double.isNaN(avgVA)) {
             winner = "NO_COMPARISONS";
         } else {
-            double min = Math.min(
-                avgStatic,
+            double min = Math.min(avgStatic,
                 Math.min(avgLinear, Math.min(avgPsoVel, Math.min(avgObsVel, avgVA)))
             );
 
+            // Which Prediction Model does the minimum error belong to:
             if (min == avgVA) winner = "VELOCITY_ACCELERATION";
             else if (min == avgObsVel) winner = "OBSERVED_VELOCITY";
             else if (min == avgPsoVel) winner = "PSO_VELOCITY";
@@ -199,6 +194,9 @@ public final class PredictorComparisonRegistry {
             "WINNER                 = " + winner + "\n" +
             "====================================================";
     }
+
+    // ==================================================================================
+    
     public static String summary() {
         // return summaryForPBest() + "\n" + summaryForMonitoring();
         return summaryForMonitoring();

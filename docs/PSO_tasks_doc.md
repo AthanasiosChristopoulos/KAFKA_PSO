@@ -111,7 +111,6 @@
 			- CIFAR5 <--> CIFAR10 και CIFAR10 <--> CIFAR10 
 			- New Image Dataset of difficulty between MNIST and Cifar10
 
-		This is:
 		Transfer learning with temporal domain shift or continual learning.
 			- Sequential Transfer Learning / Continual Learning
 			- Pretraining → Fine-tuning on the same dataset distribution
@@ -138,7 +137,7 @@
 		Warm-start training:
 			You start optimization from pretrained weights instead of random initialization.
 
-		You must not leak the same samples between phases.
+		You must not leak the same samples between phases. 
 		
 	# ========================================================================================
 
