@@ -130,7 +130,7 @@ def load_cifar10(half):
     x_train = x_train.astype("float32") / 255.0
     x_test  = x_test.astype("float32") / 255.0
 
-    if(half):
+    if half:
         rng = np.random.default_rng(123)
 
         idx = rng.permutation(len(x_train))
@@ -141,32 +141,11 @@ def load_cifar10(half):
 
         x_train = x_train[half_idx:]
         y_train = y_train[half_idx:]
-        
-    return x_train, y_train, x_test, y_test
 
-def load_cifar10(half=True):
-
-    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-
-    y_train = y_train.astype("int64").reshape(-1)
-    y_test  = y_test.astype("int64").reshape(-1)
-
-    x_train = x_train.astype("float32") / 255.0
-    x_test  = x_test.astype("float32") / 255.0
-
-    # -------------------------------------------------
-    # deterministic split
-    # -------------------------------------------------
-    rng = np.random.default_rng(123)
-
-    idx = rng.permutation(len(x_train))
-    x_train = x_train[idx]
-    y_train = y_train[idx]
-
-    half_idx = len(x_train) // 2
-
-    x_train = x_train[half_idx:]
-    y_train = y_train[half_idx:]
+        # optional but recommended: reshuffle the selected half
+        idx_half = rng.permutation(len(x_train))
+        x_train = x_train[idx_half]
+        y_train = y_train[idx_half]
 
     return x_train, y_train, x_test, y_test
 
@@ -1166,7 +1145,7 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    version = "v5_3"
+    version = "v4"
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v4_cifar5"
@@ -1183,7 +1162,9 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     EPOCHS = 20
     
     half = True
-
+    # Saved Keras H5: pretrained_model/cifar10_base_plus_head_v4_half.h5
+    # 176/176 - 2s - loss: 0.5087 - accuracy: 0.8242 - val_loss: 0.8073 - val_accuracy: 0.7296 - lr: 5.0000e-04 - 2s/epoch - 10ms/step
+    
     if "cinic" in version: # ================================================================================
 
         train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)
@@ -1239,7 +1220,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             x_train, y_train, x_test, y_test = load_cifar10(half)
             num_classes = 10
 
-        model, name_h5_file = build_model_by_version(version, (32,32,3), num_classes, str(classes_for_cifar5))
+        model, name_h5_file = build_model_by_version(version, (32, 32, 3), num_classes, str(classes_for_cifar5))
         
         callbacks = [
             keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
@@ -1259,9 +1240,13 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
         print(f"\nCIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
 
     os.makedirs(out_dir, exist_ok=True)
-    h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
-    log_path = os.path.join(out_dir, f"{name_h5_file}.txt")
-
+    if half == True:
+        h5_path = os.path.join(out_dir, f"{name_h5_file}_half.h5")
+        log_path = os.path.join(out_dir, f"{name_h5_file}_half.txt")
+    else:
+        h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
+        log_path = os.path.join(out_dir, f"{name_h5_file}.txt")  
+        
     model.save(h5_path)
     print("Saved Keras H5:", h5_path)
 

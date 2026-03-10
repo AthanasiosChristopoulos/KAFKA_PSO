@@ -211,7 +211,7 @@ public class Config {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR5", "3072"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR5", "5"));
 
-        } else if("cifar10".equals(DATASET)) {
+        } else if(DATASET.contains("cifar10")) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_CIFAR10", "3072"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_CIFAR10", "10"));
             NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_CIFAR10", "250000"));
