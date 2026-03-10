@@ -120,7 +120,8 @@ def export_mobilenetv3small_base(save_path="pretrained_model/mobilenetv3small_32
 # ===============================================================================
 # Load Data
 
-def load_cifar10():
+def load_cifar10(half):
+
     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 
     y_train = y_train.astype("int64").reshape(-1)
@@ -128,6 +129,44 @@ def load_cifar10():
 
     x_train = x_train.astype("float32") / 255.0
     x_test  = x_test.astype("float32") / 255.0
+
+    if(half):
+        rng = np.random.default_rng(123)
+
+        idx = rng.permutation(len(x_train))
+        x_train = x_train[idx]
+        y_train = y_train[idx]
+
+        half_idx = len(x_train) // 2
+
+        x_train = x_train[half_idx:]
+        y_train = y_train[half_idx:]
+        
+    return x_train, y_train, x_test, y_test
+
+def load_cifar10(half=True):
+
+    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+
+    y_train = y_train.astype("int64").reshape(-1)
+    y_test  = y_test.astype("int64").reshape(-1)
+
+    x_train = x_train.astype("float32") / 255.0
+    x_test  = x_test.astype("float32") / 255.0
+
+    # -------------------------------------------------
+    # deterministic split
+    # -------------------------------------------------
+    rng = np.random.default_rng(123)
+
+    idx = rng.permutation(len(x_train))
+    x_train = x_train[idx]
+    y_train = y_train[idx]
+
+    half_idx = len(x_train) // 2
+
+    x_train = x_train[half_idx:]
+    y_train = y_train[half_idx:]
 
     return x_train, y_train, x_test, y_test
 
@@ -499,6 +538,7 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
 # ===============================================================================
 # Epoch 19/20
 # 352/352 - 4s - loss: 0.0053 - accuracy: 0.9998 - val_loss: 1.5402 - val_accuracy: 0.7860 - lr: 1.5625e-05 - 4s/epoch - 10ms/step
+
 def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
 
     model = keras.Sequential([
@@ -518,7 +558,6 @@ def build_cifar_base_v5(input_shape=(32, 32, 3), num_classes=10):
         layers.Flatten(),
 
         layers.Dense(64, activation="relu", use_bias=True),
-
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -1142,6 +1181,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # classes_for_cifar5 = (5, 6, 7, 8, 9)
 
     EPOCHS = 20
+    
+    half = True
 
     if "cinic" in version: # ================================================================================
 
@@ -1194,7 +1235,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             num_classes = 5
         
         else:
-            x_train, y_train, x_test, y_test = load_cifar10()
+            
+            x_train, y_train, x_test, y_test = load_cifar10(half)
             num_classes = 10
 
         model, name_h5_file = build_model_by_version(version, (32,32,3), num_classes, str(classes_for_cifar5))
@@ -1237,7 +1279,7 @@ if __name__ == "__main__":
     train_and_export()
 
 
-    # source ~/venvs/tf215/bin/activate
+# source ~/venvs/tf215/bin/activate
 
 # Ranking of overfiiting highest to lowest:
 # build_cifar_base_v3 (Flatten + Dense)

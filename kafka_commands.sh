@@ -551,6 +551,32 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar10-test --from-beginning
 
+# cifar10_half: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar10_half-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10_half-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic cifar10_half-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic cifar10_half-input --from-beginning
+  
+# cifar10_half-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar10_half-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10_half-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic cifar10_half-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic cifar10_half-test --from-beginning
+
 # nsfw: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \

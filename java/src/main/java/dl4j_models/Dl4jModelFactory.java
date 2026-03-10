@@ -149,13 +149,14 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 11;
+				int version = 2;
 
 				String filename;
 				switch (version) {
 					case 1 -> filename = "../python/pretrained_model/mnist_base_plus_head_v1.h5";	
 					// case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
 					case 2 -> filename = "../python/pretrained_model/mnist_base_plus_head_v2.h5";
+						// 0.83
 					case 3 -> filename = "../python/pretrained_model/mnist_base_plus_head_v3.h5";
 					case 4 -> filename = "../python/pretrained_model/mnist_base_plus_head_v4.h5";
 					case 5 -> filename = "../python/pretrained_model/mnist_base_plus_head_v5.h5";
@@ -163,12 +164,14 @@ public class Dl4jModelFactory {
 					case 7 -> filename = "../python/pretrained_model/mnist_base_plus_head_v7.h5";
 					case 8 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
 					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+						// 70%
 						// recomendation
 					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";					
 					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";					
 						// 0.756 accuracy after PSO training, 66.4% in the pretrained
 					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";				
-						// 0.792 PSO training, 0.652 pretrained
+						// 0.792 PSO training, 0.652 pretrained (also 0.8466667)
+						// recommended
 					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";				
 						// 0.785 PSO training, 0.676 pretrained
 					case 13 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";
@@ -289,7 +292,7 @@ public class Dl4jModelFactory {
 
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 13;
+				int version = 7;
 				String filename;
 				
 				if(version == 4 || version == 5) {
@@ -306,6 +309,7 @@ public class Dl4jModelFactory {
 					case 6 -> filename = "../python/pretrained_model/tinyimagenet200_pretrained_v2.h5";		// 50%
 					case 7 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5.h5";		// 81% (new - 500) vs (75% - cifar 10)
 						// on cifar10 => 65%, on cifar5 => 83%
+						// on cifar10 => 75%, on cifar5 => 83%
 					case 8 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
 																									// 72% => 100 and 77% pretrained
 					case 9 -> filename = "../python/pretrained_model/cifar100_base_plus_head_v5.h5";			// 67%

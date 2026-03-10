@@ -111,7 +111,7 @@
 			- no ImageNet models
 
 			due to the nature of PSO this is not possible  to use ImageNet type models 
-
+	
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
@@ -132,6 +132,35 @@
 			- CIFAR5 <--> CIFAR10 και CIFAR10 <--> CIFAR10 
 			- New Image Dataset of difficulty between MNIST and Cifar10
 
+		This is:
+		Transfer learning with temporal domain shift or continual learning.
+			- Sequential Transfer Learning / Continual Learning
+			- Pretraining → Fine-tuning on the same dataset distribution
+			- Self-training / Self-transfer (rare term)
+
+		Train on dataset 𝐷ℎ𝑖𝑠𝑡𝑜𝑟𝑖𝑐, then adapt to 𝐷𝑛𝑒𝑤, this is known as:
+			=> Continual Learning (CL)
+			=> Lifelong Learning
+
+		Continual learning studies how models can learn from a sequence of data distributions without forgetting previous knowledge.
+
+		Domain Adaptation
+			Source domain: historic dataset
+			Target domain: new unseen dataset
+		
+		Sequential training with different optimization methods on disjoint data splits:
+			Dataset D
+			├── Historic subset D₁ (50%)
+			│      train with GD
+			│
+			└── Unseen subset D₂ (50%)
+					continue training with PSO
+
+		Warm-start training:
+			You start optimization from pretrained weights instead of random initialization.
+
+		You must not leak the same samples between phases.
+		
 	# ========================================================================================
 
 	60) Write dimplomatiki:

@@ -424,9 +424,9 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
-    # version = "v8"
+    version = "v2"
     # version = "v3_fmnist"
-    version = "v5_fmnist"
+    # version = "v5_fmnist"
 
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),

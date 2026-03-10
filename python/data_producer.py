@@ -63,6 +63,9 @@ if(DATASET == "cifar5"):
 if(DATASET == "cifar10"):
     NUMBER_OF_DATA_REPEATS = 9
 
+if(DATASET == "cifar10_half"):
+    NUMBER_OF_DATA_REPEATS = 18
+    
 if(DATASET == "mnist"):
     NUMBER_OF_DATA_REPEATS = 7
 
@@ -77,7 +80,7 @@ if(DATASET == "svhn"):
     
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn")
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10_half", "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -736,6 +739,67 @@ def load_dataset():
 
         return X_train, y_train, X_test, y_test, class_names
 
+    # ==================================================================================================
+
+    elif DATASET == "cifar10_half":
+
+        classes = np.arange(10, dtype=np.int64)
+
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+        y_train = y_train.squeeze().astype(np.int64)
+        y_test  = y_test.squeeze().astype(np.int64)
+
+        X_train = x_train.astype(np.float32) / 255.0
+        X_test  = x_test.astype(np.float32) / 255.0
+
+        rng = np.random.default_rng(123)
+
+        # -------------------------------------------------
+        # Step 1: create reproducible split
+        # -------------------------------------------------
+        
+        idx = rng.permutation(len(X_train))
+        X_train = X_train[idx]
+        y_train = y_train[idx]
+
+        half = len(X_train) // 2
+
+        X_train_hist = X_train[:half]
+        y_train_hist = y_train[:half]
+        
+        # -------------------------------------------------
+        # Step 2: shuffle each half independently
+        # -------------------------------------------------
+
+        idx_hist = rng.permutation(len(X_train_hist))
+        X_train_hist = X_train_hist[idx_hist]
+        y_train_hist = y_train_hist[idx_hist]
+
+        # -------------------------------------------------
+        # shuffle test set
+        # -------------------------------------------------
+
+        idx = rng.permutation(len(X_test))
+        X_test, y_test = X_test[idx], y_test[idx]
+
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        class_names = [CIFAR10_NAMES[int(c)] for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"Historic train: {X_train_hist.shape}, {y_train_hist.shape}")
+        print(f"X_test : {X_test.shape}, y_test : {y_test.shape}")
+
+        evaluate_dataset(X_train_hist, y_train_hist, X_test, y_test, len(class_names))
+
+        return (
+            X_train_hist, y_train_hist,
+            X_test, y_test,
+            class_names
+        )
+    
     # ==================================================================================================
 
     elif DATASET == "nsfw":
