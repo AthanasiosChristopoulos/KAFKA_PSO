@@ -36,21 +36,13 @@
 
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
-		- Ειναι τα Tasks που εχω σκεφτει σωστα και ξεχναω κατι ?:
-			- Comparison with Gradient Descent ?
-			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?	- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?nv as User Interface ?
-			- Μετρησεις προς το Experimentation Setup (τι κυματομορφες) ?
-			
 		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
 
 		- για τιτλο μηπως λειπει οτι χρησιμοποιουμε το PSO για training neural networks ? Η εννοειται ? 	
 			- Σε αλλα papers χρησιμοποιουν PSO γενικα ως τροπο βελτιοστοποιησεις μιας συναρτησεις
 
-	- Implementation Detail: ================================================================
+		- το related work section ? ειναι για papers που κανουν κατι παρομοιο ? οχι απλως γενικα στο ιδιο field of study ?
 
-		- velocity like simulated annealing ? Make velocity reduce over time so that swarm converges ... 
-		- Χρησιμοποιω στον κωδικα καποια "κολπα" για να δουλευει το Kafka Streams με τους brokers πειραζει ?
-		- τρεξιμο σε server reliance on static classes για coordination
 
 	- Email: ==========================================================================
 

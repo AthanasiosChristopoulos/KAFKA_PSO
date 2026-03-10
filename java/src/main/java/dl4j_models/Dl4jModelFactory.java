@@ -275,8 +275,6 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("cifar")) {
 
-			cfg.USING_PRETRAINED_MODEL = true;
-
 			// model = createCifar3Model_PSO_Simple(workerId);
 			// model = createCifar3Model(workerId);
 			// model = createCifar3Model_New(workerId);	
@@ -288,11 +286,13 @@ public class Dl4jModelFactory {
 			// model = buildCifarNCHW(3);
 			// model = createCifarCnn_New_13(workerId);	// failure !!!
 
+			cfg.USING_PRETRAINED_MODEL = true;
+
 			// pretrained =============================================================================================
 
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 16;
+				int version = 17;
 				String filename;
 				
 				if(version == 4 || version == 5) {
@@ -325,6 +325,9 @@ public class Dl4jModelFactory {
 						// Failure 53% accuracy at the most
 					case 16 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4_half.h5";	
 						// 0.6066667 for cifar 10 maybe it will work for cifar 5
+						
+					case 17 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_half.h5";	
+
 					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 				}
 
@@ -332,7 +335,7 @@ public class Dl4jModelFactory {
 					System.out.println("Using model version: " + version);
 
 					switch (version) {
-						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16 -> model = pretrainedModelCIFAR(filename);
+						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17 -> model = pretrainedModelCIFAR(filename);
 						case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 						default -> throw new IllegalStateException("Unknown ???" );
 					}
@@ -341,7 +344,7 @@ public class Dl4jModelFactory {
 
 					switch (version) {
 						case 1, 3, 10, 14, 15, 16 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-						case 7, 13 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
+						case 7, 13, 17 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 							// cifar 10 trained 75%, cifar 5 optimized 90%
 						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
 						case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)

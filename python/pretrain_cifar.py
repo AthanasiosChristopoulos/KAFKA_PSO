@@ -1145,7 +1145,7 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    version = "v4"
+    version = "v5"
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v4_cifar5"
@@ -1162,9 +1162,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     EPOCHS = 20
     
     half = True
-    # Saved Keras H5: pretrained_model/cifar10_base_plus_head_v4_half.h5
-    # 176/176 - 2s - loss: 0.5087 - accuracy: 0.8242 - val_loss: 0.8073 - val_accuracy: 0.7296 - lr: 5.0000e-04 - 2s/epoch - 10ms/step
-    
+ 
     if "cinic" in version: # ================================================================================
 
         train_ds, val_ds, test_ds = load_cinic10("../data/DS_10283_3192/", batch_size=128)

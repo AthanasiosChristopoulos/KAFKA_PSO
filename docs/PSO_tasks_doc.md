@@ -105,13 +105,15 @@
 				=> no ImageNet models
 				
 		Solution_2:
-			- Find a Dataset that is similar but different to the target dataset
+			- Find a Dataset that is similar, but different to the target dataset
 			- Train the model on that dataset
 			- Transfer it to the other dataset, replacing its classification layers and using the other data + PSO to train it
 			- no ImageNet models
 
 			due to the nature of PSO this is not possible  to use ImageNet type models 
-	
+			 - Hard dataset → GD pretraining
+			 - Easier dataset → PSO adaptation
+
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
