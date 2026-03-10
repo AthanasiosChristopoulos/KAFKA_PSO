@@ -46,6 +46,8 @@
  - Settings:
 	- Ctrl + Shift + P / Preferences: Open Keyboard Shortcuts:
 		- go back: Alt + Left
+	- Preferences: Open User Settings JSON:
+	- "workbench.hover.delay": 2000,
 
 sudo apt install gnome-shell-extension-manager
  - extension: Hide TopBar

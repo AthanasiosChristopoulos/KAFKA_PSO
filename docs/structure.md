@@ -100,6 +100,16 @@
 
 ### 7.3 Execution
 #### 7.3.1 Datasets and Models
+- Πως ακριβως να βλεπω το experimentation ?
+	- Κανουμε study each individuall dataset by itself σιγα σιγα ?
+	- Δηλαδη κανουμε για ενα Dataset:
+		- Diagram: N_WORKERS => Ευρεση SWEET SPOT N_WORKERS για αυτο το DATASET
+		- Diagram: SEVERITY => Ευρεση SWEET SPOT SEVERIY για αυτο το DATASET
+		- Final Diagram, using the above determined parameters, to achieve best accuracy scenario:
+			=> accuracy - iterations
+	- Keep the generall study using pendigits as generall example (with INDEPENDENT = false / true)
+		to explain generally and then look at each dataset individually all diagrams
+		
 #### 7.3.2 Final Results
 #### 7.3.3 Discussion
 

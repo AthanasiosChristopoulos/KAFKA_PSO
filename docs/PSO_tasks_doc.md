@@ -30,16 +30,11 @@
 
 		Prediction models σημαινει προβλεψη pbest / gbest, ωστε να ξερω αμα θα επικοινωνησω ή οχι
 
-	## ===========================================================================================================================
+	## ==============================================================
 
 	2) Experimentation:
-
-		- Different Non - Differentiable Loss Functions
-		- Different Datasets, Different sizes: INDEPENDENT_DATA_PROCESSING true or false
 			
 		- Measure / Diagrams of (For these kinds of experiments set a paradigm where the samish correct solution is found => need data and convergence criteria):
-
-			- x: Different Topologies / y: Accuracy
 
 			# =================================================================
 
@@ -55,7 +50,7 @@
 
 	# ========================================================================================
 
-	66) We want following diagrams:
+	66) Experimentation - We want following diagrams:
 
 		- 0) x: classical / fully_informed	| y: accuracy	=> conclusion: fully informed better
 		- 1) x: Dimensionality 				| y: accuracy	=> conclusion: high dimensionality bad
@@ -79,6 +74,9 @@
 		- Final Part 2) For one (hard - image) Dataset:
 			- x: Iterations 				| y: Accuracy	(differentialable Loss Function)
 			- x: Iterations 				| y: Accuracy	(non differentialable Loss Function)
+
+		- Final Part 3) Differentiable vs Non Differentiable Loss Functions
+			- accuracy - monitoring roinds diagram
 
 	# ========================================================================================
 

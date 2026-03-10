@@ -34,6 +34,16 @@
 		- exei νοημα να προσθεσω on top of fmnist -> mnist, το svhn -> mnist ?
 			=> βασικα πως να το παρουσιασω ? πρωτα να κανω my own training (65%) και μετα να πω αρα χρεαιζομαστε tranfer learning με αυτο το dataset ?
 
+		- Πως ακριβως να βλεπω το experimentation ?
+			- Κανουμε study each individuall dataset by itself σιγα σιγα ?
+			- Δηλαδη κανουμε για ενα Dataset:
+				- Diagram: N_WORKERS => Ευρεση SWEET SPOT N_WORKERS για αυτο το DATASET
+				- Diagram: SEVERITY => Ευρεση SWEET SPOT SEVERIY για αυτο το DATASET
+				- Final Diagram, using the above determined parameters, to achieve best accuracy scenario:
+					=> accuracy - iterations
+			- Keep the generall study using pendigits as generall example (with INDEPENDENT = false / true)
+				to explain generally and then look at each dataset individually all diagrams
+
 	- Για συνταξη της Διπλωματικης + Next Steps: ===========================================
 
 		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
@@ -43,6 +53,17 @@
 
 		- το related work section ? ειναι για papers που κανουν κατι παρομοιο ? οχι απλως γενικα στο ιδιο field of study ?
 
+		- Πως ακριβως να βλεπω το experimentation ?
+			- Κανουμε study each individuall dataset by itself σιγα σιγα ?
+			- Δηλαδη κανουμε για ενα Dataset:
+				- Diagram: N_WORKERS => Ευρεση SWEET SPOT N_WORKERS για αυτο το DATASET
+				- Diagram: SEVERITY => Ευρεση SWEET SPOT SEVERIY για αυτο το DATASET
+				- Final Diagram, using the above determined parameters, to achieve best accuracy scenario:
+					=> accuracy - iterations
+			- We need to do a more generall study first:
+				- do it on pendigits: using pendigits as generall example (with INDEPENDENT = false / true)
+				to explain generally and then look at each dataset individually all diagrams
+				
 
 	- Email: ==========================================================================
 
