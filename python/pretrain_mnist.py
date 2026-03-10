@@ -213,6 +213,95 @@ def build_fmnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 
+def build_fmnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True),   # 28->26
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 26->13
+
+        layers.Conv2D(12, (3,3), padding="valid", activation="relu", use_bias=True),  # 13->11
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 11->5
+
+        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),   # 5->3
+
+        layers.Flatten(),                                                               # 3*3*4 = 36
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
+def build_fmnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True),   # 28->26
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 26->13
+
+        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),   # 13->11
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 11->5
+
+        layers.Conv2D(3, (3,3), padding="valid", activation="relu", use_bias=True),   # 5->3
+
+        layers.Flatten(),                                                               # 3*3*3 = 27
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+def build_fmnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Reshape((28, 28, 1)),
+
+        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),    # 28->28
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                          # 28->14
+
+        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),    # 14->14
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                          # 14->7
+
+        layers.Conv2D(2, (3,3), padding="same", activation="relu", use_bias=True),    # 7->7
+
+        layers.Flatten(),                                                               # 7*7*2 = 98
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    print("Trainable params:", model.count_params())
+    return model
+
+# ===============================================================================
+
 def build_mnist_base_plus_head_v1(input_shape=(28, 28), num_classes=10):
 
     model = keras.Sequential([
@@ -483,8 +572,8 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
     # version = "v2_1"
-    # version = "v3_fmnist"
-    version = "v2_1_fmnist"
+    version = "v8_fmnist"
+    # version = "v2_1_fmnist"
 
     model_registry = {
         "v1": ("mnist_base_plus_head_v1", build_mnist_base_plus_head_v1),
@@ -501,7 +590,11 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
         "v2_1_fmnist": ("fmnist_base_plus_head_v2_1", build_fmnist_base_plus_head_v2_1),
         "v3_fmnist": ("fmnist_base_plus_head_v3", build_fmnist_base_plus_head_v3),
         "v4_fmnist": ("fmnist_base_plus_head_v4", build_fmnist_base_plus_head_v4),
-        "v5_fmnist": ("fmnist_base_plus_head_v5", build_fmnist_base_plus_head_v5),
+        "v5_fmnist": ("fmnist_base_plus_head_v5", build_fmnist_base_plus_head_v5), 
+        "v6_fmnist": ("fmnist_base_plus_head_v6", build_fmnist_base_plus_head_v6), 
+        "v7_fmnist": ("fmnist_base_plus_head_v7", build_fmnist_base_plus_head_v7), 
+        "v8_fmnist": ("fmnist_base_plus_head_v8", build_fmnist_base_plus_head_v8), 
+
     }
     
     filename, mnist_model_function = model_registry[version]

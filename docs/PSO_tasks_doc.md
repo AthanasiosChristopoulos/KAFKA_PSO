@@ -222,4 +222,12 @@
 ## ================================================================================================
 ## Papers I have already downloaded:
 
+1)
 Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
+
+2)
+
+de Rosa, Roder, Papa, dos Santos (2022), Improving Pre-Trained Weights Through Meta-Heuristics Fine-Tuning.
+	=> PSO fine-tuning not actuall training
+
+	

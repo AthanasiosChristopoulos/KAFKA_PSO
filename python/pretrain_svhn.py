@@ -339,6 +339,121 @@ def build_svhn_model_v6_mnist(input_shape=(28, 28, 1), num_classes=10):
     print("Trainable params:", model.count_params())
     return model
 
+# =====================================================================================
+
+def build_svhn_model_v9_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(8, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+
+        layers.Conv2D(2, (3, 3), padding="same", activation="relu"),
+                                                   # 7 x 7 x 2
+        layers.Flatten(),                           # 98
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    return model
+
+# =====================================================================================
+
+def build_svhn_model_v10_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(12, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+
+        layers.Conv2D(24, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+
+        layers.Conv2D(2, (3, 3), padding="same", activation="relu"),   # 7x7x2
+        layers.Flatten(),                                                # 98
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    return model
+
+# =====================================================================================
+
+def build_svhn_model_v11_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(12, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+
+        layers.Conv2D(24, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+
+        layers.Conv2D(16, (1, 1), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),          # 7 -> 3
+
+        layers.Flatten(),                                # 3*3*16 = 144
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    return model
+# =====================================================================================
+
+def build_svhn_model_v12_mnist(input_shape=(28, 28, 1), num_classes=10):
+    inputs = keras.Input(shape=input_shape)
+
+    x = layers.Conv2D(24, (3, 3), padding="same", use_bias=False)(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Downsample: 28x28 -> 14x14
+    x = layers.Conv2D(32, (3, 3), strides=2, padding="same", use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Dropout(0.10)(x)
+
+    # Feature block
+    x = layers.Conv2D(48, (3, 3), padding="same", use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Downsample: 14x14 -> 7x7
+    x = layers.Conv2D(64, (3, 3), strides=2, padding="same", use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Dropout(0.15)(x)
+
+    # Final feature refinement
+    x = layers.Conv2D(64, (3, 3), padding="same", use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    x = layers.GlobalAveragePooling2D()(x)
+
+    # Final dense layer params = 64*10 + 10 = 650
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
+
+    model = keras.Model(inputs, outputs, name="svhn_v12_mnist")
+    return model
+
+# =====================================================================================
+
+def build_svhn_model_v13_mnist(input_shape=(28, 28, 1), num_classes=10):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+
+        layers.Conv2D(48, (3, 3), strides=2, padding="same", activation="relu"),
+        layers.Dropout(0.10),
+
+        layers.Conv2D(64, (3, 3), strides=2, padding="same", activation="relu"),
+
+        layers.GlobalAveragePooling2D(),
+
+        # 64*10 + 10 = 650
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    return model
 
 # =====================================================================================
 
@@ -482,7 +597,7 @@ def main():
     # MODEL_NAME = "svhn_v5"
     # MODEL_NAME = "svhn_v6"
     # MODEL_NAME = "svhn_v7"
-    MODEL_NAME = "svhn_v8"
+    MODEL_NAME = "svhn_v13"
     
     convert_to_mnist = True
 
@@ -494,10 +609,20 @@ def main():
     if convert_to_mnist == True:
         if "v4" in MODEL_NAME:
             model = build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10)
-        if "v7" in MODEL_NAME:
+        elif "v7" in MODEL_NAME:
             model = build_svhn_model_v7_mnist(input_shape=(28, 28, 1), num_classes=10)
-        if "v8" in MODEL_NAME:
+        elif "v8" in MODEL_NAME:
             model = build_svhn_model_v8_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v9" in MODEL_NAME:
+            model = build_svhn_model_v9_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v10" in MODEL_NAME:
+            model = build_svhn_model_v10_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v11" in MODEL_NAME:
+            model = build_svhn_model_v11_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v12" in MODEL_NAME:
+            model = build_svhn_model_v12_mnist(input_shape=(28, 28, 1), num_classes=10)
+        elif "v13" in MODEL_NAME:
+            model = build_svhn_model_v13_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v5" in MODEL_NAME:
             model = build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10)    
         elif "v6" in MODEL_NAME:

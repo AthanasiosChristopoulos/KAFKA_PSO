@@ -149,7 +149,7 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 20;
+				int version = 11;
 
 				String filename;
 				switch (version) {
@@ -162,8 +162,9 @@ public class Dl4jModelFactory {
 					case 5 -> filename = "../python/pretrained_model/mnist_base_plus_head_v5.h5";
 					case 6 -> filename = "../python/pretrained_model/mnist_base_plus_head_v6.h5";
 					case 7 -> filename = "../python/pretrained_model/mnist_base_plus_head_v7.h5";
-					case 8 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v3.h5";		// NO FREEZE %, FULL freeze %, Partial Freeze %
-					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
+					case 8 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v3.h5";	
+						// 58%	
+					case 9 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";				
 						// 70%
 						// recomendation
 					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";					
@@ -191,6 +192,15 @@ public class Dl4jModelFactory {
 						// 78%	
 					case 20 -> filename = "../python/pretrained_model/svhn_v8_mnist_final.h5";		
 						// 81%
+					case 21 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v6.h5";		
+						// 63%
+					case 22 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v7.h5";		
+						// 35%
+					case 23 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v8.h5";		
+						// 66%
+					case 24 -> filename = "../python/pretrained_model/svhn_v9_mnist_final.h5";		
+						// 78%
+					case 25 -> filename = "../python/pretrained_model/svhn_v10_mnist_final.h5";	
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
@@ -199,7 +209,8 @@ public class Dl4jModelFactory {
 
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
-						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+						24, 25 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -238,7 +249,13 @@ public class Dl4jModelFactory {
 						case 19 -> pair = createCNNModel_1_Layer(workerId, filename, 784);
 							// 78%
 						case 20 -> pair = createCNNModel_1_Layer(workerId, filename, 144);
-							
+						case 21 -> pair = createCNNModel_1_Layer(workerId, filename, 36);
+						case 22 -> pair = createCNNModel_1_Layer(workerId, filename, 27);
+						case 23 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
+						case 24 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
+						case 25 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
+							// 81.3%
+
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 				}
