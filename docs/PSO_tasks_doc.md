@@ -117,8 +117,6 @@
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
-		1)
-		- mnist (GD) -> fashion mnist (PSO) 
 		2)
 		"Self Transfer Learning":
 		- Not transfer learning (by definition means transfering from task 1 to task 2)
@@ -130,7 +128,6 @@
 			- Ειδικο scenario transfer learning
 
 		- Αρα δοκιμαζεις:
-			- NSFW
 			- CIFAR5 <--> CIFAR10 και CIFAR10 <--> CIFAR10 
 			- New Image Dataset of difficulty between MNIST and Cifar10
 
@@ -165,13 +162,7 @@
 		
 	# ========================================================================================
 
-	60) Write dimplomatiki:
-
-		- In Datasets section we need to show the datasets in increasing difficulty order.
-			- 1) Iris (Highly seperable / Easy dataset, Low Samples, Low Number of Classes)
-			- 2) Winequality (Highly seperable / Easy dataset, High Samples, Low Number of Classes) => How do we scale with higher amount of samples
-			- 3) Pendigits (Highly seperable / Easy dataset, High Samples, High Number of Classes) => How do we scale with higher amount of number of classes
-			- 4) MNIST (More complicated / Image dataset, High Samples, High Number of Classes) => How do we scale with more complex dataset ?
+	60) Write dimplomatiki
 
 	## =======================================================================================
 
@@ -186,7 +177,7 @@
 	## =======================================================================================
 
 	69) Prediction Models:
-		Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+		- Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
 		
 ## =======================================================================================
 

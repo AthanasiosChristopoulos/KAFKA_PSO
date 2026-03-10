@@ -149,11 +149,12 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
-				int version = 2;
+				int version = 11;
 
 				String filename;
 				switch (version) {
 					case 1 -> filename = "../python/pretrained_model/mnist_base_plus_head_v1.h5";	
+						// best, 99%
 					// case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";		// NO FREEZE 69%, FULL freeze 67%, 71% Partial Freeze
 					case 2 -> filename = "../python/pretrained_model/mnist_base_plus_head_v2.h5";
 						// 0.83

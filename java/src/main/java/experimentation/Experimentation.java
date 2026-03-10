@@ -28,7 +28,8 @@ public class Experimentation {
                     "GBEST_ACC,GBEST_LOSS," + 
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
-                    "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX\n";
+                    "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
+                    "INDEPENDENT_DATA_PROCESSING\n";
 
     // ========================================================================
 
@@ -60,12 +61,18 @@ public class Experimentation {
         cfg.LOSS_THRESHOLD_MIN = 0.005f;
         LOSS_THRESHOLD_MIN_ORIGINAL = cfg.LOSS_THRESHOLD_MIN;
         LOSS_THRESHOLD_MAX_ORIGINAL = cfg.LOSS_THRESHOLD_MAX;
-        
+
+        cfg.EARLY_STOPPING = false; // this is detrimental to experimentation, especially in the time diagrams:
+            // N_WORKERS => on low N_WORKERS, workers exit sooner than expected, because they have pretty bad performances
+                // EARLY STOPPING kicks in
+            // SEVERITY => Easier filters reach EARLY_STOPPING requiring less time, when Harder filters require more 
+                // time to reach good accuracy but they are contantly improving but slowly, so no EARLY_STOPPING
+    
         // ===========================================================================================================================================
         // ===========================================================================================================================================
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
-            
+                
             // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
@@ -273,7 +280,7 @@ public class Experimentation {
         // ===========================================================================================================================================
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
-            
+            cfg.EARLY_STOPPING = true;  // probably a good idea
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_monitoring_iterations.csv");
@@ -488,7 +495,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b\n",
                 filterEnabled,
                 nWorkers,
                 // r.getTotalElapsedSec(),
@@ -506,8 +513,8 @@ public class Experimentation {
                 (double) cfg.LOSS_THRESHOLD_MAX,
                 cfg.PBEST_DEBOUNCE_MS,
                 cfg.MONITORING_THRESHOLD_MIN,
-                cfg.MONITORING_THRESHOLD_MAX
-
+                cfg.MONITORING_THRESHOLD_MAX,
+                cfg.INDEPENDENT_DATA_PROCESSING
             ));
 
         } catch(Exception e) {
