@@ -66,6 +66,9 @@ if(DATASET == "cifar10"):
 if(DATASET == "cifar10_half"):
     NUMBER_OF_DATA_REPEATS = 18
     
+if(DATASET == "cifar5_half"):
+    NUMBER_OF_DATA_REPEATS = 36
+    
 if(DATASET == "mnist"):
     NUMBER_OF_DATA_REPEATS = 7
 
@@ -80,7 +83,7 @@ if(DATASET == "svhn"):
     
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10_half", "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn")
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10_half", "cifar5_half", "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
 print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
@@ -662,7 +665,7 @@ def load_dataset():
 
     elif DATASET == "cifar5":
 
-        classes = (0,1,2, 3, 4)
+        classes = (0, 1, 2, 3, 4)
 
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
             # X_train: (15000, 32, 32, 3), y_train: (15000,). This means 15000 * 27 = 40 * 10^4
@@ -765,6 +768,7 @@ def load_dataset():
 
         half = len(X_train) // 2
 
+        # So it takes the first / lower / earlier half of the shuffled CIFAR-10 training set.
         X_train_hist = X_train[:half]
         y_train_hist = y_train[:half]
         
@@ -799,7 +803,88 @@ def load_dataset():
             X_test, y_test,
             class_names
         )
-    
+
+    # ==================================================================================================
+        
+    elif DATASET == "cifar5_half":
+
+        classes = np.array((0, 1, 4, 8, 9), dtype=np.int64)
+
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+        y_train = y_train.squeeze().astype(np.int64)
+        y_test  = y_test.squeeze().astype(np.int64)
+
+        X_train = x_train.astype(np.float32) / 255.0
+        X_test  = x_test.astype(np.float32) / 255.0
+
+        rng = np.random.default_rng(123)
+
+        # -------------------------------------------------
+        # Step 1: reproducible split of the full training set
+        # -------------------------------------------------
+        idx = rng.permutation(len(X_train))
+        X_train = X_train[idx]
+        y_train = y_train[idx]
+
+        half = len(X_train) // 2
+
+        X_train_hist = X_train[:half]
+        y_train_hist = y_train[:half]
+
+        # -------------------------------------------------
+        # Step 2: keep only selected CIFAR-5 classes
+        # -------------------------------------------------
+        train_mask = np.isin(y_train_hist, classes)
+        test_mask  = np.isin(y_test, classes)
+
+        X_train_hist = X_train_hist[train_mask]
+        y_train_hist = y_train_hist[train_mask]
+
+        X_test = X_test[test_mask]
+        y_test = y_test[test_mask]
+
+        # -------------------------------------------------
+        # Step 3: remap labels {0,1,4,8,9} -> {0,1,2,3,4}
+        # -------------------------------------------------
+        label_map = {0: 0, 1: 1, 4: 2, 8: 3, 9: 4}
+
+        y_train_hist = np.array([label_map[int(y)] for y in y_train_hist], dtype=np.int64)
+        y_test       = np.array([label_map[int(y)] for y in y_test], dtype=np.int64)
+
+        # -------------------------------------------------
+        # Step 4: shuffle the filtered training half
+        # -------------------------------------------------
+        idx_hist = rng.permutation(len(X_train_hist))
+        X_train_hist = X_train_hist[idx_hist]
+        y_train_hist = y_train_hist[idx_hist]
+
+        # -------------------------------------------------
+        # Step 5: shuffle / trim test
+        # -------------------------------------------------
+        idx_test = rng.permutation(len(X_test))
+        X_test = X_test[idx_test]
+        y_test = y_test[idx_test]
+
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        class_names = [CIFAR10_NAMES[int(c)] for c in classes]
+
+        print(f"Selected classes: {classes.tolist()} -> {class_names}")
+        print(f"Historic CIFAR5 train: {X_train_hist.shape}, {y_train_hist.shape}")
+        print(f"X_test : {X_test.shape}, y_test : {y_test.shape}")
+        print(f"Remapped labels in train: {np.unique(y_train_hist)}")
+        print(f"Remapped labels in test : {np.unique(y_test)}")
+
+        evaluate_dataset(X_train_hist, y_train_hist, X_test, y_test, len(class_names))
+
+        return (
+            X_train_hist, y_train_hist,
+            X_test, y_test,
+            class_names
+        )
+        
     # ==================================================================================================
 
     elif DATASET == "nsfw":

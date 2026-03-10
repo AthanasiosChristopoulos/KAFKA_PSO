@@ -138,7 +138,9 @@ def load_cifar10(half):
         y_train = y_train[idx]
 
         half_idx = len(x_train) // 2
-
+       # Takes the second / latter / upper half of the shuffled CIFAR-10 training set.
+        # shuffled indices 0 ... 24999 are discarded
+        # shuffled indices 25000 ... 49999 are kept
         x_train = x_train[half_idx:]
         y_train = y_train[half_idx:]
 
@@ -1145,7 +1147,8 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
 def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
-    version = "v5"
+    # version = "v5"
+    version = "v6"
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v4_cifar5"

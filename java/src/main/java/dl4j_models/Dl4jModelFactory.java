@@ -292,7 +292,7 @@ public class Dl4jModelFactory {
 
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 17;
+				int version = 16;
 				String filename;
 				
 				if(version == 4 || version == 5) {
@@ -325,9 +325,12 @@ public class Dl4jModelFactory {
 						// Failure 53% accuracy at the most
 					case 16 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4_half.h5";	
 						// 0.6066667 for cifar 10 maybe it will work for cifar 5
-						
+						// cifar5_half => 81%
+						// Recommended
 					case 17 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_half.h5";	
-
+						// cifar10_half => 60%, cifar5_half => 86%
+					case 18 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6_half.h5";	
+						// cifar5_half => 0.74
 					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 				}
 
@@ -335,7 +338,7 @@ public class Dl4jModelFactory {
 					System.out.println("Using model version: " + version);
 
 					switch (version) {
-						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17 -> model = pretrainedModelCIFAR(filename);
+						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18 -> model = pretrainedModelCIFAR(filename);
 						case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 						default -> throw new IllegalStateException("Unknown ???" );
 					}
@@ -348,7 +351,7 @@ public class Dl4jModelFactory {
 							// cifar 10 trained 75%, cifar 5 optimized 90%
 						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
 						case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
-						case 8 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
+						case 8, 18 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
 							// 77% accuracy pretrained, 75% new head
 						case 12 -> pair = createCNN_1_L(workerId, filename, 64, 25); 
 
