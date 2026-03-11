@@ -352,46 +352,67 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     //=========================================================================================================================
 
-    private void compareStaticVsLinearForPBest(float[] currentPBest) {
+    private void comparePredictorsForPBest(float[] currentPBest) {
 
-        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
-        // long t = currentSimulationTimeMs();
-        
-        if (!ws.predictorInitializedPBest) {
-            ws.predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
-            ws.predictorTsPBest = t;
-            ws.predictorInitializedPBest = true;
+        TimedWeightsSnapshot ref = ws.pBestMotionTracker.getLatestSnapshot();
+        if(ref == null) return;
 
-            if (logger.isEnabled(1)) {
-                logger.log(taskInstance + ", PBEST predictor baseline initialized at t_s = " + ws.predictorTsPBest);
-            }
-            return;
-        }
-
-        float[] staticPred = ws.predictorRefWeightsPBest;
-        float[] linearPred = linearGrowthPredict(ws.predictorRefWeightsPBest, t, ws.predictorTsPBest);
+        float[] staticPred = ref.weights;
+        float[] linearPred = linearGrowthPredict(ref.weights, ws.t, ref.timeMs);
+        float[] psoVelPred = psoVelocityPredict(ref.weights, 
+            ws.predictorRefPsoVelocityMonitoring, ws.t, ref.timeMs);
 
         double staticErr = rmsDiff(currentPBest, staticPred);
         double linearErr = rmsDiff(currentPBest, linearPred);
+        double psoVelErr = rmsDiff(currentPBest, psoVelPred);
 
-        PredictorComparisonRegistry.record(PredictorComparisonRegistry.Kind.PBEST, staticErr, linearErr);
+        double observedVelErr = -1.0;
+        double vaErr = -1.0;
+
+        if (ws.pBestMotionTracker.hasVelocity()) {
+            ws.currentVelocityPBest = ws.pBestMotionTracker.estimateWindowVelocity();
+            float[] observedVelPred = observedVelocityPredict(ref.weights, ref.timeMs,
+                    ws.currentVelocityPBest, ws.t);
+
+            observedVelErr = rmsDiff(currentPBest, observedVelPred);
+
+            if (ws.pBestMotionTracker.hasAcceleration()) {
+                float[] accObserved = ws.pBestMotionTracker.estimateAcceleration();
+                float[] vaPred = velocityAccelerationPredict(ref.weights, ref.timeMs,
+                    ws.currentVelocityPBest, accObserved, ws.t);
+                vaErr = rmsDiff(currentPBest, vaPred);
+            }
+
+        } else {
+            logger.log("No velocity yet");
+        }
+
+        if(observedVelErr == -1.0) {
+            observedVelErr = staticErr + 0.01;
+        }
+        if(vaErr == -1.0) {
+            vaErr = staticErr + 0.01;
+        }
+
+        PredictorComparisonRegistry.recordPBest(PredictorComparisonRegistry.Kind.PBEST, staticErr, linearErr, psoVelErr, 
+            observedVelErr, vaErr);
 
         if (logger.isEnabled(1)) {
             logger.log(taskInstance +
-                ", PBEST predictor compare: t = " + t +
-                ", ts = " + ws.predictorTsPBest +
+                ", PBEST predictor compare: t = " + ws.t +
+                ", ts = " + ref.timeMs +
                 ", staticErr = " + staticErr +
                 ", linearErr = " + linearErr +
-                ", winner = " + (linearErr < staticErr ? "LINEAR" : (staticErr < linearErr ? "STATIC" : "TIE")));
+                ", psoVelErr = " + psoVelErr +
+                ", observedVelErr = " + observedVelErr +
+                ", vaErr = " + vaErr);
         }
-
-        ws.predictorRefWeightsPBest = Arrays.copyOf(currentPBest, currentPBest.length);
-        ws.predictorTsPBest = t;
+        ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
+            ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
     }
-
     //=========================================================================================================================
 
-    private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
+    private void comparePredictorsForMonitoring(float[] currentWeights) {
         
         // // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
         // long t = currentSimulationTimeMs();
@@ -443,11 +464,11 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             // float[] observedVelPred = observedVelocityPredict(ws.snapX1.weights, ws.snapX1.timeMs, 
             //     ws.currentVelocity, t);
 
-            ws.currentVelocity = ws.motionTracker.estimateWindowVelocity();
+            ws.currentVelocityMonitoring = ws.motionTracker.estimateWindowVelocity();
             // ws.currentVelocity = ws.motionTracker.estimateWindowVelocity_v2();
 
             float[] observedVelPred = observedVelocityPredict(ref.weights, ref.timeMs,
-                    ws.currentVelocity, ws.t);
+                    ws.currentVelocityMonitoring, ws.t);
 
             observedVelErr = rmsDiff(currentWeights, observedVelPred);
 
@@ -458,12 +479,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 // float[] vaPred = velocityAccelerationPredict(ws.snapX1.weights, ws.snapX1.timeMs,ws.currentVelocity, accObserved, t);
                 float[] accObserved = ws.motionTracker.estimateAcceleration();
                 float[] vaPred = velocityAccelerationPredict(ref.weights, ref.timeMs,
-                    ws.currentVelocity, accObserved, ws.t);
+                    ws.currentVelocityMonitoring, accObserved, ws.t);
                 vaErr = rmsDiff(currentWeights, vaPred);
             }
 
         } else {
-            logger.log("ws.snapX1 and ws.snapX2 are null");
+            logger.log("No velocity yet");
         }
 
         if(observedVelErr == -1.0) {
@@ -473,7 +494,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             vaErr = staticErr + 0.01;
         }
 
-        PredictorComparisonRegistry.recordMonitoring(staticErr, linearErr, psoVelErr, 
+        PredictorComparisonRegistry.recordMonitoring(PredictorComparisonRegistry.Kind.MONITORING, staticErr, linearErr, psoVelErr, 
             observedVelErr, vaErr);
 
         if (logger.isEnabled(1)) {
@@ -596,7 +617,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             }
 
             ws.improved_pBest_count++;
-            // compareStaticVsLinearForPBest(ws.pBestWeights);
+
+            if (cfg.PREDICTION_MODELS) {
+                ws.t = currentSimulationTimeMs();
+                comparePredictorsForPBest(ws.pBestWeights);
+                ws.pBestMotionTracker.addSnapshot(ws.pBestWeights, ws.t);
+            }
 
             // if (logger.isEnabled(1)) logger.log(taskInstance + 
             //     ", Improved pBest with loss: " + ws.stats.getPBestLoss() + 
@@ -706,9 +732,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || 
             (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
 
-        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
-        if(cfg.PREDICTION_MODELS) ws.t = currentSimulationTimeMs();
-
         if (shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
@@ -720,7 +743,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
             
             if(cfg.PREDICTION_MODELS) {
-                compareStaticVsLinearForMonitoring(snapshot);
+                ws.t = currentSimulationTimeMs();
+                comparePredictorsForMonitoring(snapshot);
                 ws.motionTracker.addSnapshot(ws.flatModel, ws.t);
             }
 

@@ -94,15 +94,18 @@ public final class WorkerStatic {
     public TimedWeightsSnapshot snapX1 = null;   // most recent previous monitoring snapshot
     public TimedWeightsSnapshot snapX2 = null;   // one before that
     public TimedWeightsSnapshot snapX3 = null;   // one before that
-    public float[] currentVelocity = null;
-    public float[] previousVelocity = null;
+    public float[] currentVelocityPBest = null;
+    public float[] currentVelocityMonitoring = null;
 
     public MotionTracker motionTracker = new MotionTracker(12);
+    public MotionTracker pBestMotionTracker = new MotionTracker(12);
+
     public long t = 0;
 
     // ========================================================
 
     public WorkerStatic(int workerId) {
+
         INSTANCES.put(workerId, this);
         this.workerId = workerId;
         this.logger = CustomLogger.getWorkerInstance(workerId);

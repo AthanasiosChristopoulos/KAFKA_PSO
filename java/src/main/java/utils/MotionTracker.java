@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Deque;
 
 public final class MotionTracker {
+    
     private final int maxWindow;
     private final Deque<TimedWeightsSnapshot> window = new ArrayDeque<>();
 
