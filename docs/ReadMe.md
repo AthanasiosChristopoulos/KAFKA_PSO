@@ -1529,20 +1529,24 @@ source ~/venvs/tf215/bin/activate
 
 # Prediction Models ===============================================================================
 		
-    - 𝑡s: when the coordinator last collected exact vectors from all sites 𝑡 
+    - ts: when the coordinator last collected exact vectors from all sites 𝑡 
     - t: the current moment when a site is evaluating whether it should communicate
+        => t = current time index of the stream
+        => it is shared through a global clock
     - After time ts (synchronization) sites keep receiving updates locally at time t => vi(t).
     
-    During the monitoring task using the geometric approach [Sharfman et al. 2006,
+    "During the monitoring task using the geometric approach [Sharfman et al. 2006,
     2007b], the coordinator may request that all sites transmit their local measurements
     vectors and subsequently calculates v(t), performs the required check on f(v(t)), and
-    transmits the v(t) vector to all sites. The previous process is referred to as a synchronization step
+    transmits the v(t) vector to all sites. The previous process is referred to as a synchronization step"
     
-    A plausible question is: Could we avoid
+    "A plausible question is: Could we avoid
     such a synchronization step, if the changes in the values of the three local measurements vectors could have been predicted fairly accurately? For example, if we could
     have predicted the change (drift) in the local measurements vectors of each site fairly
     accurately, then we would have determined that v(t) has probably not moved closer to
-    the threshold surface and thus avoid the synchronization step.
+    the threshold surface and thus avoid the synchronization step."
+
+    “The global measurements vector v(t) at any given timestamp t is calculated as the weighted average of vi(t) vectors.”
 
     - We are tracking vi(t), which is the sites / particles current position. This can only influnce current_weights communication, not pBest communication (since that is unpredictable).
 
@@ -1559,6 +1563,7 @@ source ~/venvs/tf215/bin/activate
         => This means small deviation from predicted vi​(t)
 
     - Filtering Implementation:
+
         - Στο Paper:
             The goal of the filter is to reduce communication from the distributed sites (workers) to the coordinator.
             Allow sites to locally decide whether a communication to the coordinator is necessary.
@@ -1629,6 +1634,11 @@ source ~/venvs/tf215/bin/activate
         - no sync protocol
             => t / ts needs to be time defined, otherwise wont work.
             => this is bad in this case => (t - ts) * veli. This should be the integer number of updates that have happend since sync, but in my async protocol there is no way (even considering the time) for my workers to actually predict how many updates the other workers have done.
+                => this is a problem depending hoe veli is calculated
+                => if vel 𝑖 ≈ (𝑣𝑖(t) − 𝑣𝑖(𝑡𝑎))/(𝑡 − 𝑡𝑎) ​then its scaled correctly, np
+                => if veli = PSO stuff then its scaled to the moon its not going to work
+                    => in that case you actually need number of steps, not actuall time
+                    => Impossible to know based on shared time. This would need to be an actuall sync
             => paper’s monitoring model is much closer to a synchronous, round-based protocol than to your Kafka-style asynchronous pipeline => t needs rounds
             => the mechanism is basically built around repeated global synchronization events.
 

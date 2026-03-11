@@ -85,8 +85,8 @@ public final class WorkerStatic {
     public boolean predictorInitializedPBest = false;
 
     // Predictor comparison experiment: monitoring/current_weights ================
-    public float[] predictorRefWeightsMonitoring = null;
     public long predictorTsMonitoring = -1L;
+    public float[] predictorRefWeightsMonitoring = null;
     public boolean predictorInitializedMonitoring = false;
 
     public float[] predictorRefPsoVelocityMonitoring;
@@ -96,6 +96,9 @@ public final class WorkerStatic {
     public TimedWeightsSnapshot snapX3 = null;   // one before that
     public float[] currentVelocity = null;
     public float[] previousVelocity = null;
+
+    public MotionTracker motionTracker = new MotionTracker(12);
+    public long t = 0;
 
     // ========================================================
 

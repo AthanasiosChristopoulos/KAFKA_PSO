@@ -393,33 +393,36 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private void compareStaticVsLinearForMonitoring(float[] currentWeights) {
         
-        long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        // // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
         // long t = currentSimulationTimeMs();
 
-        // current snapshot for future history update
-        TimedWeightsSnapshot currentSnap = new TimedWeightsSnapshot(Arrays.copyOf(currentWeights, currentWeights.length), t);
+        // // current snapshot for future history update
+        // TimedWeightsSnapshot currentSnap = new TimedWeightsSnapshot(Arrays.copyOf(currentWeights, 
+        //     currentWeights.length), t);
 
-        // first ever monitoring snapshot -> only initialize
+        // ws.motionTracker.addSnapshot(currentSnap.weights, t);
+
+        TimedWeightsSnapshot ref = ws.motionTracker.getLatestSnapshot();
+
         if (!ws.predictorInitializedMonitoring) {
             ws.predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
-            ws.predictorTsMonitoring = t;
+            ws.predictorTsMonitoring = ws.t;
             ws.predictorInitializedMonitoring = true;
             ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
-                ? null
-                : Arrays.copyOf(ws.velocity, ws.velocity.length);
+                ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
 
-            ws.snapX1 = currentSnap;
+            // ws.snapX1 = currentSnap;
 
             if (logger.isEnabled(1)) {
                 logger.log(taskInstance + ", MONITORING predictor baseline initialized at t_s = " + ws.predictorTsMonitoring);
             }
-            return;
+            return; // this is the first call we are returning later on
         }
 
         float[] staticPred = ws.predictorRefWeightsMonitoring;
-        float[] linearPred = linearGrowthPredict(ws.predictorRefWeightsMonitoring, t, ws.predictorTsMonitoring);
-        float[] psoVelPred = psoVelocityPredict(ws.predictorRefWeightsMonitoring, 
-            ws.predictorRefPsoVelocityMonitoring, t, ws.predictorTsMonitoring);
+        float[] linearPred = linearGrowthPredict(ref.weights, ws.t, ref.timeMs);
+        float[] psoVelPred = psoVelocityPredict(ref.weights, 
+            ws.predictorRefPsoVelocityMonitoring, ws.t, ref.timeMs);
 
         double staticErr = rmsDiff(currentWeights, staticPred);
         double linearErr = rmsDiff(currentWeights, linearPred);
@@ -429,20 +432,32 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         double observedVelErr = -1.0;
         double vaErr = -1.0;
 
-        if (ws.snapX1 != null && ws.snapX2 != null) {
-            logger.log("ws.snapX1 and ws.snapX2 arent null");
+        // if (ws.snapX1 != null && ws.snapX2 != null) {
+        if (ws.motionTracker.hasVelocity()) {
 
+            // logger.log("ws.snapX1 and ws.snapX2 arent null");
             // use previous 1 and 2 values
-            ws.currentVelocity = estimateVelocity(ws.snapX1.weights, ws.snapX1.timeMs, ws.snapX2.weights, ws.snapX2.timeMs);
-            float[] observedVelPred = observedVelocityPredict(ws.snapX1.weights, ws.snapX1.timeMs, ws.currentVelocity, t);
+            // ws.currentVelocity = estimateVelocity(ws.snapX1.weights, ws.snapX1.timeMs, 
+            //     ws.snapX2.weights, ws.snapX2.timeMs);
+            // float[] observedVelPred = observedVelocityPredict(ws.snapX1.weights, ws.snapX1.timeMs, 
+            //     ws.currentVelocity, t);
+
+            ws.currentVelocity = ws.motionTracker.estimateWindowVelocity();
+            // ws.currentVelocity = ws.motionTracker.estimateWindowVelocity_v2();
+
+            float[] observedVelPred = observedVelocityPredict(ref.weights, ref.timeMs,
+                    ws.currentVelocity, ws.t);
 
             observedVelErr = rmsDiff(currentWeights, observedVelPred);
 
-            if (ws.previousVelocity != null) {
+            if (ws.motionTracker.hasAcceleration()) {
                 // essentially we can now utilize the two velocities we have gathered from the 2 snapshots in time
                 // float[] velPrev = estimateVelocity(ws.snapX2.weights, ws.snapX2.timeMs, ws.snapX3.weights, ws.snapX3.timeMs);
-                float[] accObserved = estimateAcceleration(ws.currentVelocity, ws.snapX1.timeMs, ws.previousVelocity, ws.snapX2.timeMs);
-                float[] vaPred = velocityAccelerationPredict(ws.snapX1.weights, ws.snapX1.timeMs,ws.currentVelocity, accObserved, t);
+                // float[] accObserved = estimateAcceleration(ws.currentVelocity, ws.snapX1.timeMs, ws.previousVelocity, ws.snapX2.timeMs);
+                // float[] vaPred = velocityAccelerationPredict(ws.snapX1.weights, ws.snapX1.timeMs,ws.currentVelocity, accObserved, t);
+                float[] accObserved = ws.motionTracker.estimateAcceleration();
+                float[] vaPred = velocityAccelerationPredict(ref.weights, ref.timeMs,
+                    ws.currentVelocity, accObserved, ws.t);
                 vaErr = rmsDiff(currentWeights, vaPred);
             }
 
@@ -457,11 +472,12 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             vaErr = staticErr + 0.01;
         }
 
-        PredictorComparisonRegistry.recordMonitoring(staticErr, linearErr, psoVelErr, observedVelErr, vaErr);
+        PredictorComparisonRegistry.recordMonitoring(staticErr, linearErr, psoVelErr, 
+            observedVelErr, vaErr);
 
         if (logger.isEnabled(1)) {
             logger.log(taskInstance +
-                ", MONITORING predictor compare: t = " + t +
+                ", MONITORING predictor compare: t = " + ws.t +
                 ", ts = " + ws.predictorTsMonitoring +
                 ", staticErr = " + staticErr +
                 ", linearErr = " + linearErr +
@@ -472,15 +488,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         // update baseline for static/linear/pso-velocity:
         ws.predictorRefWeightsMonitoring = Arrays.copyOf(currentWeights, currentWeights.length);
-        ws.predictorTsMonitoring = t;
+        ws.predictorTsMonitoring = ws.t;
         ws.predictorRefPsoVelocityMonitoring = (ws.velocity == null)
             ? null : Arrays.copyOf(ws.velocity, ws.velocity.length);
 
         // This is for observed velocity / VA:
         // ws.snapX3 = ws.snapX2;
-        ws.snapX2 = ws.snapX1;
-        ws.snapX1 = currentSnap;
-        ws.previousVelocity = ws.currentVelocity;
+        // ws.snapX2 = ws.snapX1;
+        // ws.snapX1 = currentSnap;
+        // ws.previousVelocity = ws.currentVelocity;
     }
 
     //=========================================================================================================================
@@ -689,6 +705,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || 
             (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
 
+        // long t = Math.max(1L, (long) ws.countForwardPasses + 1L);
+        ws.t = currentSimulationTimeMs();
+
         if (shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
 
             if (logger.isEnabled(1)) logger.log(taskInstance + 
@@ -700,13 +719,15 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             float[] snapshot = Arrays.copyOf(ws.flatModel, ws.flatModel.length);    // The danger window for updating flatModel is before it becomes bytes.
             
             if(cfg.PREDICTION_MODELS) compareStaticVsLinearForMonitoring(snapshot);
-            
+            ws.motionTracker.addSnapshot(ws.flatModel, ws.t);
+
             WeightsMessage msg = new WeightsMessage(workerId, msgIndex, accuracy, loss, snapshot);
             
             ws.incrementTotalMessagesSent("current_weights");
 
             out = new KeyValue<>("current_weights", msg);
         }
+        // ws.motionTracker.addSnapshot(ws.flatModel, ws.t);
 
         // =========================================================================================================
         // Logging and Time
