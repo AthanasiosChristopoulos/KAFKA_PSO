@@ -38,3 +38,14 @@ Quotes:
 "Lifelong learning represents a long-standing challenge for machine learning and neural network sys-
 tems (Hassabis et al. 2017, French 1999). This is due to the tendency of learning models to catas-
 trophically forget existing knowledge when learning from novel observations"
+
+5) Communication-Efficient Learning of Deep Networks from Decentralized Data, H. Brendan McMahan
+
+Quotes:
+“We investigate a learning technique that allows users to collectively reap the benefits of shared models trained from this rich data, without the need to centrally store it.”
+	=> means that learning happens without central storage of raw data.
+	=> "“Each client has a local training dataset which is never uploaded to the server.”"
+	=> "“Instead, each client computes an update to the current global model maintained by the server, and only this update is communicated.”"
+
+"which are coordinated by a central server."
+	=> “At the beginning of each round, a random fraction C of clients is selected, and the server sends the current global algorithm state to each of these clients.”
