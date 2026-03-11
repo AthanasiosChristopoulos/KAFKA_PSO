@@ -53,6 +53,10 @@
 #### 4.4.4 PSO for Neural Network Training
 
 ## 5. System Requirements
+Horizontal Scalability (Scale Out)
+	You increase system capacity by adding more machines or workers.
+Vertical Scalability (Scale Up)
+	You increase system capacity by making a single machine more powerful.
 
 ## 6. Implementation
 ### 6.1 Protocol
