@@ -1650,3 +1650,6 @@ source ~/venvs/tf215/bin/activate
             - you can then not consider velocity static and update it concurently, but this would require messages overhead that would defeat the entire purpose of this (Coordinator would need to read pBest weights topic).
 
             - if i am to be sending the entire velocity for sync purposes, that is essentially the entire message * 2, since a WeightsMessage is basically the weights. This is a complete waste.
+
+         - It is built only from sparse synchronization-like points.
+            That means the effective time gap between snapshots grows with N_BATCHES.
