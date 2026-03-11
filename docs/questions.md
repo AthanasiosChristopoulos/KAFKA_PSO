@@ -20,7 +20,8 @@
 		- Federated Learning or Distributed Learning ?
 			=> Αρκει να αλλαξω το dataset σε NON-IDD ?
 			=> Αρκει οτι το συστημα εχει μονο το capability να το κανει αυτο και οτι απλως δεν το εξεταζουμε / δεν το τρεχουμε ετσι για διευκολυνση ?
-
+			=> Protocol wise its async and less communication so FedAvg
+			
 		- Training των απλων Datasets ειναι παρα πολυ γρηγορο με υψηλους workers πειραζει ?
 		
 		- Τι εννουσαι με scaling σε πιο δυσκολα Datasets

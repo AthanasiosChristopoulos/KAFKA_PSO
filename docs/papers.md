@@ -39,7 +39,8 @@ Quotes:
 tems (Hassabis et al. 2017, French 1999). This is due to the tendency of learning models to catas-
 trophically forget existing knowledge when learning from novel observations"
 
-5) Communication-Efficient Learning of Deep Networks from Decentralized Data, H. Brendan McMahan
+5)
+Communication-Efficient Learning of Deep Networks from Decentralized Data, H. Brendan McMahan
 
 Quotes:
 “We investigate a learning technique that allows users to collectively reap the benefits of shared models trained from this rich data, without the need to centrally store it.”
@@ -49,3 +50,44 @@ Quotes:
 
 "which are coordinated by a central server."
 	=> “At the beginning of each round, a random fraction C of clients is selected, and the server sends the current global algorithm state to each of these clients.”
+
+“The training data on a given client is typically based on the usage of the mobile device by a particular user, and hence any particular user’s local dataset will not be representative of the population distribution.”
+
+“In federated optimization communication costs dominate”
+
+“each client locally takes one step of gradient descent on the current model using its local data, and the server then takes a weighted average of the resulting models.”
+
+"FederatedAveraging algorithm, which combines local stochastic gradient descent (SGD) on each client with a server that performs model averaging."
+	=> This is the definition of FedAvg. Its called really The FederatedAveraging Algorithm
+
+"Communication costs are the principal constraint, and we show a reduction in required communication rounds by 10–100× as compared to synchronized stochastic gradient descent."
+	=> We do this instead of sync because communication effciency
+	=> "can reduce the rounds of communication needed to train a deep network on decentralized data by orders of magnitude"
+
+"on-IID data distributions that are a defining characteristic of this setting"
+
+6)
+Communication-Efficient Distributed Deep Learning via Federated Dynamic Averaging
+
+"“Most DDL methods are iterative, where, in each iteration, some amount of local training is followed by synchronization of the local models with the global one.”"
+	=> pure DL does syncing, not FedAvg
+
+"The predominant method, based on the bulk synchronous parallel (BSP) approach [56], is to average the local model updates and then apply the average update to each local model [69]
+"
+“The communication bottleneck arises from the frequent exchange (synchronization) of model parameters, often in the range of billions, across distributed workers.”
+
+“The most direct method to alleviate the communication burden is to reduce the frequency of communication rounds. Local-SGD is the prime example of this approach.”
+
+“DDL algorithms typically waste valuable bandwidth… by relying on overly simplistic, periodic, and rigid synchronization schedules.”
+
+“The costly synchronization step is triggered only if the local models… have significantly diverged.”
+
+"The most direct method to alleviate the communication burden
+is to reduce the frequency of communication rounds. "
+
+" Our FDA algorithm dynamically triggers
+synchronization based on the value of model variance across
+worker-nodes. In a nutshell, the costly synchronization step is
+only triggered if the local models have diverged significantly,
+which implies that the global model may no longer be accurate."
+	=> Synchronization still takes place but only when necessary.

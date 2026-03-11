@@ -43,6 +43,13 @@
         - MaxPooling / AveragePooling => Reduce (H, W) dimensionality in half
         These layers have no parameters, they always do the same thing (fixed reduction)
         
+## Deep Learning (DL) ===============================================================================
+
+Deep Learning is a special type of Machine Learning that uses structures called neural networks with many layers.
+The name “deep” simply means:
+    The neural network has many layers.
+    These layers gradually learn more complex patterns.
+
 ## Funnels / Valeys: ==========================================================================
 
 The landscape of the neural networks is:

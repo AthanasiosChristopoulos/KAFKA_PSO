@@ -298,6 +298,34 @@ So a system is “distributed” if:
     - there are multiple workers/processes
     - This means that 8 processes on 1 laptop is equivalent to 8 machines each running 1 worker
 
+Protocol:
+Distributed Deep Learning (DDL) protocol
+
+Environment assumption:
+    Workers are usually machines in the same data center or cluster
+    Fast network connections
+    Communication cost is relatively low
+
+Typical protocol (synchronous SGD / BSP style):
+
+    A global model is initialized.
+    The model is copied to all workers.
+    Each worker:
+        receives a mini-batch of data
+        computes gradients or updates locally.
+    Workers send updates to a coordinator (or perform AllReduce).
+    Updates are averaged to produce a new global model.
+    The new model is broadcast back to all workers.
+    Repeat every step or every iteration.
+
+Key characteristics
+
+    Synchronization usually happens every training step
+
+    Communication is frequent
+
+    Designed for high-speed cluster networks
+
 ## Federated Learning: ===========================================================
 
  - Is a special case of Federated Learning
