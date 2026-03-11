@@ -749,6 +749,39 @@ def build_cifar_base_v6(input_shape=(32, 32, 3), num_classes=10):
 
 # ===============================================================================
 
+def build_cifar_base_v7(input_shape=(32, 32, 3), num_classes=5):
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 32 -> 16
+
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 16 -> 8
+
+        layers.Conv2D(96, 3, padding="same", activation="relu", use_bias=True),
+        layers.Conv2D(96, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 8 -> 4
+
+        # changed 96 -> 48
+        layers.Conv2D(48, 3, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),  # 4 -> 2
+
+        layers.Flatten(),        # 2*2*48 = 192
+        layers.Dense(num_classes, activation="softmax", use_bias=True),
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+    return model
+
+# ===============================================================================
+
 def build_cinic_base_v1(input_shape=(32, 32, 3), num_classes=10):
     aug = keras.Sequential([
         layers.RandomFlip("horizontal"),
@@ -1122,7 +1155,11 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
         case "v6":
             model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v6"
-
+            
+        case "v7":
+            model = build_cifar_base_v7(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v7"
+            
         case "v5_cinic": 
 
             model = build_cinic_base_v1(input_shape=input_shape, num_classes=num_classes)
@@ -1148,7 +1185,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     # version = "v2"
     # version = "v5"
-    version = "v6"
+    # version = "v6"
+    version = "v7"
     # version = "v5_cinic"
     # version = "v5_cifar100"
     # version = "v4_cifar5"
@@ -1159,9 +1197,11 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v1_stl10"
     # version = "v1_stl10_resnet20"
     
-    classes_for_cifar5 = (0, 1, 4, 8, 9)
+    # classes_for_cifar5 = (0, 1, 4, 8, 9)
     # classes_for_cifar5 = (5, 6, 7, 8, 9)
-
+    classes_for_cifar5 = (-2)
+    print(classes_for_cifar5)
+    
     EPOCHS = 20
     
     half = True
@@ -1241,6 +1281,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
         print(f"\nCIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
 
     os.makedirs(out_dir, exist_ok=True)
+    
     if half == True:
         h5_path = os.path.join(out_dir, f"{name_h5_file}_half.h5")
         log_path = os.path.join(out_dir, f"{name_h5_file}_half.txt")
