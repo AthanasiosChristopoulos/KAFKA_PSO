@@ -186,3 +186,11 @@ weight for the current epoch or iteration."
 
 “PSO is applied to feedforward neural network … where the position of each particle in swarm represents a set of weight for the current epoch or iteration.”
 “The particle moves within the weight space attempting to minimize learning error. Changing the position means updating the weight of the network in order to reduce the error of the current epoch.”
+
+
+11)
+Improving Pre- Trained Weights through Meta - Heuristics Fine- Tuning
+	- Train the model with GD and fine tunes it using PSO.
+Quotes:
+
+“In this work, we propose to use meta-heuristic techniques to fine-tune pre-trained weights, exploring additional regions of the search space, and improving their effectiveness.”

@@ -15,6 +15,44 @@ DATASET = "KMNIST"
 
 # =====================================================================================
 
+def evaluate_dataset(x_train, y_train, x_test, y_test):
+
+    print("\n===== DATASET SUMMARY =====")
+
+    # samples
+    print("Train samples:", x_train.shape[0])
+    print("Test samples :", x_test.shape[0])
+
+    # feature information
+    print("\nInput shape:", x_train.shape[1:])
+
+    if len(x_train.shape) == 4:
+        h, w, c = x_train.shape[1:]
+        num_features = h * w * c
+        print(f"Features per sample: {num_features} ({h}x{w}x{c})")
+    else:
+        num_features = np.prod(x_train.shape[1:])
+        print("Features per sample:", num_features)
+
+    # classes
+    classes = np.unique(y_train)
+    num_classes = len(classes)
+
+    print("\nNumber of classes:", num_classes)
+    print("Class labels:", classes)
+
+    # class distribution
+    print("\nClass distribution (train):")
+    counts = np.bincount(y_train)
+
+    for cls, count in enumerate(counts):
+        pct = 100 * count / len(y_train)
+        print(f"  class {cls}: {count} samples ({pct:.2f}%)")
+
+    print("===========================\n")
+
+# =====================================================================================
+
 def _read_idx_images_gz(path):
     with gzip.open(path, "rb") as f:
         data = f.read()
@@ -196,7 +234,7 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
     x_train, y_train, x_test, y_test = load_kmnist(
         data_dir="/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data/kmnist")
-
+    evaluate_dataset(x_train, y_train, x_test, y_test)
     model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
     name_h5_file = filename
     model.summary()
