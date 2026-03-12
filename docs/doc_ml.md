@@ -122,7 +122,24 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
 The validation Dataset is used for:
     => Early Stopping (to avoid overfitting)
         => stop training if validation accuracy stops improving.
-    => Learning rate scheduling, This reduces LR if validation loss plateaus.
+        => If validation accuracy stops improving + train accuracy keeps improving, then we know that overfitting is happening
+        => Also decided to keep the best validation weights
+
+    => Learning rate scheduling. This reduces LR if validation loss plateaus.
+        => Learning rate controls step size, its like having a greater velocity.
+        => We want to start with a higher LR (i want to start with high velocity)
+        => So a higher LR helps the model move quickly toward a good region.
+        => When validation loss stops improving (plateaus), it usually means we reached a good region, but need finer adjustments, So we reduce the step size to allow fine tuning.
+        => Increasing LR is bad in this case, since:
+            plateau → optimizer is near minimum
+            increase LR → jump away from minimum
+
+Why we needs 3 separate datasets:
+    You are never directly training on the validation dataset.
+    validation: used only to measure performance during training
+    test: used only once at the end for final evaluation
+    => But we are still indirectly fitting to the validation dataset, simply because it influences training due to training callbacks (EarlyStopping and ReduceLROnPlateau)
+        => Thr validation dataset changes training decisions
 
 ## CNNs =========================================================================
  

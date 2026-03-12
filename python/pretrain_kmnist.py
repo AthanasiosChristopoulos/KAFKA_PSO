@@ -150,12 +150,46 @@ def build_kmnist_base_plus_head_v1(input_shape=(28, 28, 1), num_classes=10):
 
 # =====================================================================================
 
+def build_kmnist_base_plus_head_v2(input_shape=(28, 28, 1), num_classes=10):
+
+    model = keras.Sequential(
+        [
+            layers.Input(shape=input_shape),
+
+            layers.Conv2D(16, kernel_size=3, padding="same", activation="relu"),
+            layers.MaxPooling2D(pool_size=2),
+            layers.Dropout(0.10),
+
+            layers.Conv2D(32, kernel_size=3, padding="same", activation="relu"),
+            layers.MaxPooling2D(pool_size=2),
+            layers.Dropout(0.10),
+
+            layers.Conv2D(64, kernel_size=3, padding="same", activation="relu"),
+
+            layers.GlobalAveragePooling2D(name="features"),
+
+            # (64 + 1) * 10 = 650 params
+            layers.Dense(num_classes, activation="softmax", name="classifier"),
+        ],
+        name="kmnist_base_plus_head_v2"
+    )
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    return model
+# =====================================================================================
+
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
-    version = "v1"
+    version = "v2"
 
     model_registry = {
         "v1": ("kmnist_base_plus_head_v1", build_kmnist_base_plus_head_v1),
+        "v2": ("kmnist_base_plus_head_v2", build_kmnist_base_plus_head_v2),
     }
     
     filename, mnist_model_function = model_registry[version]
@@ -166,7 +200,7 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
     model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
     name_h5_file = filename
     model.summary()
-    
+
     callbacks = [
         keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=3, restore_best_weights=True),
         keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5),
