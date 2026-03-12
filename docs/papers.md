@@ -91,3 +91,98 @@ worker-nodes. In a nutshell, the costly synchronization step is
 only triggered if the local models have diverged significantly,
 which implies that the global model may no longer be accurate."
 	=> Synchronization still takes place but only when necessary.
+
+7)
+Parallel PSO for Efficient Neural Network Training Using GPGPU and Apache Spark in Edge Computing Sets
+
+Quotes:
+"This paper presents a novel approach to accelerating DLNN training using the particle swarm optimisation
+(PSO) algorithm, which exploits the GPGPU architecture and the Apache Spark analytics engine
+for large-scale data processing tasks."
+
+"A new library in Scala has been developed with the objective of facilitating distributed training of neural networks using Spark."
+
+“This allows the particle fitness computation and particle position update to be distributed across the different execution nodes of a standalone Spark cluster.”
+
+“Two variants of Parallel PSO were proposed. DSPSO is more efficient for medium-sized datasets, while DAPSO is faster and more scalable for large datasets.”
+	=> DSPSO = Distributed Synchronous Particle Swarm Optimization
+	=> DAPSO = Distributed Asynchronous Particle Swarm Optimization
+
+The main point of this PSO implementation os to be scalable with increased data:
+	"Accordingly, this algorithm will demonstrate superior performance in the handling and
+	processing of massive datasets on distributed systems, exhibiting both scalability and fault tolerance."
+
+	"In contrast,
+	distributed implementations of PSO with Apache Spark are horizontally scalable, allowing
+	for the addition of nodes to the cluster and thus making them suitable for processing very
+	large datasets."
+
+Uses Spark cluster scheduling rather than message-based communication. This means that Spark is inherently meant to be executed in a Cluster:
+
+“Spark distributes the computational parallelisation process across the available cluster executors.”
+"Secondly, the partitioning feature enables Spark to distribute the
+computational parallelisation process across the available cluster executors."
+"While the programs devel-
+oped with Spark can be executed on diverse distributed platforms, this work exclusively
+presents results from execution on a departmental GPU cluster. As future work, we in-
+tend to adapt the presented algorithms for deployment on alternative platforms, such as
+Kubernetes or Databricks."
+
+“Particle fitness computation and particle position update are distributed across the execution nodes of the Spark cluster.”
+	=> Uses actuall PSO training
+8)
+FedPSO: Federated Learning Using Particle Swarm Optimization to Reduce Communication Costs
+
+Quotes:	
+
+Communication Improvemnt with FedPSO
+"Thus, we propose a FedPSO, a global model update algorithm with improved
+network communication performance, by changing the form of the data that clients transmit to
+servers.
+	“We increase its robustness in unstable network environments by transmitting score values rather than large weights.”
+
+	“The proposed model, FedPSO, receives the model weights only for the client that provided the best score so that the model weights do not need to be transmitted from all clients.”
+
+"In this study, we propose the algorithm using particle swarm optimization algorithm instead of FedAvg,
+which updates the global model by collecting weights of learned models that were mainly used in
+federated learning."
+
+“Applying FedPSO significantly reduced the amount of data used in network communication.”
+	=> because of sending dcoes and ni updates
+
+“FedPSO improved the accuracy of the global model by an average of 9.47%.”
+
+“Both FedPSO and FedAvg used SGD methods for client training”
+	=> This shows the clients are still trained with SGD, so PSO is not replacing the whole training process there.
+	
+PSO is used instead of FedAvg => PSO style server update rule:
+	“Based on the weight update equation (Equation (2)), we present the conceptual algorithm of FedPSO.”
+	“FedPSO identifies the best model through pbest and gbest variables and updates using the value of V"
+	"Unlike conventional algorithms, Function ServerExecutes receives only pbest values, without receiving w from the client on Line 5."
+
+9)
+PSO-PS:Parameter Synchronization with Particle Swarm Optimization for Distributed Training of Deep Neural Networks
+
+Quotes:
+"could be iteratively updated during the model training using mini-batch stochastic gradient descent (SGD) optimizers and the back propagation algorithm"
+	“To decrease the training time and utilize the gradients and the SGD optimizer … step is applied to make the optimizer switch between PSO and SGD.”
+“a different subset of data is fed into different workers, and each worker performs its forward pass and backward pass individually”
+“At each synchronization stage, the weights are updated by PSO from the sub weights gathered from all workers, instead of averaging the weights or the gradients.”
+
+“the new parameters are calculated based on the particle updating mechanism, which is a completely different strategy from the existing methods that aggregate parameters or gradients at each synchronization”
+“At each synchronization stage, the weights are updated by PSO from the sub weights gathered from all workers”
+	sub-weights = locally trained weights from each worker.
+
+10)
+PARTICLE SWARM OPTIMIZATION FOR NEURAL NETWORK LEARNING ENHANCEMENT
+
+Quotes:
+
+"In this study, PSO is applied to feedforward neural network based on Al-kazemi
+and Mohan [8], where the position of each particle in swarm represents a set of
+weight for the current epoch or iteration."
+
+“There is no backpropagation concept in PSONN where the feedforward NN produced the learning error (particle fitness) based on set of weight and bias (PSO positions).”
+
+“PSO is applied to feedforward neural network … where the position of each particle in swarm represents a set of weight for the current epoch or iteration.”
+“The particle moves within the weight space attempting to minimize learning error. Changing the position means updating the weight of the network in order to reduce the error of the current epoch.”
