@@ -14,6 +14,7 @@ public class CoordinatorControl {
     private static float bestGlobalModelAccuracy = -1f;
     private static float bestGlobalModelLoss= 10000f;
     private static float bestTrainingAccuracy = -1f;
+    private static float pretrainedAccuracy = -1f;
 
 	private static final CoordinatorControl instance = new CoordinatorControl();
 
@@ -27,6 +28,7 @@ public class CoordinatorControl {
     // =================================================================================================
 
     private CoordinatorControl() {
+        
         for (int i = 0; i < cfg.N_WORKERS; i++) {
             workerStopRequested[i] = new AtomicBoolean(false);
         }
@@ -68,6 +70,17 @@ public class CoordinatorControl {
         return instance;
     }
 
+    // =================================================================================================
+
+    public float getPretrainedAccuracy() {
+        return pretrainedAccuracy;
+    }
+    // =================================================================================================
+
+    public void setPretrainedAccuracy(float pretrainedAccuracy) {
+        CoordinatorControl.pretrainedAccuracy = pretrainedAccuracy;
+    }
+    
     // =================================================================================================
 
     public float getBestGlobalModelAccuracy() {

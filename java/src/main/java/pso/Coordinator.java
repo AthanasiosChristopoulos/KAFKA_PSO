@@ -226,8 +226,10 @@ public class Coordinator implements Runnable {
                         control.accuracyValues));
                 }
 
-                System.out.println("[Coordinator] Final (Best) Results: Training Accuracy: " + control.getBestTrainingAccuracy()
-                     + ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
+                System.out.println("[Coordinator] Final (Best) Results: " +
+                    " Pretrained Accuracy: " + control.getPretrainedAccuracy() +  
+                    ", Training Accuracy: " + control.getBestTrainingAccuracy() +
+                    ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
 
                 System.out.printf("[Coordinator] Elapsed time: %.3f seconds, Starting Delay: %.3f %n", seconds, starting_delay);
 
@@ -380,9 +382,9 @@ public class Coordinator implements Runnable {
 
     private static void printThreadsAndTasks(KafkaStreams streams) {
         for (ThreadMetadata tm : streams.localThreadsMetadata()) {
-            System.out.println("Thread: " + tm.threadName() + " state=" + tm.threadState());
+            System.out.println("Thread: " + tm.threadName() + " state = " + tm.threadState());
             for (TaskMetadata task : tm.activeTasks()) {
-                System.out.println("  ACTIVE Task: " + task.taskId() + " partitions=" + task.topicPartitions());
+                System.out.println("  ACTIVE Task: " + task.taskId() + " partitions = " + task.topicPartitions());
             }
         }
     }

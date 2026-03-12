@@ -119,6 +119,8 @@ public class Config {
 
     public boolean TRANSFORM_IMAGE;
 
+    public boolean EVALUATE_PRETRAINED;
+
     public Dotenv dotenv;
 
     //=============================================================================================================
@@ -376,6 +378,8 @@ public class Config {
         EXPERIMENTATION_DIR = getenv(dotenv, "EXPERIMENTATION_DIR", "experimental_results_server");
 
         TRANSFORM_IMAGE = false;
+
+        EVALUATE_PRETRAINED = Boolean.parseBoolean(getenv(dotenv, "EVALUATE_PRETRAINED", "false"));
     } 
 
     // ==================================================================================================================================

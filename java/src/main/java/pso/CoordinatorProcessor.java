@@ -465,14 +465,16 @@ public void onAllWorkersReported() {
         System.out.println("[Coordinator] Test Samples have been loaded into memory, of length: " + cachedTestSet.size());
         
 
-        if(false && cfg.USING_PRETRAINED_MODEL && cfg.TESTABLE_PRETRAINED_MODEL) {
+        if(cfg.EVALUATE_PRETRAINED && cfg.USING_PRETRAINED_MODEL && cfg.TESTABLE_PRETRAINED_MODEL) {
             float[] accLoss;
             accLoss = globalPredictor.callPredictionsBatch(cachedTestSet, preTrainedModel, true);
             accuracy = accLoss[0];
             loss = accLoss[1];
             nSamples = (int) accLoss[2];
             nCorrect = (int) accLoss[3];
-
+            
+            control.setPretrainedAccuracy(accuracy);
+            
             if (logger.isEnabled(2)) logger.log("Report on preTrained Model accuracy: " + accuracy + ", with nSamples: " + nSamples +
                         ", nCorrect: " + nCorrect + " loss: " + loss);
 

@@ -189,8 +189,20 @@ weight for the current epoch or iteration."
 
 
 11)
-Improving Pre- Trained Weights through Meta - Heuristics Fine- Tuning
-	- Train the model with GD and fine tunes it using PSO.
+Improving PreTrained Weights through Meta - Heuristics Fine- Tuning Train the model with GD and fine tunes it using PSO.
+
 Quotes:
 
 “In this work, we propose to use meta-heuristic techniques to fine-tune pre-trained weights, exploring additional regions of the search space, and improving their effectiveness.”
+
+"The proposed approach aims to pre-train an architecture through its standard pipeline, e.g., stochastic gradient optimization across a training set, followed by a fine-tuning using meta-heuristic optimization across a validation set (post-trained)."\
+
+In Table II: “PSO — w = 0.7 | c1 = 1.7 | c2 = 1.7”
+
+12)
+Particle swarm optimisation for evolving artificial neural network
+
+Quotes:
+“In PSONN system, the learning algorithm is the PSO algorithm.”
+“Here the encoding scheme is that each individual is to parameterise a whole group of g nodes in ANNs, this means that every component of each individual represents a connection weight.”
+“Generate an initial population of M networks.”
