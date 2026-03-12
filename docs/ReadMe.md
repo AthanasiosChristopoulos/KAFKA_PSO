@@ -361,7 +361,7 @@ Federated Learning implies hardware distribution between edge devices
 ## ===================================================
 ## ===================================================
 ## ===================================================
-## Datasets: =========================================
+## Finding and Using New Datasets: =========================================
 
 ## Input new Dataset - Model:
 
@@ -471,7 +471,8 @@ def run_bank():
 ```
 
 ## ===================================================================
-## DATASETS: =========================================================
+## Existing DATASETS: =========================================================
+
 ## Small / Easy Datasets / UCI datasets:
 Few Samples / Few classes (2 - 3 classes)
 
@@ -588,7 +589,7 @@ Iris => 150
  - Very similar to Pendigits, just letters / alphabetical characters instead of numerical Digits
  - 24 classes (alphabet)
 
-### HIGGS: ===============================================================================================
+### HIGGS: =============================================
 
 The HIGGS dataset comes from high-energy physics
 The task is to distinguish Higgs boson events (class 1) from background events (class 0)
@@ -633,6 +634,13 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
         => strokes, loops, digit curves, simple edges
     - Fashion-MNIST requires more complex CNN features 
 
+## KMNIST: =========================================================================
+
+    60000 samples
+    images of dimensionality: 28, 28, 1 
+    10 classes
+    description: classify japanese characters
+
 ### CIRAR10: =======================================================================
 
     - CIFAR-10 labels are: 0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck
@@ -650,8 +658,11 @@ On gradient descent => 75% (~0.75 accuracy / ~0.83 AUC is reasonable on HIGGS, i
     Difficulty scale (asceding):
         - MNIST
         - FASHION MNIST
+        - KMNIST => Kuzushiji-MNIST
         - CIFAR10
+        - STL-10
         - NSFW
+        - Caltech-101
 
     - SVHN (Street View House Numbers) => same theme with mnist
 

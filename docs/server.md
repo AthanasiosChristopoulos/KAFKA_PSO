@@ -163,6 +163,7 @@ echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.bashrc
 echo 'export JAVACPP_CACHE_DIR=/mnt/nas_drive/achristopoulos/.javacpp' >> ~/.bashrc
 echo 'export XDG_CACHE_HOME=/mnt/nas_drive/achristopoulos/.cache' >> ~/.bashrc
 echo 'export MAVEN_USER_HOME=/mnt/nas_drive/achristopoulos/.m2' >> ~/.bashrc
+echo 'export TFDS_DATA_DIR=/mnt/nas_drive/achristopoulos/tensorflow_datasets' >> ~/.bashrc
 ```
 
 # ===============================================================================

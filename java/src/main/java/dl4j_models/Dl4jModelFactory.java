@@ -303,6 +303,40 @@ public class Dl4jModelFactory {
 
 		// ==============================================================================================
 
+		} else if ("kmnist".equals(DATASET)) {
+
+			cfg.USING_PRETRAINED_MODEL = true;
+
+			// pretrained =============================================================================================
+			
+			if(cfg.USING_PRETRAINED_MODEL) {
+
+				int version = 1;
+
+				String filename;
+				switch (version) {
+					case 1 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v1.h5";	
+						// 0.9 => pretrained
+					default -> filename = "no_pretrained_file_chosen";
+				}
+				
+				if (preTrained) {
+					System.out.println("Using model version: " + version);
+					switch (version) {
+						case 1 -> model = pretrainedModelMNIST(filename);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+
+				} else {
+					switch (version) {
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+				}
+			}
+
+		// ==============================================================================================
+
 		} else if (DATASET.contains("cifar")) {
 
 			// model = createCifar3Model_PSO_Simple(workerId);

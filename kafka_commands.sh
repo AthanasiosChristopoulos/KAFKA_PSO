@@ -176,32 +176,32 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic mnist5-test --from-beginning
 
-# svhn: ======================================================
+# kmnist: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic svhn-input --partitions 40 --if-not-exists
+  --create --topic kmnist-input --partitions 40 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --describe --topic svhn-input
+  --describe --topic kmnist-input
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic svhn-input
+  --delete --topic kmnist-input
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic svhn-input --from-beginning
+  --topic kmnist-input --from-beginning
 
-# svhn-test: ======================================================
-
-kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic svhn-test --partitions 1 --if-not-exists
-
-kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic svhn-test
+# kmnist-test: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic svhn-test
+  --create --topic kmnist-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic kmnist-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic kmnist-test
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic svhn-test --from-beginning
+  --topic kmnist-test --from-beginning
 
 # fashion_mnist: ======================================================
 
@@ -229,6 +229,33 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic fashion_mnist-test --from-beginning
+
+# svhn: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic svhn-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --describe --topic svhn-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic svhn-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic svhn-input --from-beginning
+
+# svhn-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic svhn-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic svhn-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic svhn-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic svhn-test --from-beginning
 
 # susy: ======================================================
 

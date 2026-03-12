@@ -117,6 +117,13 @@ checkpoint = ModelCheckpoint(   # Whenever validation loss improves, save the mo
 
 ```
 
+## Validation Accuracy: =========================================================
+
+The validation Dataset is used for:
+    => Early Stopping (to avoid overfitting)
+        => stop training if validation accuracy stops improving.
+    => Learning rate scheduling, This reduces LR if validation loss plateaus.
+
 ## CNNs =========================================================================
  
  - Dimensionality after conv layer:

@@ -594,7 +594,6 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
         "v6_fmnist": ("fmnist_base_plus_head_v6", build_fmnist_base_plus_head_v6), 
         "v7_fmnist": ("fmnist_base_plus_head_v7", build_fmnist_base_plus_head_v7), 
         "v8_fmnist": ("fmnist_base_plus_head_v8", build_fmnist_base_plus_head_v8), 
-
     }
     
     filename, mnist_model_function = model_registry[version]

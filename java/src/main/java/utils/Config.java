@@ -166,6 +166,10 @@ public class Config {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_FASHION_MNIST", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_FASHION_MNIST", "10"));
 
+        } else if("kmnist".equals(DATASET)) {
+            NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_KMNIST", "784"));
+            NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_KMNIST", "10"));
+
         } else if("susy".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
