@@ -5,11 +5,13 @@
 1)
 Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
 
+## ====================================================================
 2)
 
 de Rosa, Roder, Papa, dos Santos (2022), Improving Pre-Trained Weights Through Meta-Heuristics Fine-Tuning.
 	=> PSO fine-tuning not actuall training
 
+## ====================================================================
 3)
 Yosinski et al., 2014 How transferable are features in deep neural networks ?
 	=> Early layers learn generic features transferable across tasks. This justifies using GD for the CNN backbone.
@@ -27,6 +29,7 @@ the new task into the base (copied) features to fine-tune them to the new task, 
 feature layers can be left frozen, meaning that they do not change during training on the new task."
 
 
+## ====================================================================
 4)
 Parisi et al., 2019, Continual Lifelong Learning with Neural Networks: A Review
 	=> This supports sequential learning from new datasets.
@@ -39,6 +42,7 @@ Quotes:
 tems (Hassabis et al. 2017, French 1999). This is due to the tendency of learning models to catas-
 trophically forget existing knowledge when learning from novel observations"
 
+## ====================================================================
 5)
 Communication-Efficient Learning of Deep Networks from Decentralized Data, H. Brendan McMahan
 
@@ -66,6 +70,7 @@ Quotes:
 
 "on-IID data distributions that are a defining characteristic of this setting"
 
+## ====================================================================
 6)
 Communication-Efficient Distributed Deep Learning via Federated Dynamic Averaging
 
@@ -92,6 +97,7 @@ only triggered if the local models have diverged significantly,
 which implies that the global model may no longer be accurate."
 	=> Synchronization still takes place but only when necessary.
 
+## ====================================================================
 7)
 Parallel PSO for Efficient Neural Network Training Using GPGPU and Apache Spark in Edge Computing Sets
 
@@ -130,6 +136,8 @@ Kubernetes or Databricks."
 
 “Particle fitness computation and particle position update are distributed across the execution nodes of the Spark cluster.”
 	=> Uses actuall PSO training
+
+## ====================================================================
 8)
 FedPSO: Federated Learning Using Particle Swarm Optimization to Reduce Communication Costs
 
@@ -160,6 +168,7 @@ PSO is used instead of FedAvg => PSO style server update rule:
 	“FedPSO identifies the best model through pbest and gbest variables and updates using the value of V"
 	"Unlike conventional algorithms, Function ServerExecutes receives only pbest values, without receiving w from the client on Line 5."
 
+## ====================================================================
 9)
 PSO-PS:Parameter Synchronization with Particle Swarm Optimization for Distributed Training of Deep Neural Networks
 
@@ -173,6 +182,7 @@ Quotes:
 “At each synchronization stage, the weights are updated by PSO from the sub weights gathered from all workers”
 	sub-weights = locally trained weights from each worker.
 
+## ====================================================================
 10)
 PARTICLE SWARM OPTIMIZATION FOR NEURAL NETWORK LEARNING ENHANCEMENT
 
@@ -187,7 +197,7 @@ weight for the current epoch or iteration."
 “PSO is applied to feedforward neural network … where the position of each particle in swarm represents a set of weight for the current epoch or iteration.”
 “The particle moves within the weight space attempting to minimize learning error. Changing the position means updating the weight of the network in order to reduce the error of the current epoch.”
 
-
+## ====================================================================
 11)
 Improving PreTrained Weights through Meta - Heuristics Fine- Tuning Train the model with GD and fine tunes it using PSO.
 
@@ -199,6 +209,7 @@ Quotes:
 
 In Table II: “PSO — w = 0.7 | c1 = 1.7 | c2 = 1.7”
 
+## ====================================================================
 12)
 Particle swarm optimisation for evolving artificial neural network
 
@@ -206,3 +217,44 @@ Quotes:
 “In PSONN system, the learning algorithm is the PSO algorithm.”
 “Here the encoding scheme is that each individual is to parameterise a whole group of g nodes in ANNs, this means that every component of each individual represents a connection weight.”
 “Generate an initial population of M networks.”
+
+## ====================================================================
+13)
+A Study of Hybrid and Evolutionary Metaheuristics for Single Hidden Layer Feedforward Neural Network Architecture
+
+Quotes:
+“This study presents a population-based metaheuristic framework for training ANNs… framing the training objective as a high-dimensional nonlinear optimization problem.”
+“the trainable parameters of the ANN—consisting of weights and biases—are components of a high-dimensional vector.”
+“This study employs a single hidden layer feedforward neural network architecture.”
+
+“we present an innovative hybrid PSO–SGD approach that utilizes PSO’s global search capabilities and SGD’s local refining.”
+
+“SGD modifies the weights using a first-order approximation of the loss landscape by descending down the negative gradient of the error function.” The protocol can be described as such:
+	Neural Network (single hidden layer)
+			↓
+	Initialize weights
+			↓
+	Population of candidate weight vectors
+			↓
+	PSO / GA search
+			↓
+	Hybrid PSO-SGD update, which actually does:
+		new_weights =
+			PSO_velocity_step
+		+ PSO_cognitive_term
+		+ PSO_social_term
+		- SGD_gradient_step
+
+## ====================================================================
+14)
+Particle Swarm Optimisation for Evolving Deep Neural Networks for Image Classification by Evolving and Stacking Transferable Blocks
+
+Quotes:
+“In this paper, an efficient particle swarm optimisation method named EPSOCNN is proposed to evolve CNN architectures inspired by the idea of transfer learning.”
+“In the proposed method, DenseNet [4] is used as the prior expertise to minimise the search space by encoding only the hyper-parameters of one dense block...”
+	=> “Instead of evolving the whole network architecture, the PSO is only utilised to evolve the optimal Dense Block on the small subset.”
+	=> NAS == Each particle is a proposal for how the CNN should be built.
+		=> it encodes only a small architectural description of one dense block.
+“Thirdly, an automatic and progressive process of stacking the learned block is proposed to increase the capacity of the final neural network.”
+
+	
