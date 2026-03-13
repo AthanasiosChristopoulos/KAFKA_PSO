@@ -13,7 +13,6 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.processor.ThreadMetadata;
 import org.apache.kafka.streams.processor.TaskMetadata;
 import org.apache.kafka.common.MetricName;
@@ -23,6 +22,7 @@ import org.apache.kafka.common.MetricName;
 import java.util.Set;
 import java.util.HashSet;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 import java.util.Properties;
 import java.util.Map;
@@ -130,7 +130,7 @@ public class Worker implements Runnable {
             // Kafka Streams uses this that client id as a prefix when naming its threads,
 
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cfg.KAFKA_HOST); // for now localhost, but this is the URL of the Kafka cluster
-        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0);
         // props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1"); // 2 is pointless. The Global table consumer thread takes care of task 0

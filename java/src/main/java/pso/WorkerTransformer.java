@@ -1313,7 +1313,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                     "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
                     "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
                     "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
-                    "   => per forwardPassMs: " + avgForwardPassMs + "\n" + 
+                    "   => per forwardPassMs: " + String.format("%.3f ms", avgForwardPassMs) + "\n" + 
                     "Rate of Updates / Batches per sec: " + String.format("%.5f sec", per_task_count / totalElapsedTimeSec)   // this is count_of_updates per seconds
                         // Also equivalent with batches per second
             );

@@ -104,14 +104,15 @@ git rm -r --cached target
 ## Related Work: =============================================
 
 PySwarm:
+
 Standard PSO works this way:
 1) Initialize a population of particles with random positions and velocities on d dimensions
 2) For each particle, evaluate the desired optimization fitness function in d variables.
 3) Compare particle's fitness evaluation with particle's pbest. If current value is better than pbest, then update pbest 
 4) Compare fitness evaluation with the population's overall previous best, to update gBest
 5) Change the velocity and position of the particle according to the equations (for the id_th partitle):
-    Vid = Vid + c * rand() * (pBest_id - x_id) + c2* Rand() * (gBest - x_id)
-    xid= xid + Vid 
+    Vid = Vid + c1 * rand() * (pBest_id - x_id) + c2 * Rand() * (gBest - x_id)
+    xid = xid + Vid 
 6) Loop to step (2) until reached a maximum number of iterations (also called generations).
 
 ## Non Differentiable Loss Functions: =======================================================
@@ -358,9 +359,7 @@ Hardware Distribution: ======================================
 
 Federated Learning implies hardware distribution between edge devices
 
-## ===================================================
-## ===================================================
-## ===================================================
+## =========================================================================
 ## Finding and Using New Datasets: =========================================
 
 ## Input new Dataset - Model:
