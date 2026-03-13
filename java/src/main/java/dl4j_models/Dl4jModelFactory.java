@@ -173,7 +173,9 @@ public class Dl4jModelFactory {
 					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";				
 						// 0.82 PSO training, 0.652 pretrained (also 0.8466667)
 						// even if pretty slow it will keep improving
-						// recommended
+						// recommended for svhn version
+						// this also needs a lot of workers !!! for accuracy
+						// the more complicated the problem, the most important is the accuracy
 					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";				
 						// 0.785 PSO training, 0.676 pretrained
 					case 13 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";
@@ -239,7 +241,9 @@ public class Dl4jModelFactory {
 						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
 						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
 						case 10 -> pair = createCNNModel_1_Layer(workerId, filename, 576);	
-						case 11, 13 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+						// case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+						case 11 -> pair = createCNNModel_1_Layer_Logits(workerId, filename, 90);
+						case 13 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
 						case 12 -> pair = createCNNModel_1_Layer(workerId, filename, 198);
 						case 14 -> pair = createCNNModel_1_Layer(workerId, filename, 200);
 						case 15 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
@@ -1051,6 +1055,45 @@ public class Dl4jModelFactory {
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
+						.build())
+				.build();
+
+		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
+	}
+
+	// ===========================================================================================
+
+	public static Pair<PsoModel, Integer>  createCNNModel_1_Layer_Logits(int workerId, String fileName, int inputDim) {
+
+		// Pretrained Model ===========================================================
+		System.out.println("AAAAAAAAAAAAAAAAa");
+		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+
+		// ============================================================================
+		
+		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
+				.seed(123 + workerId)
+				.updater(new NoOp()) 
+				.build();
+
+		int start = (int) new TransferLearning.Builder(pretrained) 
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)
+				.build().numParams();
+
+		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
+				.fineTuneConfiguration(ftc)
+				.removeLayersFromOutput(1)
+				.build();
+
+		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
+				.fineTuneConfiguration(ftc) 
+				.addLayer(new DenseLayer.Builder()
+						.nIn(inputDim)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.IDENTITY)   // raw logits
+						.weightInit(WeightInit.XAVIER)
+						.biasInit(0.0)
 						.build())
 				.build();
 

@@ -258,3 +258,14 @@ Quotes:
 “Thirdly, an automatic and progressive process of stacking the learned block is proposed to increase the capacity of the final neural network.”
 
 	
+## ====================================================================
+15)
+Top-k Multiclass SVM
+
+I need this for topk (this one is per sample)
+
+## =====================================================================
+16)
+https://lightning.ai/docs/torchmetrics/stable/classification/hinge_loss.html?utm_source=chatgpt.com
+
+For multi class hinge loss

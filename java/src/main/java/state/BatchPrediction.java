@@ -60,7 +60,7 @@ public class BatchPrediction {
     private INDArray X2d;
     private INDArray X;
     private INDArray Xbuffer;
-    private INDArray probs; 
+    private INDArray logits_probs; 
     private INDArray argMax;
 
     private int EXPECTED_SIZE; 
@@ -184,7 +184,7 @@ public class BatchPrediction {
 
     //         INDArray y = model.asMultiLayerNetwork().output(x, false, ws);
     //         Nd4j.getExecutioner().commit();
-    //         probs = y;
+    //         logits_probs = y;
     //         return y.detach(); // valid ONLY while ws is still open
     //     }
     // }
@@ -281,14 +281,6 @@ public class BatchPrediction {
         for (int i = 0; i < nSamples; i++) {
             System.arraycopy(featureList.get(i), 0, data[i], 0, NUM_FEATURES);
         }
-
-
-        // if (probs == null || probs.rank() != 2 || probs.size(0) != nSamples || probs.size(1) != NUM_CLASSES) {
-        //     if (probs != null) probs.close();
-        //     probs = Nd4j.create(nSamples, NUM_CLASSES);
-        // } else {
-        //     probs.assign(0.0); // reuse
-        // }
 
         // Forward Pass Start ===============================================================================
 
@@ -466,16 +458,19 @@ public class BatchPrediction {
         // ==============================================================================================================
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
-        probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
-        // probs = GpuGate.outputExclusive(argument_model, X, workerId);
-        // probs = outputWithWorkspace(argument_model, X); 
+        logits_probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        // logits_probs = GpuGate.outputExclusive(argument_model, X, workerId);
+        // logits_probs = outputWithWorkspace(argument_model, X); 
+        if (LOSS_FUNCTION.equals("CROSS_ENTROPY")) {
+            logits_probs = Nd4j.nn().softmax(logits_probs.dup(), 1);
+        }
         Nd4j.getExecutioner().commit();
 
         // this is one forward pass per batch (has multiple samples), X is one of the different 
         // dimensionalities identified above. This allocates memory by it self
         // model.output(X,false) is the core inference forward pass.
 
-        // probs = forwardOnce(argument_model, X);
+        // logits_probs = forwardOnce(argument_model, X);
         // Nd4j.getExecutioner().commit(); 
         
         // Nd4j.getWorkspaceManager().destroyAllWorkspacesForCurrentThread();
@@ -496,17 +491,17 @@ public class BatchPrediction {
         //     MemoryWorkspace toDestroy = Nd4j.getWorkspaceManager().getWorkspaceForCurrentThread("INFERENCE_WS_" + workerId);
         //     Nd4j.getWorkspaceManager().destroyWorkspace(toDestroy);
         // }
-        // double min = probs.minNumber().doubleValue();
-        // double max = probs.maxNumber().doubleValue();
-        // System.out.println("probs min/max = " + min + " / " + max);
+        // double min = logits_probs.minNumber().doubleValue();
+        // double max = logits_probs.maxNumber().doubleValue();
+        // System.out.println("logits_probs min/max = " + min + " / " + max);
         
         // GpuMem.log("[Worker " + workerId + " - " +  Thread.currentThread().getName() + "] AFTER FORWARD");
         if(MEMORY_EFFICIENT) GpuMem.log("[Worker " + workerId + "] AFTER FORWARD");
 
         // Forward Pass End ===============================================================================
 
-        if (probs == null || probs.size(0) == 0) {
-            if (logger.isEnabled(2)) logger.log("Empty probs batch");
+        if (logits_probs == null || logits_probs.size(0) == 0) {
+            if (logger.isEnabled(2)) logger.log("Empty logits_probs batch");
             return null;
         }
 
@@ -514,8 +509,8 @@ public class BatchPrediction {
         float loss = 0f;
 
         float[] sampleLosses = new float[nSamples];
-        int outDim = (int) probs.size(1);
-        // System.out.println("outDim: " + outDim + ", probs: " + probs);
+        int outDim = (int) logits_probs.size(1);
+        // System.out.println("outDim: " + outDim + ", logits_probs: " + logits_probs);
         // Make sure the scratch buffer fits the actual output dimension
         if (probabilities == null || probabilities.length < outDim) {
             probabilities = new float[outDim];
@@ -527,7 +522,7 @@ public class BatchPrediction {
 
             for (int i = 0; i < nSamples; i++) {
 
-                float p = probs.getFloat(i, 0);
+                float p = logits_probs.getFloat(i, 0);
 
                 if (p < EPS) p = EPS;
                 if (p > 1f - EPS) p = 1f - EPS;
@@ -547,14 +542,14 @@ public class BatchPrediction {
             if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
                 // System.out.println("NUM_CLASSES: " + outDim);
             
-                argMax = probs.argMax(1);   // max probability => this is what we are deciding
+                argMax = logits_probs.argMax(1);   // max probability => this is what we are deciding
                 Nd4j.getExecutioner().commit();
 
-                float[] flatProps = probs.data().asFloat();  // row-major view of probs data
+                float[] flatProps = logits_probs.data().asFloat();  // row-major view of logits_probs data
 
                 for (int i = 0; i < nSamples; i++) {
 
-                    int pred = argMax.getInt(i);    // accuracy is dependent on this and only this not from probs
+                    int pred = argMax.getInt(i);    // accuracy is dependent on this and only this not from logits_probs
 
                     int label = labels.get(i);
                     if (pred == label) nCorrect++;
@@ -571,20 +566,20 @@ public class BatchPrediction {
                 //     int label = labels.get(i);
                 //     if (pred == label) nCorrect++;
 
-                //     // float[] probabilities = probs.getRow(i).toFloatVector();   
+                //     // float[] probabilities = logits_probs.getRow(i).toFloatVector();   
                 //         // Expensive because: getRow(i) creates a view,
                 //         // toFloatVector() allocates a new float[] and copies data every iteration
                 //     // float p = probabilities[label];
                 //     // if (p < EPS) p = EPS;
 
-                //     // probabilities = probs.data().asFloat();
-                //     INDArray row = probs.getRow(i);     // still creates a view per sample
+                //     // probabilities = logits_probs.data().asFloat();
+                //     INDArray row = logits_probs.getRow(i);     // still creates a view per sample
                 //     for (int c = 0; c < NUM_CLASSES; c++) {
                 //         probabilities[c] = row.getFloat(c);     // doesnt allocate but overwrites memory
                 //     }
                 //     sampleLosses[i] = LossFunction.compute_loss(probabilities, label);
                     
-                //     // float p1 = probs.getFloat(i, label);
+                //     // float p1 = logits_probs.getFloat(i, label);
                 //     // logger.log("Label = " + label + ", probabilities: " + 
                 //     //     Arrays.toString(probabilities) + ", p = " + p1);
 
@@ -603,22 +598,22 @@ public class BatchPrediction {
 
             } else {
                 
-                argMax = probs.argMax(1);
+                argMax = logits_probs.argMax(1);
 
                 for (int i = 0; i < nSamples; i++) {
                     int pred = argMax.getInt(i);
                     int label = labels.get(i);
                     if (pred == label) nCorrect++;
 
-                    float p = probs.getFloat(i, label);     // probs.getFloat(i, j), probs is 2D-Array 
-                                                            // probs = [nSamples, NUM_CLASSES]
+                    float p = logits_probs.getFloat(i, label);     // logits_probs.getFloat(i, j), logits_probs is 2D-Array 
+                                                            // logits_probs = [nSamples, NUM_CLASSES]
                     if(p < EPS) p = EPS;
                     
                     sampleLosses[i] = (float) -Math.log(p); // cross-entropy
                 }
             }
         }
-        // end = System.nanoTime();    // this is where the forward pass reliably ends due to gathering the probs 
+        // end = System.nanoTime();    // this is where the forward pass reliably ends due to gathering the logits_probs 
         // too and having forced a stnc between the GPU and CPU
         // Combine Losses from Multiple Samples =======================================================
 
@@ -674,12 +669,12 @@ public class BatchPrediction {
 
         float forwardMs = (end - start) / 1_000_000f;
         // X.close();
-        // probs.close();
+        // logits_probs.close();
         featureList.clear();
         labels.clear();
 
         if(false && !MEMORY_EFFICIENT) {
-            if (probs != null) probs.close();
+            if (logits_probs != null) logits_probs.close();
             if (X != null && X != Xbuffer) X.close();
             if (argMax != null) argMax.close();
             if (X2d != null) X2d.close();
@@ -703,8 +698,8 @@ public class BatchPrediction {
 
     //     try {
     //         INDArray X = Nd4j.create(msg.features).reshape(1, NUM_FEATURES);
-    //         INDArray probs = bestModel.output(X, false);
-    //         int pred = probs.argMax(1).getInt(0);
+    //         INDArray logits_probs = bestModel.output(X, false);
+    //         int pred = logits_probs.argMax(1).getInt(0);
 
     //         Map<String, Object> out = new HashMap<>();
     //         out.put("sample_index", msg.sampleIndex);

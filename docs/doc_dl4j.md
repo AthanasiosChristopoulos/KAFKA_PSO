@@ -42,6 +42,26 @@ Also this fixes the same issue for:
 .dataFormat(CNN2DFormat.NHWC) 
 ```
 
+```java
+// Output Layer => effectively wraps a dense layer plus loss machinery. This is designed to work with Backprop:
+.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+        .nIn(inputDim)
+        .nOut(NUM_CLASSES)
+        .activation(Activation.IDENTITY)
+        .weightInit(WeightInit.XAVIER)
+        .biasInit(0.0)
+        .build())
+
+// This comes with no Loss backage, can output logits
+.addLayer(new DenseLayer.Builder()
+        .nIn(inputDim)
+        .nOut(NUM_CLASSES)
+        .activation(Activation.IDENTITY)   // raw logits
+        .weightInit(WeightInit.XAVIER)
+        .biasInit(0.0)
+        .build())
+```
+
 ## DL4J workspaces =================================================================================
 
  - ND4J workspace as a reusable arena of memory

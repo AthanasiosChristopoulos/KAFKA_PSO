@@ -43,6 +43,36 @@
         - MaxPooling / AveragePooling => Reduce (H, W) dimensionality in half
         These layers have no parameters, they always do the same thing (fixed reduction)
         
+## Last Layer:  ====================================================================
+ 
+ - Without activation function:
+    input→network→logits z (this outputs logits, one per class)
+ 
+ - with activation function:
+    input→network→logits z→softmax→probabilities p (converts logits into probabilities)
+
+## Loss Functions =================================================================
+
+There are two completely different levels where top-k can be applied:
+
+1️⃣ Across classes (logit level)
+2️⃣ Across samples (batch level)
+
+ - In classification, the model outputs scores for each class.
+ - Prediction chooses the class with the highest score.
+
+ - But just predicting the correct class is not enough for many learning algorithms (like SVMs). They want the correct class to be confidently larger than the others.
+
+Margin:
+- The margin measures how far the correct class is from the strongest competitor:
+    margin=sy​−j=ymax​sj​
+| Margin value | Meaning                               |
+| ------------ | ------------------------------------- |
+| margin > 1   | very confident correct classification |
+| margin = 1   | exactly at desired separation         |
+| margin < 1   | insufficient separation               |
+| margin < 0   | misclassification                     |
+
 ## Deep Learning (DL) ===============================================================================
 
 Deep Learning is a special type of Machine Learning that uses structures called neural networks with many layers.

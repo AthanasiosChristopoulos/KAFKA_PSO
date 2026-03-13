@@ -35,6 +35,7 @@ public class LossFunction {
 
         } else if ("HINGE".equals(LOSS_FUNCTION)) {
             return compute_loss_hinge(probs, label);
+            // return compute_loss_topk_hinge(probs, label, 5);
 
         } else if ("RAMP".equals(LOSS_FUNCTION)) {
             // System.out.println("AAAAAAAAAAAAAAAAAAAA");
@@ -120,10 +121,10 @@ public class LossFunction {
     }
 
     // =============================================================================================
+    // top-1 Hinge
+    public static float compute_loss_hinge(float[] scores, int label) {  
 
-    public static float compute_loss_hinge(float[] probs, int label) {
-
-        float py = probs[label];
+        float trueScore = scores[label];    // trueScore
         float maxOther = -Float.MAX_VALUE;
 
         // L=max(0,1−ys)
@@ -132,15 +133,40 @@ public class LossFunction {
         // If ys<1: inside is positive → loss grows linearly (the more wrong the quess was)
         // Meaning: “penalize violations of the margin.”
 
-        for (int i = 0; i < probs.length; i++) {
+        for (int i = 0; i < scores.length; i++) {
             if (i == label) continue;
-            if (probs[i] > maxOther) maxOther = probs[i];
+            if (scores[i] > maxOther) maxOther = scores[i];
         }
 
-        float margin = py - maxOther;
+        float margin = trueScore - maxOther;
         return Math.max(0f, 1f - margin);   // once the prediction is confident enough, no more penalty
     }
 
+    // =============================================================================================
+    // top-k Hinge
+    public static float compute_loss_topk_hinge(float[] scores, int label, int k) {
+        // System.out.println("AAAA");
+        int C = scores.length;
+        float trueScore = scores[label];
+
+        float[] violations = new float[C - 1];
+        int idx = 0;
+
+        for (int j = 0; j < C; j++) {
+            if (j == label) continue;
+            violations[idx++] = 1f + scores[j] - trueScore;
+        }
+
+        Arrays.sort(violations); // ascending
+        int kk = Math.min(k, violations.length);
+
+        float sum = 0f;
+        for (int i = violations.length - kk; i < violations.length; i++) {
+            sum += violations[i];
+        }
+
+        return Math.max(0f, sum / kk);
+    }
     // =============================================================================================
     // ε-insensitive loss
 
