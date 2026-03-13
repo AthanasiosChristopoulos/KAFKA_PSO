@@ -226,10 +226,16 @@ public class Coordinator implements Runnable {
                         control.accuracyValues));
                 }
 
-                System.out.println("[Coordinator] Final (Best) Results: " +
-                    " Pretrained Accuracy: " + control.getPretrainedAccuracy() +  
-                    ", Training Accuracy: " + control.getBestTrainingAccuracy() +
-                    ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
+                if(control.getPretrainedAccuracy() != -1f) {
+                    System.out.println("[Coordinator] Final (Best) Results: " +
+                        " Pretrained Accuracy: " + control.getPretrainedAccuracy() +  
+                        ", Training Accuracy: " + control.getBestTrainingAccuracy() +
+                        ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
+                } else {
+                    System.out.println("[Coordinator] Final (Best) Results: " +
+                        " Training Accuracy: " + control.getBestTrainingAccuracy() +
+                        ", Test Accuracy:" + control.getBestGlobalModelAccuracy());
+                }
 
                 System.out.printf("[Coordinator] Elapsed time: %.3f seconds, Starting Delay: %.3f %n", seconds, starting_delay);
 
