@@ -480,6 +480,7 @@ public class Experimentation {
 
         } else if (cfg.EXPERIMENTATION_MODE.equals("DIMENSIONALITY")) {
 
+            cfg.EARLY_STOPPING = true;
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_dimensionality.csv");
@@ -496,7 +497,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("MODEL_VERSION," + header_1);
+                w.write("MODEL_VERSION,DIMENSIONALITY," + header_1);
 
                 for (Integer model_version : model_version_list) {
 
@@ -522,13 +523,15 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    w.write(String.format("%d,", cfg.MODEL_VERSION));
+                    w.write(String.format("%d,%d,", cfg.MODEL_VERSION, r.getDimensionality()));
                     writeExperimentData(w, r, -1, -1, -1);
 
                     w.flush();
 
                     System.out.println("===============================================================================================");
-                    System.out.println("End of experiment with cfg.MODEL_VERSION: " + cfg.MODEL_VERSION);
+                    System.out.println("End of experiment with cfg.MODEL_VERSION: " + cfg.MODEL_VERSION +
+                        ", with cfg.DIMENSIONALITY: " + r.getDimensionality()
+                    );
                     System.out.println("===============================================================================================");
 
                     if(experimentationStopRequested == true) {

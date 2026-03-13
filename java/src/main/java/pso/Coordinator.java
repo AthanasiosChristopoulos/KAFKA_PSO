@@ -85,7 +85,7 @@ public class Coordinator implements Runnable {
     private Pair<PsoModel, Integer> pair_best;
 
     private int start;
-
+    private int dimensionality = 0;
     private final MetricsCollector collector; 
 
     // ====================================================================================================================================
@@ -96,6 +96,7 @@ public class Coordinator implements Runnable {
 
         // Need to do the instancing here the transformers constructor runs many times from different tasks
         this.globalModel = Dl4jModelFactory.createModel(-1, false).getFirst();
+        this.dimensionality = this.globalModel.numParams();
         System.out.println("Model Summary ===========================================");
         if(logger.isEnabled(2)) logger.log("Model Summary ===========================================");
         if(logger.isEnabled(2)) logger.log(this.globalModel.summary());
@@ -223,7 +224,7 @@ public class Coordinator implements Runnable {
                 if(collector != null) {
                     collector.reportCoordinatorDone(new CoordinatorMetrics(seconds, 
                         control.getBestGlobalModelAccuracy(), control.getBestGlobalModelLoss(),
-                        control.accuracyValues));
+                        control.accuracyValues, this.dimensionality));
                 }
 
                 if(control.getPretrainedAccuracy() != -1f) {

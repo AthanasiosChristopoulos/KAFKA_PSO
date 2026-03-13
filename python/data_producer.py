@@ -65,10 +65,10 @@ if(DATASET == "cifar5"):
 if(DATASET == "cifar10"):
     NUMBER_OF_DATA_REPEATS = 9
 
-if(DATASET == "cifar10_half"):
+if(DATASET == "cifar10-half"):
     NUMBER_OF_DATA_REPEATS = 18
     
-if(DATASET == "cifar5_half"):
+if(DATASET == "cifar5-half"):
     NUMBER_OF_DATA_REPEATS = 36
     
 if(DATASET == "mnist"):
@@ -88,7 +88,7 @@ if(DATASET == "svhn"):
     
 # ==============================================================================================
 
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10_half", "cifar5_half", 
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
     "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn", "kmnist")
 
 print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
@@ -861,7 +861,7 @@ def load_dataset():
 
     # ==================================================================================================
 
-    elif DATASET == "cifar10_half":
+    elif DATASET == "cifar10-half":
 
         classes = np.arange(10, dtype=np.int64)
 
@@ -923,7 +923,7 @@ def load_dataset():
 
     # ==================================================================================================
         
-    elif DATASET == "cifar5_half":
+    elif DATASET == "cifar5-half":
 
         classes = np.array((0, 1, 4, 8, 9), dtype=np.int64)
 

@@ -74,8 +74,8 @@ DATASET=mnist
 # DATASET=cifar10
 # DATASET=cifar3
 # DATASET=cifar5
-# DATASET=cifar10_half
-# DATASET=cifar5_half
+# DATASET=cifar10-half
+# DATASET=cifar5-half
 # DATASET=nsfw
 # DATASET=svhn
 

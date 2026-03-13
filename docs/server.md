@@ -115,11 +115,14 @@ htop -u achristopoulos
 ```bash
 rm -rf /mnt/nas_drive/achristopoulos/kafka-kraft/logs/*
 cd /mnt/nas_drive/achristopoulos/kafka-local
-bin/kafka-storage.sh random-uuid  ## whatever you got from there 
+bin/kafka-storage.sh random-uuid 
 bin/kafka-storage.sh format \
   --cluster-id <PASTE_UUID_HERE> \
   --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 
+bin/kafka-storage.sh format \
+  --cluster-id NQ0hkMpsQlWQhDfMUh6n9A \
+  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 
 ```
 

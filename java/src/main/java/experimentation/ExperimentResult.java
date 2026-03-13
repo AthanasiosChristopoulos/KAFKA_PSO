@@ -84,6 +84,12 @@ public final class ExperimentResult {
 
     // ===============================================================================
 
+    public int getDimensionality() {
+        return coordinator.getDimensionality();
+    }
+    
+    // ===============================================================================
+
     @Override
     public String toString() {
         return "ExperimentResult{" +

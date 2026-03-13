@@ -47,6 +47,8 @@ public class Dl4jModelFactory {
 
 	public static final boolean printModel = false;
 
+	// ===========================================================================================
+
 	public static Pair<PsoModel, Integer> createModel(int workerId, boolean preTrained) {
 		// System.out.println("DATASET: " + DATASET);
 		PsoModel model = null;
@@ -426,15 +428,15 @@ public class Dl4jModelFactory {
 						// Failure 53% accuracy at the most
 					case 16 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4_half.h5";	
 						// 0.6066667 for cifar 10
-						// cifar5_half => 81%
+						// cifar5-half => 81%
 						// pretrained model, no training => 0.334
 					case 17 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_half.h5";	
-						// cifar10_half => 60%, cifar5_half => 86%
+						// cifar10-half => 60%, cifar5-half => 86%
 						// Recommended
 					case 18 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6_half.h5";	
-						// cifar5_half => 0.74
+						// cifar5-half => 0.74
 					case 19 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v7_half.h5";	
-						// cifar5_half => 0.8
+						// cifar5-half => 0.8
 					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 				}
 

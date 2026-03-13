@@ -3,17 +3,48 @@
 # ==============================================================
 # recreate:
 
+kafka-topics.sh --bootstrap-server localhost:19092 --list 
+
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic pbest-weights-topic --partitions 1 --if-not-exists
-
-kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic pbest-weights-topic --from-beginning
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic local-weights-topic --partitions 1 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic iris-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic iris-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic winequality-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic winequality-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic pendigits-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic pendigits-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic mnist-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic mnist-test --partitions 1 --if-not-exists
+  
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar5-half-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar5-half-test --partitions 1 --if-not-exists
+
+# ==============================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic prediction-input --partitions 1 --if-not-exists
@@ -31,8 +62,6 @@ docker exec -it broker bash -lc '
 '
 # ==============================================================
 # Evaluate position:
-
-kafka-topics.sh --bootstrap-server localhost:19092 --list 
 
 docker exec -it broker \
   /opt/kafka/bin/kafka-run-class.sh \
@@ -578,31 +607,57 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic cifar10-test --from-beginning
 
-# cifar10_half: ======================================================
+# cifar10-half: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic cifar10_half-input --partitions 40 --if-not-exists
+  --create --topic cifar10-half-input --partitions 40 --if-not-exists
 
-kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10_half-input
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10-half-input
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic cifar10_half-input
+  --delete --topic cifar10-half-input
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic cifar10_half-input --from-beginning
+  --topic cifar10-half-input --from-beginning
   
-# cifar10_half-test: ======================================================
+# cifar10-half-test: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic cifar10_half-test --partitions 1 --if-not-exists
+  --create --topic cifar10-half-test --partitions 1 --if-not-exists
 
-kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10_half-test
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar10-half-test
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic cifar10_half-test
+  --delete --topic cifar10-half-test
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic cifar10_half-test --from-beginning
+  --topic cifar10-half-test --from-beginning
+
+# cifar5-half: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar5-half-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar5-half-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic cifar5-half-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic cifar5-half-input --from-beginning
+  
+# cifar5-half-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic cifar5-half-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic cifar5-half-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic cifar5-half-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic cifar5-half-test --from-beginning
 
 # nsfw: ======================================================
 

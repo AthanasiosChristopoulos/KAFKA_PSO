@@ -117,6 +117,21 @@ def main():
         
     # =================================================================================================
 
+    elif mode == "DIMENSIONALITY":
+        # default: N_WORKERS experiments
+        csv_path = Path(f"java/{experimentation_dir}/results_dimensionality.csv")
+        xcol = "DIMENSIONALITY"
+        xlabel = "DIMENSIONALITY"
+        suffix = "dimensionality"
+        plots = [
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs DIMENSIONALITY", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs DIMENSIONALITY", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs DIMENSIONALITY", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs DIMENSIONALITY", "messages"),
+        ]
+            
+    # =================================================================================================
+
     else: 
         print("Wrong experimentation mode selected, exiting")
         exit(-1)
@@ -169,11 +184,19 @@ def main():
 
             xs_plot = plot_df[xcol].tolist()
             ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
+       
             
         plt.figure()
-
+        
+        # ===========================================================================================
+        # plot points:
+        
         if mode == "MONITORING_ITERATIONS":
             plt.plot(xs_plot, ys_plot)
+        elif mode == "DIMENSIONALITY":
+            positions = np.arange(len(xs_plot))
+            plt.plot(positions, ys_plot, marker="o")
+
         else:
             plt.plot(xs_plot, ys_plot, marker="o")
         if ycol == "GBEST_ACC":
@@ -181,21 +204,32 @@ def main():
             plt.yticks(np.linspace(0, 1, 11))
         else:
             plt.ylim(bottom=0)
+            
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
         plt.grid(True)
         
         # ===========================================================================================
-
+        # xticks:
+        
         if mode == "MONITORING_ITERATIONS":
             tick_count = 10
             if len(xs_plot) > tick_count:
                 tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
                 plt.xticks([xs_plot[i] for i in tick_idx])
+                
+        elif mode == "DIMENSIONALITY":
+            plt.xticks(positions, xs_plot)
+            
         else:
             plt.xticks(xs_plot)
+            # plt.xticks(xs_plot, rotation=30, ha="right")
+        
+        # ===========================================================================================
 
+        plt.tight_layout()
+        
         outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
         plt.savefig(outpath, dpi=200, bbox_inches="tight")
         plt.close()
