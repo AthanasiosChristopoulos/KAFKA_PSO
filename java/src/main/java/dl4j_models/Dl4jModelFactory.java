@@ -79,12 +79,28 @@ public class Dl4jModelFactory {
 		} else if ("har".equals(DATASET)) {
 			model = createHarModel(workerId);
 
+		// ========================================================================================
+
 		} else if (DATASET.contains("pendigits")) {
-			// model = createPendigitsModelTanh(workerId);
-			model = createDenseModel_1(workerId);	// forward pass cost: CPU = 10ms / GPU = 3ms
-			// model = createDenseModel_2(workerId);
-			// model = createDenseModel_3(workerId);
-			// model = createDenseModel_4(workerId);
+
+			int version = 1;
+
+			if(cfg.MODEL_VERSION != -1) {
+				version = cfg.MODEL_VERSION;
+			}
+
+			if(version == 1) {
+				model = createDenseModel_1(workerId);
+			} else if(version == 2) {
+				model = createDenseModel_2(workerId);
+			} else if(version == 3) {
+				model = createDenseModel_3(workerId);
+			} else if(version == 4) {
+				model = createDenseModel_4(workerId);
+				// model = createDenseModel_4_RELU(workerId);
+			}
+
+		// ========================================================================================
 
 		} else if ("winequality".equals(DATASET)) {
 			// model = createWineQualityModel(workerId);
@@ -3466,7 +3482,7 @@ public class Dl4jModelFactory {
 	// ======================================================================================================================
 	// PENDIGITS Dataset Model Architecture
 
-	public static PsoModel createDenseModel_4(int workerId) {
+	public static PsoModel createDenseModel_4_RELU(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}
@@ -3513,7 +3529,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static PsoModel createPendigitsModelTanh(int workerId) {
+	public static PsoModel createDenseModel_4(int workerId) {
 		if(printModel) {
 			System.out.println("Using PenDigits Model");
 		}

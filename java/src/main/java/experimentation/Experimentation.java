@@ -428,7 +428,7 @@ public class Experimentation {
             // =====================================================================
             List<Boolean> fully_informed_list = List.of(false, true);
             // =====================================================================
-            
+
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
                     StandardOpenOption.CREATE,
@@ -461,7 +461,6 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    // Write severity info + existing metrics
                     w.write(String.format("%b,", cfg.FULLY_INFORMED));
                     writeExperimentData(w, r, -1, -1, -1);
 
@@ -469,6 +468,67 @@ public class Experimentation {
 
                     System.out.println("===============================================================================================");
                     System.out.println("End of experiment with cfg.FULLY_INFORMED: " + cfg.FULLY_INFORMED);
+                    System.out.println("===============================================================================================");
+
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
+                }
+            }
+
+        // ================================================================================================
+
+        } else if (cfg.EXPERIMENTATION_MODE.equals("DIMENSIONALITY")) {
+
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_dimensionality.csv");
+
+            // =====================================================================
+            // List<Integer> model_version_list = List.of(1, 2, 3, 4);
+            List<Integer> model_version_list = List.of(1, 4);
+
+            // =====================================================================
+            
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write("MODEL_VERSION," + header_1);
+
+                for (Integer model_version : model_version_list) {
+
+                    cfg.refreshRunId();
+                    CustomLogger.refreshAll();
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                    cfg.MODEL_VERSION = model_version;
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("MODEL_VERSION: " + cfg.MODEL_VERSION);
+                    System.out.println("RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // Restart Kafka topic(s) like you already do
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    }
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    w.write(String.format("%d,", cfg.MODEL_VERSION));
+                    writeExperimentData(w, r, -1, -1, -1);
+
+                    w.flush();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with cfg.MODEL_VERSION: " + cfg.MODEL_VERSION);
                     System.out.println("===============================================================================================");
 
                     if(experimentationStopRequested == true) {

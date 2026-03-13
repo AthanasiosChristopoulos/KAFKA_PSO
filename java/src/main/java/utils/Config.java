@@ -122,6 +122,7 @@ public class Config {
     public boolean TRANSFORM_IMAGE;
 
     public boolean EVALUATE_PRETRAINED;
+    public int MODEL_VERSION;
 
     public Dotenv dotenv;
 
@@ -392,6 +393,8 @@ public class Config {
         TRANSFORM_IMAGE = false;
 
         EVALUATE_PRETRAINED = Boolean.parseBoolean(getenv(dotenv, "EVALUATE_PRETRAINED", "false"));
+
+        MODEL_VERSION = Integer.parseInt(getenv(dotenv, "MODEL_VERSION", "1")); 
     } 
 
     // ==================================================================================================================================
