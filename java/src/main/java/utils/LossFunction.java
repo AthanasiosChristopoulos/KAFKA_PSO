@@ -469,10 +469,10 @@ public class LossFunction {
         float[] weights_abs = new float[d];
         for (int i = 0; i < d; i++) {
             float v = w[i];
-            weights_abs[i] = (v >= 0f) ? v : -v;
+            weights_abs[i] = (v >= 0f) ? v : -v;    // compute |w| element wise == weight_abs
         }
 
-        Arrays.sort(weights_abs); // ascending
+        Arrays.sort(weights_abs); // sort weight abs, ascending
 
         double pen = 0.0;
         int j = 0;      // lambda_1 applies to largest |w|
@@ -489,6 +489,7 @@ public class LossFunction {
     // Based on geometric decay λj​=λ1​αj−1,  0<α≤1
     
     public static float[] makeSlopeLambdasGeometric(int d, float lambda1, float alpha) {
+
         if (d <= 0) return new float[0];
         if (alpha <= 0f || alpha > 1f) throw new IllegalArgumentException("alpha must be in (0, 1].");
 
@@ -496,7 +497,8 @@ public class LossFunction {
         float cur = lambda1;
         for (int j = 0; j < d; j++) {
             l[j] = cur;
-            cur *= alpha;
+            cur *= alpha;   // defined based on geometric decay, accumulationg this alpha multiplier,
+                            // which is smaller than 1 (0<alpha≤1)
         }
         return l;
     }

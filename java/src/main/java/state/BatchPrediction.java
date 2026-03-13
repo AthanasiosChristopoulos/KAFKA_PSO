@@ -652,7 +652,7 @@ public class BatchPrediction {
                 loss += (float) (cfg.LAMBDA_VALUE * LossFunction.slopePenalty(ws.flatModel, slopeLambdas));
             
             } else if ("NONE".equals(cfg.REGULARIZER)) {
-                // ...
+                // no weight penalties applied
             }
         }
 
