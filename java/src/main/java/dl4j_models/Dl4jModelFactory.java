@@ -241,8 +241,8 @@ public class Dl4jModelFactory {
 						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
 						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
 						case 10 -> pair = createCNNModel_1_Layer(workerId, filename, 576);	
-						// case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-						case 11 -> pair = createCNNModel_1_Layer_Logits(workerId, filename, 90);
+						case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+						// case 11 -> pair = createCNNModel_1_Layer_Logits(workerId, filename, 90);
 						case 13 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
 						case 12 -> pair = createCNNModel_1_Layer(workerId, filename, 198);
 						case 14 -> pair = createCNNModel_1_Layer(workerId, filename, 200);
@@ -1025,7 +1025,9 @@ public class Dl4jModelFactory {
 	// ===========================================================================================
 
 	public static Pair<PsoModel, Integer>  createCNNModel_1_Layer(int workerId, String fileName, int inputDim) {
+		System.out.println("AAAABBBB");
 
+		Activation act = cfg.NEED_PROBS ? Activation.SOFTMAX : Activation.IDENTITY;
 		// Pretrained Model ===========================================================
 
 		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
@@ -1049,10 +1051,10 @@ public class Dl4jModelFactory {
 
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc) 
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+				.addLayer(new DenseLayer.Builder()
 						.nIn(inputDim)
 						.nOut(NUM_CLASSES)   
-						.activation(Activation.SOFTMAX)
+						.activation(act)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())

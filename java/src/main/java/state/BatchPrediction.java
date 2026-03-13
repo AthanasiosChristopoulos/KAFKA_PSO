@@ -461,9 +461,11 @@ public class BatchPrediction {
         logits_probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
         // logits_probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // logits_probs = outputWithWorkspace(argument_model, X); 
-        if (LOSS_FUNCTION.equals("CROSS_ENTROPY")) {
-            logits_probs = Nd4j.nn().softmax(logits_probs.dup(), 1);
-        }
+    
+        // if (cfg.NEED_PROBS) {
+        //     logits_probs = Nd4j.nn().softmax(logits_probs.dup(), 1);
+        // }
+
         Nd4j.getExecutioner().commit();
 
         // this is one forward pass per batch (has multiple samples), X is one of the different 

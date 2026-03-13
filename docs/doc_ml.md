@@ -73,6 +73,15 @@ Margin:
 | margin < 1   | insufficient separation               |
 | margin < 0   | misclassification                     |
 
+- Which losses need probabilities, and which need logits/scores?
+
+Very short rule:
+
+A loss needs probabilities if it compares predictions to targets as values in [0,1], or if it uses a probabilistic interpretation.
+    => comparison to targets (labels)
+A loss needs logits/scores if it is based on relative class scores, margins, or ranking between classes.
+    => comparison to other logits
+    
 ## Deep Learning (DL) ===============================================================================
 
 Deep Learning is a special type of Machine Learning that uses structures called neural networks with many layers.

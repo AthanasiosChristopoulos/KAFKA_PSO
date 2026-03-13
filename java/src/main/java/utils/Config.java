@@ -51,6 +51,8 @@ public class Config {
     public String LOSS_FUNCTION;
     public String COMBINE_LOSS;
     public int TOP_K_VALUE;
+    public boolean NEED_LOGITS;
+    public boolean NEED_PROBS;
 
     public float VMAX_FACTOR;
     public String VMAX_CLAMPING_TYPE;
@@ -279,6 +281,16 @@ public class Config {
         LOSS_FUNCTION = getenv(dotenv, "LOSS_FUNCTION", "L2");
         COMBINE_LOSS = getenv(dotenv, "COMBINE_LOSS", "L2");
         TOP_K_VALUE = Integer.parseInt(getenv(dotenv, "TOP_K_VALUE", "5"));
+        NEED_PROBS =
+            "CROSS_ENTROPY".equals(LOSS_FUNCTION)
+            || "MAE".equals(LOSS_FUNCTION)
+            || "L2".equals(LOSS_FUNCTION)
+            || "ZERO_ONE".equals(LOSS_FUNCTION)
+            || "ABSOLUTE_MARGIN".equals(LOSS_FUNCTION);
+
+        NEED_LOGITS =
+            "HINGE".equals(LOSS_FUNCTION)
+            || "RAMP".equals(LOSS_FUNCTION);
 
         VMAX_FACTOR = Float.parseFloat(getenv(dotenv, "VMAX_FACTOR", "0.1"));
         VMAX_CLAMPING_TYPE = getenv(dotenv, "VMAX_CLAMPING_TYPE", "DIM");
