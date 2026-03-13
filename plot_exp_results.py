@@ -82,9 +82,10 @@ def main():
         xlabel = "FULLY_INFORMED"
         suffix = "fully_informed_vs_classical"
         plots = [
-            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
-            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
-            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FULLY_INFORMED_VS_CLASSICAL", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FULLY_INFORMED_VS_CLASSICAL", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FULLY_INFORMED_VS_CLASSICAL", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FULLY_INFORMED_VS_CLASSICAL", "messages"),
         ]
         
     # =================================================================================================
@@ -101,7 +102,7 @@ def main():
 
     # =================================================================================================
 
-    else:
+    elif mode == "N_WORKERS":
         # default: N_WORKERS experiments
         csv_path = Path(f"java/{experimentation_dir}/results_n_workers.csv")
         xcol = "N_WORKERS"
@@ -113,6 +114,12 @@ def main():
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs N_WORKERS", "bytes"),
             ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs N_WORKERS", "messages"),
         ]
+        
+    # =================================================================================================
+
+    else: 
+        print("Wrong experimentation mode selected, exiting")
+        exit(-1)
         
     # =================================================================================================
 
@@ -169,7 +176,11 @@ def main():
             plt.plot(xs_plot, ys_plot)
         else:
             plt.plot(xs_plot, ys_plot, marker="o")
-        plt.ylim(bottom=0)
+        if ycol == "GBEST_ACC":
+            plt.ylim(0, 1)
+            plt.yticks(np.linspace(0, 1, 11))
+        else:
+            plt.ylim(bottom=0)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
@@ -196,6 +207,7 @@ def main():
     for p in saved:
         print(" -", p)
 
+# ===========================================================================================
 
 if __name__ == "__main__":
     main()

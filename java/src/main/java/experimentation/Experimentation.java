@@ -24,7 +24,7 @@ public class Experimentation {
 
     // ========================================================================
 
-    public static String header_1 = "N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
+    public static String header_1 = "FILTER_ENABLED,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
                     "GBEST_ACC,GBEST_LOSS," + 
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
@@ -280,6 +280,7 @@ public class Experimentation {
         // ===========================================================================================================================================
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
+
             cfg.EARLY_STOPPING = true;  // probably a good idea
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
@@ -340,6 +341,7 @@ public class Experimentation {
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_severity_of_filter.csv");
 
+            // =====================================================================
             var severities = List.of(
                 FilterSeverity.Level.OFF,
                 FilterSeverity.Level.EASY,
@@ -359,8 +361,7 @@ public class Experimentation {
             // var severities = List.of(
             //     FilterSeverity.Level.EASY
             // );
-
-            String header = "SEVERITY_CODE,SEVERITY_NAME," + header_1; 
+            // =====================================================================
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -368,7 +369,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write(header);
+                w.write("SEVERITY_CODE,SEVERITY_NAME," + header_1);
 
                 for (FilterSeverity.Level level : severities) {
 
@@ -424,17 +425,17 @@ public class Experimentation {
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_fully_informed_vs_classical.csv");
 
+            // =====================================================================
             List<Boolean> fully_informed_list = List.of(false, true);
-        
-            String header = "FULLY_INFORMED," + header_1; 
-
+            // =====================================================================
+            
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write(header);
+                w.write("FULLY_INFORMED," + header_1);
 
                 for (Boolean fully_informed : fully_informed_list) {
 
