@@ -24,7 +24,7 @@ public class Experimentation {
 
     // ========================================================================
 
-    public static String header_1 = "`,N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
+    public static String header_1 = "N_WORKERS,TOTAL_ELAPSED,COORD_ELAPSED,LAST_WORKER_ELAPSED," +
                     "GBEST_ACC,GBEST_LOSS," + 
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
@@ -291,7 +291,7 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("MONITORING_ITER,TIME_SEC,ACCURACY\n");
+                w.write("MONITORING_ITER,TIME_SEC,ACCURACY\n");  // this is independent, this is the last one, no more columns
 
                 CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
                 CustomLogger.refreshAll();
@@ -532,7 +532,7 @@ public class Experimentation {
             for (AccuracyPoint p : r.getAccuracyValues()) {
                 iter++;
                 w.write(String.format(
-                    "%d,%f,%f\n",
+                    "%d,%f,%f\n",   // this is independent, this is the last one, no more columns
                     iter,
                     p.getElapsedSec(),
                     p.getAccuracy()

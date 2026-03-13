@@ -18,7 +18,7 @@ public class LossFunction {
 
     public static float compute_loss(float[] probs, int label) {
         
-        if ("MAE".equals(LOSS_FUNCTION) || "TOP_K".equals(cfg.COMBINE_LOSS)) {
+        if ("MAE".equals(LOSS_FUNCTION)) {
             return compute_loss_MAE(probs, label);    
 
         } else if ("L2".equals(LOSS_FUNCTION)) {

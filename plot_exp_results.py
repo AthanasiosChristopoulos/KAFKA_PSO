@@ -111,10 +111,10 @@ def main():
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs N_WORKERS", "accuracy"),
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs N_WORKERS", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs N_WORKERS", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs N_WORKERS", "messages"),
         ]
         
     # =================================================================================================
-
 
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
@@ -137,7 +137,10 @@ def main():
 
     saved = []
     
-    for ycol, ylabel, title, tag in plots:
+    # ===========================================================================================
+    
+    for ycol, ylabel, title, tag in plots:  
+        
         if ycol not in df.columns:
             raise KeyError(f"CSV missing y column '{ycol}' needed for plot '{title}'. Columns: {list(df.columns)}")
 
@@ -147,6 +150,8 @@ def main():
         xs_plot = df.loc[mask, xcol].tolist()
         ys_plot = ys.loc[mask].tolist()
 
+        # ===========================================================================================
+    
         if mode == "MONITORING_ITERATIONS":
             
             MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
@@ -157,8 +162,9 @@ def main():
 
             xs_plot = plot_df[xcol].tolist()
             ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
-
+            
         plt.figure()
+
         if mode == "MONITORING_ITERATIONS":
             plt.plot(xs_plot, ys_plot)
         else:
@@ -169,6 +175,8 @@ def main():
         plt.title(title)
         plt.grid(True)
         
+        # ===========================================================================================
+
         if mode == "MONITORING_ITERATIONS":
             tick_count = 10
             if len(xs_plot) > tick_count:
