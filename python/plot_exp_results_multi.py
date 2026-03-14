@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import numpy as np
 
-load_dotenv("java/.env")
+load_dotenv("../java/.env")
 
 # ============================================================================================
 # Filename -> plotting config
@@ -321,10 +321,10 @@ def main():
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
 
-    default_csv_dir = Path(f"java/{experimentation_dir}") if experimentation_dir else None
-    # csv_dir = Path(f"java/exp_dataset/fully_informed_vs_classical/mnist/help")
-    # csv_dir = Path(f"java/exp_dataset/dimensionality/pendigits/help")
-    csv_dir = Path(f"java/exp_dataset")
+    default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
+    # csv_dir = Path(f"../java/exp_dataset/fully_informed_vs_classical/mnist/help")
+    # csv_dir = Path(f"../java/exp_dataset/dimensionality/pendigits/help")
+    csv_dir = Path(f"../java/exp_dataset")
     
     if args.delete:
         delete_pngs(csv_dir)
@@ -333,7 +333,7 @@ def main():
     process_multi(csv_dir)
 
     if not mode:
-        raise RuntimeError("EXPERIMENTATION_MODE is not set in java/.env")
+        raise RuntimeError("EXPERIMENTATION_MODE is not set in ../java/.env")
 
     # config = get_csv_config_from_mode(mode)
     # csv_path = csv_dir / MODE_TO_FILENAME[config["mode"]]

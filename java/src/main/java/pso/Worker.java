@@ -234,7 +234,6 @@ public class Worker implements Runnable {
         }));
 
         streams.start();
-        // dumpConsumerMetricsOnce(streams);
         t0 = System.nanoTime();
         if(KAFKA_METRICS_ENABLED) {
             startMetricsLogger(streams);

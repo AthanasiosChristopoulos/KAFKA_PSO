@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import numpy as np
 
-load_dotenv("java/.env")
+load_dotenv("../java/.env")
 
 # ============================================================================================
 
@@ -34,13 +34,13 @@ def main():
         
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
-    csv_dir = f"java/{experimentation_dir}"
+    csv_dir = f"../java/{experimentation_dir}"
     
-    # csv_dir = f"java/exp_dataset/classical_vs_fully_informed/pendigits"
+    # csv_dir = f"../java/exp_dataset/classical_vs_fully_informed/pendigits"
     # mode = "FULLY_INFORMED_VS_CLASSICAL"
     
     if not experimentation_dir:
-        raise RuntimeError("EXPERIMENTATION_DIR is not set in java/.env")
+        raise RuntimeError("EXPERIMENTATION_DIR is not set in ../java/.env")
 
     # =================================================================================================
 
@@ -97,7 +97,6 @@ def main():
     # =================================================================================================
 
     elif mode == "MONITORING_ITERATIONS":
-        # put your monitoring csv here, e.g. java/<dir>/monitoring_accuracy.csv
         csv_path = Path(f"{csv_dir}/results_monitoring_iterations.csv")
         xcol = "MONITORING_ITER"
         xlabel = "MONITORING_ITER"
