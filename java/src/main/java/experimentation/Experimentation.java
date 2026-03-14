@@ -29,7 +29,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "INDEPENDENT_DATA_PROCESSING\n";
+                    "INDEPENDENT_DATA_PROCESSING,ENABLE_NEIGHBORHOODS\n";
 
     // ========================================================================
 
@@ -438,6 +438,8 @@ public class Experimentation {
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     cfg.FULLY_INFORMED = fully_informed;
+                    cfg.ENABLE_NEIGHBORHOODS = false;
+                    cfg.N_WORKERS = 10;
                     cfg.refreshConfig();
 
                     System.out.println("===============================================================================================");
@@ -534,6 +536,7 @@ public class Experimentation {
                     }
                 }
             } 
+
         // ================================================================================================
 
         } else if (cfg.EXPERIMENTATION_MODE.equals("TOPOLOGY")) {
@@ -618,7 +621,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b\n",
                 filterEnabled,
                 nWorkers,
                 // r.getTotalElapsedSec(),
@@ -637,7 +640,8 @@ public class Experimentation {
                 cfg.PBEST_DEBOUNCE_MS,
                 cfg.MONITORING_THRESHOLD_MIN,
                 cfg.MONITORING_THRESHOLD_MAX,
-                cfg.INDEPENDENT_DATA_PROCESSING
+                cfg.INDEPENDENT_DATA_PROCESSING,
+                cfg.ENABLE_NEIGHBORHOODS
             ));
 
         } catch(Exception e) {

@@ -234,6 +234,7 @@ public class Worker implements Runnable {
         }));
 
         streams.start();
+        // dumpConsumerMetricsOnce(streams);
         t0 = System.nanoTime();
         if(KAFKA_METRICS_ENABLED) {
             startMetricsLogger(streams);
@@ -518,6 +519,22 @@ public class Worker implements Runnable {
         t.start();
     }
 
+    // ====================================================================================
+
+    private void dumpConsumerMetricsOnce(KafkaStreams streams) {
+        for (Map.Entry<MetricName, ? extends Metric> e : streams.metrics().entrySet()) {
+
+            MetricName mn = e.getKey();
+
+            if (!mn.group().contains("consumer")) continue;
+
+            System.out.println(
+                "GROUP=" + mn.group() +
+                " NAME=" + mn.name() +
+                " TAGS=" + mn.tags()
+            );
+        }
+    }
     // ====================================================================================
 
     private void dumpProducerMetricNamesOnce(KafkaStreams streams) {
