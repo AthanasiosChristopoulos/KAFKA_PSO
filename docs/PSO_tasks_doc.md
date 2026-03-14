@@ -54,11 +54,7 @@
 		- End) x: Iterations 				| y: Accuracy	(with recommended SWEET SPOTS, filter and N_WORKERS ?)
 			=> For all Datasets (and cases of interest)
 
-		- Final Part 2) For one (hard - image) Dataset:
-			- x: Iterations 				| y: Accuracy	(differentialable Loss Function)
-			- x: Iterations 				| y: Accuracy	(non differentialable Loss Function)
-
-		- Final Part 3) Differentiable vs Non Differentiable Loss Functions
+		- Final Part 3) Different Non Differentiable Loss Functions
 			- accuracy - monitoring roinds diagram
 
 	# ========================================================================================
