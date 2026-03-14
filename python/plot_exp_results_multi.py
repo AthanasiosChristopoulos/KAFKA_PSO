@@ -16,11 +16,13 @@ CSV_CONFIGS = {
     "results_threshold.csv": {
         "mode": "THRESHOLD",
         "xcol": "LOSS_THRESHOLD_DIFF",
-        "xlabel": "LOSS_THRESHOLD_DIFF (T)",
+        "xlabel": "LOSS_THRESHOLD_DIFF",
         "suffix": "threshold",
         "plots": [
-            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs Threshold (T)", "accuracy"),
-            ("PBEST_BYTES_EST", "Estimated pBest bytes", "pBest Bytes vs Threshold (T)", "bytes"),
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs Threshold", "accuracy"),
+            ("PBEST_BYTES_EST", "Estimated pBest bytes", "pBest Bytes vs Threshold", "bytes"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs Threshold", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs Threshold", "messages"),
         ],
     },
     "results_filter_enabled.csv": {
@@ -32,6 +34,7 @@ CSV_CONFIGS = {
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_ENABLED", "messages"),
         ],
     },
     "results_strength.csv": {
@@ -40,9 +43,10 @@ CSV_CONFIGS = {
         "xlabel": "STRENGTH_CODE",
         "suffix": "strength",
         "plots": [
-            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
-            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
-            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_STRENGTH", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_STRENGTH", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_STRENGTH", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_STRENGTH", "messages"),
         ],
     },
     "results_fully_informed_vs_classical.csv": {
