@@ -1971,7 +1971,7 @@ We cant use the reduction in training time as a reliable metric, because the rea
 In the following diagrams we will examine the differences between \texttt{FILTER\_ENABLED} false (represented by 0) and true (1). 
 
 
-% TODO - Pendigits accuracy - severity, with INDEPENDENT_DATA_PROCESSING = false
+% TODO - Pendigits accuracy - strength, with INDEPENDENT_DATA_PROCESSING = false
 
 Also we get this diagram:
 % TODO: Train without \texttt{INDEPENDENT\_DATA\_PROCESSING} = true, accuracy - rounds graph
@@ -1980,7 +1980,7 @@ Also we get this diagram:
 
 Using the above methods, we see following results:
 
-% TODO - Pendigits accuracy - severity, with INDEPENDENT_DATA_PROCESSING = true
+% TODO - Pendigits accuracy - strength, with INDEPENDENT_DATA_PROCESSING = true
 
 % TODO: Better Pendigits accuracy - rounds graph
 

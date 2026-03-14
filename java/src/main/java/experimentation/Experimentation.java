@@ -65,7 +65,7 @@ public class Experimentation {
         cfg.EARLY_STOPPING = false; // this is detrimental to experimentation, especially in the time diagrams:
             // N_WORKERS => on low N_WORKERS, workers exit sooner than expected, because they have pretty bad performances
                 // EARLY STOPPING kicks in
-            // SEVERITY => Easier filters reach EARLY_STOPPING requiring less time, when Harder filters require more 
+            // STRENGTH => Easier filters reach EARLY_STOPPING requiring less time, when Harder filters require more 
                 // time to reach good accuracy but they are contantly improving but slowly, so no EARLY_STOPPING
     
         // ===========================================================================================================================================
@@ -332,31 +332,31 @@ public class Experimentation {
         // =========================================================================================================================================
         // =========================================================================================================================================
 
-        } else if (cfg.EXPERIMENTATION_MODE.equals("SEVERITY_OF_FILTER")) {
+        } else if (cfg.EXPERIMENTATION_MODE.equals("FILTER_STRENGTH")) {
 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
-            Path csvPath = dir.resolve("results_severity.csv");
+            Path csvPath = dir.resolve("results_strength.csv");
 
             // =====================================================================
             var severities = List.of(
-                FilterSeverity.Level.OFF,
-                FilterSeverity.Level.EASY,
-                FilterSeverity.Level.MEDIUM,
-                FilterSeverity.Level.HARD
+                FilterStrength.Level.OFF,
+                FilterStrength.Level.EASY,
+                FilterStrength.Level.MEDIUM,
+                FilterStrength.Level.HARD
             );
             
             // var severities = List.of(
-            //     FilterSeverity.Level.OFF,
-            //     FilterSeverity.Level.EASY
+            //     FilterStrength.Level.OFF,
+            //     FilterStrength.Level.EASY
             // );
 
             // var severities = List.of(
-            //     FilterSeverity.Level.OFF
+            //     FilterStrength.Level.OFF
             // );
 
             // var severities = List.of(
-            //     FilterSeverity.Level.EASY
+            //     FilterStrength.Level.EASY
             // );
             // =====================================================================
 
@@ -366,17 +366,17 @@ public class Experimentation {
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE
             )) {
-                w.write("SEVERITY_CODE,SEVERITY_NAME," + header_1);
+                w.write("STRENGTH_CODE,STRENGTH_NAME," + header_1);
 
-                for (FilterSeverity.Level level : severities) {
+                for (FilterStrength.Level level : severities) {
 
                     cfg.refreshConfig();
                     CustomLogger.refreshAll();
-                    FilterSeverity.apply(cfg, level);
+                    FilterStrength.apply(cfg, level);
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
-                    System.out.println("SEVERITY: " + level + " (code=" + level.code + ")");
+                    System.out.println("STRENGTH: " + level + " (code=" + level.code + ")");
                     System.out.println("FILTER_ENABLED: " + cfg.FILTER_ENABLED);
                     System.out.println("LOSS_THRESHOLD_MIN=" + cfg.LOSS_THRESHOLD_MIN + ", LOSS_THRESHOLD_MAX=" + cfg.LOSS_THRESHOLD_MAX);
                     System.out.println("PBEST_DEBOUNCE_MS=" + cfg.PBEST_DEBOUNCE_MS);
@@ -396,14 +396,14 @@ public class Experimentation {
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
-                    // Write severity info + existing metrics
+                    // Write strength info + existing metrics
                     w.write(String.format("%d,%s,", level.code, level.name()));
                     writeExperimentData(w, r, -1, (cfg.FILTER_ENABLED ? 1 : 0), -1);
 
                     w.flush();
 
                     System.out.println("===============================================================================================");
-                    System.out.println("End of experiment with SEVERITY: " + level);
+                    System.out.println("End of experiment with STRENGTH: " + level);
                     System.out.println("===============================================================================================");
 
                     if(experimentationStopRequested == true) {

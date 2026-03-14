@@ -34,11 +34,11 @@ CSV_CONFIGS = {
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
         ],
     },
-    "results_severity.csv": {
-        "mode": "SEVERITY_OF_FILTER",
-        "xcol": "SEVERITY_CODE",
-        "xlabel": "SEVERITY_CODE",
-        "suffix": "severity",
+    "results_strength.csv": {
+        "mode": "FILTER_STRENGTH",
+        "xcol": "STRENGTH_CODE",
+        "xlabel": "STRENGTH_CODE",
+        "suffix": "strength",
         "plots": [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),

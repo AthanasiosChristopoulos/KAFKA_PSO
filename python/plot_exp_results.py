@@ -52,6 +52,8 @@ def main():
         plots = [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs Threshold (T)", "accuracy"),
             ("PBEST_BYTES_EST", "Estimated pBest bytes", "pBest Bytes vs Threshold (T)", "bytes"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_ENABLED", "messages"),
         ]
     
     # =================================================================================================
@@ -65,19 +67,21 @@ def main():
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_ENABLED", "messages"),
         ]
         
     # =================================================================================================
     
-    elif mode == "SEVERITY_OF_FILTER":
-        csv_path = Path(f"{csv_dir}/results_severity.csv")
-        xcol = "SEVERITY_CODE"  # This is what is needed for the pandas to find the correct code
-        xlabel = "SEVERITY_CODE"
-        suffix = "severity"
+    elif mode == "FILTER_STRENGTH":
+        csv_path = Path(f"{csv_dir}/results_strength.csv")
+        xcol = "STRENGTH_CODE"  # This is what is needed for the pandas to find the correct code
+        xlabel = "STRENGTH_CODE"
+        suffix = "strength"
         plots = [
-            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
-            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
-            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_STRENGTH", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_STRENGTH", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_STRENGTH", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_STRENGTH", "messages"),
         ]
         
     # =================================================================================================

@@ -39,7 +39,7 @@
 		- 2) x: Different Topologies 		| y: accuracy	=> Trade off between neighborhoods
 
 		- 3) x: N_WORKERS  					| y: accuracy / time / number of bytes
-		- 4) x: SEVERITY_OF_FILTER 			| y: accuracy / time / number of bytes
+		- 4) x: FILTER_STRENGTH 			| y: accuracy / time / number of bytes
 			- Δεν πειραζει ο χρονος να μην πεφτει εχουμε bottlenecks τα forward passes και το Disk / Broker I/O
 			If not:
 			=> x: FILTER_ENABLED 			| y: accuracy / time / number of bytes
