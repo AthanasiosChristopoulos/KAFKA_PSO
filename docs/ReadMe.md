@@ -1634,3 +1634,648 @@ Writing rules:
     - Dont regive me the entire thing just tell me what you suggest me to change one by one
     - Whatever you give me to implement as a change needs to be written in Latex. Meaning it needs to be .txt
     = If you detect any repetition in what i am writing ... notify me and write your corrected version ... merge sentenses if you can for example
+
+
+\chapter{Experimental Evaluation}
+
+% ===============================================================
+
+\section{Experimental Setup}
+
+The presented experiments were exclusively executed on the Softnet laboratory server of the university.
+
+% ===============================================================
+
+\subsection{Kafka Setup}
+\label{kafka_setup}
+
+The experiments were conducted using a locally deployed Kafka server running in KRaft mode with a single broker. A single-broker configuration was selected because all experiments were executed on a single physical server. As explained in section ~\ref{kafka:theory}, multiple brokers on the same machine do not provide any throughput benefits, especially when there is only one single disk, as in our case.
+
+The dataset input topics (\texttt{\{DATASET\}\_input}) were configured with 40 partitions. The choice of 40 partitions was made to support the maximum number of workers used during experimentation. The number of workers (\texttt{N\_WORKERS}) never exceeded 40, ensuring that each worker would be assigned at least one partition, without remaining idle.
+
+Furthermore, as explained in Section~\ref{partition_grous}, when the \texttt{N_WORKERS} share the same consumer group, the topic partitions are distributed among the workers. As a result, each worker processes a smaller subset of the records as \texttt{N_WORKERS} increases. However, it is not strictly required that all workers belong to the same group. If they each belong in a different group, then each Worker receives the full stream of records, meaning that the dataset is effectively replicated by \texttt{N_WORKERS}.
+
+% ===============================================
+
+Finally, several Kafka configuration parameters were modified in the \texttt{server.properties} file in order to better support the experimental workload.
+
+The following parameters were particularly important:
+
+\begin{verbatim}
+log.retention.hours = -1
+log.retention.bytes = 2221225472
+\end{verbatim}
+
+These parameters define the Kafka log retention policy. The configuration disables time-based deletion of records and allows each partition log of a Kafka Topic to grow up to approximately 2~GB. This setting ensures that the records inside \texttt{\{DATASET\}\_input} and \texttt{\{DATASET\}\_test} topics remain stable and are never deleted. The dataset topics are written once during dataset preparation and are not modified during training.
+
+This also means that the workers always begin consumption from the earliest available offset:
+\begin{verbatim} 
+props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+\end{verbatim}
+
+% ===============================================
+
+Another important configuration parameter is:
+
+\begin{verbatim}
+group.initial.rebalance.delay.ms = 500
+\end{verbatim}
+
+This parameter controls the delay before the initial consumer group rebalance occurs. The default value is 3000~ms. Kafka normally waits for additional consumers to join the group in order to avoid repeated rebalancing afterwards.
+
+In the experimental environment, however, all workers are launched simultaneously and belong to the same consumer group. Since no external consumers will join the group afterwards, waiting for additional members is unnecessary. Reducing this delay significantly decreases the initialization overhead during worker startup.
+
+% =======================================================
+
+\subsection{Hardware and Software}
+
+\subsubsection{Hardware}
+
+The server specifications were the following:
+
+\begin{itemize}
+    \item 2× Intel Xeon CPUs (with 12 physical cores, 2 hardware threads per core), resulting in 48 logical cores in total.
+    \item 256 GB RAM
+    \item 2× NVIDIA A10 GPUs (24\,GB VRAM each)
+    \item 960 GB SSD local storage
+    \item 21 TB NAS storage
+\end{itemize}
+
+Due to infrastructure limitations, most storage was mounted via NAS (Network Attached Storage). As a result, Kafka logs were stored on NAS rather than on server-local SSD storage.
+
+The effective data path becomes:
+
+\begin{itemize}
+    \item NAS (disk) $\rightarrow$ network $\rightarrow$ Broker $\rightarrow$ local TCP loopback $\rightarrow$ Consumer
+    \item Worker $\rightarrow$ local TCP loopback $\rightarrow$ Broker $\rightarrow$ network $\rightarrow$ NAS (disk)
+\end{itemize}
+
+Compared to a fully local setup, where only TCP loopback and direct disk access would be used, this configuration introduces additional network latency due to the remote NAS storage. 
+
+% =======================================================
+
+\subsubsection{Software}
+
+The project is primarily implemented in Java and Python.
+
+Java is the main implementation language, since Kafka Streams is a Java-based stream processing library. Furthermore, since using Java is required for Kafka Streams, neural network functionality must also be enabled in the Java environment.
+
+DL4J (DeepLearning for Java) is a promising framework for this, since it supports feedforward and convolutional neural networks, model serialization, and provides CUDA compatibility (the ability to use the GPU).
+
+Maven was used as the build automation and dependency management tool for the Java project. Using a pom.xml file, it handles external library dependencies, compilation, packaging, and project configuration. 
+
+Python was used as a complementary tool for supplementary tasks, including:
+
+\begin{itemize}
+    \item Generating experimental plots from CSV result files
+    
+    \item Producing and preprocessing datasets for the \texttt{\{DATASET\}\_input} and \texttt{\{DATASET\}\_test} Kafka topics
+    
+    \item Performing gradient descent training for comparison experiments and for pretraining models used in PSO-based transfer learning.
+    
+\end{itemize}
+
+For these tasks, commonly used Python libraries were employed, including \texttt{NumPy}, \texttt{matplotlib}, \texttt{scikit-learn}, and \texttt{TensorFlow} (with CUDA support).
+
+% =============================================
+
+\section{Performance Considerations}
+\label{performance_considerations}
+
+Performance is measured in terms of the total training time and the total number of communication messages sent during training. 
+Note that for the latter metric it is not possible to directly measure how many messages were received due to \texttt{GlobalKTable} and \texttt{Kafka Streams} internals. 
+Therefore, only the number of messages sent is used to approximate communication overhead.
+
+It is important to note that the training time is not defined solely as the time required to consume all training data, since additional stopping conditions (Early Stopping) may terminate execution earlier, which are explained below:
+
+% ========================================
+\paragraph{Early Stopping Methods}
+\label{early_stopping_methods}
+
+The motivation behind Early Stopping is that once convergence has been achieved, execution can terminate without spending unnecessary time processing additional data or epochs.
+
+There are two heuristic methods to achieve this, which can be enabled by setting \texttt{EARLY\_STOPPING} environment variable to true:
+
+\begin{itemize}
+    \item \textbf{Convergence Early Stopping:} If a Worker detects convergence (with the heuristic we have talked about), then the worker quits execution and the coordinator uses the particles last known position (before the worker exits) for FedAvg. If all workers exit this way, then the entire execution will end.
+    
+    \item \textbf{No Improvement Early Stopping:} The Coordinator keeps the model with the best accuracy. If that model does not change for \texttt{MAX\_NO\_IMPROVEMENT\_ROUNDS} monitoring rounds, then the Coordinator itself stops execution, requesting all workers to stop. 
+    
+\end{itemize}
+
+The user can parameterize these methods, so as to modify how strict the stopping condition is. 
+
+% =============================================
+
+\subsection{Forward Pass as Record Processing Bottleneck}
+
+As we have discussed, our Kafka server runs only one Broker. After experimentation, we observed that this, in addition to the worker's forward pass of a training batch, constitutes the main processing bottlenecks of the system. The forward pass delay is unavoidable, since it is part of the training process and not system overhead. Furthermore, its execution is handled internally by DL4J and therefore cannot be reduced.
+
+To verify this, we established per-worker timing counters that measure the execution time of different parts of the transformer code.
+
+In the case of a heavy model, we can clearly observe that all other processing stages are negligible compared to the forward pass.
+
+\begin{verbatim}
+per batch: 81.685 ms
+per updateX: 1.056 ms
+per prediction: 80.282 ms
+   forwardPassMs: 73.102 ms
+\end{verbatim}
+
+These measurements show that the processing delay is almost entirely dominated by the forward pass computation.
+
+% =====================================================
+
+\section{Parameter Experimentation}
+
+In the following, we will analyze both the post-training model accuracy and the performance of the PSO training system under different system parameter settings, which are configurable through the project's .env file. However, model accuracy remains our primary objective, and we therefore favor configurations that yield even small improvements in accuracy, even when they result in minor increases in training time or message overhead. 
+
+% =====================================================
+% pendigits
+
+For the parameter experimentation, we first select a suitable benchmark dataset. Out of all the datasets used in this work, we selected the Pendigits dataset for this part, since it represents a dataset of moderate difficulty.
+The dataset Pendigits has following characteristics:
+\begin{itemize}
+    \item 11000 samples
+    \item 16 features
+    \item 10 classes
+    \item moderately difficult, separable dataset
+\end{itemize}
+
+Even though this dataset is considered relatively simple for SGD, it is significantly more challenging for PSO. The main reason is the number of classes: the Pendigits dataset contains 10 classes, which increases the complexity of the classification task. As the number of classes grows, the number of decision boundaries that the model must learn, as well as the risk of misclassification, also increases. 
+
+% =====================================================
+% mnist
+
+In some experiments, however, a more challenging benchmark than Pendigits is required in order to better evaluate the behavior of the training system. For this purpose, we use the MNIST dataset. Additional details about the dataset and the neural network architecture used for MNIST training are provided in the dataset section.
+
+% =====================================================
+
+At this point we introduce a new configuration parameter, \texttt{INDEPENDENT\_DATA\_PROCESSING}.
+
+As the datasets get harder, we need more workers to achieve a "good enough" accuracy to the previous datasets. However, simply increasing \texttt{N\_WORKERS} becomes problematic after a point, since each particle will see a smaller amount of data (as explained in \ref{kafka_setup}), which means each particle will perform fewer updates, leading to poorer convergence.
+
+An easy way to avoid this problem, and to save from simply producing more data for our topics, is to enable the environment variable \texttt{INDEPENDENT\_DATA\_PROCESSING}. This variable causes each worker to use a different application ID, which means the total data increases by \texttt{N\_WORKERS} (\ref{kafka_setup}).
+
+This is essentially equivalent to artificially increasing the number of epochs. Although this negatively affects training time and the overall logic of parallelization, it provides a simple and reliable way to ensure convergence when using high \texttt{N\_WORKERS}, without requiring producing additional training data. Note that the training time will not be proportionally increased based on \texttt{N\_WORKERS}, even if the training data will be effectively duplicated. This is because of the Early Stopping methods we talked about in \ref{early_stopping_methods}.
+
+This setting will be used in experimentation, only when it is required to reach the desired accuracy in hard classification problems.
+
+% =====================================================
+
+\subsection{Fully Informed vs classical PSO}
+
+In this experiment we compare the classical PSO protocol with the Fully Informed PSO variant. 
+Switching between the two protocols is controlled by the \texttt{FULLY\_INFORMED} configuration variable.
+
+\paragraph{Experimental settings:}
+\begin{itemize}
+    \item \texttt{DATASET = MNIST}
+    \item \texttt{ENABLE\_NEIGHBORHOODS = false}
+    \item \texttt{INDEPENDENT\_DATA\_PROCESSING = true}
+    \item \texttt{N\_WORKERS = 10}
+\end{itemize}
+
+\paragraph{Experimental results:}
+\PSOExperimentPlots
+{fully_informed_vs_classical}
+{Comparison of Classical PSO and Fully Informed PSO}
+{fig:fully_informed_vs_classical}
+{mnist}
+[help]
+
+We observe that the Fully Informed variant achieves better accuracy compared to the classical PSO approach. 
+However, this improvement comes at the cost of increased communication overhead \ref{distributed_fully_informed_pso}. 
+This overhead does not appear in the plotted results because the graphs report only the number of messages sent, rather than the total communication traffic \ref{performance_considerations}.
+
+It is also important to note that accuracy improvements are generally more valuable, especially for more complicated datasets. Based on these observations, all further experiments will use the Fully Informed PSO variant.
+
+% =====================================================
+
+\subsection{Model Dimensionality vs Training Accuracy}
+% ????
+
+% =====================================================
+
+\subsection{Topologies}
+
+In the following we will examine which topology is the better one. There are three topologies implemented in the system, as described in ref{}.
+In order for this experiment to be effective, we will need to examine a hard dataset, the MNIST dataset (more details about this later).
+The reason for that, is that neighborhoods only matter, if \texttt{N\_WORKERS} is high, and \texttt{N\_WORKERS} only trully needs to be high in a hard dataset like MNIST.
+Furthermore, in this experimentation we will need only evaluate the accuracy diagram, since as we have explained before, there is no difference 
+in the receiving and sending messages part of the experimentation, only the filtering that is done inside the instance, for whose workers
+pBest solutions to include in the velocity update.
+
+\paragraph{Experimental settings:}
+\begin{itemize}
+    \item \texttt{DATASET = MNIST}
+    \item \texttt{ENABLE\_NEIGHBORHOODS = false}
+    \item \texttt{INDEPENDENT\_DATA\_PROCESSING = true}
+    \item \texttt{N\_WORKERS = 10}
+\end{itemize}
+
+\paragraph{Experimental results with \texttt{INDEPENDENT\_DATA\_PROCESSING = false}:}
+\PSOExperimentPlots
+{topology}
+{Comparison between Topologies}
+{fig:topology}
+{mnist}
+[help]
+
+\paragraph{Experimental results with \texttt{INDEPENDENT\_DATA\_PROCESSING = false}:}
+\PSOExperimentPlots
+{topology}
+{Comparison between Topologies}
+{fig:topology}
+{mnist}
+[help]
+
+As we can see the Ring topology achieves the best results 
+% =====================================================
+
+\subsection{Test Dataset and Model}
+
+% ============================================
+
+\subsection{Increasing Number of Workers}
+\label{increasing_n_workers}
+The first diagrams we are going to examine are the N\_WORKERS diagrams. Here the variability is the number of workers, i.e. particles used and we are going to study how increasing this parameter will affect the execution of PSO training.
+
+We didnt want to include any GPU overhead, since workers waiting on the GPU harms parallelization and ultimately the meaning behind the parameter \texttt{N\_WORKERS}. That is, as workers increase utilization of the GPU also increases, but due to the limited number of GPUs (in comparison to logical processors of the CPUs), parallelization plateus. This is why we choose simpler datasets and models for the following type of experimentation, which can run effectievly on the CPU.
+
+Theoretically, we are expecting the degree of data parallelism to raise as the number of workers increases, which means data will be processed in parallel therefore exhausted more quickly. This means that the overall training time should decrease. This is only possible because of horizontal scaling due to the partitions.
+
+The effective max parallelism for reading \texttt{{DATASET}\_input} is calculated as
+\[
+min(N_WORKERS, number of partitions of {DATASET}_input)
+\]
+This essentially means that, as long as
+\[
+N_WORKERS < number partitions of {DATASET}_input
+\]
+is true, the \texttt{N\_WORKERS} determines the degree of parallelism. 
+
+Furthermore, having taken the correct precautions we have already explained (enabling neighborhoods and balancing exploration vs exploitation trade-off), we are expecting the overall accuracy to increase with the number of workers.
+
+This is what we actually observe:
+
+% figure TODO increasing n_workers scenario
+
+The difference between the theoretical expectations and the experimental observations are the following:
+Concerning the diagram ref we observe that the \texttt{N\_WORKERS}training time reduction seems to plateu as \texttt{N\_WORKERS} increases. Reasons for this are written below:
+
+Time-based differences (theoretical vs experimental):
+\begin{enumerate}
+    \item This can be attributed to the physical limitations of the machine in its parallelization capability (the number of CPU cores). 
+    \item Also, as worker parallelization increases, the Kafka architecture itself will become the bottleneck. One broker means one machine provides all network + disk throughput for all partitions and all topics, so broker I/O becomes the ceiling once workers scale. All reads/writes for every topic hit the same process.
+    \item it is important to point out that there is no Coordinator bottleneck here, since the training will end when the data is exhausted, which is Coordinator independent, considering the protocol is asynchronous.
+\end{enumerate}
+
+Accuracy-based differences (theoretical vs experimental):
+
+At the start, we can observe a plateu in accuracy as \texttt{N\_WORKERS} increases, meaning diminshing returns.
+This means that, at least in this optimization landscape, there is no exploratory benefit in increasing the number of workers, beyond the point of around 12 workers, since no significantly better solution can be discovered (at least for this experimentation scenario). 
+
+% ============================================
+% Results on other datasets for this diagram
+% Shortly describe deviants
+% TODO iris - n_workers
+For iris:
+We can observe that increasing \texttt{N\_WORKERS} after a while is detrimental to the accuracy result. That is because due to the small amount of samples, each particle receives increasingly less data (gets assigned less partitions). It is clear that this leads to a smaller amount of up
+
+% TODO winequality - n_workers
+% TODO mnist - n_workers
+
+% ============================================
+\subsubsection{High Number of Workers Scenario}
+
+Lets us now explore the trend with higher \texttt{N\_WORKERS} scenaria. 
+
+% figure TODO High Number of Workers Scenario
+
+What is actually unexpected here is the fact that in the case of \texttt{N\_WORKERS} = 24, the accuracy seems to decrease. This cant be explained by just noisy results, this seems to be a trend. The reason this is happening is due to the nature of data parallelism. The more workers there are, the less data there is for each worker. This means that each worker will update its position less often, which will inevitably harm swarm convergence. 
+
+This means that after a point increasing the number of workers becomes problematic with a static number of data. To fully receive the benefits of increasing \texttt{N\_WORKERS}, we would have to increase the number of data as well.
+
+The results of experimenting with the parameter \texttt{N\_WORKERS}, are that, for this dataset and model a \texttt{N\_WORKERS} = 12 is preferred. That is because it offers the best trade-off between training time and accuracy. Its not too high, causing the convergence problem because of limited data per worker and its not too small that time saved due to parallelization is weakend. That is to say, further increasing \texttt{N\_WORKERS} would only harm accuracy and not significantly improve training time.
+
+This means for further experimentation we can fix the \texttt{N\_WORKERS} to the value 12.
+
+% =====================================================
+\subsection{Using and adjusting Filters}
+
+In the following we will examine the effectiveness of using a filter for worker / coordinator communication. It is important to mention, that benefit of reducing communication overhead can be measured only in reduction of total bytes or total messages sent. 
+
+We cant use the reduction in training time as a reliable metric, because the real bottleneck for the training time is the Data consumption by the workers, which cant be limited since they are not overhead. 
+
+In the following diagrams we will examine the differences between \texttt{FILTER\_ENABLED} false (represented by 0) and true (1). 
+
+
+% TODO - Pendigits accuracy - severity, with INDEPENDENT_DATA_PROCESSING = false
+
+Also we get this diagram:
+% TODO: Train without \texttt{INDEPENDENT\_DATA\_PROCESSING} = true, accuracy - rounds graph
+
+% ==================================
+
+Using the above methods, we see following results:
+
+% TODO - Pendigits accuracy - severity, with INDEPENDENT_DATA_PROCESSING = true
+
+% TODO: Better Pendigits accuracy - rounds graph
+
+ These are clearly better results, but as we can see they require a higher amount of monitoring rounds, which means more training time, more messages exchanged and more data processing.
+
+ 
+% =====================================================
+\subsection{Final Recommendation of System Parameters}
+\texttt{N\_WORKERS} recommendation
+\texttt{FILTER\_SCALE} recommendation
+
+% =====================================================
+% =====================================================
+% =====================================================
+
+\section{Execution}
+
+In this section, using the best parameters we have discovered after the above experimentation, we will try to reach the best accuracy on the various datasets.
+
+Important stuff about experimentation / measurements:
+It is important to understand that the time measured and showcased in the following, includes some overhead because of Kafka (rebalancing / group delay). This is usually 2 seconds, but that means the training time will never go bellow that starting offset / overhead.
+
+% Old:
+% It is important to understand that the time measured and showcased in the following, isnt really the execution time of the entire program. The timer is only considered after the worker receives his first Data message, that is when training begins. That is because, there is a significant time overhead until the full Kafka Topology is created (about 10 seconds). This is very harmful to experimentation, because it makes the time effect of the different parameters really hard to distinquish, due to such a large offset in the time. The smaller the dataset and the lighter the work, the more this is a problem.
+% ==================================================
+
+\subsection{Datasets and Models}
+
+In the following section we will study increasingly harder datasets, with the goal of exploring the capabilities of the designed system and what methods we can use to tackle increasingly harder problems (scaling up). Each Datasets comes with different characteristic, which make classification and computation harder
+
+| DATASET chracteristics | What becomes harder   
+| ------------------ | ---------------------------
+| Number of samples  | more training computation
+| Number of features | larger model     
+| Number of classes  | harder classification problem
+| Data complexity    | harder decision boundary    
+
+| Dataset     | What we test                              |
+| ----------- | ----------------------------------------- |
+| Iris        | baseline correctness                      |
+| WineQuality | scaling with more data                    |
+| Pendigits   | scaling with more classes + larger model  |
+| MNIST       | scaling with larger model / feature space |
+
+
+% =========================================
+\subsection{Iris}
+
+The first dataset we examine is the Iris dataset with the following characteristics:
+
+\begin{itemize}
+    \item 150 samples
+    \item 4 features
+    \item 3 classes
+    \item very simple, separable dataset
+\end{itemize}
+
+This makes it suitable for verifying that the distributed PSO training implementation work correctly.
+
+One important limitation of the Iris dataset is the very small number of samples. For PSO training this is problematic, since a small dataset would not allow for a sufficient number of particle updates, which wouldn't allow for convergence. To address this issue, we repeat the dataset multiple times during training. This is conceptually similar to the use of epochs in gradient-based training.
+
+In our experiments we found that repeating the dataset 111 times was sufficient to guarantee convergence, which may appear large, but it is also necessary in this case.
+
+The neural network model used for this dataset is a simple MLP consisting of a single dense output layer. The input dimension is $4$ (four features of the dataset), and the output dimension is $3$ (three classes). Despite its simplicity, this model is sufficient to perfectly separate the Iris dataset due to the relatively simple structure of the classification problem.
+
+\begin{table}[h]
+    \centering
+    \caption{Neural network architecture used for the Iris dataset}
+        \begin{tabular}{|c|c|c|c|}
+        \hline
+        Layer & Type & Input Dim & Output Dim \\
+        \hline
+        1 & Dense & 4 & 3 \\
+        \hline
+         & Activation (Softmax) & 3 & 3 \\
+        \hline
+        \end{tabular}
+\end{table}
+
+Following diagram shows PSOs performance in training the above model:
+
+% TODO 
+(accuracy - iterations diagram) + time
+
+The iterations mentioned above are the monitoring rounds of the coordinator. That is the amount of times the coordinator monitors the swarms position.
+
+% =======================================
+
+\subsection{WineQuality}
+6500 samples
+12 features
+binary classification
+
+As we can see, this new dataset has much more samples than iris. This means we wont have to repeat the dataset as many times and that we wont run out of data as easily. At the same time, processing more data would cause more training time and more communication between the workers. Furthermore, for the MLP model to fit more data effectively we have to make adjustements to the model adding a hidden layer, to accomodate the complexity of the new dataset with its increased number of samples.
+
+\begin{table}[h]
+    \centering
+    \caption{Neural network architecture used for the Winequality dataset}
+        \begin{tabular}{|c|c|c|c|}
+        \hline
+        Layer & Type & Input Dim & Output Dim \\
+        \hline
+        1 & Dense & 12 & 32 \\
+        \hline
+        1 & Dense & 32 & 1 \\
+        \hline
+         & Activation (Sigmoid) & \multicolumn{2}{|c|}{1} \\
+         % 2 => span 2 columns, c - order, {} content of the cell
+        \hline
+        \end{tabular}
+\end{table}
+
+Remember the number of epochs between Iris and winequality is fixed.
+scaling = how performance changes when the workload increases.
+=> on similar number of epochs / (on same \texttt{DESIRED\_ACCURACY}), look at time increase.
+Having more samples is good for accuracy, but not for system performance.
+So this tests data throughput scaling.
+
+% ==========================================
+
+\subsection{MNIST5}
+30k samples
+784 features (28 X 28 X 1)
+5 classes
+This is a much harder classification problem, because, as we see, this is an image dataset. On image datasets, even with small dimensionality like this, we can see that feature dimensionality explodes.
+MNIST5 is a dataset we have extracted from MNIST, because pure PSO  training on entire MNIST dataset would have been too hard. Its purpose is to demonstrate PSO training with CNNs, because this is an image dataset (to be clear MLPs, can be used here as well, but are not generally recommended. They can only work in this case, because of the nature of this particullar dataset - all digits are centered on the image and are all very similar aand typical to each other).
+
+The CNN model we are going to be using for this dataset is the following:
+
+\begin{table}[h]
+    \centering
+    \caption{Neural network architecture used for the MNIST5 CNN model}
+        \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+        Layer & Type & Input Dim & Output Dim & Parameter Count \\
+        \hline
+        1 & Convolution (3$\times$3, ReLU) & $28 \times 28 \times 1$ & $26 \times 26 \times 8$ & 80 \\
+        \hline
+        2 & Max Pooling (2$\times$2) & $26 \times 26 \times 8$ & $13 \times 13 \times 8$ & 0 \\
+        \hline
+        3 & Convolution (3$\times$3, ReLU) & $13 \times 13 \times 8$ & $11 \times 11 \times 16$ & 1168 \\
+        \hline
+        4 & Max Pooling (2$\times$2) & $11 \times 11 \times 16$ & $5 \times 5 \times 16$ & 0 \\
+        \hline
+        5 & Dense (Tanh) & 400 & 32 & 12832 \\
+        \hline
+        6 & Output (Softmax) & 32 & 5 & 165  \\
+        \hline
+        \end{tabular}
+\end{table}
+
+We will also need to use here all the techniques we discussed about in the pendigits model, since training this CNN network will be even harder.
+
+The final results of the training can be demonstrated right here:
+
+% TODO: accuracy - iteration diagram for MNIST5
+
+We can see that the results are rather encouraging, even if the length has increased significantly.
+
+% ==========================================
+
+\subsection{MNIST}
+
+60k samples
+784 features
+10 classes
+
+Although the same dataset, this is now a much harder problem than it was before, simply because of the increased number of classes.
+We cant solve any longer by relying on PSO training. Trying out the previous model we used in MNIST now yields only 65\% accuaracy at best:
+
+% TODO - MNIST accuracy - rounds without transfer learning
+
+Why are we getting such poor results ? MNIST is supposed to be easily solvable using CNNs. The reason for this, is that PSO has a very hard time training CNNs, which will be explained below:
+
+% ==========================================
+
+\subsubsection{Motivation}
+
+PSO suffers from scalability issues when optimizing very high-dimensional parameter spaces. In deep neural networks, convolutional layers often contain millions of parameters, making direct optimization with PSO impractical. Gradient-based optimization, on the other hand, is well suited for training deep feature extractors due to the availability of gradient information.
+
+To overcome this limitation, we adopt a sequential training strategy where GD is used to learn a useful feature representation, and PSO is later applied to adapt or replace the classification layers using potentially non-differentiable objective functions. This design enables PSO to operate on a smaller subset of the model parameters while still benefiting from the representational power learned through GD.
+
+CNN Neural Networks create an optimization landscape of high ruggedness, which means pure performance for PSO \cite{Malan2013RuggednessFA}. Also, due to the structural dependency of the CNNs layers with each other, the filter parameters of the convolutional layer are highly depended with each other (unlike MLPs where they are parameters are mostly independent with each other). For these reasons, PSO seems to be struggling very hard to train a CNNs by itself.
+
+For that reason we will use transfer learning to train the convolutional layers of the CNNs, since this is what PSO stuggles against. What we essentially plan to do is have ready made feature extractors (coming from pretrained Models) and then train the actuall classification layers using PSO. This is essentially what transfer learning is.
+
+Furthermore, When using CNNs, forward pass becomes expensive. This means we can no longer rely on the CPU and need to start using the GPUs.
+
+This is why we will investigate a hybrid training scheme where a neural network is first trained using Gradient Descent (GD) and subsequently optimized using Particle Swarm Optimization (PSO). The motivation is to combine the strengths of both optimization paradigms: gradient-based methods are efficient at learning hierarchical feature representations, while PSO allows optimization under non-differentiable loss functions.
+
+% ==========================================
+
+\subsubsection{Experimental Goal}
+
+The objective of this experiment is to determine whether PSO can successfully improve the classification performance of a GD-pretrained feature extractor when applied to unseen data samples.
+
+More specifically, we aim to evaluate:
+
+\begin{itemize}
+\item whether PSO can effectively fine-tune classification layers initialized from GD
+\item whether PSO can outperform the original GD-trained classifier
+\item how PSO behaves when initialized from a strong feature representation rather than random weights
+\end{itemize}
+
+This experiment therefore evaluates the feasibility of combining gradient-based representation learning with swarm-based optimization under non-differentiable objectives.
+
+This hybrid strategy significantly reduces the dimensionality of the search space explored by PSO while preserving the expressive power of deep convolutional representations.
+
+% TODO - MNIST accuracy - rounds with selftransfer learning 
+
+% TODO - MNIST accuracy - rounds with fashion mnist transfer learning 
+
+
+% TODO - MNIST accuracy - rounds with svhn transfer learning 
+
+% ==========================================
+
+\subsection{CIFAR5}
+
+The last and hardest dataset we are going to examine is the CIFAR5 dataset.
+
+\subsubsection{Dataset Partitioning Strategy}
+
+To prevent data leakage between training phases, the original dataset is partitioned into two disjoint subsets. Let $D$ denote the full dataset:
+
+\[
+D = D_{\text{hist}} \cup D_{\text{new}}, \quad
+D_{\text{hist}} \cap D_{\text{new}} = \emptyset
+\]
+
+where:
+
+\begin{itemize}
+\item $D_{\text{hist}}$ is a historical subset used for pretraining with GD
+\item $D_{\text{new}}$ is a previously unseen subset used for PSO adaptation
+\end{itemize}
+
+In our implementation, the CIFAR-10 training set is randomly shuffled using a fixed random seed for reproducibility. The dataset is then split into two equally sized halves:
+
+\begin{itemize}
+\item First half ($D_{\text{hist}}$): used for GD pretraining
+\item Second half ($D_{\text{new}}$): used for PSO training
+\end{itemize}
+
+After the split, only a subset of CIFAR-10 classes $\{0,1,4,8,9\}$ is retained, forming a reduced CIFAR-5 classification problem. Labels are remapped to the range $\{0,1,2,3,4\}$.
+
+The resulting training procedure therefore consists of two sequential learning stages:
+
+\begin{enumerate}
+\item \textbf{GD Pretraining Phase}
+
+The network is trained using gradient descent on dataset $D_{\text{hist}}$ in order to learn a set of convolutional feature extractors.
+
+\item \textbf{PSO Adaptation Phase}
+
+The pretrained weights are used as initialization for the PSO-based optimization procedure, which continues training on the disjoint dataset $D_{\text{new}}$.
+\end{enumerate}
+
+This setup guarantees that the PSO phase never observes the same samples used during the GD phase.
+
+\subsubsection{Relation to Transfer Learning}
+
+Transfer learning is commonly defined as the reuse of knowledge acquired in one task to improve performance on another related task \cite{yosinski2014transferable}. In this work the transfer occurs between two sequential training stages:
+
+\[
+\text{GD-trained model} \rightarrow \text{PSO optimization}
+\]
+
+The GD stage learns general visual features such as edges, textures, and object parts in convolutional layers. These learned representations are then reused during the PSO stage, which focuses on adapting the classification layers.
+
+\subsubsection{Relation to Transfer Learning}
+
+Transfer learning is commonly defined as the reuse of knowledge acquired in one task to improve performance on another related task \cite{Yosinski2014HowTA}. In practice, this typically involves training a base model on a source task and subsequently transferring the learned representations to a target model or task.
+
+In this work, the transfer occurs between two sequential optimization stages:
+
+\[
+\text{GD-trained model} \rightarrow \text{PSO optimization}
+\]
+
+Although both stages operate on the same dataset distribution (CIFAR), the training is performed on disjoint subsets of the data. This design simulates a sequential learning scenario where knowledge learned from historical data is reused to improve performance on previously unseen samples. Such sequential reuse of knowledge is closely related to the continual learning paradigm, where models incrementally learn from information that becomes available over time. As noted by \cite{Parisi2018ContinualLL}, ``a lifelong learning system is defined as an adaptive algorithm capable of learning from a continuous stream of information, with such information becoming progressively available over time.''
+
+From this perspective, the proposed approach can be interpreted as a special form of transfer learning where knowledge is transferred across training phases rather than across entirely different datasets. The pretrained GD model provides a strong initialization for PSO, a strategy commonly referred to as warm-start training, where optimization begins from previously learned parameters instead of random initialization.
+
+Although both stages operate on the same dataset distribution, the training occurs on disjoint subsets of data. This scenario is therefore closely related to several concepts studied in the literature:
+
+\begin{itemize}
+\item \textbf{Warm-start training}: optimization is initialized from pretrained weights instead of random initialization.
+\item \textbf{Continual learning}: the model learns sequentially from different data subsets while preserving previously acquired knowledge \cite{parisi2019continual}.
+\item \textbf{Sequential Transfer Learning} knowledge transferred across training phases.
+\end{itemize}
+
+Because the optimization algorithm also changes between stages (GD $\rightarrow$ PSO), this setup can be interpreted as \textit{cross-optimizer transfer learning}.
+
+% =====================================================
+
+\subsection{Discussion}
+

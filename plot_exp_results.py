@@ -222,13 +222,16 @@ def main():
             
         else:
             plt.plot(xs_plot, ys_plot, marker="o")
-            
+        
+        # plt.margins(y=0.5)
+
         if ycol == "GBEST_ACC":
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
             
         else:
-            plt.ylim(bottom=0)
+            ymin, ymax = 0, max(ys_plot)
+            plt.ylim(ymin, ymax * 1.15)
             
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
