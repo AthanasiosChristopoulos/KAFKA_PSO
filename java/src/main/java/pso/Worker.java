@@ -70,7 +70,7 @@ public class Worker implements Runnable {
 
         this.workerId = workerId;
 
-        if(ENABLE_NEIGHBORHOODS == true  || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS  || FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;
         } else {
@@ -154,7 +154,7 @@ public class Worker implements Runnable {
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
-        if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true) {
 
             GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
                 PBEST_WEIGHTS_TOPIC,    // messages from this are keyed differently for every worker

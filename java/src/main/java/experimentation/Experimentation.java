@@ -99,7 +99,7 @@ public class Experimentation {
 
                 for (int n : workersList) {
                     
-                    cfg.refreshRunId();
+                    cfg.refreshConfig();
                     CustomLogger.refreshAll();
                     cfg.N_WORKERS = n;
                     CoordinatorControl.getInstance().resetForNewRun(n);
@@ -113,7 +113,7 @@ public class Experimentation {
                     // Restart the Kafka Parititions
 
                     List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                    if (cfg.FULLY_INFORMED || (cfg.ENABLE_NEIGHBORHOODS)) {
                         topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
                     } else {
                         topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
@@ -162,8 +162,6 @@ public class Experimentation {
 
                 for (int fE : filterEnableList) {
 
-                    cfg.refreshRunId();
-
                     if(fE == 0) {
                         cfg.FILTER_ENABLED = false;
 
@@ -171,7 +169,7 @@ public class Experimentation {
                         cfg.FILTER_ENABLED = true;
                     }
 
-                    cfg.refreshFilterEnabled();
+                    cfg.refreshConfig();
                     CustomLogger.refreshAll();
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
@@ -232,9 +230,8 @@ public class Experimentation {
                 for (float theshold_offset : theshold_offset_list) {
 
                     cfg.FILTER_ENABLED = true;
-                    cfg.refreshRunId();
                     CustomLogger.refreshAll();
-                    cfg.refreshFilterEnabled();
+                    cfg.refreshConfig();
 
                     cfg.LOSS_THRESHOLD_MIN = LOSS_THRESHOLD_MIN_ORIGINAL + theshold_offset;
                     cfg.LOSS_THRESHOLD_MAX = LOSS_THRESHOLD_MAX_ORIGINAL + theshold_offset;
@@ -373,11 +370,9 @@ public class Experimentation {
 
                 for (FilterSeverity.Level level : severities) {
 
-                    cfg.refreshRunId();
+                    cfg.refreshConfig();
                     CustomLogger.refreshAll();
-
                     FilterSeverity.apply(cfg, level);
-
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     System.out.println("===============================================================================================");
@@ -439,11 +434,11 @@ public class Experimentation {
 
                 for (Boolean fully_informed : fully_informed_list) {
 
-                    cfg.refreshRunId();
                     CustomLogger.refreshAll();
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     cfg.FULLY_INFORMED = fully_informed;
+                    cfg.refreshConfig();
 
                     System.out.println("===============================================================================================");
                     System.out.println("FULLY_INFORMED: " + cfg.FULLY_INFORMED);
@@ -480,7 +475,7 @@ public class Experimentation {
 
         } else if (cfg.EXPERIMENTATION_MODE.equals("DIMENSIONALITY")) {
 
-            cfg.EARLY_STOPPING = true;
+            // cfg.EARLY_STOPPING = true;
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_dimensionality.csv");
@@ -501,11 +496,11 @@ public class Experimentation {
 
                 for (Integer model_version : model_version_list) {
 
-                    cfg.refreshRunId();
                     CustomLogger.refreshAll();
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     cfg.MODEL_VERSION = model_version;
+                    cfg.refreshConfig();
 
                     System.out.println("===============================================================================================");
                     System.out.println("MODEL_VERSION: " + cfg.MODEL_VERSION);
@@ -532,6 +527,69 @@ public class Experimentation {
                     System.out.println("End of experiment with cfg.MODEL_VERSION: " + cfg.MODEL_VERSION +
                         ", with cfg.DIMENSIONALITY: " + r.getDimensionality()
                     );
+                    System.out.println("===============================================================================================");
+
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
+                }
+            } 
+        // ================================================================================================
+
+        } else if (cfg.EXPERIMENTATION_MODE.equals("TOPOLOGY")) {
+
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_topology.csv");
+
+            // =====================================================================
+            // List<String> topology_list = List.of("all", "ring", "square");
+            List<String> topology_list = List.of("all");
+
+            // =====================================================================
+            
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                w.write("ENABLE_NEIGHBORHOODS,NEIGHBORHOOD_TOPOLOGY," + header_1);
+
+                for (String topology : topology_list) {
+
+                    CustomLogger.refreshAll();
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+
+                    cfg.ENABLE_NEIGHBORHOODS = true;
+                    cfg.NEIGHBORHOOD_TOPOLOGY = topology;
+                    cfg.refreshConfig();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("ENABLE_NEIGHBORHOODS: " + cfg.ENABLE_NEIGHBORHOODS + 
+                        ", NEIGHBORHOOD_TOPOLOGY: " + cfg.NEIGHBORHOOD_TOPOLOGY);
+                    System.out.println("RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // Restart Kafka topic(s) like you already do
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    }
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    ExperimentResult r = SimulationRunner.runOnce(cfg);
+
+                    w.write(String.format("%s,%s,", cfg.ENABLE_NEIGHBORHOODS, cfg.NEIGHBORHOOD_TOPOLOGY));
+                    writeExperimentData(w, r, -1, -1, -1);
+
+                    w.flush();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of Experiment with ENABLE_NEIGHBORHOODS: " + cfg.ENABLE_NEIGHBORHOODS + 
+                        ", NEIGHBORHOOD_TOPOLOGY: " + cfg.NEIGHBORHOOD_TOPOLOGY);
                     System.out.println("===============================================================================================");
 
                     if(experimentationStopRequested == true) {

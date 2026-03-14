@@ -154,7 +154,7 @@ public class Coordinator implements Runnable {
 
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
         Topology gbestTopology = null;
-        if (!ENABLE_NEIGHBORHOODS && !FULLY_INFORMED) {
+        if (!cfg.ENABLE_NEIGHBORHOODS && !FULLY_INFORMED) {
             gbestTopology = buildGBestRelayTopology(weightsSerde);
         }
 

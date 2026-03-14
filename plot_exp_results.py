@@ -118,7 +118,6 @@ def main():
     # =================================================================================================
 
     elif mode == "DIMENSIONALITY":
-        # default: N_WORKERS experiments
         csv_path = Path(f"java/{experimentation_dir}/results_dimensionality.csv")
         xcol = "DIMENSIONALITY"
         xlabel = "DIMENSIONALITY"
@@ -131,13 +130,28 @@ def main():
         ]
             
     # =================================================================================================
+    
+    elif mode == "TOPOLOGY":
+        csv_path = Path(f"java/{experimentation_dir}/results_topology.csv")
+        xcol = "NEIGHBORHOOD_TOPOLOGY"
+        xlabel = "TOPOLOGY"
+        suffix = "topology"
+        plots = [
+            ("GBEST_ACC", "GBEST_ACC", "Accuracy vs TOPOLOGY", "accuracy"),
+            ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs TOPOLOGY", "time"),
+            ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs TOPOLOGY", "bytes"),
+            ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs TOPOLOGY", "messages"),
+        ]
+            
+    # =================================================================================================
 
     else: 
         print("Wrong experimentation mode selected, exiting")
         exit(-1)
         
     # =================================================================================================
-
+    # data frame processing 
+    
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
 
@@ -147,9 +161,11 @@ def main():
     if xcol not in df.columns:
         raise KeyError(f"CSV missing x column '{xcol}'. Columns: {list(df.columns)}")
 
-    # numeric + sort
-    df[xcol] = pd.to_numeric(df[xcol], errors="coerce")
-    df = df.dropna(subset=[xcol]).sort_values(xcol)
+    if mode in {"N_WORKERS", "MODEL_VERSION", "RING_RADIUS", "DIMENSIONALITY", "MONITORING_ITERATIONS"}:
+        df[xcol] = pd.to_numeric(df[xcol], errors="coerce")
+        df = df.dropna(subset=[xcol]).sort_values(xcol)
+    elif mode == "TOPOLOGY":
+        df[xcol] = df[xcol].astype(str)
 
     # pbest estimation only when those columns exist (won't run for MONITORING)
     if "TOTAL_MESSAGES_SENT_PBEST" in df.columns and "TOTAL_MESSAGES_SENT" in df.columns and "TOTAL_BYTES_SENT" in df.columns:
@@ -193,15 +209,18 @@ def main():
         
         if mode == "MONITORING_ITERATIONS":
             plt.plot(xs_plot, ys_plot)
-        elif mode == "DIMENSIONALITY":
+            
+        elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
             plt.plot(positions, ys_plot, marker="o")
-
+            
         else:
             plt.plot(xs_plot, ys_plot, marker="o")
+            
         if ycol == "GBEST_ACC":
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
+            
         else:
             plt.ylim(bottom=0)
             
@@ -219,7 +238,7 @@ def main():
                 tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
                 plt.xticks([xs_plot[i] for i in tick_idx])
                 
-        elif mode == "DIMENSIONALITY":
+        elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             plt.xticks(positions, xs_plot)
             
         else:

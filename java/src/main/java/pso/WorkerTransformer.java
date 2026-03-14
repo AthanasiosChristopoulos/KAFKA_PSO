@@ -143,7 +143,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + 
         " WorkerTransformer started");
 
-        if(ENABLE_NEIGHBORHOODS == true || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;   // this is the unique key, necessary for the statestore to work
         } else {
@@ -157,7 +157,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.ringRadius = Math.max(0, NEIGHBORHOOD_SIZE / 2);
 
         // Build neighbor list only if neighborhoods enabled
-        if (ENABLE_NEIGHBORHOODS) {
+        if (cfg.ENABLE_NEIGHBORHOODS) {
             this.neighborIds = computeNeighborIds(workerId, cfg.N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
             if(logger.isEnabled(2)) logger.log("neighborIds: " + Arrays.toString(neighborIds)); 
             this.neighborKeys = new String[neighborIds.length];
@@ -942,7 +942,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         if (logger.isEnabled(1)) logger.log(taskInstance + ", pBest Weights: ");
 
-        if(!ENABLE_NEIGHBORHOODS) {
+        if(!cfg.ENABLE_NEIGHBORHOODS) {
 
             try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                         // this is GlobalKTable it will run for all of them
@@ -1004,7 +1004,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private float[] readGBestStore() {
 
-        if(ENABLE_NEIGHBORHOODS == true) {  // right here i am not using global gBest (bestStore.get(keyName)), but local gBest (bestStore.get(key)) 
+        if(cfg.ENABLE_NEIGHBORHOODS) {  // right here i am not using global gBest (bestStore.get(keyName)), but local gBest (bestStore.get(key)) 
 
                 float minLoss = LOSS_INIT;
                 WeightsMessage bestMsg = null;

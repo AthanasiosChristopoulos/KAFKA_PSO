@@ -332,6 +332,9 @@ public class Config {
         NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
         INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
         NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
+        if(NEIGHBORHOOD_TOPOLOGY.equals("all")) {
+            ENABLE_NEIGHBORHOODS = false;
+        }
 
         INDEPENDENT_DATA_PROCESSING = Boolean.parseBoolean(getenv(dotenv, "INDEPENDENT_DATA_PROCESSING", "false"));
 
@@ -405,13 +408,7 @@ public class Config {
 
     // ==================================================================================================================================
 
-    public void refreshRunId() {
-        RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
-    }
-
-    // ==================================================================================================================================
-
-    public void refreshFilterEnabled() {
+    public void refreshConfig() {
         if(FILTER_ENABLED == false) {
             SIGNIFICANT_LOSS_DIFF = 0f;    // Essentially disables the filter
             N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
@@ -433,12 +430,11 @@ public class Config {
 
         System.out.println("MONITORING_THRESHOLD_MAX: " + MONITORING_THRESHOLD_MAX);
         System.out.println("MONITORING_THRESHOLD_MIN: " + MONITORING_THRESHOLD_MIN);
-    }
 
-    // ==================================================================================================================================
+        if(NEIGHBORHOOD_TOPOLOGY.equals("all")) {
+            ENABLE_NEIGHBORHOODS = false;
+        }
 
-    public void refreshFullyInformed() {
-        
         if(FULLY_INFORMED == true) {
             INERTIA = Float.parseFloat(getenv(dotenv, "INERTIA_FULLY", "0.9"));
             System.out.println("Fully Informed Run");
@@ -446,8 +442,9 @@ public class Config {
             INERTIA = Float.parseFloat(getenv(dotenv, "INERTIA_G_BEST", "0.7"));
             System.out.println("Neighborhood Best Run");
         }
-    }
 
+        RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
+    }
 
     // ==================================================================================================================================
 
