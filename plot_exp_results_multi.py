@@ -301,11 +301,6 @@ def delete_pngs(root_dir: Path):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--multi",
-        action="store_true",
-        help="Process all supported CSV files in a directory",
-    )
     
     parser.add_argument(
         "--delete",
@@ -332,16 +327,14 @@ def main():
         delete_pngs(csv_dir)
         return
     
-    if args.multi:
-        process_multi(csv_dir)
-        return
+    process_multi(csv_dir)
 
     if not mode:
         raise RuntimeError("EXPERIMENTATION_MODE is not set in java/.env")
 
-    config = get_csv_config_from_mode(mode)
-    csv_path = csv_dir / MODE_TO_FILENAME[config["mode"]]
-    process_one_csv(csv_path)
+    # config = get_csv_config_from_mode(mode)
+    # csv_path = csv_dir / MODE_TO_FILENAME[config["mode"]]
+    # process_one_csv(csv_path)
 
 # ============================================================================================
 
