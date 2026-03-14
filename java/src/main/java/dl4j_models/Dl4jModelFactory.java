@@ -1042,8 +1042,7 @@ public class Dl4jModelFactory {
 
 	// ===========================================================================================
 
-	public static Pair<PsoModel, Integer>  createCNNModel_1_Layer(int workerId, String fileName, int inputDim) {
-		System.out.println("AAAABBBB");
+	public static Pair<PsoModel, Integer> createCNNModel_1_Layer(int workerId, String fileName, int inputDim) {
 
 		Activation act = cfg.NEED_PROBS ? Activation.SOFTMAX : Activation.IDENTITY;
 		// Pretrained Model ===========================================================

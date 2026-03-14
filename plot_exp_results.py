@@ -27,19 +27,23 @@ def downsample_df(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
         return df
     idx = np.linspace(0, n - 1, num=max_rows, dtype=int)
     return df.iloc[idx].copy()
+
 # ============================================================================================
 
 def main():
+        
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
-
+    # csv_dir = f"java/{experimentation_dir}"
+    csv_dir = f"java/exp_dataset/classical_vs_fully_informed/pendigits"
+    mode = "FULLY_INFORMED_VS_CLASSICAL"
     if not experimentation_dir:
         raise RuntimeError("EXPERIMENTATION_DIR is not set in java/.env")
 
     # =================================================================================================
 
     if mode == "THRESHOLD":
-        csv_path = Path(f"java/{experimentation_dir}/results_threshold.csv")
+        csv_path = Path(f"{csv_dir}/results_threshold.csv")
         xcol = "LOSS_THRESHOLD_DIFF"
         xlabel = "LOSS_THRESHOLD_DIFF (T)"
         suffix = "threshold"
@@ -51,7 +55,7 @@ def main():
     # =================================================================================================
     
     elif mode == "FILTER_ENABLED":
-        csv_path = Path(f"java/{experimentation_dir}/results_filter_enabled.csv")
+        csv_path = Path(f"{csv_dir}/results_filter_enabled.csv")
         xcol = "FILTER_ENABLED"
         xlabel = "FILTER_ENABLED"
         suffix = "filter_enabled"
@@ -64,7 +68,7 @@ def main():
     # =================================================================================================
     
     elif mode == "SEVERITY_OF_FILTER":
-        csv_path = Path(f"java/{experimentation_dir}/results_severity_of_filter.csv")
+        csv_path = Path(f"{csv_dir}/results_severity_of_filter.csv")
         xcol = "SEVERITY_CODE"  # This is what is needed for the pandas to find the correct code
         xlabel = "SEVERITY_CODE"
         suffix = "severity_of_filter"
@@ -77,7 +81,7 @@ def main():
     # =================================================================================================
     
     elif mode == "FULLY_INFORMED_VS_CLASSICAL":
-        csv_path = Path(f"java/{experimentation_dir}/results_fully_informed_vs_classical.csv")
+        csv_path = Path(f"{csv_dir}/results_fully_informed_vs_classical.csv")
         xcol = "FULLY_INFORMED"  # This is what is needed for the pandas to find the correct code
         xlabel = "FULLY_INFORMED"
         suffix = "fully_informed_vs_classical"
@@ -92,7 +96,7 @@ def main():
 
     elif mode == "MONITORING_ITERATIONS":
         # put your monitoring csv here, e.g. java/<dir>/monitoring_accuracy.csv
-        csv_path = Path(f"java/{experimentation_dir}/results_monitoring_iterations.csv")
+        csv_path = Path(f"{csv_dir}/results_monitoring_iterations.csv")
         xcol = "MONITORING_ITER"
         xlabel = "MONITORING_ITER"
         suffix = "monitoring"
@@ -104,7 +108,7 @@ def main():
 
     elif mode == "N_WORKERS":
         # default: N_WORKERS experiments
-        csv_path = Path(f"java/{experimentation_dir}/results_n_workers.csv")
+        csv_path = Path(f"{csv_dir}/results_n_workers.csv")
         xcol = "N_WORKERS"
         xlabel = "N_WORKERS"
         suffix = "workers"
@@ -118,7 +122,7 @@ def main():
     # =================================================================================================
 
     elif mode == "DIMENSIONALITY":
-        csv_path = Path(f"java/{experimentation_dir}/results_dimensionality.csv")
+        csv_path = Path(f"{csv_dir}/results_dimensionality.csv")
         xcol = "DIMENSIONALITY"
         xlabel = "DIMENSIONALITY"
         suffix = "dimensionality"
@@ -132,7 +136,7 @@ def main():
     # =================================================================================================
     
     elif mode == "TOPOLOGY":
-        csv_path = Path(f"java/{experimentation_dir}/results_topology.csv")
+        csv_path = Path(f"{csv_dir}/results_topology.csv")
         xcol = "NEIGHBORHOOD_TOPOLOGY"
         xlabel = "TOPOLOGY"
         suffix = "topology"
@@ -249,7 +253,8 @@ def main():
 
         plt.tight_layout()
         
-        outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
+        # outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
+        outpath = outdir / f"{csv_path.stem}_{tag}.png"
         plt.savefig(outpath, dpi=200, bbox_inches="tight")
         plt.close()
         saved.append(outpath)
