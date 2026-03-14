@@ -40,63 +40,72 @@ NUMBER_OF_DATA_REPEATS_TEST = 1
 
 # ==============================================================================================
 
-if(DATASET == "iris" or DATASET == "wine"):     # 150 samples
-    NUMBER_OF_DATA_REPEATS = 37 * 10
-    NUMBER_OF_DATA_REPEATS_TEST = 3
-
-if(DATASET == "winequality"):
-    NUMBER_OF_DATA_REPEATS = 37     
-
-if(DATASET == "letter"):
-    NUMBER_OF_DATA_REPEATS = 20
-
-if(DATASET == "pendigits"):
-    NUMBER_OF_DATA_REPEATS = 40
-
-if(DATASET == "pendigits-half"):
-    NUMBER_OF_DATA_REPEATS = 80
-
-if(DATASET == "cifar3"):
-    NUMBER_OF_DATA_REPEATS = 27
-
-if(DATASET == "cifar5"):
-    NUMBER_OF_DATA_REPEATS = 16
-
-if(DATASET == "cifar10"):
-    NUMBER_OF_DATA_REPEATS = 9
-
-if(DATASET == "cifar10-half"):
-    NUMBER_OF_DATA_REPEATS = 18
+def set_epochs():
     
-if(DATASET == "cifar5-half"):
-    NUMBER_OF_DATA_REPEATS = 36
+    global NUMBER_OF_DATA_REPEATS, NUMBER_OF_DATA_REPEATS_TEST
+    global INPUT_TOPIC, TEST_TOPIC
     
-if(DATASET == "mnist"):
-    NUMBER_OF_DATA_REPEATS = 7
+    if(DATASET == "iris" or DATASET == "wine"):     # 150 samples
+        NUMBER_OF_DATA_REPEATS = 37 * 10
+        NUMBER_OF_DATA_REPEATS_TEST = 3
 
-if(DATASET == "kmnist"):
-    NUMBER_OF_DATA_REPEATS = 7
+    if(DATASET == "winequality"):
+        NUMBER_OF_DATA_REPEATS = 37     
 
-if(DATASET == "mnist5"):
-    NUMBER_OF_DATA_REPEATS = 15
+    if(DATASET == "letter"):
+        NUMBER_OF_DATA_REPEATS = 20
 
-if(DATASET == "fashion_mnist"):
-    NUMBER_OF_DATA_REPEATS = 7
+    if(DATASET == "pendigits"):
+        NUMBER_OF_DATA_REPEATS = 40
+
+    if(DATASET == "pendigits-half"):
+        NUMBER_OF_DATA_REPEATS = 80
+
+    if(DATASET == "cifar3"):
+        NUMBER_OF_DATA_REPEATS = 27
+
+    if(DATASET == "cifar5"):
+        NUMBER_OF_DATA_REPEATS = 16
+
+    if(DATASET == "cifar10"):
+        NUMBER_OF_DATA_REPEATS = 9
+
+    if(DATASET == "cifar10-half"):
+        NUMBER_OF_DATA_REPEATS = 18
+        
+    if(DATASET == "cifar5-half"):
+        NUMBER_OF_DATA_REPEATS = 36
+        
+    if(DATASET == "mnist"):
+        NUMBER_OF_DATA_REPEATS = 7
+
+    if(DATASET == "kmnist"):
+        NUMBER_OF_DATA_REPEATS = 7
+
+    if(DATASET == "mnist5"):
+        NUMBER_OF_DATA_REPEATS = 15
+
+    if(DATASET == "fashion_mnist"):
+        NUMBER_OF_DATA_REPEATS = 7
+        
+    if(DATASET == "svhn"):
+        NUMBER_OF_DATA_REPEATS = 5
     
-if(DATASET == "svhn"):
-    NUMBER_OF_DATA_REPEATS = 5
+    print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
+    print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
+
+    INPUT_TOPIC = DATASET + "-input"
+    TEST_TOPIC = DATASET + "-test"
     
 # ==============================================================================================
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
     "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn", "kmnist")
 
-print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
-print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
 parser.add_argument('--all', action='store_true') # make this a flag argument
+parser.add_argument('--multi', action='store_true')
 parser.add_argument('--pred', action='store_true')
 parser.add_argument('--eval', action='store_true')
 parser.add_argument('--train', action='store_true')
@@ -176,15 +185,6 @@ def _read_idx_labels_gz(path):
 # =======================================================================================
 
 def load_kmnist(data_dir):
-    """
-    Load KMNIST from local MNIST-format .gz files stored on NAS.
-
-    Expected files inside data_dir:
-      - train-images-idx3-ubyte.gz
-      - train-labels-idx1-ubyte.gz
-      - t10k-images-idx3-ubyte.gz
-      - t10k-labels-idx1-ubyte.gz
-    """
 
     train_images_path = os.path.join(data_dir, "train-images-idx3-ubyte.gz")
     train_labels_path = os.path.join(data_dir, "train-labels-idx1-ubyte.gz")
@@ -234,6 +234,7 @@ def load_kmnist(data_dir):
 # ========================================================================================
 
 def load_susy_sample(path, sample_size=60000):       # shuffle large files (pick random values)
+    
     reservoir = []
 
     with open(path, "r") as f:
@@ -1181,165 +1182,179 @@ def load_dataset():
 # ==================================================================================================
 
 def main():
-
-    # X_scaled, y, class_names = load_dataset()
     
-    X_train, y_train, X_test, y_test, class_names = load_dataset()
-
-    load_training_data = True
-    load_test_data = True
-
-    if(args.train):
-        load_test_data = False
-
-    if(args.test):
-        load_training_data = False
-
-    index = 0
-    data_repeats = 0
+    global DATASET
     
-    if args.eval:
-        exit(0)
-        
-    # =================================================================================================================
+    if args.multi:
+        # DATASET_MULTI = ["iris", "winequality", "mnist", "cifar5-half"]
+        DATASET_MULTI = ["cifar5-half"]
+        print(f"Multi Dataset with: {DATASET_MULTI}" )
 
-    if args.all:   
-         
-        # Load to Training Topic ==================================================================        
-        
-        if(load_training_data):
-            
-            while data_repeats < NUMBER_OF_DATA_REPEATS:
-                
-                for index in range(len(X_train)):
-                    
-                    if(DATASET in CNN_DATASETS):
-                        
-                        features = X_train[index].ravel().astype(np.float32)    # This is float type
-                        # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
-                        # .ravel() in C-order flattens the last axis fastest
-                            # if its (32, 32, 3) => last axis is the channel axis, then the columns axis
-                            # if its (28, 28, 1) => this is row major, column axis change faster
-                        # (row, col, channel) with channel changing fastest
-                        # (0,0,0), (0,0,1), (0,0,2)
-                        # then next pixel (0,1,0), (0,1,1), (0,1,2)
-                        
-                    else:
-                        features = X_train[index]
-
-                    label = int(y_train[index])
+    else:
+        DATASET_MULTI = [DATASET]
     
-                    msg = {
-                        "sample_index": index,
-                        "features": features,
-                        "label": label
-                    }
+    for dataset_name in DATASET_MULTI:
+        DATASET = dataset_name
 
-                    producer.send(INPUT_TOPIC, value=msg)   # this has key=None ... essentially this means use round robin for partitioning the records 
-                    
-                    if index % BATCH_FLUSH == 0:
-                        producer.flush()
+        set_epochs()
+          
+        X_train, y_train, X_test, y_test, class_names = load_dataset()
 
-                producer.flush()
+        load_training_data = True
+        load_test_data = True
 
-                data_repeats += 1
-            
-            print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
+        if(args.train):
+            load_test_data = False
+
+        if(args.test):
+            load_training_data = False
+
+        index = 0
+        data_repeats = 0
         
-        # Load to Test Topic =====================================================================
-                
-        if(load_test_data):
-                
-            data_repeats = 0
+        if args.eval:
+            exit(0)
             
-            if X_test is not None and y_test is not None:     
-                while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
-                    
-                    for index in range(len(X_test)):
+        # =================================================================================================================
 
-                        if(DATASET in CNN_DATASETS):
-                            features = X_test[index].ravel().astype(np.float32)
-                        else:
-                            features = X_test[index]
-                            
-                        label = int(y_test[index])
-
-                        msg = {
-                            "sample_index": index,
-                            "features": features,
-                            "label": label
-                        }
-                        
-                        key = f"{data_repeats}:{index}"
-                        producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
-
-                        if index % BATCH_FLUSH == 0:
-                            producer.flush()
-                    
-                    producer.flush() 
-                    data_repeats += 1
-                                
-                print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+        if args.all:   
             
-            # ==========================================================================================================
-
-            else:   # If there are no explicit training samples then load the training samples in the test topic
+            # Load to Training Topic ==================================================================        
+            
+            if(load_training_data):
                 
-                while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                while data_repeats < NUMBER_OF_DATA_REPEATS:
                     
                     for index in range(len(X_train)):
-
+                        
                         if(DATASET in CNN_DATASETS):
-                            features = X_train[index].ravel().astype(np.float32)
+                            
+                            features = X_train[index].ravel().astype(np.float32)    # This is float type
+                            # NHWC interleaved: X_train[index] has shape (32, 32, 3) (NHWC image)
+                            # .ravel() in C-order flattens the last axis fastest
+                                # if its (32, 32, 3) => last axis is the channel axis, then the columns axis
+                                # if its (28, 28, 1) => this is row major, column axis change faster
+                            # (row, col, channel) with channel changing fastest
+                            # (0,0,0), (0,0,1), (0,0,2)
+                            # then next pixel (0,1,0), (0,1,1), (0,1,2)
+                            
                         else:
                             features = X_train[index]
 
                         label = int(y_train[index])
-
+        
                         msg = {
                             "sample_index": index,
                             "features": features,
                             "label": label
                         }
 
-                        key = f"{data_repeats}:{index}"
-                        producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
-
+                        producer.send(INPUT_TOPIC, value=msg)   # this has key=None ... essentially this means use round robin for partitioning the records 
+                        
                         if index % BATCH_FLUSH == 0:
                             producer.flush()
 
-                    producer.flush() 
+                    producer.flush()
+
                     data_repeats += 1
-                                
-                print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
-    
-    # =================================================================================================================
-    
-    elif args.streaming:
-        
-        while True:
-            index = random.randrange(len(X_train))      # we need random samples (if in order, they would belong to the same class)
-            features = X_train[index]
-            label = int(y_train[index])   
-
-            msg = { 
-                "sample_index" : index,
-                "features": features,
-                "label": label,
-            } 
-
-            producer.send(INPUT_TOPIC, value=msg)       # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
-            producer.flush()                            # This sends everything that been buffered
-
-            print(f"sent: {msg}")
-            index = index + 1
+                
+                print(f"Loaded entire {DATASET} dataset in {INPUT_TOPIC}")
             
-            time.sleep(1)
+            # Load to Test Topic =====================================================================
+                    
+            if(load_test_data):
+                    
+                data_repeats = 0
+                
+                if X_test is not None and y_test is not None:     
+                    while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                        
+                        for index in range(len(X_test)):
 
-    else:
-        print("Arg missing")
+                            if(DATASET in CNN_DATASETS):
+                                features = X_test[index].ravel().astype(np.float32)
+                            else:
+                                features = X_test[index]
+                                
+                            label = int(y_test[index])
 
-    
+                            msg = {
+                                "sample_index": index,
+                                "features": features,
+                                "label": label
+                            }
+                            
+                            key = f"{data_repeats}:{index}"
+                            producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
+
+                            if index % BATCH_FLUSH == 0:
+                                producer.flush()
+                        
+                        producer.flush() 
+                        data_repeats += 1
+                                    
+                    print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+                
+                # ==========================================================================================================
+
+                else:   # If there are no explicit training samples then load the training samples in the test topic
+                    
+                    while data_repeats < NUMBER_OF_DATA_REPEATS_TEST:
+                        
+                        for index in range(len(X_train)):
+
+                            if(DATASET in CNN_DATASETS):
+                                features = X_train[index].ravel().astype(np.float32)
+                            else:
+                                features = X_train[index]
+
+                            label = int(y_train[index])
+
+                            msg = {
+                                "sample_index": index,
+                                "features": features,
+                                "label": label
+                            }
+
+                            key = f"{data_repeats}:{index}"
+                            producer.send(TEST_TOPIC, key=key.encode("utf-8"), value=msg)
+
+                            if index % BATCH_FLUSH == 0:
+                                producer.flush()
+
+                        producer.flush() 
+                        data_repeats += 1
+                                    
+                    print(f"Loaded entire {DATASET} dataset in {TEST_TOPIC}")
+        
+        # =================================================================================================================
+        
+        elif args.streaming:
+            
+            while True:
+                index = random.randrange(len(X_train))      # we need random samples (if in order, they would belong to the same class)
+                features = X_train[index]
+                label = int(y_train[index])   
+
+                msg = { 
+                    "sample_index" : index,
+                    "features": features,
+                    "label": label,
+                } 
+
+                producer.send(INPUT_TOPIC, value=msg)       # Kafka Producer doesnt send immidiately, it buffers messages into a queue and sends them in batches
+                producer.flush()                            # This sends everything that been buffered
+
+                print(f"sent: {msg}")
+                index = index + 1
+                
+                time.sleep(1)
+
+        else:
+            print("Arg missing")
+
+# ===================================================================================
+
 if __name__ == "__main__":
     main()
                               
