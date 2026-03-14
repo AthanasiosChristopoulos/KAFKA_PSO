@@ -217,7 +217,7 @@ def main():
         # plot points:
         
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot)
+            plt.plot(xs_plot, ys_plot, marker="o")
             
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))

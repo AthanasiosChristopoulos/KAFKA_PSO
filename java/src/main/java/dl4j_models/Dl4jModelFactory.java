@@ -107,8 +107,8 @@ public class Dl4jModelFactory {
 		} else if ("winequality".equals(DATASET)) {
 			// model = createWineQualityModel(workerId);
 			// model = createDenseModel_1(workerId);
-			model = createDenseModel_2(workerId);
-			// model = createDenseModel_3(workerId);
+			// model = createDenseModel_2(workerId);
+			model = createDenseModel_3(workerId);
 
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
