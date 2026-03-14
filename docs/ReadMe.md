@@ -1698,3 +1698,4 @@ Writing rules:
     - Dont make it too complex / too formal, stick to my level of writing, just improve the actually bad experessions and grammar mistakes
     - Dont regive me the entire thing just tell me what you suggest me to change one by one
     - Whatever you give me to implement as a change needs to be written in Latex. Meaning it needs to be .txt
+    = If you detect any repetition in what i am writing ... notify me and write your corrected version ... merge sentenses if you can for example
