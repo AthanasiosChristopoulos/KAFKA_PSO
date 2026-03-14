@@ -87,7 +87,7 @@ public class Experimentation {
             // ========================================================================
             // Scenario with high workers:
             
-            List<Integer> workersList = List.of(6, 18, 24, 30);
+            List<Integer> workersList = List.of(6, 12, 18, 24, 30);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -336,7 +336,7 @@ public class Experimentation {
 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
-            Path csvPath = dir.resolve("results_severity_of_filter.csv");
+            Path csvPath = dir.resolve("results_severity.csv");
 
             // =====================================================================
             var severities = List.of(

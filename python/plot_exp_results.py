@@ -70,10 +70,10 @@ def main():
     # =================================================================================================
     
     elif mode == "SEVERITY_OF_FILTER":
-        csv_path = Path(f"{csv_dir}/results_severity_of_filter.csv")
+        csv_path = Path(f"{csv_dir}/results_severity.csv")
         xcol = "SEVERITY_CODE"  # This is what is needed for the pandas to find the correct code
         xlabel = "SEVERITY_CODE"
-        suffix = "severity_of_filter"
+        suffix = "severity"
         plots = [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_ENABLED", "accuracy"),
             ("TOTAL_ELAPSED", "TOTAL_ELAPSED (sec)", "Time vs FILTER_ENABLED", "time"),
