@@ -537,14 +537,15 @@ public class Experimentation {
         // ================================================================================================
 
         } else if (cfg.EXPERIMENTATION_MODE.equals("TOPOLOGY")) {
+
             cfg.EARLY_STOPPING = true;
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_topology.csv");
 
             // =====================================================================
-            // List<String> topology_list = List.of("all", "ring", "square");
-            List<String> topology_list = List.of("all");
+            List<String> topology_list = List.of("all", "ring", "square");
+            // List<String> topology_list = List.of("all");
 
             // =====================================================================
             

@@ -34,9 +34,11 @@ def main():
         
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
-    # csv_dir = f"java/{experimentation_dir}"
-    csv_dir = f"java/exp_dataset/classical_vs_fully_informed/pendigits"
-    mode = "FULLY_INFORMED_VS_CLASSICAL"
+    csv_dir = f"java/{experimentation_dir}"
+    
+    # csv_dir = f"java/exp_dataset/classical_vs_fully_informed/pendigits"
+    # mode = "FULLY_INFORMED_VS_CLASSICAL"
+    
     if not experimentation_dir:
         raise RuntimeError("EXPERIMENTATION_DIR is not set in java/.env")
 
