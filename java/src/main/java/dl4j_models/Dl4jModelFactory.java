@@ -192,7 +192,7 @@ public class Dl4jModelFactory {
 						// 70%
 						// recomendation
 					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";					
-					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";					
+					case 10 -> filename = "../python/pretrained_model/svhn_v2_mnist_best.h5";					
 						// 0.756 accuracy after PSO training, 66.4% in the pretrained
 					// case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";	
 					case 11 -> filename = "../python/pretrained_model/svhn_v4_mnist_final.h5";				

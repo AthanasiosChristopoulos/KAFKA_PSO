@@ -536,12 +536,7 @@ def get_callbacks(model_out_dir: str, model_name: str):
             factor=0.5,
             patience=2,
             min_lr=1e-6,
-        ),
-        keras.callbacks.ModelCheckpoint(
-            filepath=best_h5_path,
-            monitor="val_accuracy",
-            save_best_only=True,
-        ),
+        )
     ]
     return callbacks
 
@@ -593,11 +588,11 @@ def main():
     
     set_seed(SEED)
 
-    # MODEL_NAME = "svhn_v2"
+    MODEL_NAME = "svhn_v2"
     # MODEL_NAME = "svhn_v5"
     # MODEL_NAME = "svhn_v6"
     # MODEL_NAME = "svhn_v7"
-    MODEL_NAME = "svhn_v13"
+    # MODEL_NAME = "svhn_v13"
     
     convert_to_mnist = True
 
