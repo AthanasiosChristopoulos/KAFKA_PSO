@@ -110,6 +110,8 @@ public class Dl4jModelFactory {
 			// model = createDenseModel_2(workerId);
 			model = createDenseModel_3(workerId);
 
+		// =========================================================================================
+		
 		} else if ("letter".equals(DATASET)) {
 			model = createLetterModel(workerId);
 			// model = createLetterModel70K(workerId);
