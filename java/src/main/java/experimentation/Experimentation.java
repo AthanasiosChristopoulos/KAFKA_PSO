@@ -278,7 +278,7 @@ public class Experimentation {
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
 
-            cfg.EARLY_STOPPING = true;  // probably a good idea
+            cfg.EARLY_STOPPING = true; 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_monitoring_iterations.csv");

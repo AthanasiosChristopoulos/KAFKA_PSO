@@ -230,7 +230,7 @@ def main():
         # plot points:
         
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot, marker="o")
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=4, markeredgewidth=0.4)
             
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
@@ -241,7 +241,7 @@ def main():
         
         # plt.margins(y=0.5)
 
-        if ycol == "GBEST_ACC":
+        if ycol in {"GBEST_ACC", "ACCURACY"}:
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
             

@@ -166,7 +166,21 @@ def process_one_csv(csv_path: Path):
         raise FileNotFoundError(f"CSV not found: {csv_path}")
 
     outdir = csv_path.parent
-    df = pd.read_csv(csv_path)
+
+    if(mode != "MONITORING_ITERATIONS"):
+        df = pd.read_csv(csv_path)
+
+    else:
+        lines = []
+        with open(csv_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("FILTER_ENABLED,"):
+                    break
+                lines.append(line)
+
+        from io import StringIO
+        df = pd.read_csv(StringIO("".join(lines)))
+        
 
     if xcol not in df.columns:
         raise KeyError(f"CSV missing x column '{xcol}'. Columns: {list(df.columns)}")
@@ -210,7 +224,7 @@ def process_one_csv(csv_path: Path):
         plt.figure()
 
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot)
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=4, markeredgewidth=0.4)
 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
@@ -221,9 +235,10 @@ def process_one_csv(csv_path: Path):
         
         # plt.margins(y=0.25)
        
-        if ycol == "GBEST_ACC":
+        if ycol in {"GBEST_ACC", "ACCURACY"}:
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
+            
         else:
             ymin, ymax = 0, max(ys_plot)
             plt.ylim(ymin, ymax * 1.15)
