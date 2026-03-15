@@ -128,7 +128,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
 			// model = createMNIST5Cnn_New_Simpler(workerId);
 			// model = createMNIST5Cnn_New_2(workerId);		// 0.89
-			// model = createMNIST5Cnn_New_3(workerId);		//
+			// model = createMNIST5Cnn_New_3(workerId);		// 0.3
 			// model = createMNIST5Cnn_New_4(workerId);		// 0.915
 			model = createMNIST5Cnn_New_4_without_2_Dense(workerId);		// used for experimentation
 
@@ -159,8 +159,9 @@ public class Dl4jModelFactory {
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
 
-			model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.65
-			model = createMNIST5Cnn_New_4(workerId);	
+			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.69, after going heavy on it
+			model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 
+			// model = createMNIST5Cnn_New_4(workerId);	
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
 			// model = createMNIST5Cnn_New_12(workerId);	// 0.6433333
@@ -2800,6 +2801,47 @@ public class Dl4jModelFactory {
 						.build())
 				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 11x11x12
 						.nOut(12)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x12
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
+						.nOut(NUM_CLASSES)
+						.activation(Activation.SOFTMAX)
+						.build())
+				.setInputType(InputType.convolutional(28, 28, 1))
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model, false);
+	}
+
+	// ======================================================================================================================
+
+	public static PsoModel createMNIST5Cnn_New_4_without_2_Dense_v2(int workerId) {
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x6
+						.nIn(1)
+						.nOut(8)
+						.stride(1, 1)
+						.padding(0, 0)
+						.activation(Activation.RELU)
+						.build())
+				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x6
+						.kernelSize(2, 2)
+						.stride(2, 2)
+						.build())
+				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 11x11x12
+						.nOut(16)
 						.stride(1, 1)
 						.padding(0, 0)
 						.activation(Activation.RELU)
