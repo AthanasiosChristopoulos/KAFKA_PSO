@@ -336,7 +336,7 @@ public class Experimentation {
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("LOSS_FUNCTIONS")) {
 
-            cfg.EARLY_STOPPING = false; 
+            cfg.EARLY_STOPPING = true; 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_loss_functions.csv");

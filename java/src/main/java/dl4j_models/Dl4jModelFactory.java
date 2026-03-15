@@ -145,7 +145,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_13(workerId);		// Accuracy:0.92333335
 			// model = createMNIST5Cnn_New_14(workerId);		// Accuracy:0.933
 
-	// ======================================================================================================================
+	// ===================================================================================
 
 		} else if ("mnist".equals(DATASET)) {
 
