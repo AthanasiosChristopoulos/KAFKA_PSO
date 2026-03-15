@@ -279,6 +279,40 @@ def main():
         plt.savefig(outpath, dpi=200, bbox_inches="tight")
         plt.close()
         saved.append(outpath)
+        
+        if mode == "MONITORING_ITERATIONS":
+            time_xcol = "TIME_SEC"
+
+            if time_xcol not in df.columns:
+                raise KeyError(f"CSV missing x column '{time_xcol}'. Columns: {list(df.columns)}")
+
+            df[time_xcol] = pd.to_numeric(df[time_xcol], errors="coerce")
+
+            plot_df = df[[time_xcol, "ACCURACY"]].copy()
+            plot_df[time_xcol] = pd.to_numeric(plot_df[time_xcol], errors="coerce")
+            plot_df["ACCURACY"] = pd.to_numeric(plot_df["ACCURACY"], errors="coerce")
+            plot_df = plot_df.dropna(subset=[time_xcol, "ACCURACY"]).sort_values(time_xcol)
+
+            MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
+            plot_df = downsample_df(plot_df, MAX_POINTS)
+
+            xs_plot = plot_df[time_xcol].tolist()
+            ys_plot = plot_df["ACCURACY"].tolist()
+
+            plt.figure()
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
+            plt.ylim(0, 1)
+            plt.yticks(np.linspace(0, 1, 11))
+            plt.xlabel("TIME_SEC")
+            plt.ylabel("ACCURACY")
+            plt.title("Accuracy vs Time")
+            plt.grid(True)
+            plt.tight_layout()
+
+            outpath = outdir / f"{csv_path.stem}_accuracy_vs_time.png"
+            plt.savefig(outpath, dpi=200, bbox_inches="tight")
+            plt.close()
+            saved.append(outpath)
 
     print("Mode:", mode or "(default N_WORKERS)")
     print("CSV :", csv_path)

@@ -61,13 +61,24 @@ CSV_CONFIGS = {
             ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FULLY_INFORMED_VS_CLASSICAL", "messages"),
         ],
     },
+    # "results_monitoring_iterations.csv": {
+    #     "mode": "MONITORING_ITERATIONS",
+    #     "xcol": "MONITORING_ITER",
+    #     "xlabel": "MONITORING_ITER",
+    #     "suffix": "monitoring",
+    #     "plots": [
+    #         ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy"),
+    #     ],
+    # },
+    
     "results_monitoring_iterations.csv": {
         "mode": "MONITORING_ITERATIONS",
         "xcol": "MONITORING_ITER",
         "xlabel": "MONITORING_ITER",
         "suffix": "monitoring",
         "plots": [
-            ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy"),
+            ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy", "MONITORING_ITER", "MONITORING_ITER"),
+            ("ACCURACY", "ACCURACY", "Accuracy vs Time", "accuracy_vs_time", "TIME_SEC", "TIME_SEC"),
         ],
     },
     "results_n_workers.csv": {
@@ -200,31 +211,54 @@ def process_one_csv(csv_path: Path):
 
     saved = []
 
-    for ycol, ylabel, title, tag in plots:
+    for plot in plots:
+        if len(plot) == 4:
+            ycol, ylabel, title, tag = plot
+            plot_xcol = xcol
+            plot_xlabel = xlabel
+        elif len(plot) == 6:
+            ycol, ylabel, title, tag, plot_xcol, plot_xlabel = plot
+        else:
+            raise ValueError(f"Invalid plot config: {plot}")        
+            
         if ycol not in df.columns:
             raise KeyError(
                 f"CSV missing y column '{ycol}' needed for plot '{title}'. "
                 f"Columns: {list(df.columns)}"
             )
 
+        if plot_xcol not in df.columns:
+            raise KeyError(
+                f"CSV missing x column '{plot_xcol}' needed for plot '{title}'. "
+                f"Columns: {list(df.columns)}"
+            )
+
         ys = pd.to_numeric(df[ycol], errors="coerce")
-        mask = ys.notna()
-        xs_plot = df.loc[mask, xcol].tolist()
+        plot_xs = pd.to_numeric(df[plot_xcol], errors="coerce") if mode == "MONITORING_ITERATIONS" else df[plot_xcol]
+        mask = ys.notna() & plot_xs.notna()
+        xs_plot = plot_xs.loc[mask].tolist()
+        ys_plot = ys.loc[mask].tolist()
+
+        plot_xs = pd.to_numeric(df[plot_xcol], errors="coerce") if mode == "MONITORING_ITERATIONS" else df[plot_xcol]
+        mask = ys.notna() & plot_xs.notna()
+        xs_plot = plot_xs.loc[mask].tolist()
         ys_plot = ys.loc[mask].tolist()
 
         if mode == "MONITORING_ITERATIONS":
             max_points = int(os.getenv("MAX_PLOT_POINTS", "1000"))
-            plot_df = df.loc[mask, [xcol, ycol]].copy()
-            plot_df = plot_df.sort_values(xcol)
+            plot_df = df.loc[mask, [plot_xcol, ycol]].copy()
+            plot_df[plot_xcol] = pd.to_numeric(plot_df[plot_xcol], errors="coerce")
+            plot_df[ycol] = pd.to_numeric(plot_df[ycol], errors="coerce")
+            plot_df = plot_df.sort_values(plot_xcol)
             plot_df = downsample_df(plot_df, max_points)
 
-            xs_plot = plot_df[xcol].tolist()
-            ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
+            xs_plot = plot_df[plot_xcol].tolist()
+            ys_plot = plot_df[ycol].tolist()
 
         plt.figure()
 
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot, marker="o", markersize=4, markeredgewidth=0.4)
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
@@ -243,7 +277,7 @@ def process_one_csv(csv_path: Path):
             ymin, ymax = 0, max(ys_plot)
             plt.ylim(ymin, ymax * 1.15)
 
-        plt.xlabel(xlabel)
+        plt.xlabel(plot_xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
         plt.grid(True)
