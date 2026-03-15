@@ -74,7 +74,7 @@ def set_epochs():
         NUMBER_OF_DATA_REPEATS = 18
         
     if(DATASET == "cifar5-half"):
-        NUMBER_OF_DATA_REPEATS = 36
+        NUMBER_OF_DATA_REPEATS = 37
         
     if(DATASET == "mnist"):
         NUMBER_OF_DATA_REPEATS = 7
