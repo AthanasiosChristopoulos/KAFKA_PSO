@@ -67,4 +67,12 @@ Codes:
 git rm -r --cached logs
 git rm -r --cached target
 
+# ===================================================================
+# .gitignore:
+# you will need this to check what is already staged:
+git ls-files
+# 
+git restore --staged main.bbl main.blg main.fls main.out main.tex
+git rm --cached main.bbl main.blg main.fls main.out main.tex
+
 ```
