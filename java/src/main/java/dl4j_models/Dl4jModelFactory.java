@@ -213,7 +213,7 @@ public class Dl4jModelFactory {
 					case 17 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";		
 						// 61.6%
 					case 18 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2_1.h5";		
-						// 77%, recommended for fashion_mnist
+						// 77%, recommended for fashion-mnist
 					case 19 -> filename = "../python/pretrained_model/svhn_v7_mnist_final.h5";		
 						// 78%	
 					case 20 -> filename = "../python/pretrained_model/svhn_v8_mnist_final.h5";		
@@ -291,7 +291,7 @@ public class Dl4jModelFactory {
 
 		// ======================================================================================================================	
 
-		} else if ("fashion_mnist".equals(DATASET)) {
+		} else if ("fashion-mnist".equals(DATASET)) {
 
 			cfg.USING_PRETRAINED_MODEL = true;
 

@@ -167,7 +167,7 @@ public class Config {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST5", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST5", "5"));
 
-        } else if("fashion_mnist".equals(DATASET)) {
+        } else if("fashion-mnist".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_FASHION_MNIST", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_FASHION_MNIST", "10"));
 

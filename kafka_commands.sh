@@ -50,6 +50,18 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic cifar5-half-test --partitions 1 --if-not-exists
 
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic kmnist-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic kmnist-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic fashion-mnist-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic fashion-mnist-test --partitions 1 --if-not-exists
+  
 # ==============================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
@@ -238,32 +250,32 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic kmnist-test --from-beginning
 
-# fashion_mnist: ======================================================
+# fashion-mnist: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic fashion_mnist-input --partitions 40 --if-not-exists
+  --create --topic fashion-mnist-input --partitions 40 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --describe --topic fashion_mnist-input
+  --describe --topic fashion-mnist-input
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic fashion_mnist-input
+  --delete --topic fashion-mnist-input
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic fashion_mnist-input --from-beginning
+  --topic fashion-mnist-input --from-beginning
 
-# fashion_mnist-test: ======================================================
-
-kafka-topics.sh --bootstrap-server localhost:19092 \
-  --create --topic fashion_mnist-test --partitions 1 --if-not-exists
-
-kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic fashion_mnist-test
+# fashion-mnist-test: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
-  --delete --topic fashion_mnist-test
+  --create --topic fashion-mnist-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic fashion-mnist-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic fashion-mnist-test
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
-  --topic fashion_mnist-test --from-beginning
+  --topic fashion-mnist-test --from-beginning
 
 # svhn: ======================================================
 

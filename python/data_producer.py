@@ -85,7 +85,7 @@ def set_epochs():
     if(DATASET == "kmnist"):
         NUMBER_OF_DATA_REPEATS = 7
 
-    if(DATASET == "fashion_mnist"):
+    if(DATASET == "fashion-mnist"):
         NUMBER_OF_DATA_REPEATS = 7
         
     if(DATASET == "svhn"):
@@ -100,7 +100,7 @@ def set_epochs():
 # ==============================================================================================
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
-    "nsfw", "mnist", "mnist5", "fashion_mnist", "svhn", "kmnist")
+    "nsfw", "mnist", "mnist5", "fashion-mnist", "svhn", "kmnist")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
@@ -371,9 +371,9 @@ def load_dataset():
     
     # ==================================================================================================
 
-    elif DATASET == "fashion_mnist":
+    elif DATASET == "fashion-mnist":
         
-        print("Loading from tf.keras.datasets.fashion_mnist")
+        print("Loading from tf.keras.datasets.fashion-mnist")
         (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
 
         # Normalize to [0,1]
