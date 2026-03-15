@@ -5,8 +5,110 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import numpy as np
+from io import StringIO
 
 load_dotenv("../java/.env")
+
+# ============================================================================================
+
+def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
+    experiments = []
+
+    with open(csv_path, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    current_block = []
+    current_meta = None
+
+    for line in lines:
+        if line.startswith("MONITORING_ITER,"):
+            if current_block:
+                # unexpected repeated header without metadata, finalize previous if needed
+                df = pd.read_csv(StringIO("\n".join(current_block)))
+                experiments.append((df, current_meta or {}))
+                current_block = []
+                current_meta = None
+
+            current_block = [line]
+
+        elif line.startswith("LOSS_FUNCTION,"):
+            current_meta = {}
+            parts = line.split(",")
+
+            # expected format:
+            # LOSS_FUNCTION,HINGE,COMBINE_LOSS,AVG,REGULARIZER,NONE
+            for i in range(0, len(parts) - 1, 2):
+                key = parts[i].strip()
+                value = parts[i + 1].strip()
+                current_meta[key] = value
+
+            if current_block:
+                df = pd.read_csv(StringIO("\n".join(current_block)))
+                experiments.append((df, current_meta))
+                current_block = []
+                current_meta = None
+
+        else:
+            current_block.append(line)
+
+    # in case file ends without metadata line
+    if current_block:
+        df = pd.read_csv(StringIO("\n".join(current_block)))
+        experiments.append((df, current_meta or {}))
+
+    return experiments
+
+# ============================================================================================
+
+def plot_loss_functions_experiments(csv_path: Path, outdir: Path):
+    experiments = parse_loss_functions_csv(csv_path)
+    saved = []
+
+    MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
+
+    for df, meta in experiments:
+        if "MONITORING_ITER" not in df.columns or "ACCURACY" not in df.columns:
+            continue
+
+        df["MONITORING_ITER"] = pd.to_numeric(df["MONITORING_ITER"], errors="coerce")
+        df["ACCURACY"] = pd.to_numeric(df["ACCURACY"], errors="coerce")
+        df = df.dropna(subset=["MONITORING_ITER", "ACCURACY"]).sort_values("MONITORING_ITER")
+        df = downsample_df(df, MAX_POINTS)
+
+        xs_plot = df["MONITORING_ITER"].tolist()
+        ys_plot = df["ACCURACY"].tolist()
+
+        loss_function = meta.get("LOSS_FUNCTION", "UNKNOWN")
+        combine_loss = meta.get("COMBINE_LOSS", "UNKNOWN")
+        regularizer = meta.get("REGULARIZER", "UNKNOWN")
+        safe_loss = loss_function.lower()
+        safe_combine = combine_loss.lower()
+        safe_regularizer = regularizer.lower()
+
+        plt.figure()
+        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
+        plt.ylim(0, 1)
+        plt.yticks(np.linspace(0, 1, 11))
+        plt.xlabel("MONITORING_ITER")
+        plt.ylabel("ACCURACY")
+        plt.title(f"{loss_function} - {combine_loss} - {regularizer}")
+        plt.grid(True)
+        plt.tight_layout()
+        
+        outpath = outdir / (
+            f"{csv_path.stem}_accuracy_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
+        )
+        
+        plt.savefig(outpath, dpi=200, bbox_inches="tight")
+        plt.close()
+        saved.append(outpath)
+        
+        print(
+            f"Parsed block: LOSS_FUNCTION={loss_function}, "
+            f"COMBINE_LOSS={combine_loss}, REGULARIZER={regularizer}"
+        )
+
+    return saved
 
 # ============================================================================================
 
@@ -55,6 +157,22 @@ def main():
             ("TOTAL_BYTES_SENT", "TOTAL_BYTES_SENT", "Bytes vs FILTER_ENABLED", "bytes"),
             ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FILTER_ENABLED", "messages"),
         ]
+    
+    # =================================================================================================
+
+    elif mode == "LOSS_FUNCTIONS":
+        csv_path = Path(f"{csv_dir}/results_loss_functions.csv")
+        outdir = csv_path.parent
+
+        suffix = "loss_functions"
+        saved = plot_loss_functions_experiments(csv_path, outdir)
+
+        print("Mode:", mode)
+        print("CSV :", csv_path)
+        print("Saved:")
+        for p in saved:
+            print(" -", p)
+        return
     
     # =================================================================================================
     
@@ -163,9 +281,8 @@ def main():
     
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
-
     outdir = csv_path.parent
-    
+
     if(mode != "MONITORING_ITERATIONS"):
         df = pd.read_csv(csv_path)
 
@@ -259,9 +376,17 @@ def main():
         
         if mode == "MONITORING_ITERATIONS":
             tick_count = 10
+
             if len(xs_plot) > tick_count:
                 tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
-                plt.xticks([xs_plot[i] for i in tick_idx])
+            else:
+                tick_idx = range(len(xs_plot))
+
+            tick_positions = [xs_plot[i] for i in tick_idx]
+            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]  # <-- rounding
+
+            plt.xticks(tick_positions, tick_labels, ha="right")
+            
                 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             plt.xticks(positions, xs_plot)

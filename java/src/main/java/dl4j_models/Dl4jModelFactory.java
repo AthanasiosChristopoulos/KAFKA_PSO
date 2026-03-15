@@ -321,7 +321,7 @@ public class Dl4jModelFactory {
 					case 4 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";	
 						// Pretrained Accuracy: 0.892, Training Accuracy: 0.93, Test Accuracy:0.8466667
 					case 5 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";	
-						// Pretrained Accuracy: 0.91, Training Accuracy: 0.78, Test Accuracy:0.74
+						// Pretrained Accuracy: 0.91, Training Accuracy: 0.81, Test Accuracy:0.79333335
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				
@@ -354,21 +354,22 @@ public class Dl4jModelFactory {
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 2;
+				int version = 3;
 
 				String filename;
 				switch (version) {
 					case 1 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v1.h5";	
 						// 0.9 => pretrained
 					case 2 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v2.h5";	
-
+					case 3 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v3.h5";	
 					default -> filename = "no_pretrained_file_chosen";
+						// 0.74 after training (high difficulty), 0.91 on pretrained
 				}
 				
 				if (preTrained) {
 					System.out.println("Using model version: " + version);
 					switch (version) {
-						case 1, 2 -> model = pretrainedModelMNIST(filename);
+						case 1, 2, 3 -> model = pretrainedModelMNIST(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -376,6 +377,7 @@ public class Dl4jModelFactory {
 					switch (version) {
 						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
 						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
+						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
 
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}

@@ -321,13 +321,89 @@ public class Experimentation {
                 writeExperimentData(w, r, -1, -1, -1);
 
                 w.flush();
-
+                
                 System.out.println("===============================================================================================");
                 System.out.println("End of experiment with MONITORING_ITERATIONS");
                 System.out.println("===============================================================================================");
                 if(experimentationStopRequested == true) {
                     System.exit(0);
                 }
+            }
+
+        // ==================================================================================================
+        // ====================================================================================================
+        // =======================================================================================================
+
+        } else if(cfg.EXPERIMENTATION_MODE.equals("LOSS_FUNCTIONS")) {
+
+            cfg.EARLY_STOPPING = false; 
+            Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
+            Files.createDirectories(dir);
+            Path csvPath = dir.resolve("results_loss_functions.csv");
+            List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
+            List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
+            List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
+
+            ExperimentResult r = null;
+            try (BufferedWriter w = Files.newBufferedWriter(
+                    csvPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            )) {
+                for (int i = 0; i < loss_function_list.size(); i++) {
+                    String loss_function = loss_function_list.get(i);
+                    String combine_loss = combine_loss_list.get(i);
+                    String regularizer = regularizer_list.get(i);
+
+                    w.write("MONITORING_ITER,TIME_SEC,ACCURACY\n");  // this is independent, this is the last one, no more columns
+
+                    cfg.LOSS_FUNCTION = loss_function;
+                    cfg.COMBINE_LOSS = combine_loss;
+                    cfg.REGULARIZER = regularizer;
+
+                    CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
+                    CustomLogger.refreshAll();
+                    cfg.refreshConfig();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("New RUN_ID: " + cfg.RUN_ID);
+                    System.out.println("===============================================================================================");
+
+                    // =================================================================================================
+                    // Restart the Kafka Parititions
+
+                    List<String> topics;
+                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    } else {
+                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+                    }
+
+                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+
+                    // =================================================================================================
+
+                    r = SimulationRunner.runOnce(cfg);
+                    writeAccuracyValues(w, r);
+                    w.write(String.format("%s,%s,%s,%s,%s,%s\n",
+                        "LOSS_FUNCTION", cfg.LOSS_FUNCTION,
+                        "COMBINE_LOSS", cfg.COMBINE_LOSS,
+                        "REGULARIZER", cfg.REGULARIZER));
+                    w.flush();
+                    r.resetAccuracyValues();
+
+                    System.out.println("===============================================================================================");
+                    System.out.println("End of experiment with LOSS_FUNCTION: " + cfg.LOSS_FUNCTION + 
+                        ", and COMBINE_LOSS: " + cfg.COMBINE_LOSS + ", and REGULARIZER: " + cfg.REGULARIZER);
+                    System.out.println("===============================================================================================");
+                    if(experimentationStopRequested == true) {
+                        System.exit(0);
+                    }
+                }
+
+                w.write(header_1);
+                writeExperimentData(w, r, -1, -1, -1);
             }
 
         // ==================================================================================================

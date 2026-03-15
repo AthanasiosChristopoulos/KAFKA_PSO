@@ -40,4 +40,13 @@ public final class CoordinatorMetrics {
                 ", globalBestLoss=" + globalBestLoss +
                 '}';
     }
+    
+    // ===========================================================================================
+
+    public void resetAccuracyValues() {
+        if (accuracyValues != null) {
+            accuracyValues.clear();
+        }
+    }
+
 }

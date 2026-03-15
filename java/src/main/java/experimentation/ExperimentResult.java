@@ -50,6 +50,12 @@ public final class ExperimentResult {
     public List<AccuracyPoint> getAccuracyValues() {
         return coordinator.accuracyValues;
     }
+
+    // ===============================================================================
+
+    public void resetAccuracyValues() {
+        coordinator.resetAccuracyValues();
+    }
     
     // ===============================================================================
 

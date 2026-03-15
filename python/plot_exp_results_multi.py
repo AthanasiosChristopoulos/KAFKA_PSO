@@ -201,7 +201,9 @@ def process_one_csv(csv_path: Path):
         df = df.dropna(subset=[xcol]).sort_values(xcol)
     elif mode == "TOPOLOGY":
         df[xcol] = df[xcol].astype(str)
-
+    else:
+        return
+    
     if (
         "TOTAL_MESSAGES_SENT_PBEST" in df.columns
         and "TOTAL_MESSAGES_SENT" in df.columns
@@ -284,9 +286,16 @@ def process_one_csv(csv_path: Path):
 
         if mode == "MONITORING_ITERATIONS":
             tick_count = 10
+
             if len(xs_plot) > tick_count:
                 tick_idx = np.linspace(0, len(xs_plot) - 1, tick_count, dtype=int)
-                plt.xticks([xs_plot[i] for i in tick_idx])
+            else:
+                tick_idx = range(len(xs_plot))
+
+            tick_positions = [xs_plot[i] for i in tick_idx]
+            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]  # <-- rounding
+
+            plt.xticks(tick_positions, tick_labels, ha="right")
 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             plt.xticks(positions, xs_plot)

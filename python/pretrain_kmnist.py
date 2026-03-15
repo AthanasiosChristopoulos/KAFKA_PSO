@@ -87,16 +87,7 @@ def _read_idx_labels_gz(path):
 # =======================================================================================
 
 def load_kmnist(data_dir):
-    """
-    Load KMNIST from local MNIST-format .gz files stored on NAS.
-
-    Expected files inside data_dir:
-      - train-images-idx3-ubyte.gz
-      - train-labels-idx1-ubyte.gz
-      - t10k-images-idx3-ubyte.gz
-      - t10k-labels-idx1-ubyte.gz
-    """
-
+    
     train_images_path = os.path.join(data_dir, "train-images-idx3-ubyte.gz")
     train_labels_path = os.path.join(data_dir, "train-labels-idx1-ubyte.gz")
     test_images_path  = os.path.join(data_dir, "t10k-images-idx3-ubyte.gz")
@@ -219,21 +210,52 @@ def build_kmnist_base_plus_head_v2(input_shape=(28, 28, 1), num_classes=10):
     )
 
     return model
+
+# =====================================================================================
+
+def build_kmnist_base_plus_head_v3(input_shape=(28, 28, 1), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.20),
+
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.25),
+
+        layers.Conv2D(10, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Flatten(),   # 3x3x10 = 90
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    return model
+
 # =====================================================================================
 
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
-    version = "v2"
+    version = "v3"
 
     model_registry = {
         "v1": ("kmnist_base_plus_head_v1", build_kmnist_base_plus_head_v1),
         "v2": ("kmnist_base_plus_head_v2", build_kmnist_base_plus_head_v2),
+        "v3": ("kmnist_base_plus_head_v3", build_kmnist_base_plus_head_v3),
     }
     
     filename, mnist_model_function = model_registry[version]
 
-    x_train, y_train, x_test, y_test = load_kmnist(
-        data_dir="/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data/kmnist")
+    x_train, y_train, x_test, y_test = load_kmnist(data_dir="/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data/kmnist")
     evaluate_dataset(x_train, y_train, x_test, y_test)
     model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
     name_h5_file = filename
