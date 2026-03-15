@@ -165,7 +165,20 @@ def main():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
 
     outdir = csv_path.parent
-    df = pd.read_csv(csv_path)
+    
+    if(mode != "MONITORING_ITERATIONS"):
+        df = pd.read_csv(csv_path)
+
+    else:
+        lines = []
+        with open(csv_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("FILTER_ENABLED,"):
+                    break
+                lines.append(line)
+
+        from io import StringIO
+        df = pd.read_csv(StringIO("".join(lines)))
 
     if xcol not in df.columns:
         raise KeyError(f"CSV missing x column '{xcol}'. Columns: {list(df.columns)}")

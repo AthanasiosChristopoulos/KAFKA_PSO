@@ -317,6 +317,8 @@ public class Experimentation {
 
                 // writeExperimentData(w, r, -1, -1, -1);
                 writeAccuracyValues(w, r);
+                w.write(header_1);
+                writeExperimentData(w, r, -1, -1, -1);
 
                 w.flush();
 

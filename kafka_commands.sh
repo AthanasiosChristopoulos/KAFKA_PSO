@@ -33,6 +33,12 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic pendigits-test --partitions 1 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic mnist5-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic mnist5-test --partitions 1 --if-not-exists
+  
+kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic mnist-input --partitions 40 --if-not-exists
 
 kafka-topics.sh --bootstrap-server localhost:19092 \

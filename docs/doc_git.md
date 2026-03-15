@@ -35,9 +35,14 @@ git reset --soft HEAD~1   # Removes commit but keeps changes
 git reset --hard HEAD~1   # Removes commit AND changes
 
 # Relationship to Remote - Githup repo ===================================================================
+
+git pull
+git fetch origin
+git reset --hard origin/<Branch name>
+git clean -fd
+
 git push -u origin main
 git push --force origin main (so you dont have to pull first / be up to date)
-
 git pull --no-rebase origin DL4J-PSO-Generic    # create a merge commit 
 
 git fetch --prune origin    # fetch does NOT modify your code or merge anything.

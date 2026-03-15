@@ -79,11 +79,11 @@ def set_epochs():
     if(DATASET == "mnist"):
         NUMBER_OF_DATA_REPEATS = 7
 
-    if(DATASET == "kmnist"):
-        NUMBER_OF_DATA_REPEATS = 7
-
     if(DATASET == "mnist5"):
         NUMBER_OF_DATA_REPEATS = 15
+        
+    if(DATASET == "kmnist"):
+        NUMBER_OF_DATA_REPEATS = 7
 
     if(DATASET == "fashion_mnist"):
         NUMBER_OF_DATA_REPEATS = 7
@@ -1186,7 +1186,7 @@ def main():
     global DATASET
     
     if args.multi:
-        # DATASET_MULTI = ["iris", "winequality", "mnist", "cifar5-half"]
+        # DATASET_MULTI = ["iris", "winequality", "mnist5", "mnist", "cifar5-half"]
         DATASET_MULTI = ["cifar5-half"]
         print(f"Multi Dataset with: {DATASET_MULTI}" )
 
