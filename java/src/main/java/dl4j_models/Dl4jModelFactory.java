@@ -130,7 +130,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_2(workerId);		// 0.89
 			// model = createMNIST5Cnn_New_3(workerId);		//
 			// model = createMNIST5Cnn_New_4(workerId);		// 0.915
-			model = createMNIST5Cnn_New_4_without_2_Dense(workerId);	
+			model = createMNIST5Cnn_New_4_without_2_Dense(workerId);		// used for experimentation
 
 			// Bad Experimentation ================================================================
 			// model = createMNIST5Cnn_New_5(workerId);		// 0.385 with GlobalPooling Layer
@@ -159,7 +159,8 @@ public class Dl4jModelFactory {
 			// model = createMNISTCnn_New_2(workerId);
 			// model = createMNISTModelCNNHeavy(workerId);
 
-			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.295
+			model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.65
+			model = createMNIST5Cnn_New_4(workerId);	
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
 			// model = createMNIST5Cnn_New_12(workerId);	// 0.6433333
