@@ -160,7 +160,7 @@ public class Dl4jModelFactory {
 			// model = createMNISTModelCNNHeavy(workerId);
 
 			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.69, after going heavy on it
-			model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 
+			model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 	// performs worse at 0.66
 			// model = createMNIST5Cnn_New_4(workerId);	
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
