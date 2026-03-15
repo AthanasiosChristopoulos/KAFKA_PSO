@@ -117,6 +117,7 @@ public class Dl4jModelFactory {
 			// model = createLetterModel70K(workerId);
 
 		} else if ("mnist5".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
+
 			// model = createMNISTModelMLP(workerId);
 			// model = createMNISTModelMLPSimple_1(workerId);
 			// model = createMNISTModelMLPSimple_2(workerId);
@@ -129,8 +130,9 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_2(workerId);		// 0.89
 			// model = createMNIST5Cnn_New_3(workerId);		//
 			// model = createMNIST5Cnn_New_4(workerId);		// 0.915
-			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId);	
+			model = createMNIST5Cnn_New_4_without_2_Dense(workerId);	
 
+			// Bad Experimentation ================================================================
 			// model = createMNIST5Cnn_New_5(workerId);		// 0.385 with GlobalPooling Layer
 			// model = createMNIST5Cnn_New_6(workerId);		// 86%
 			// model = createMNIST5Cnn_New_7(workerId); 		// 0.37, with GlobalPooling Layer
@@ -141,7 +143,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_12(workerId);		// 0.935
 			// model = createDenseModel_1(workerId);
 			// model = createMNIST5Cnn_New_13(workerId);		// Accuracy:0.92333335
-			model = createMNIST5Cnn_New_14(workerId);		// Accuracy:0.933
+			// model = createMNIST5Cnn_New_14(workerId);		// Accuracy:0.933
 
 	// ======================================================================================================================
 
@@ -165,7 +167,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_14(workerId); // bestAccuracy: 0.69
 			// model = createDenseModel_1(workerId);	// 0.6066667
 
-			cfg.USING_PRETRAINED_MODEL = true;
+			cfg.USING_PRETRAINED_MODEL = false;
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
