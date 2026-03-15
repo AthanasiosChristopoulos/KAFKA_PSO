@@ -56,7 +56,6 @@ git branch -vv      # Shows branches on local and what they track on remote
 git config --get remote.origin.fetch    # Which branches are allowed to be tracked
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    # Set to be able to fetch everything
 
-
 git config --global user.name "AthanasiosChristopoulos"
 git config --global user.email "athanasioschristopoulos61@gmail.com"
 

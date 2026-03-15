@@ -160,7 +160,7 @@ public class Dl4jModelFactory {
 			// model = createMNISTModelCNNHeavy(workerId);
 
 			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.69, after going heavy on it
-			model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 	// performs worse at 0.66
+			// model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 	// performs worse at 0.66
 			// model = createMNIST5Cnn_New_4(workerId);	
 			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
 			// model = createMNIST5Cnn_New_10(workerId);	// 65%
@@ -169,7 +169,7 @@ public class Dl4jModelFactory {
 			// model = createMNIST5Cnn_New_14(workerId); // bestAccuracy: 0.69
 			// model = createDenseModel_1(workerId);	// 0.6066667
 
-			cfg.USING_PRETRAINED_MODEL = false;
+			cfg.USING_PRETRAINED_MODEL = true;
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
 				
@@ -194,7 +194,9 @@ public class Dl4jModelFactory {
 					// case 10 -> filename = "../python/pretrained_model/svhn_flat_dense_v1_best.h5";					
 					case 10 -> filename = "../python/pretrained_model/svhn_28x28x1_v2_mnist_best.h5";					
 						// 0.756 accuracy after PSO training, 66.4% in the pretrained
-					case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";				
+					// case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";	
+					case 11 -> filename = "../python/pretrained_model/svhn_v4_mnist_final.h5";				
+			
 						// 0.82 PSO training, 0.652 pretrained (also 0.8466667)
 						// even if pretty slow it will keep improving
 						// recommended for svhn version
