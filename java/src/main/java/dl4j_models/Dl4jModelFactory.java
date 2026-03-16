@@ -57,8 +57,8 @@ public class Dl4jModelFactory {
 
 		if("iris".equals(DATASET)) {
 			// model = createIrisModel(workerId);
-			model = createDenseModel_1(workerId);
-			// model = createDenseModel_2(workerId);
+			// model = createDenseModel_1(workerId);
+			model = createDenseModel_2(workerId);
 			// model = createDenseModel_3(workerId);
 
 		} else if ("wine".equals(DATASET)) {

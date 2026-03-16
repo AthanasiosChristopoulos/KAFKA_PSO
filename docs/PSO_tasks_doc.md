@@ -138,15 +138,13 @@
 	# ========================================================================================
 
 	60) Write dimplomatiki
+		- κανε introductory κεφαλαια
 
 	## =======================================================================================
 
 	65) Non differentiable Functions, with requirements:
 		- 1) Continious, but non differentiable
 		- 2) Πρεπει να εχουν χρησιμοποιηθει σε καποιο γνωστο / οχι οτι να ναι venue (χώρος δημοσίευσης)
-			=> Να αναφερεται οτι ειναι non differentiable 
-			=> In research, venue means the place where the work was published. 
-				=> basically a journal or a conference
 		- 3) Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
 	## =======================================================================================
@@ -155,6 +153,7 @@
 		- Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
 		
 	## =======================================================================================
+	## New Tasks
 
 	70) Time in iris, winequality and pendigits is too short !
 		=> This doesnt have to affect accuracy only time
@@ -169,6 +168,15 @@
 		=> 2) strength σου δινει filter strength
 		=> 3) χρησιμοποιεις n_workers και strength για monitoring iterations
 
+	## =======================================================================================
+
+	72) Motivation για INDEPENDENT_DATA_PROCESSING
+
+	ή κανεις replace INDEPENDENT_DATA_PROCESSING με περισσοτερα δεδομενα που τα χρεαιζεσαι either way
+		=> like πηγαινει στο Mnist και καντου * 5
+
+	ή καντο προγραμματιστικα. Οχι * N_WORKERS, αλλα * μια σταθερα: 0 < EPOCHS < N_WORKERS
+	
 ## =======================================================================================
 
 	Backlog Tasks:

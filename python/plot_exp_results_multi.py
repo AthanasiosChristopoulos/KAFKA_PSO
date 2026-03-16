@@ -40,7 +40,7 @@ CSV_CONFIGS = {
     "results_strength.csv": {
         "mode": "FILTER_STRENGTH",
         "xcol": "STRENGTH_CODE",
-        "xlabel": "STRENGTH_CODE",
+        "xlabel": "FILTER_STRENGTH_INDEX",
         "suffix": "strength",
         "plots": [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_STRENGTH", "accuracy"),

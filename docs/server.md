@@ -54,6 +54,8 @@ kafka-storage.sh format -t "$CLUSTER_ID" -c /mnt/nas_drive/achristopoulos/kafka-
 export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
 export PATH="$KAFKA_HOME/bin:$PATH"     # this isnt overriding PATH, this is are prepending to it (appending to the beggining of the list)
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-heavy.properties
+
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-ssd.properties
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties 2>&1 | grep -Ei "error|warn"
 # see differences between disks:
@@ -112,6 +114,7 @@ htop -u achristopoulos
 ```
 
 ## Restore KRaft: =====================================================
+
 ```bash
 rm -rf /mnt/nas_drive/achristopoulos/kafka-kraft/logs/*
 cd /mnt/nas_drive/achristopoulos/kafka-local
@@ -123,6 +126,26 @@ bin/kafka-storage.sh format \
 bin/kafka-storage.sh format \
   --cluster-id NQ0hkMpsQlWQhDfMUh6n9A \
   --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+
+```
+
+## Make new KRaft instance: =====================================================
+
+```bash
+cd /mnt/nas_drive/achristopoulos/kafka-local/config/kraft
+cp server.properties server-heavy.properties
+
+log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs-heavy
+mkdir -p /mnt/nas_drive/achristopoulos/kafka-kraft/logs-heavy
+bin/kafka-storage.sh random-uuid
+
+bin/kafka-storage.sh format \
+  --cluster-id <PASTE_CLUSTER_ID_HERE> \
+  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-heavy.properties
+
+  bin/kafka-storage.sh format \
+  --cluster-id hQwr5n_sTpGaBH4UAYHv3Q \
+  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-heavy.properties
 
 ```
 

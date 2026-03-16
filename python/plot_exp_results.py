@@ -193,7 +193,7 @@ def main():
     elif mode == "FILTER_STRENGTH":
         csv_path = Path(f"{csv_dir}/results_strength.csv")
         xcol = "STRENGTH_CODE"  # This is what is needed for the pandas to find the correct code
-        xlabel = "STRENGTH_CODE"
+        xlabel = "FILTER_STRENGTH_INDEX"
         suffix = "strength"
         plots = [
             ("GBEST_ACC", "GBEST_ACC", "Accuracy vs FILTER_STRENGTH", "accuracy"),

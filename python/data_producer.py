@@ -38,6 +38,22 @@ BATCH_FLUSH = int(os.getenv("BATCH_FLUSH"))
 NUMBER_OF_DATA_REPEATS = 1
 NUMBER_OF_DATA_REPEATS_TEST = 1
 
+
+CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
+    "nsfw", "mnist", "mnist5", "fashion-mnist", "svhn", "kmnist")
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--streaming', action='store_true')
+parser.add_argument('--all', action='store_true') # make this a flag argument
+parser.add_argument('--multi', action='store_true')
+parser.add_argument('--pred', action='store_true')
+parser.add_argument('--eval', action='store_true')
+parser.add_argument('--train', action='store_true')
+parser.add_argument('--test', action='store_true')
+args = parser.parse_args()
+
+REPEAT = 10
+
 # ==============================================================================================
 
 def set_epochs():
@@ -46,17 +62,17 @@ def set_epochs():
     global INPUT_TOPIC, TEST_TOPIC
     
     if(DATASET == "iris" or DATASET == "wine"):     # 150 samples
-        NUMBER_OF_DATA_REPEATS = 37 * 10
+        NUMBER_OF_DATA_REPEATS = 37 * 10 * REPEAT 
         NUMBER_OF_DATA_REPEATS_TEST = 3
 
     if(DATASET == "winequality"):
-        NUMBER_OF_DATA_REPEATS = 37     
+        NUMBER_OF_DATA_REPEATS = 37 * REPEAT   
 
     if(DATASET == "letter"):
         NUMBER_OF_DATA_REPEATS = 20
 
     if(DATASET == "pendigits"):
-        NUMBER_OF_DATA_REPEATS = 40
+        NUMBER_OF_DATA_REPEATS = 40 * REPEAT 
 
     if(DATASET == "pendigits-half"):
         NUMBER_OF_DATA_REPEATS = 80
@@ -91,6 +107,7 @@ def set_epochs():
     if(DATASET == "svhn"):
         NUMBER_OF_DATA_REPEATS = 5
     
+    print(f"REPEAT: {REPEAT}")
     print(f"NUMBER_OF_DATA_REPEATS: {NUMBER_OF_DATA_REPEATS}")
     print(f"NUMBER_OF_DATA_REPEATS_TEST: {NUMBER_OF_DATA_REPEATS_TEST}")
 
@@ -98,19 +115,6 @@ def set_epochs():
     TEST_TOPIC = DATASET + "-test"
     
 # ==============================================================================================
-
-CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
-    "nsfw", "mnist", "mnist5", "fashion-mnist", "svhn", "kmnist")
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--streaming', action='store_true')
-parser.add_argument('--all', action='store_true') # make this a flag argument
-parser.add_argument('--multi', action='store_true')
-parser.add_argument('--pred', action='store_true')
-parser.add_argument('--eval', action='store_true')
-parser.add_argument('--train', action='store_true')
-parser.add_argument('--test', action='store_true')
-args = parser.parse_args()
 
 if args.pred:
     print("Outputting to the prediction topic")
@@ -274,16 +278,19 @@ def shuffle(X, y):
 
 def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=7):
     
-    print(
-        "Train shape:", X_train.shape,
-        "classes / y (labels):", (int(y_train.min()), int(y_train.max())),
-        "with counts:", np.bincount(y_train, minlength=n_classes)
-    )
-    print(
-        "Test shape:", X_test.shape,
-        "classes / y (labels):", (int(y_test.min()), int(y_test.max())),
-        "with counts:", np.bincount(y_test, minlength=n_classes)
-    )
+    if(X_train != None and y_train != None):
+        print(
+            "Train shape:", X_train.shape,
+            "classes / y (labels):", (int(y_train.min()), int(y_train.max())),
+            "with counts:", np.bincount(y_train, minlength=n_classes)
+        )
+        
+    if(X_test != None and y_test != None):
+        print(
+            "Test shape:", X_test.shape,
+            "classes / y (labels):", (int(y_test.min()), int(y_test.max())),
+            "with counts:", np.bincount(y_test, minlength=n_classes)
+        )
 
 # ========================================================================================
 
@@ -302,7 +309,9 @@ def load_dataset():
         
         scaler = StandardScaler().fit(X)
         X_scaled = scaler.transform(X).tolist() 
-    
+
+        evaluate_dataset(X_train, y, None, None)
+
         return X_scaled, y, None, None, class_names
     
     # ==================================================================================================
@@ -1187,7 +1196,8 @@ def main():
     
     if args.multi:
         # DATASET_MULTI = ["iris", "winequality", "mnist5", "mnist", "cifar5-half", "kmnist", "fashion-mnist"]
-        DATASET_MULTI = ["kmnist", "fashion-mnist"]
+        # DATASET_MULTI = ["kmnist", "fashion-mnist"]
+        DATASET_MULTI = ["iris", "winequality", "pendigits"]
         print(f"Multi Dataset with: {DATASET_MULTI}" )
 
     else:
