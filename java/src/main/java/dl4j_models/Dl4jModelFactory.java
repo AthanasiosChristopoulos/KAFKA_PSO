@@ -363,7 +363,7 @@ public class Dl4jModelFactory {
 					case 2 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v2.h5";	
 					case 3 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v3.h5";	
 					case 4 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v4.h5";	
-
+						// 0.65 on trained, 0.922 on pretrained
 					default -> filename = "no_pretrained_file_chosen";
 						// 0.74 after training (high difficulty), 0.91 on pretrained
 				}
