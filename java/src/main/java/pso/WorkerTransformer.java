@@ -577,6 +577,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         float[] accLoss = ws.predictor.callPredictionsBatch(buffer, ws.model, false);    // this is a forward pass
         if(accLoss == null) {
+            System.out.println("[Worker" + workerId +"] Closed, because error accLoss == null");
             control.requestStopFinal(); // a serious error has happend
             return null;
         }
@@ -1338,7 +1339,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
             if (logger.isEnabled(2)) logger.log("neighborKeys: " + Arrays.toString(neighborKeys));
     
-            if (logger.isEnabled(2)) logger.log("FIltering Statistics:");
+            if (logger.isEnabled(2)) logger.log("Filtering Statistics:");
             if (logger.isEnabled(2)) logger.log("TOTAL_MESSAGES_SENT: "+ ws.TOTAL_MESSAGES_SENT +
                  ", TOTAL_BYTES_SENT: " + ws.TOTAL_BYTES_SENT);
 

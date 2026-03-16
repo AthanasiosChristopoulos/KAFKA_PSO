@@ -29,7 +29,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS\n";
+                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING\n";
 
     // ========================================================================
 
@@ -46,6 +46,7 @@ public class Experimentation {
 
                 experimentationStopRequested = true;
             });
+
         } catch (Throwable t) {
             // Fallback: if Signal not available, you can't prevent JVM exit on Ctrl+C.
             System.out.println("[Experimentation] WARNING: sun.misc.Signal not available; Ctrl+C will terminate JVM.");
@@ -72,7 +73,7 @@ public class Experimentation {
         // =====================================================
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
-                
+            cfg.EARLY_STOPPING = false;
             // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
@@ -82,12 +83,12 @@ public class Experimentation {
             // List<Integer> workersList = List.of(2, 12, 24); 
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
-            // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
-            // List<Integer> workersList = List.of(1, 16);
+            List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
+            // List<Integer> workersList = List.of(1);
             // ========================================================================
             // Scenario with high workers:
             
-            List<Integer> workersList = List.of(6, 12, 18, 24, 30);
+            // List<Integer> workersList = List.of(6, 12, 18, 24, 30);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -756,7 +757,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b,%b\n",
                 filterEnabled,
                 nWorkers,
                 // r.getTotalElapsedSec(),
@@ -776,7 +777,8 @@ public class Experimentation {
                 cfg.MONITORING_THRESHOLD_MIN,
                 cfg.MONITORING_THRESHOLD_MAX,
                 cfg.DATASET_PARTITIONING,
-                cfg.ENABLE_NEIGHBORHOODS
+                cfg.ENABLE_NEIGHBORHOODS,
+                cfg.EARLY_STOPPING
             ));
 
         } catch(Exception e) {

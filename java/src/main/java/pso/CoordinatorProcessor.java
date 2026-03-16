@@ -195,15 +195,6 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
             return;
         }
 
-        switch (cfg.DATASET) {
-            case "mnist":
-                if (evaluation_count > 200) {
-                    control.requestStopFinal();
-                    return;
-                }
-                break;
-        }
-
         if(evaluation_count == 0) {
             t_actually_started.set(System.nanoTime());
             context.recordMetadata().ifPresent(meta -> {
@@ -353,6 +344,7 @@ public void onAllWorkersReported() {
                 ", noImprovementRounds: " + roundsWithoutImprovement);
 
     if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
+        System.out.println("Stopped, because DESIRED_ACCURACY reached");
         Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
         control.requestStopFinal();
         return;

@@ -46,14 +46,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
 parser.add_argument('--all', action='store_true') # make this a flag argument
 parser.add_argument('--multi', action='store_true')
+parser.add_argument('--repeat', action='store_true')
 parser.add_argument('--pred', action='store_true')
 parser.add_argument('--eval', action='store_true')
 parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
-REPEAT = 10
-
+REPEAT = 1
+if args.repeat:
+    REPEAT = 10
+    if(DATASET == "mnist"):
+        REPEAT = 3
+        
 # ==============================================================================================
 
 def set_epochs():
@@ -93,7 +98,7 @@ def set_epochs():
         NUMBER_OF_DATA_REPEATS = 37
         
     if(DATASET == "mnist"):
-        NUMBER_OF_DATA_REPEATS = 7
+        NUMBER_OF_DATA_REPEATS = 7 * REPEAT
 
     if(DATASET == "mnist5"):
         NUMBER_OF_DATA_REPEATS = 15
