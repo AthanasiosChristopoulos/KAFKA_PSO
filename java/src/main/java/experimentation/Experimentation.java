@@ -342,7 +342,7 @@ public class Experimentation {
             Path csvPath = dir.resolve("results_loss_functions.csv");
 
             // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
-            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
+            // List<String> combine_loss_list = List.of("AVG", "TOP_K", "AVG", "AVG");
             // List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY");
@@ -354,11 +354,11 @@ public class Experimentation {
             // List<String> regularizer_list = List.of("SLOPE", "NONE");
 
             // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY");
-            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG");
+            // List<String> combine_loss_list = List.of("AVG", "TOP_K", "AVG");
             // List<String> regularizer_list = List.of("NONE", "NONE", "NONE");
             
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "MAE");
-            // List<String> combine_loss_list = List.of("AVG", "TOPK");
+            // List<String> combine_loss_list = List.of("AVG", "TOP_K");
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "CROSS_ENTROPY");
@@ -374,19 +374,19 @@ public class Experimentation {
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
             // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
-            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
+            // List<String> combine_loss_list = List.of("AVG", "TOP_K", "AVG", "AVG");
             // List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "HINGE", "MAE");
-            // List<String> combine_loss_list = List.of("AVG", "AVG", "TOPK");
+            // List<String> combine_loss_list = List.of("AVG", "AVG", "TOP_K");
             // List<String> regularizer_list = List.of("SLOPE", "NONE", "NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "MAE");
-            // List<String> combine_loss_list = List.of("AVG", "TOPK");
+            // List<String> combine_loss_list = List.of("AVG", "TOP_K");
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
             List<String> loss_function_list = List.of("MAE");
-            List<String> combine_loss_list = List.of("TOPK");
+            List<String> combine_loss_list = List.of("TOP_K");
             List<String> regularizer_list = List.of("NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "HINGE");
