@@ -212,7 +212,7 @@ def build_kmnist_base_plus_head_v2(input_shape=(28, 28, 1), num_classes=10):
     return model
 
 # =====================================================================================
-
+# 422/422 - 3s - loss: 0.2026 - accuracy: 0.9376 - val_loss: 0.1509 - val_accuracy: 0.9562 - lr: 0.0010 - 3s/epoch - 7ms/step
 def build_kmnist_base_plus_head_v3(input_shape=(28, 28, 1), num_classes=10):
 
     model = keras.Sequential([
@@ -242,6 +242,37 @@ def build_kmnist_base_plus_head_v3(input_shape=(28, 28, 1), num_classes=10):
     return model
 
 # =====================================================================================
+# 422/422 - 3s - loss: 0.1033 - accuracy: 0.9680 - val_loss: 0.0906 - val_accuracy: 0.9737 - lr: 0.0010 - 3s/epoch - 6ms/step
+
+def build_kmnist_base_plus_head_v4(input_shape=(28, 28, 1), num_classes=10):
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+
+        layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.20),
+
+        layers.Conv2D(64, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Dropout(0.25),
+
+        layers.Conv2D(20, (3, 3), padding="same", activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+
+        layers.Flatten(),   # 3x3x10 = 90
+        layers.Dense(num_classes, activation="softmax"),
+    ])
+    
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    return model
+
+# =====================================================================================
 
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
@@ -251,6 +282,8 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
         "v1": ("kmnist_base_plus_head_v1", build_kmnist_base_plus_head_v1),
         "v2": ("kmnist_base_plus_head_v2", build_kmnist_base_plus_head_v2),
         "v3": ("kmnist_base_plus_head_v3", build_kmnist_base_plus_head_v3),
+        "v4": ("kmnist_base_plus_head_v4", build_kmnist_base_plus_head_v4),
+
     }
     
     filename, mnist_model_function = model_registry[version]
