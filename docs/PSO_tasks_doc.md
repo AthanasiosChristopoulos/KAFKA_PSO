@@ -154,6 +154,21 @@
 	69) Prediction Models:
 		- Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
 		
+	## =======================================================================================
+
+	70) Time in iris, winequality and pendigits is too short !
+		=> This doesnt have to affect accuracy only time
+		=> Κανε cook τα .csv συγκεκριμενα στο training time
+		=> Βαλε * 5 στα δεδομενα => μπορεις να το πεις verbally οτι το εκανες
+		=> Σκοπος ειναι να αποδειξουμε οτι αυτο που βλεπουμε δεν ειναι noise! σε 1.5 sec, noise εχει πολυ μεγαλυτερη ισχυη
+
+	## =======================================================================================
+
+	71) Θα πρεπει για καθε dataset να βλεπεις και να υπολογιζεις διαφορετικα sweet spots:
+		=> 1) n_workers σου δινει n_workers
+		=> 2) strength σου δινει filter strength
+		=> 3) χρησιμοποιεις n_workers και strength για monitoring iterations
+
 ## =======================================================================================
 
 	Backlog Tasks:
