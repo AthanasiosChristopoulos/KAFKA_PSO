@@ -152,12 +152,13 @@ NEIGHBORHOOD_TOPOLOGY=ring    # [square|ring]
 # NEIGHBORHOOD_TOPOLOGY=square
 
 # ===============================================================================================
-INDEPENDENT_DATA_PROCESSING=true         # [true|false]
+DATASET_PARTITIONING=false         # [true|false]
 INERTIA_START=1.9 
 INERTIA_END=0.8  
-# INDEPENDENT_DATA_PROCESSING=false  # in this case inertia and other parameters that lead to high exploration need to be significantly reduced 
+# DATASET_PARTITIONING=true  # in this case inertia and other parameters that lead to high exploration need to be significantly reduced 
 # INERTIA_START=1.4    
 # INERTIA_END=0.6  
+
 
 # ===============================================================================================
 # Exploiation vs Exploration ====================================================================

@@ -29,7 +29,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "INDEPENDENT_DATA_PROCESSING,ENABLE_NEIGHBORHOODS\n";
+                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS\n";
 
     // ========================================================================
 
@@ -79,7 +79,7 @@ public class Experimentation {
             Path csvPath = dir.resolve("results_n_workers.csv");
             // List<Integer> workersList = List.of(2, 4, 6);
             // List<Integer> workersList = List.of(2, 6, 12);
-            // List<Integer> workersList = List.of(2, 12, 24); // make sure that INDEPENDENT_DATA_PROCESSING == false
+            // List<Integer> workersList = List.of(2, 12, 24); 
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
@@ -775,7 +775,7 @@ public class Experimentation {
                 cfg.PBEST_DEBOUNCE_MS,
                 cfg.MONITORING_THRESHOLD_MIN,
                 cfg.MONITORING_THRESHOLD_MAX,
-                cfg.INDEPENDENT_DATA_PROCESSING,
+                cfg.DATASET_PARTITIONING,
                 cfg.ENABLE_NEIGHBORHOODS
             ));
 
