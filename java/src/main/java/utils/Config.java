@@ -444,6 +444,31 @@ public class Config {
         }
 
         RUN_ID = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
+
+        NEED_PROBS =
+            "CROSS_ENTROPY".equals(LOSS_FUNCTION)
+            || "MAE".equals(LOSS_FUNCTION)
+            || "L2".equals(LOSS_FUNCTION)
+            || "ZERO_ONE".equals(LOSS_FUNCTION)
+            || "ABSOLUTE_MARGIN".equals(LOSS_FUNCTION);
+
+        NEED_LOGITS =
+            "HINGE".equals(LOSS_FUNCTION)
+            || "RAMP".equals(LOSS_FUNCTION);
+
+        if(REGULARIZER.equals("L2")) {
+            LAMBDA_VALUE = 1e-2f;
+        
+        } else if (REGULARIZER.equals("GROUP_LASSO")) {
+            LAMBDA_VALUE = 1e-3f;    // or 1e-5f
+        
+        } else if (REGULARIZER.equals("SLOPE")) {
+            LAMBDA_VALUE = 1e-3f;     // smaller because scale is large
+
+        } else {
+            LAMBDA_VALUE = 0;
+        }
+        
     }
 
     // ==================================================================================================================================

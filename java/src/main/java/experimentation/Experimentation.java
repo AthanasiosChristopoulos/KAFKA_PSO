@@ -340,9 +340,38 @@ public class Experimentation {
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_loss_functions.csv");
-            List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
-            List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
-            List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
+
+            // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
+
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG");
+            // List<String> regularizer_list = List.of("NONE");
+
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "AVG");
+            // List<String> regularizer_list = List.of("SLOPE", "NONE");
+
+            // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE", "NONE");
+            
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "MAE");
+            // List<String> combine_loss_list = List.of("AVG", "TOPK");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
+
+            List<String> loss_function_list = List.of("CROSS_ENTROPY", "CROSS_ENTROPY");
+            List<String> combine_loss_list = List.of("AVG", "AVG");
+            List<String> regularizer_list = List.of("NONE", "NONE");
+
+            // List<String> loss_function_list = List.of("HINGE", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
+
+            // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
 
             ExperimentResult r = null;
             try (BufferedWriter w = Files.newBufferedWriter(
@@ -366,9 +395,9 @@ public class Experimentation {
                     CustomLogger.refreshAll();
                     cfg.refreshConfig();
 
-                    System.out.println("===============================================================================================");
+                    System.out.println("==================================================================================");
                     System.out.println("New RUN_ID: " + cfg.RUN_ID);
-                    System.out.println("===============================================================================================");
+                    System.out.println("==================================================================================");
 
                     // =================================================================================================
                     // Restart the Kafka Parititions
@@ -453,7 +482,7 @@ public class Experimentation {
                     FilterStrength.apply(cfg, level);
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
-                    System.out.println("===============================================================================================");
+                    System.out.println("===============================================================================");
                     System.out.println("STRENGTH: " + level + " (code=" + level.code + ")");
                     System.out.println("FILTER_ENABLED: " + cfg.FILTER_ENABLED);
                     System.out.println("LOSS_THRESHOLD_MIN=" + cfg.LOSS_THRESHOLD_MIN + ", LOSS_THRESHOLD_MAX=" + cfg.LOSS_THRESHOLD_MAX);
@@ -461,7 +490,7 @@ public class Experimentation {
                     System.out.println("MONITORING_THRESHOLD_MIN=" + cfg.MONITORING_THRESHOLD_MIN +
                                     ", MONITORING_THRESHOLD_MAX=" + cfg.MONITORING_THRESHOLD_MAX);
                     System.out.println("RUN_ID: " + cfg.RUN_ID);
-                    System.out.println("===============================================================================================");
+                    System.out.println("===============================================================================");
 
                     // Restart Kafka topic(s) like you already do
                     List<String> topics;
