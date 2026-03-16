@@ -192,10 +192,6 @@
 		- Δες parameter server (independent learning με merging των μοντελλων afterwards) => δεδομενα ειναι λιγοτερα για καθε worker
 		- Basically πρεπει να κανεις το federated learning στην python με gradient descent
 
-	47) Κανε share one drive με γραφικες (διαγραμματα και τετοια ...)
-
-	51) Get ONXX - Pytorch - Cifar - 32 x 32 x 3 models
-
 	52) End-to-end propagation delay
 
 

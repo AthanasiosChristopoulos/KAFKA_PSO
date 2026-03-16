@@ -441,8 +441,8 @@ public class Dl4jModelFactory {
 						// Failure 53% accuracy at the most
 					case 16 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v4_half.h5";	
 						// 0.6066667 for cifar 10
-						// cifar5-half => 81%
-						// pretrained model, no training => 0.334
+						// after training => 81%, for cifar5-half	
+						// pretrained model => 0.334
 					case 17 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_half.h5";	
 						// cifar10-half => 60%, cifar5-half => 86%
 						// Recommended
