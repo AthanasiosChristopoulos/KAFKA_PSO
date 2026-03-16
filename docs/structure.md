@@ -3,9 +3,13 @@
 
 # Table of Contents
 
+	=> how is this overal field relevant in todays world
+	=> what is the point of this specific solution
+	=> what does this work contribute
+
 # 1 Introduction
 ## 1.1 Problem Context and Relevance
-## 1.2 Proposed Solution Overview
+## 1.2 Motivation
 ### 1.2.1 Why Particle Swarm Optimization (PSO)
 ### 1.2.2 Why Federated / Distributed Processing Environment
 ### 1.2.3 Why Kafka / Kafka Streams as Architecture
@@ -19,6 +23,7 @@
 	Papers που κάνουν παρόμοια δουλεια με αυτην (biger picture δουλεια - το distributed PSO)
 	Papers που λύνουν μέρος του προβλήματος
 	Papers που είναι βάση για της δουλειά
+	
 ## 3.1 PSO Basics
 ## 3.2 PSO in Neural Learning
 ## 3.3 Hybrid PSO-SGD training
