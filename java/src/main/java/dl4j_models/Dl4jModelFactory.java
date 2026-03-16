@@ -85,12 +85,13 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("pendigits")) {
 
-			int version = 1;
+			int version = 2;
 
 			if(cfg.MODEL_VERSION != -1) {
 				version = cfg.MODEL_VERSION;
 			}
-
+			System.out.println("Pendigits model version: " + version);
+			
 			if(version == 1) {
 				model = createDenseModel_1(workerId);
 			} else if(version == 2) {
