@@ -133,7 +133,9 @@ public final class WorkerStatic {
         this.velocity = new float[this.flatModel.length];
 
         if(logger.isEnabled(2)) {
-            this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT));
+            this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT) + 
+                ", with LOSS_FUNCTION: " + cfg.LOSS_FUNCTION);
+                
             Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);
             logger.log("Model with shape: ");
             Map<String, INDArray> pt = model.paramTable();

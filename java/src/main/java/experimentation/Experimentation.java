@@ -365,9 +365,9 @@ public class Experimentation {
             // List<String> combine_loss_list = List.of("AVG", "AVG");
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
-            List<String> loss_function_list = List.of("MAE", "CROSS_ENTROPY");
-            List<String> combine_loss_list = List.of("AVG", "AVG");
-            List<String> regularizer_list = List.of("NONE", "NONE");
+            // List<String> loss_function_list = List.of("MAE", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
 
             // List<String> loss_function_list = List.of("HINGE", "CROSS_ENTROPY");
             // List<String> combine_loss_list = List.of("AVG", "AVG");
@@ -376,6 +376,26 @@ public class Experimentation {
             // List<String> loss_function_list = List.of("HINGE", "MAE", "CROSS_ENTROPY", "CROSS_ENTROPY");
             // List<String> combine_loss_list = List.of("AVG", "TOPK", "AVG", "AVG");
             // List<String> regularizer_list = List.of("NONE", "NONE", "SLOPE", "NONE");
+
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "HINGE", "MAE");
+            // List<String> combine_loss_list = List.of("AVG", "AVG", "TOPK");
+            // List<String> regularizer_list = List.of("SLOPE", "NONE", "NONE");
+
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "MAE");
+            // List<String> combine_loss_list = List.of("AVG", "TOPK");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
+
+            List<String> loss_function_list = List.of("MAE");
+            List<String> combine_loss_list = List.of("TOPK");
+            List<String> regularizer_list = List.of("NONE");
+
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "HINGE");
+            // List<String> combine_loss_list = List.of("AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
+
+            // List<String> loss_function_list = List.of("HINGE");
+            // List<String> combine_loss_list = List.of("AVG");
+            // List<String> regularizer_list = List.of("NONE");
 
             ExperimentResult r = null;
             try (BufferedWriter w = Files.newBufferedWriter(

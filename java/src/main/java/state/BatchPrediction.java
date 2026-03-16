@@ -40,10 +40,7 @@ public class BatchPrediction {
     public final int NUM_FEATURES = cfg.NUM_FEATURES;
     public final int NUM_CLASSES = cfg.NUM_CLASSES;
     public final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
-
     public final String DATASET = cfg.DATASET;
-    private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
-    private static final String COMBINE_LOSS = cfg.COMBINE_LOSS;
     public final boolean MEMORY_EFFICIENT = cfg.MEMORY_EFFICIENT;
 
     private static BatchPrediction coordinatorInstance = null;
@@ -620,13 +617,13 @@ public class BatchPrediction {
         // too and having forced a stnc between the GPU and CPU
         // Combine Losses from Multiple Samples =======================================================
 
-        if ("TOP_K".equals(COMBINE_LOSS)) {
+        if ("TOP_K".equals(cfg.COMBINE_LOSS)) {
             loss = LossFunction.topKAverage(sampleLosses);
 
-        } else if ("SUM".equals(COMBINE_LOSS)) {
+        } else if ("SUM".equals(cfg.COMBINE_LOSS)) {
             loss = LossFunction.sum(sampleLosses);
 
-        } else if ("AVG".equals(COMBINE_LOSS)) {
+        } else if ("AVG".equals(cfg.COMBINE_LOSS)) {
             loss = LossFunction.average(sampleLosses);
 
         } else {

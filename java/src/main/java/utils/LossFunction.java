@@ -10,34 +10,32 @@ import org.deeplearning4j.nn.api.Layer;
 public class LossFunction {
 
     private static final Config cfg = Config.getInstance();
-    private static final String LOSS_FUNCTION = cfg.LOSS_FUNCTION;
-    private static final int TOP_K_VALUE = cfg.TOP_K_VALUE;
 
     // =============================================================================================
     // Loss Function Control:
 
     public static float compute_loss(float[] probs, int label) {
-        
-        if ("MAE".equals(LOSS_FUNCTION)) {
+        if ("MAE".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_MAE(probs, label);    
 
-        } else if ("L2".equals(LOSS_FUNCTION)) {
+        } else if ("L2".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_MSE(probs, label);
 
-        } else if ("CROSS_ENTROPY".equals(LOSS_FUNCTION)) {
+        } else if ("CROSS_ENTROPY".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_CE(probs, label);
 
-        } else if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
+        } else if ("ZERO_ONE".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_zero_one(probs, label);
 
-        } else if ("ABSOLUTE_MARGIN".equals(LOSS_FUNCTION)) {
+        } else if ("ABSOLUTE_MARGIN".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_margin_abs(probs, label);
 
-        } else if ("HINGE".equals(LOSS_FUNCTION)) {
+        } else if ("HINGE".equals(cfg.LOSS_FUNCTION)) {
+            // System.out.println("HINGE");
             return compute_loss_hinge(probs, label);
             // return compute_loss_topk_hinge(probs, label, 5);
 
-        } else if ("RAMP".equals(LOSS_FUNCTION)) {
+        } else if ("RAMP".equals(cfg.LOSS_FUNCTION)) {
             // System.out.println("AAAAAAAAAAAAAAAAAAAA");
             return compute_loss_ramp(probs, label);
         }
@@ -50,16 +48,16 @@ public class LossFunction {
 
     public static float compute_loss(float prob, int label) {
 
-        if ("ZERO_ONE".equals(LOSS_FUNCTION)) {
+        if ("ZERO_ONE".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_zero_one_binary(prob, label);
         
-        } else if("MAE".equals(LOSS_FUNCTION)) {
+        } else if("MAE".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_MAE_binary(prob, label);
 
-        } else if("HINGE".equals(LOSS_FUNCTION)) {
+        } else if("HINGE".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_hinge_binary(prob, label);
 
-        } else if("RAMP".equals(LOSS_FUNCTION)) {
+        } else if("RAMP".equals(cfg.LOSS_FUNCTION)) {
             return compute_loss_ramp_binary(prob, label);
 
         } else {
@@ -383,7 +381,7 @@ public class LossFunction {
         int n = sampleLosses.length;
         if (n == 0) return 0f;
 
-        int k_edited = Math.min(TOP_K_VALUE, n);
+        int k_edited = Math.min(cfg.TOP_K_VALUE, n);
 
         float[] tmp = Arrays.copyOf(sampleLosses, n);
         Arrays.sort(tmp);   // sorts in ascending order (min → max).

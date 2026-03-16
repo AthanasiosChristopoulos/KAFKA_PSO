@@ -379,7 +379,7 @@ public class Config {
             LAMBDA_VALUE = 1e-3f;    // or 1e-5f
         
         } else if (REGULARIZER.equals("SLOPE")) {
-            LAMBDA_VALUE = 1e-3f;     // smaller because scale is large
+            LAMBDA_VALUE = 1e-1f;     // smaller because scale is large
 
         } else {
             LAMBDA_VALUE = 0;
@@ -463,7 +463,7 @@ public class Config {
             LAMBDA_VALUE = 1e-3f;    // or 1e-5f
         
         } else if (REGULARIZER.equals("SLOPE")) {
-            LAMBDA_VALUE = 1e-3f;     // smaller because scale is large
+            LAMBDA_VALUE = 1e-1f;     // smaller because scale is large
 
         } else {
             LAMBDA_VALUE = 0;
