@@ -468,7 +468,7 @@ public class Config {
         } else {
             LAMBDA_VALUE = 0;
         }
-        
+        System.out.println("NEED_PROBS: " + NEED_PROBS + ", NEED_LOGITS: " + NEED_LOGITS +  ", REGULARIZER: " + REGULARIZER);
     }
 
     // ==================================================================================================================================

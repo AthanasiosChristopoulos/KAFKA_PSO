@@ -361,7 +361,11 @@ public class Experimentation {
             // List<String> combine_loss_list = List.of("AVG", "TOPK");
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
-            List<String> loss_function_list = List.of("CROSS_ENTROPY", "CROSS_ENTROPY");
+            // List<String> loss_function_list = List.of("CROSS_ENTROPY", "CROSS_ENTROPY");
+            // List<String> combine_loss_list = List.of("AVG", "AVG");
+            // List<String> regularizer_list = List.of("NONE", "NONE");
+
+            List<String> loss_function_list = List.of("MAE", "CROSS_ENTROPY");
             List<String> combine_loss_list = List.of("AVG", "AVG");
             List<String> regularizer_list = List.of("NONE", "NONE");
 

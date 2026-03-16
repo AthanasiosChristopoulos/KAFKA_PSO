@@ -541,7 +541,8 @@ public class BatchPrediction {
 
         } else {
 
-            if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
+            // if(!LOSS_FUNCTION.equals("CROSS_ENTROPY") || true) {
+            if(true) {
                 // System.out.println("NUM_CLASSES: " + outDim);
             
                 argMax = logits_probs.argMax(1);   // max probability => this is what we are deciding
