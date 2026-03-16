@@ -348,7 +348,7 @@ public void onAllWorkersReported() {
     // only accuracies
     System.out.println(evaluation_count + 
                 ") time: " + lastActivitySeconds + ", bestAccuracy: " + control.getBestGlobalModelAccuracy() + 
-                ", accuracy: " + accuracy + 
+                ", accuracy: " + accuracy + ", loss: " + loss + 
                 ", bestTrainingAccuracy: " + control.getBestTrainingAccuracy() +
                 ", noImprovementRounds: " + roundsWithoutImprovement);
 

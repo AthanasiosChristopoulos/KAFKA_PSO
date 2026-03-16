@@ -16,10 +16,9 @@
 # 2 Motivation
 
 # 3 Related Work
-Το Related Work είναι πιο γενικής φύσης, αλλά συνήθως περιλαμβάνει papers που κάνεις cite στη δουλειά. 
 	Papers που κάνουν παρόμοια δουλεια με αυτην (biger picture δουλεια - το distributed PSO)
 	Papers που λύνουν μέρος του προβλήματος
-	Papers που είναι βάση για τη δουλειά σου
+	Papers που είναι βάση για της δουλειά
 ## 3.1 PSO Basics
 ## 3.2 PSO in Neural Learning
 ## 3.3 Hybrid PSO-SGD training
@@ -91,7 +90,6 @@
 ### 7.6.2 Hinge Loss
 ### 7.6.3 Top-k Mean Absolute Error
 ### 7.6.4 Sorted L_1 Penalized Estimator Regularization
-## 7.7 Misc
 
 # 8 Experimental Evaluation
 ## 8.1 Experimental Setup

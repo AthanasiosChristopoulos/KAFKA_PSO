@@ -9,6 +9,7 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import org.nd4j.linalg.api.ops.impl.layers.convolution.config.Conv2DConfig;
 import org.nd4j.linalg.api.ops.impl.layers.convolution.Upsampling2d;
 
+import dl4j_models.Dl4jParamUtils;
 import dl4j_models.PsoModel;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class BatchPrediction {
     float[] probabilities;
 
     private final boolean coordinator;
-
+    private PsoModel coordinatorModel;
     private transient MemoryWorkspace inferenceWsObj;
     private transient String wsName;
 
@@ -115,7 +116,7 @@ public class BatchPrediction {
     public BatchPrediction(PsoModel model, PsoModel bestModel, CustomLogger logger) {
 
         this.ws = null;
-
+        this.coordinatorModel = model;
         this.MODEL_IS_CNN = model.isCnn();
         this.logger = logger;
         this.EXPECTED_SIZE = 500;
@@ -631,26 +632,56 @@ public class BatchPrediction {
         }
 
         // Regularization Cost =======================================================
-    
-        if (!this.coordinator) {
+        if (!"NONE".equals(cfg.REGULARIZER)) {
 
-            if ("L2".equals(cfg.REGULARIZER)) {
-                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.l2Penalty(ws.flatModel));
+            if (!this.coordinator) {    // the regularization cost only is taking into account on the worker
 
-            } else if ("GROUP_LASSO".equals(cfg.REGULARIZER) && argument_model.asMultiLayerNetwork() != null) {
-                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.groupLassoNeuronPenalty(argument_model.asMultiLayerNetwork(), true));
+                if ("L2".equals(cfg.REGULARIZER)) {
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.l2Penalty(ws.flatModel));
 
-            }  else if ("SLOPE".equals(cfg.REGULARIZER)) {
+                } else if ("GROUP_LASSO".equals(cfg.REGULARIZER) && argument_model.asMultiLayerNetwork() != null) {
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.groupLassoNeuronPenalty(argument_model.asMultiLayerNetwork(), true));
 
-                if (slopeLambdas == null || slopeLambdas.length != ws.flatModel.length) {
-                    slopeLambdas = LossFunction.makeSlopeLambdasGeometric(ws.flatModel.length,
-                        1e-3f,0.995f);  // 0.995f means a slow decay, but it must be smaller than 1
+                }  else if ("SLOPE".equals(cfg.REGULARIZER)) {
+
+                    if (slopeLambdas == null || slopeLambdas.length != ws.flatModel.length) {
+                        slopeLambdas = LossFunction.makeSlopeLambdasGeometric(ws.flatModel.length,
+                            1e-2f, 0.995f);  // 0.995f means a slow decay, but it must be smaller than 1
+
+                        // makeSlopeLambdasGeometric(int d, float lambda1, float alpha)
+                    }
+
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.slopePenalty(ws.flatModel, slopeLambdas));
+                
+                } else if ("NONE".equals(cfg.REGULARIZER)) {
+                    // no weight penalties applied
                 }
 
-                loss += (float) (cfg.LAMBDA_VALUE * LossFunction.slopePenalty(ws.flatModel, slopeLambdas));
-            
-            } else if ("NONE".equals(cfg.REGULARIZER)) {
-                // no weight penalties applied
+
+            } else {
+
+                float[] flatCoordinatorModel = Dl4jParamUtils.modelToFlatList(this.coordinatorModel);
+
+                if ("L2".equals(cfg.REGULARIZER)) {
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.l2Penalty(flatCoordinatorModel));
+
+                } else if ("GROUP_LASSO".equals(cfg.REGULARIZER) && argument_model.asMultiLayerNetwork() != null) {
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.groupLassoNeuronPenalty(argument_model.asMultiLayerNetwork(), true));
+
+                }  else if ("SLOPE".equals(cfg.REGULARIZER)) {
+
+                    if (slopeLambdas == null || slopeLambdas.length != flatCoordinatorModel.length) {
+                        slopeLambdas = LossFunction.makeSlopeLambdasGeometric(flatCoordinatorModel.length,
+                            1e-2f, 0.995f);  // 0.995f means a slow decay, but it must be smaller than 1
+
+                        // makeSlopeLambdasGeometric(int d, float lambda1, float alpha)
+                    }
+
+                    loss += (float) (cfg.LAMBDA_VALUE * LossFunction.slopePenalty(flatCoordinatorModel, slopeLambdas));
+                
+                } else if ("NONE".equals(cfg.REGULARIZER)) {
+                    // no weight penalties applied
+                }
             }
         }
 

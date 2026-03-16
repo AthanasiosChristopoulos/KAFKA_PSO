@@ -385,9 +385,9 @@ public class Experimentation {
             // List<String> combine_loss_list = List.of("AVG", "TOP_K");
             // List<String> regularizer_list = List.of("NONE", "NONE");
 
-            List<String> loss_function_list = List.of("MAE");
-            List<String> combine_loss_list = List.of("TOP_K");
-            List<String> regularizer_list = List.of("NONE");
+            // List<String> loss_function_list = List.of("MAE");
+            // List<String> combine_loss_list = List.of("TOP_K");
+            // List<String> regularizer_list = List.of("NONE");
 
             // List<String> loss_function_list = List.of("CROSS_ENTROPY", "HINGE");
             // List<String> combine_loss_list = List.of("AVG", "AVG");
@@ -396,6 +396,10 @@ public class Experimentation {
             // List<String> loss_function_list = List.of("HINGE");
             // List<String> combine_loss_list = List.of("AVG");
             // List<String> regularizer_list = List.of("NONE");
+
+            List<String> loss_function_list = List.of("CROSS_ENTROPY");
+            List<String> combine_loss_list = List.of("AVG");
+            List<String> regularizer_list = List.of("SLOPE");
 
             ExperimentResult r = null;
             try (BufferedWriter w = Files.newBufferedWriter(
