@@ -365,6 +365,8 @@ def main():
         else:
             ymin, ymax = 0, max(ys_plot)
             plt.ylim(ymin, ymax * 1.15)
+            upper = ymax * 1.15 if ymax > 0 else 1
+            plt.yticks(np.linspace(0, upper, 11))
             
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)

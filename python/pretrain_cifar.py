@@ -1190,7 +1190,7 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
             name_h5_file = "cifar100_pretrained_base"
             
         case "v4_cifar100":
-
+            # 352/352 - 3s - loss: 1.2441 - accuracy: 0.6519 - val_loss: 2.1159 - val_accuracy: 0.4664 - lr: 2.5000e-04 - 3s/epoch - 8ms/step
             model = build_cifar_base_v4(input_shape=input_shape, num_classes=100)
             name_h5_file = "cifar100_pretrained_base_v4"
               

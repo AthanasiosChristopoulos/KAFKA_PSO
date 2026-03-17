@@ -278,6 +278,8 @@ def process_one_csv(csv_path: Path):
         else:
             ymin, ymax = 0, max(ys_plot)
             plt.ylim(ymin, ymax * 1.15)
+            upper = ymax * 1.15 if ymax > 0 else 1
+            plt.yticks(np.linspace(0, upper, 11))
 
         plt.xlabel(plot_xlabel)
         plt.ylabel(ylabel)
@@ -386,7 +388,8 @@ def main():
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
     # csv_dir = Path(f"../java/exp_dataset/fully_informed_vs_classical/mnist/help")
     # csv_dir = Path(f"../java/exp_dataset/dimensionality/pendigits/help")
-    csv_dir = Path(f"../java/exp_dataset")
+    # csv_dir = Path(f"../java/exp_dataset")
+    csv_dir = Path(f"../java/exp_dataset_heavy")
     
     if args.delete:
         delete_pngs(csv_dir)

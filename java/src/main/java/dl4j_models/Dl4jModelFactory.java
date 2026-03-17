@@ -453,7 +453,8 @@ public class Dl4jModelFactory {
 					case 19 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v7_half.h5";	
 						// cifar5-half => 0.8
 					case 20 -> filename = "../python/pretrained_model/cifar100_pretrained_base_v4.h5";	
-
+						// cifar100 to cifar5_half: 63% accuracy
+						
 					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 				}
 
