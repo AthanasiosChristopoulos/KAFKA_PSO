@@ -21,6 +21,9 @@ pwd
 
 # Dont use it, it will destroy kafka, because kafka is a fragile little bitch
 # pkill -9 -u achristopoulos -f java 
+# -9 → Force kill (SIGKILL)
+pkill -u achristopoulos -f java 
+
 
 # Run instead: 
 ps -ef | grep -i kafka | grep -v grep
@@ -111,6 +114,8 @@ kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weig
 watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
 htop
 htop -u achristopoulos
+# F4 and then search for Java
+ps -u achristopoulos | grep java
 ```
 
 ## Sync: =====================================================================

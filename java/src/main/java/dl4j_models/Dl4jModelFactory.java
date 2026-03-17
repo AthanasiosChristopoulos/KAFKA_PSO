@@ -409,7 +409,7 @@ public class Dl4jModelFactory {
 
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 20;
+				int version = 16;
 				String filename;
 				
 				if(version == 4 || version == 5) {
@@ -3315,7 +3315,7 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model);
 	}
 
-	// ======================================================================================================================
+	// ===============================================================================
 	// Bank Dataset Model Architecture 
 
 	public static PsoModel createBankModel(int workerId) {
