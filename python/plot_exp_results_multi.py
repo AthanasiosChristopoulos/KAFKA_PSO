@@ -35,6 +35,8 @@ BAR_COMPATIBLE_MODES = {
 MODE_COLORS = {
     "N_WORKERS": "tab:orange",
     "FILTER_STRENGTH": "firebrick",
+    "TOPOLOGY": "khaki",
+    "LOSS_FUNCTIONS": "tab:green"
 }
 
 # ============================================================================================
@@ -443,10 +445,9 @@ def main():
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
 
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
-    # csv_dir = Path(f"../java/exp_dataset/fully_informed_vs_classical/mnist/help")
-    # csv_dir = Path(f"../java/exp_dataset/dimensionality/pendigits/help")
-    # csv_dir = Path(f"../java/exp_dataset")
-    csv_dir = Path(f"../java/exp_dataset_heavy")
+
+    csv_dir = Path(f"../java/exp_dataset")
+    # csv_dir = Path(f"../java/exp_dataset_heavy")
     
     if args.delete:
         delete_pngs(csv_dir)

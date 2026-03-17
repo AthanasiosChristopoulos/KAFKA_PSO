@@ -32,9 +32,12 @@ BAR_COMPATIBLE_MODES = {
 # "tomato"       # slightly reddish orange
 # "darkorange"   # deeper orange
 # "khaki"  
+
 MODE_COLORS = {
     "N_WORKERS": "tab:orange",
     "FILTER_STRENGTH": "firebrick",
+    "TOPOLOGY": "khaki",
+    "LOSS_FUNCTIONS": "tab:green"
 }
 
 # ============================================================================================
