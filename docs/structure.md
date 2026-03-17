@@ -3,12 +3,31 @@
 
 # Table of Contents
 
-	=> how is this overal field relevant in todays world
-	=> what is the point of this specific solution
+# 1 Introduction
+	=> how is this overal field relevant in todays world => Broad context / global trend	
+		=> Give 2–4 concrete domains where the problem appears
+	=> Explain why the problem is difficult
+	=> Briefly mention existing frameworks / technologies, 
+		=> and why this doesnt solve the problem completely are
+	=> Introduce your system / method
+
 	=> what does this work contribute
 
-# 1 Introduction
-## 1.1 Problem Context and Relevance
+	- Broad context / global trend
+
+Context
+	Big Data / ML / distributed systems trend
+	Why current approaches struggle
+
+Existing technologies
+	Kafka, Spark, etc.
+
+Research gap
+	What is missing
+
+This thesis
+	What you propose
+
 ## 1.2 Motivation
 ### 1.2.1 Why Particle Swarm Optimization (PSO)
 ### 1.2.2 Why Federated / Distributed Processing Environment
