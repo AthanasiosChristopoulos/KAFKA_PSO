@@ -8,7 +8,7 @@ import numpy as np
 from io import StringIO
 
 load_dotenv("../java/.env")
-
+MAX_POINTS = 200
 # ============================================================================================
 
 def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
@@ -63,8 +63,6 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
 def plot_loss_functions_experiments(csv_path: Path, outdir: Path):
     experiments = parse_loss_functions_csv(csv_path)
     saved = []
-
-    MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
 
     for df, meta in experiments:
         if "MONITORING_ITER" not in df.columns or "ACCURACY" not in df.columns:
@@ -330,11 +328,11 @@ def main():
         # ===========================================================================================
     
         if mode == "MONITORING_ITERATIONS":
-            
-            MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
 
             plot_df = df.loc[mask, [xcol, ycol]].copy()
-            plot_df = plot_df.sort_values(xcol)
+            plot_df[xcol] = pd.to_numeric(plot_df[xcol], errors="coerce")
+            plot_df[ycol] = pd.to_numeric(plot_df[ycol], errors="coerce")
+            plot_df = plot_df.dropna(subset=[xcol, ycol]).sort_values(xcol)
             plot_df = downsample_df(plot_df, MAX_POINTS)
 
             xs_plot = plot_df[xcol].tolist()
@@ -420,7 +418,6 @@ def main():
             plot_df["ACCURACY"] = pd.to_numeric(plot_df["ACCURACY"], errors="coerce")
             plot_df = plot_df.dropna(subset=[time_xcol, "ACCURACY"]).sort_values(time_xcol)
 
-            MAX_POINTS = int(os.getenv("MAX_PLOT_POINTS", "1000"))
             plot_df = downsample_df(plot_df, MAX_POINTS)
 
             xs_plot = plot_df[time_xcol].tolist()

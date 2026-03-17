@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import numpy as np
 
 load_dotenv("../java/.env")
+MAX_POINTS = 200
 
 # ============================================================================================
 # Filename -> plotting config
@@ -247,7 +248,7 @@ def process_one_csv(csv_path: Path):
         ys_plot = ys.loc[mask].tolist()
 
         if mode == "MONITORING_ITERATIONS":
-            max_points = int(os.getenv("MAX_PLOT_POINTS", "1000"))
+            max_points = MAX_POINTS
             plot_df = df.loc[mask, [plot_xcol, ycol]].copy()
             plot_df[plot_xcol] = pd.to_numeric(plot_df[plot_xcol], errors="coerce")
             plot_df[ycol] = pd.to_numeric(plot_df[ycol], errors="coerce")
