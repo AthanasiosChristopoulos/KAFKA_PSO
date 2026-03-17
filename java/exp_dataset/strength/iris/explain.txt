@@ -1,3 +1,0 @@
-This is because in 2 and 3 we didnt get enough monitoring
-    => iris already has few updates => Few monitoring
-Thats whty we need to be careful with lowering monitoring
