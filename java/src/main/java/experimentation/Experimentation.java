@@ -29,7 +29,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING\n";
+                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING,HEAVY\n";
 
     // ========================================================================
 
@@ -475,17 +475,17 @@ public class Experimentation {
             Path csvPath = dir.resolve("results_strength.csv");
 
             // =====================================================================
-            // var strengths = List.of(
-            //     FilterStrength.Level.OFF,
-            //     FilterStrength.Level.EASY,
-            //     FilterStrength.Level.MEDIUM,
-            //     FilterStrength.Level.HARD
-            // );
-            
             var strengths = List.of(
                 FilterStrength.Level.OFF,
-                FilterStrength.Level.EASY
+                FilterStrength.Level.EASY,
+                FilterStrength.Level.MEDIUM,
+                FilterStrength.Level.HARD
             );
+            
+            // var strengths = List.of(
+            //     FilterStrength.Level.OFF,
+            //     FilterStrength.Level.EASY
+            // );
 
             // var strengths = List.of(
             //     FilterStrength.Level.OFF
@@ -778,7 +778,8 @@ public class Experimentation {
                 cfg.MONITORING_THRESHOLD_MAX,
                 cfg.DATASET_PARTITIONING,
                 cfg.ENABLE_NEIGHBORHOODS,
-                cfg.EARLY_STOPPING
+                cfg.EARLY_STOPPING,
+                cfg.HEAVY_SAMPLES
             ));
 
         } catch(Exception e) {

@@ -124,6 +124,7 @@ public class Config {
     public boolean EVALUATE_PRETRAINED;
     public int MODEL_VERSION;
 
+    public boolean HEAVY_SAMPLES;
     public Dotenv dotenv;
 
     //=============================================================================================================
@@ -149,12 +150,13 @@ public class Config {
         
         NUM_SAMPLES = 400000;
         N_BATCHES = Integer.parseInt(getenv(dotenv, "N_BATCHES", "30"));
+        HEAVY_SAMPLES = Boolean.parseBoolean(getenv(dotenv, "HEAVY_SAMPLES", "false"));
 
         if("iris".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_IRIS", "4"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
             N_BATCHES = 1;
-        
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 10;
         } else if("wine".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
@@ -162,10 +164,12 @@ public class Config {
         } else if("mnist".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST", "10"));
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 3;
 
         } else if("mnist5".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_MNIST5", "784"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_MNIST5", "5"));
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 5;
 
         } else if("fashion-mnist".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_FASHION_MNIST", "784"));
@@ -199,6 +203,7 @@ public class Config {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS", "16"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_PENDIGITS", "10"));
             NUM_SAMPLES = Integer.parseInt(getenv(dotenv, "NUM_SAMPLES_PENDIGITS", "400000"));
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 10;
 
         } else if("pendigits-half".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_PENDIGITS_HALF", "16"));
@@ -208,6 +213,7 @@ public class Config {
         } else if("winequality".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINEQUALITY", "12"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINEQUALITY", "2"));
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 10;
 
         } else if("letter".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_LETTER", "16"));
