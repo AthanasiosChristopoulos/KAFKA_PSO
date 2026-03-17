@@ -113,6 +113,9 @@ htop
 htop -u achristopoulos
 ```
 
+robocopy C:\AAAProjects\KAFKA_PSO_4\java\exp_dataset C:\AAAProjects\diplomatiki\figures\exp_dataset /MIR
+robocopy C:\AAAProjects\KAFKA_PSO_4\java\exp_dataset_heavy C:\AAAProjects\diplomatiki\figures\exp_dataset_heavy /MIR
+
 ## Restore KRaft: =====================================================
 
 ```bash

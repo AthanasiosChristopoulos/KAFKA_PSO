@@ -56,7 +56,7 @@ args = parser.parse_args()
 REPEAT = 1
 if args.repeat:
     REPEAT = 10
-    if(DATASET == "mnist"):
+    if("mnist" in DATASET):
         REPEAT = 3
         
 # ==============================================================================================
@@ -101,7 +101,7 @@ def set_epochs():
         NUMBER_OF_DATA_REPEATS = 7 * REPEAT
 
     if(DATASET == "mnist5"):
-        NUMBER_OF_DATA_REPEATS = 15
+        NUMBER_OF_DATA_REPEATS = 7 * 2 * REPEAT
         
     if(DATASET == "kmnist"):
         NUMBER_OF_DATA_REPEATS = 7
