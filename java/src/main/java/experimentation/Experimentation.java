@@ -475,23 +475,23 @@ public class Experimentation {
             Path csvPath = dir.resolve("results_strength.csv");
 
             // =====================================================================
-            var severities = List.of(
-                FilterStrength.Level.OFF,
-                FilterStrength.Level.EASY,
-                FilterStrength.Level.MEDIUM,
-                FilterStrength.Level.HARD
-            );
-            
-            // var severities = List.of(
+            // var strengths = List.of(
             //     FilterStrength.Level.OFF,
-            //     FilterStrength.Level.EASY
+            //     FilterStrength.Level.EASY,
+            //     FilterStrength.Level.MEDIUM,
+            //     FilterStrength.Level.HARD
             // );
+            
+            var strengths = List.of(
+                FilterStrength.Level.OFF,
+                FilterStrength.Level.EASY
+            );
 
-            // var severities = List.of(
+            // var strengths = List.of(
             //     FilterStrength.Level.OFF
             // );
 
-            // var severities = List.of(
+            // var strengths = List.of(
             //     FilterStrength.Level.EASY
             // );
             // =====================================================================
@@ -504,7 +504,7 @@ public class Experimentation {
             )) {
                 w.write("STRENGTH_CODE,STRENGTH_NAME," + header_1);
 
-                for (FilterStrength.Level level : severities) {
+                for (FilterStrength.Level level : strengths) {
 
                     cfg.refreshConfig();
                     CustomLogger.refreshAll();
