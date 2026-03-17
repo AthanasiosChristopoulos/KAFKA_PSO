@@ -457,6 +457,20 @@ public class BatchPrediction {
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         logits_probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
+        
+        try {
+            logits_probs = argument_model.output(X, false);    // forward pass (GPU critical point)
+            // Nd4j.getExecutioner().commit();
+        } catch (Exception e) {
+            System.err.println("GPU inference failed on worker " + workerId + ": " + e.getMessage());
+            e.printStackTrace();
+
+            // 0) notify coordinator to stop
+            CoordinatorControl.getInstance().requestStop(workerId);
+
+            return null;
+        }        
+            
         // logits_probs = GpuGate.outputExclusive(argument_model, X, workerId);
         // logits_probs = outputWithWorkspace(argument_model, X); 
     
