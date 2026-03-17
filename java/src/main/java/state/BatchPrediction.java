@@ -453,7 +453,7 @@ public class BatchPrediction {
         // Evaluate input shape ========================================================
         // System.out.println("Input shape to model: " + Arrays.toString(X.shape()));
         // System.exit(0);
-        // ==============================================================================================================
+        // ====================================================================================
 
         start = System.nanoTime();                // We only want to evaluate the performance of the forward pass, but this also includes the GPU transfer overhead
         logits_probs = argument_model.output(X, false);    // (nSamples, NUM_CLASSES) or (nSamples, 1) if sigmoid. Here is where the memory transfer happens between CPU and GPU
