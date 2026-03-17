@@ -113,8 +113,14 @@ htop
 htop -u achristopoulos
 ```
 
+## Sync: =====================================================================
+# Windows:
 robocopy C:\AAAProjects\KAFKA_PSO_4\java\exp_dataset C:\AAAProjects\diplomatiki\figures\exp_dataset /MIR
 robocopy C:\AAAProjects\KAFKA_PSO_4\java\exp_dataset_heavy C:\AAAProjects\diplomatiki\figures\exp_dataset_heavy /MIR
+
+# Ubuntu:
+rsync -av --delete /home/ds123f15/Documents/diplomatiki/KAFKA_PSO_4/java/exp_dataset/ /home/ds123f15/Documents/diplomatiki/diplomatiki_latex/diplomatiki/figures/exp_dataset/
+rsync -av --delete /home/ds123f15/Documents/diplomatiki/KAFKA_PSO_4/java/exp_dataset_heavy/ /home/ds123f15/Documents/diplomatiki/diplomatiki_latex/diplomatiki/figures/exp_dataset_heavy/
 
 ## Restore KRaft: =====================================================
 
