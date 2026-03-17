@@ -281,3 +281,25 @@ I need this for topk (this one is per sample)
 https://lightning.ai/docs/torchmetrics/stable/classification/hinge_loss.html?utm_source=chatgpt.com
 
 For multi class hinge loss
+
+
+
+
+## =====================================================================
+## Picture Gathering:
+0)
+https://medium.com/%40minervaaniket/apache-kafka-a-deep-dive-into-its-architecture-and-workflow-510709dff298
+1)
+https://www.instaclustr.com/education/apache-kafka/apache-kafka-architecture-a-complete-guide-2026/
+2)
+https://cloud.ibm.com/docs/EventStreams?topic=EventStreams-apache_kafka
+3)
+https://www.geeksforgeeks.org/apache-kafka/kafka-architecture/
+4)
+https://docs.confluent.io/platform/current/streams/architecture.html#processor-topology
+5)
+https://www.analyticsvidhya.com/blog/2022/08/exploring-partitions-and-consumer-groups-in-apache-kafka/
+6)
+https://developer.confluent.io/courses/kafka-streams/internals/
+8)
+https://www.jasss.org/25/2/8.html
