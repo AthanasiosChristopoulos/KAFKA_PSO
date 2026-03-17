@@ -101,6 +101,24 @@ def export_mobilenet_base_224(save_path="pretrained_model/mobilenet_base_224x224
     print("\nLast 20 layer names (for DL4J setFeatureExtractor / removing vertices):")
     for layer in base_model.layers[-20:]:
         print("  ", layer.name)
+        
+# ============================================================================================
+
+def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=7):
+    
+    if(X_train is not None and y_train is not None):
+        print(
+            "Train shape:", X_train.shape,
+            "classes / y (labels):", (int(y_train.min()), int(y_train.max())),
+            "with counts:", np.bincount(y_train, minlength=n_classes)
+        )
+        
+    if(X_test is not None and y_test is not None):
+        print(
+            "Test shape:", X_test.shape,
+            "classes / y (labels):", (int(y_test.min()), int(y_test.max())),
+            "with counts:", np.bincount(y_test, minlength=n_classes)
+        )
 
 # ============================================================================================
 
@@ -1092,6 +1110,10 @@ def pretrain_stl10_resnet20_and_export(
 def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_classes):
 
     match version:
+        
+        # ====================================================================================
+        # pretrain on cifar10:
+        
         case "v1":
             model = build_cifar_base(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v1"
@@ -1124,6 +1146,17 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
             model = build_cifar_base_v5_3(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = "cifar10_base_plus_head_v5_3"
             
+        case "v6":
+            model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v6"
+            
+        case "v7":
+            model = build_cifar_base_v7(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cifar10_base_plus_head_v7"
+            
+        # ====================================================================================
+        # pretrain on cifar5:
+
         case "v4_cifar5":
             model = build_cifar_base_v4(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = f"cifar5_base_plus_head_v4_{cifar_5_classes}"
@@ -1147,28 +1180,30 @@ def build_model_by_version(version: str, input_shape, num_classes: int, cifar_5_
         case "v6_cifar5":
             model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
             name_h5_file = f"cifar5_base_plus_head_v6_{cifar_5_classes}"
-                              
-        case "v5_cifar100":
-            model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
-            name_h5_file = "cifar100_base_plus_head_v5"
-
-        case "v6":
-            model = build_cifar_base_v6(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar10_base_plus_head_v6"
-            
-        case "v7":
-            model = build_cifar_base_v7(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cifar10_base_plus_head_v7"
-            
-        case "v5_cinic": 
-
-            model = build_cinic_base_v1(input_shape=input_shape, num_classes=num_classes)
-            name_h5_file = "cinic10_base_plus_head_v1"
+        
+        # ====================================================================================
+        # pretrain on cifar100:
 
         case "v1_cifar100":
 
             model = build_cifar_base(input_shape=input_shape, num_classes=100)
             name_h5_file = "cifar100_pretrained_base"
+            
+        case "v4_cifar100":
+
+            model = build_cifar_base_v4(input_shape=input_shape, num_classes=100)
+            name_h5_file = "cifar100_pretrained_base_v4"
+              
+        case "v5_cifar100":
+            model = build_cifar_base_v5(input_shape=input_shape, num_classes=100)
+            name_h5_file = "cifar100_base_plus_head_v5"
+            
+        # ====================================================================================
+        
+        case "v5_cinic": 
+
+            model = build_cinic_base_v1(input_shape=input_shape, num_classes=num_classes)
+            name_h5_file = "cinic10_base_plus_head_v1"
 
         case "v1_tinyimagenet":
             model = build_tinyimagenet_base_v1(input_shape=input_shape, num_classes=200)
@@ -1186,8 +1221,9 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     # version = "v2"
     # version = "v5"
     # version = "v6"
-    version = "v7"
+    # version = "v7"
     # version = "v5_cinic"
+    version = "v4_cifar100"
     # version = "v5_cifar100"
     # version = "v4_cifar5"
     # version = "v5_cifar5"
@@ -1204,7 +1240,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
     
     EPOCHS = 20
     
-    half = True
+    half = False
  
     if "cinic" in version: # ================================================================================
 
@@ -1250,6 +1286,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
 
         if "cifar100" in version: 
             x_train, y_train, x_test, y_test = load_cifar100()
+            evaluate_dataset(x_train, y_train, x_test, y_test, 100)
             num_classes = 100
             
         elif "cifar5" in version:
@@ -1276,7 +1313,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
             verbose=2,
             callbacks=callbacks
         )
-        
+
         test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
         print(f"\nCIFAR-10 test acc: {test_acc:.4f}, loss: {test_loss:.4f}")
 

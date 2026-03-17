@@ -409,7 +409,7 @@ public class Dl4jModelFactory {
 
 			if(cfg.USING_PRETRAINED_MODEL) {
 
-				int version = 16;
+				int version = 20;
 				String filename;
 				
 				if(version == 4 || version == 5) {
@@ -444,6 +444,7 @@ public class Dl4jModelFactory {
 						// 0.6066667 for cifar 10
 						// after training => 81%, for cifar5-half	
 						// pretrained model => 0.334
+						// recommend
 					case 17 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v5_half.h5";	
 						// cifar10-half => 60%, cifar5-half => 86%
 						// Recommended
@@ -451,6 +452,8 @@ public class Dl4jModelFactory {
 						// cifar5-half => 0.74
 					case 19 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v7_half.h5";	
 						// cifar5-half => 0.8
+					case 20 -> filename = "../python/pretrained_model/cifar100_pretrained_base_v4.h5";	
+
 					default -> throw new IllegalArgumentException("Unknown CIFAR pretrained version: " + version);
 				}
 
@@ -458,7 +461,7 @@ public class Dl4jModelFactory {
 					System.out.println("Using model version: " + version);
 
 					switch (version) {
-						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19 -> model = pretrainedModelCIFAR(filename);
+						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20 -> model = pretrainedModelCIFAR(filename);
 						case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 						default -> throw new IllegalStateException("Unknown ???" );
 					}
@@ -466,7 +469,7 @@ public class Dl4jModelFactory {
 				} else {
 
 					switch (version) {
-						case 1, 3, 10, 14, 15, 16 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
+						case 1, 3, 10, 14, 15, 16, 20 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
 						case 7, 13, 17 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 							// cifar 10 trained 75%, cifar 5 optimized 90%
 						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);

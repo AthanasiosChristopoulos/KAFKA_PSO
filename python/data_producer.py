@@ -283,14 +283,14 @@ def shuffle(X, y):
 
 def evaluate_dataset(X_train, y_train, X_test, y_test, n_classes=7):
     
-    if(X_train != None and y_train != None):
+    if(X_train is not None and y_train is not None):
         print(
             "Train shape:", X_train.shape,
             "classes / y (labels):", (int(y_train.min()), int(y_train.max())),
             "with counts:", np.bincount(y_train, minlength=n_classes)
         )
         
-    if(X_test != None and y_test != None):
+    if(X_test is not None and y_test is not None):
         print(
             "Test shape:", X_test.shape,
             "classes / y (labels):", (int(y_test.min()), int(y_test.max())),

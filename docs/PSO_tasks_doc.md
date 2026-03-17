@@ -171,12 +171,12 @@
 
 	## =======================================================================================
 
-	72) Motivation για INDEPENDENT_DATA_PROCESSING
+	72) Motivation για DATASET_PARTITIONING
+		Εξηγησε καλυτερα στην διπλωματικη PARTITIONING vs NOT PARTITIONING
+				- DATASET_PARTITIONING = true vs DATASET_PARTITIONING = false
 
-	ή κανεις replace INDEPENDENT_DATA_PROCESSING με περισσοτερα δεδομενα που τα χρεαιζεσαι either way
+	ή κανεις replace DATASET_PARTITIONING με περισσοτερα δεδομενα που τα χρειαζεσαι either way
 		=> like πηγαινει στο Mnist και καντου * 5
-
-	ή καντο προγραμματιστικα. Οχι * N_WORKERS, αλλα * μια σταθερα: 0 < EPOCHS < N_WORKERS
 	
 	## =======================================================================================
 	
@@ -187,11 +187,6 @@
 	73) Κανε διαγραμματα και για CIFAR10 -> CIFAR5
 		- n_workers
 		- fiter_strength
-
-	## =======================================================================================
-
-	74) Εξηγησε καλυτερα στην διπλωματικη PARTITIONING vs NOT PARTITIONING
-		- DATASET_PARTITIONING = true vs DATASET_PARTITIONING = false
 
 ## =======================================================================================
 
