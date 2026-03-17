@@ -116,6 +116,9 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
 
     private int roundsWithoutImprovement = 0;
 
+    private long start_waiting_for_test = System.nanoTime();
+    private long end_waiting_for_test = System.nanoTime();
+
     // ================================================================================================================
 
     public CoordinatorProcessor(PsoModel globalModel, PsoModel bestGlobalModel, 
@@ -406,6 +409,7 @@ public void onAllWorkersReported() {
     private List<DataMessage> loadAndCacheTestSet(int minRows) {
 
         if (cachedTestSet != null) return cachedTestSet;    // if already cached, just return the cache
+        start_waiting_for_test = System.nanoTime();
 
         if (logger.isEnabled(2)) logger.log("Waiting on loadAndCacheTestSet");
 
@@ -442,7 +446,7 @@ public void onAllWorkersReported() {
         }
 
         cachedTestSet = Collections.unmodifiableList(all);
-
+        end_waiting_for_test = System.nanoTime();
         updateTime();
 
         if (logger.isEnabled(2)) logger.log(taskInstance + ", Timer: " + lastActivitySeconds + 
@@ -542,7 +546,20 @@ public void onAllWorkersReported() {
                 System.out.println("[Coordinator] weightsBuffer empty, skipping final evaluation");
             }
         }   
+        double initialTestLoadMs = (end_waiting_for_test - start_waiting_for_test) / 1_000_000.0;
+        double initialTestLoadSec = (end_waiting_for_test - start_waiting_for_test) / 1_000_000_000.0;
 
+        if (end_waiting_for_test > start_waiting_for_test) {
+            if (logger.isEnabled(2)) {
+                logger.log(taskInstance + ", initial test set wait/load delay: "
+                        + String.format("%.3f ms", initialTestLoadMs)
+                        + " (" + String.format("%.3f s", initialTestLoadSec) + ")");
+            }
+
+            System.out.println("[Coordinator] Initial test set wait/load delay: "
+                    + String.format("%.3f ms", initialTestLoadMs)
+                    + " (" + String.format("%.3f s", initialTestLoadSec) + ")");
+        }
         this.logger.flush();
     }
     //=========================================================================================================================
