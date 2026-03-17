@@ -22,8 +22,11 @@ pwd
 # Dont use it, it will destroy kafka, because kafka is a fragile little bitch
 # pkill -9 -u achristopoulos -f java 
 # -9 → Force kill (SIGKILL)
-pkill -u achristopoulos -f java 
+# -f → Match full command line
 
+pkill -u achristopoulos -f java   # is gracefull
+pgrep -u achristopoulos -f java -a # find maven process
+kill -9 <pid> # of the maven process
 
 # Run instead: 
 ps -ef | grep -i kafka | grep -v grep
