@@ -28,8 +28,15 @@ task at the expense of performance on the target task."
 the new task into the base (copied) features to fine-tune them to the new task, or the transferred
 feature layers can be left frozen, meaning that they do not change during training on the new task."
 
+"In order to compare transfer performance between tasks A and B such that A and B are as semanti-
+cally dissimilar as possible, we sought to find two disjoint subsets of the 1000 classes in ImageNet
+that were as unrelated as possible. "
+	=> same dataset, split into disjoint subsets, train → reuse → adapt
+"dataset A containing only man-made entities and B containing natural entities"
+"“the first n layers are copied from a network trained on one dataset”"
 
 ## ====================================================================
+
 4)
 Parisi et al., 2019, Continual Lifelong Learning with Neural Networks: A Review
 	=> This supports sequential learning from new datasets.
@@ -41,6 +48,11 @@ Quotes:
 "Lifelong learning represents a long-standing challenge for machine learning and neural network sys-
 tems (Hassabis et al. 2017, French 1999). This is due to the tendency of learning models to catas-
 trophically forget existing knowledge when learning from novel observations"
+
+A system that:
+	learns multiple tasks sequentially
+	from a continuous stream of data without forgetting previous tasks
+	=> fix catastrophic forgetting problem	
 
 ## ====================================================================
 5)
