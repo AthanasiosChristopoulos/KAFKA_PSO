@@ -127,6 +127,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float LOSS_THRESHOLD_MIN = cfg.LOSS_THRESHOLD_MIN;     // e.g. 0.005f (0.5%)
     private float loss_threshold;
 
+    
     // ====================================================================================================================
     
     public WorkerTransformer(int workerId, long t0, AtomicLong t_actually_started, AtomicLong t1, WorkerStatic ws) {
@@ -733,8 +734,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         boolean shouldSendMonitoring = (FILTER_ENABLED  && ws.batchesRead >= monitoring_threshold) || 
             (!FILTER_ENABLED && ws.batchesRead >= N_BATCHES);
 
-        if (shouldSendMonitoring) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
-
+        if (shouldSendMonitoring || ws.monitoring_iterations_shift) {   // doesnt matter which partition sends localWeights message thats why ws.batchesRead 
+            ws.monitoring_iterations_shift = false;
             if (logger.isEnabled(1)) logger.log(taskInstance + 
                 ", Sending current weights ...");
 

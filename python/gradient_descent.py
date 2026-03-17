@@ -297,6 +297,27 @@ def build_susy_model(input_dim=18):
 
 # ===============================================================================
 
+    def build_susy_model(input_dim=18):
+
+        model = models.Sequential()
+        model.add(layers.Dense(128, activation='relu', input_shape=(input_dim,)))        
+        model.add(layers.Dropout(0.025))
+        model.add(layers.Dense(128, activation='relu'))
+        model.add(layers.Dropout(0.025))
+        model.add(layers.Dense(128, activation='relu'))
+        model.add(layers.Dropout(0.025))
+        model.add(layers.Dense(1, activation='sigmoid'))
+
+        model.compile(optimizer='rmsprop', 
+                    loss = 'binary_crossentropy', 
+                    metrics = ['accuracy',tf.keras.metrics.AUC()])
+
+        model.summary()
+
+        return model
+
+# ===============================================================================
+
 def run_susy():                                                                                 
     
     # X_train, y_train, X_test, y_test, class_names = load_susy_data(max_rows=5000000, train_size=4000000, path="../data/SUSY.csv")
@@ -319,7 +340,7 @@ def run_susy():
     #     ),
     # ]
     
-    history = model.fit(X_train, y_train, validation_split=0.1, epochs=3,  batch_size=4096, verbose=2, 
+    history = model.fit(X_train, y_train, validation_split=0.1, epochs=6,  batch_size=4096, verbose=2, 
                         # callbacks=callbacks, 
                         shuffle=True)
 

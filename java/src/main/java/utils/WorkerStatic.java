@@ -102,6 +102,8 @@ public final class WorkerStatic {
 
     public long t = 0;
 
+    public boolean monitoring_iterations_shift = false;
+
     // ========================================================
 
     public WorkerStatic(int workerId) {
@@ -153,6 +155,10 @@ public final class WorkerStatic {
         if(logger.isEnabled(2)) logger.log("Affinity: " + Nd4j.getAffinityManager().getClass().getName());
         if(logger.isEnabled(2)) logger.log("Params buffer class: " + model.params().data().getClass().getName());
         if(logger.isEnabled(2)) logger.log("Params is on device? " + model.params().isAttached());
+
+        if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
+            monitoring_iterations_shift = false;
+        }
     }
 
     // ===========================================================================

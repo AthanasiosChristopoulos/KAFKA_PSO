@@ -72,7 +72,10 @@ def set_epochs():
 
     if(DATASET == "winequality"):
         NUMBER_OF_DATA_REPEATS = 37 * REPEAT   
-
+        
+    if(DATASET == "susy"):
+        NUMBER_OF_DATA_REPEATS = 1 * REPEAT  
+         
     if(DATASET == "letter"):
         NUMBER_OF_DATA_REPEATS = 20
 
@@ -441,7 +444,7 @@ def load_dataset():
     elif DATASET == "susy":
         
         # data = np.loadtxt("../data/SUSY.csv", delimiter=",", max_rows=80000) # 80000 - 100000
-                                                                             # (5000000, 19), the 19th is the label
+                                                                            # (5000000, 19), the 19th is the label
                                                                             #  5000000
                                                                             #    80000
                                                                             #  3200000

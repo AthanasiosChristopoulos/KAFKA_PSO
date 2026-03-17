@@ -73,7 +73,7 @@ public class Experimentation {
         // =====================================================
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
-            cfg.EARLY_STOPPING = true;
+            cfg.EARLY_STOPPING = false;
             // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
@@ -83,9 +83,9 @@ public class Experimentation {
             // List<Integer> workersList = List.of(2, 12, 24); 
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
-            // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
+            List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20, 24); 
-            List<Integer> workersList = List.of(24); 
+            // List<Integer> workersList = List.of(24); 
 
             // List<Integer> workersList = List.of(1);
             // ========================================================================
@@ -282,7 +282,7 @@ public class Experimentation {
 
         } else if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
 
-            cfg.EARLY_STOPPING = false; 
+            cfg.EARLY_STOPPING = true; 
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_monitoring_iterations.csv");

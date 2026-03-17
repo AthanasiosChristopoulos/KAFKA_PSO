@@ -66,7 +66,8 @@ public class Dl4jModelFactory {
 
 		} else if ("susy".equals(DATASET)) {
 			// model = createSUSYModel_SOFTMAX(workerId);
-			model = createSUSYModel(workerId);
+			// model = createSUSYModel(workerId);
+			model = createDenseModel_1(workerId);
 
 		} else if ("bank".equals(DATASET)) {
 			// model = createBankModel(workerId);

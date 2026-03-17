@@ -107,6 +107,15 @@ public class Worker implements Runnable {
 
     private void runInternal() throws Exception {
 
+        if(cfg.EXPERIMENTATION_MODE.equals("MONITORING_ITERATIONS")) {
+            try{
+                Thread.sleep(10000);
+            } catch(Exception e) {
+                System.out.println("Sleeping didnt work");
+                e.printStackTrace();
+            }
+
+        }
         t_actually_started.set(System.nanoTime());
 
         this.ws = new WorkerStatic(workerId);

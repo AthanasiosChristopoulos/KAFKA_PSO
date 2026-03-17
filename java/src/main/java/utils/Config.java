@@ -182,6 +182,7 @@ public class Config {
         } else if("susy".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_SUSY", "18"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_SUSY", "2"));
+            if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 10;
 
         } else if("bank".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_BANK", "21"));
