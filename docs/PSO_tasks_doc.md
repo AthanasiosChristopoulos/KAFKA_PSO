@@ -157,7 +157,6 @@
 
 	70) Time in iris, winequality and pendigits is too short !
 		=> This doesnt have to affect accuracy only time
-		=> Κανε cook τα .csv συγκεκριμενα στο training time
 		=> Βαλε * 5 στα δεδομενα => μπορεις να το πεις verbally οτι το εκανες
 		=> Βρες αλλο Dataset (iris not enough)
 		=> Σκοπος ειναι να αποδειξουμε οτι αυτο που βλεπουμε δεν ειναι noise! σε 1.5 sec, noise εχει πολυ μεγαλυτερη ισχυη
