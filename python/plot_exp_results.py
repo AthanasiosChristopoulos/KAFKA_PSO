@@ -9,6 +9,43 @@ from io import StringIO
 
 load_dotenv("../java/.env")
 MAX_POINTS = 200
+
+PLOT_STYLE = "bar"     # options: "line", "bar" 
+
+BAR_COMPATIBLE_MODES = {
+    "N_WORKERS",
+    "FILTER_ENABLED",
+    "THRESHOLD",
+    "FILTER_STRENGTH",
+    "FULLY_INFORMED_VS_CLASSICAL",
+    "DIMENSIONALITY",
+    "TOPOLOGY",
+}
+
+# "gold"        # already good (default pick)
+# "goldenrod"   # darker, more muted
+# "darkgoldenrod"
+# "tab:orange",
+# "tab:green",
+# "tab:blue",
+# "coral"        # softer orange
+# "tomato"       # slightly reddish orange
+# "darkorange"   # deeper orange
+# "khaki"  
+MODE_COLORS = {
+    "N_WORKERS": "tab:orange",
+    "FILTER_STRENGTH": "firebrick",
+}
+
+# ============================================================================================
+def get_plot_color(mode: str) -> str | None:
+    return MODE_COLORS.get(mode)
+
+# ============================================================================================
+
+def should_use_bar_plot(mode: str) -> bool:
+    return PLOT_STYLE == "bar" and mode in BAR_COMPATIBLE_MODES
+
 # ============================================================================================
 
 def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
@@ -82,9 +119,11 @@ def plot_loss_functions_experiments(csv_path: Path, outdir: Path):
         safe_loss = loss_function.lower()
         safe_combine = combine_loss.lower()
         safe_regularizer = regularizer.lower()
+        
+        plot_color = get_plot_color(mode)
 
         plt.figure()
-        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
+        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
         plt.ylim(0, 1)
         plt.yticks(np.linspace(0, 1, 11))
         plt.xlabel("MONITORING_ITER")
@@ -338,21 +377,27 @@ def main():
             xs_plot = plot_df[xcol].tolist()
             ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
        
+        plot_color = get_plot_color(mode)
             
         plt.figure()
         
         # ===========================================================================================
         # plot points:
-        
+        use_bar = should_use_bar_plot(mode)
+
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
-            
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
+
+        elif use_bar:
+            positions = np.arange(len(xs_plot))
+            plt.bar(positions, ys_plot, width=0.35, color=plot_color)
+
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
-            plt.plot(positions, ys_plot, marker="o")
-            
+            plt.plot(positions, ys_plot, marker="o", color=plot_color)
+
         else:
-            plt.plot(xs_plot, ys_plot, marker="o")
+            plt.plot(xs_plot, ys_plot, marker="o", color=plot_color)
         
         # plt.margins(y=0.5)
 
@@ -369,8 +414,13 @@ def main():
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.title(title)
-        plt.grid(True)
-        
+        ax = plt.gca()
+        ax.set_axisbelow(True)
+
+        if use_bar:
+            plt.grid(True)
+        else:
+            plt.grid(True)        
         # ===========================================================================================
         # xticks:
         
@@ -383,18 +433,19 @@ def main():
                 tick_idx = range(len(xs_plot))
 
             tick_positions = [xs_plot[i] for i in tick_idx]
-            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]  # <-- rounding
+            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]
 
             plt.xticks(tick_positions, tick_labels, ha="right")
-            
-                
+
+        elif use_bar:
+            plt.xticks(positions, [str(x) for x in xs_plot])
+
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             plt.xticks(positions, xs_plot)
-            
+
         else:
             plt.xticks(xs_plot)
-            # plt.xticks(xs_plot, rotation=30, ha="right")
-        
+            
         # ===========================================================================================
 
         plt.tight_layout()
@@ -422,9 +473,11 @@ def main():
 
             xs_plot = plot_df[time_xcol].tolist()
             ys_plot = plot_df["ACCURACY"].tolist()
+            
+            plot_color = get_plot_color(mode)
 
             plt.figure()
-            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
             plt.xlabel("TIME_SEC")

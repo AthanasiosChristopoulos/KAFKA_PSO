@@ -161,28 +161,6 @@
 		=> Βρες αλλο Dataset (iris not enough)
 		=> Σκοπος ειναι να αποδειξουμε οτι αυτο που βλεπουμε δεν ειναι noise! σε 1.5 sec, noise εχει πολυ μεγαλυτερη ισχυη
 
-	## =======================================================================================
-
-	71) Θα πρεπει για καθε dataset να βλεπεις και να υπολογιζεις διαφορετικα sweet spots:
-		=> 1) n_workers σου δινει n_workers
-		=> 2) strength σου δινει filter strength
-		=> 3) χρησιμοποιεις n_workers και strength για monitoring iterations
-
-	## =======================================================================================
-
-	72) Motivation για DATASET_PARTITIONING
-		Εξηγησε καλυτερα στην διπλωματικη PARTITIONING vs NOT PARTITIONING
-				- DATASET_PARTITIONING = true vs DATASET_PARTITIONING = false
-
-	ή κανεις replace DATASET_PARTITIONING με περισσοτερα δεδομενα που τα χρειαζεσαι either way
-		=> like πηγαινει στο Mnist και καντου * 5
-
-	## =======================================================================================
-
-	73) Κανε διαγραμματα και για CIFAR10 -> CIFAR5
-		- n_workers
-		- fiter_strength
-
 ## =======================================================================================
 
 	Backlog Tasks:

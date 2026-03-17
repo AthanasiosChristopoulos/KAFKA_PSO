@@ -10,6 +10,42 @@ import numpy as np
 load_dotenv("../java/.env")
 MAX_POINTS = 200
 
+PLOT_STYLE = "bar"     # options: "line", "bar" 
+
+BAR_COMPATIBLE_MODES = {
+    "N_WORKERS",
+    "FILTER_ENABLED",
+    "THRESHOLD",
+    "FILTER_STRENGTH",
+    "FULLY_INFORMED_VS_CLASSICAL",
+    "DIMENSIONALITY",
+    "TOPOLOGY",
+}
+
+# "gold"        # already good (default pick)
+# "goldenrod"   # darker, more muted
+# "darkgoldenrod"
+# "tab:orange",
+# "tab:green",
+# "tab:blue",
+# "coral"        # softer orange
+# "tomato"       # slightly reddish orange
+# "darkorange"   # deeper orange
+# "khaki"  
+MODE_COLORS = {
+    "N_WORKERS": "tab:orange",
+    "FILTER_STRENGTH": "firebrick",
+}
+
+# ============================================================================================
+def get_plot_color(mode: str) -> str | None:
+    return MODE_COLORS.get(mode)
+
+# ============================================================================================
+
+def should_use_bar_plot(mode: str) -> bool:
+    return PLOT_STYLE == "bar" and mode in BAR_COMPATIBLE_MODES
+
 # ============================================================================================
 # Filename -> plotting config
 
@@ -197,14 +233,22 @@ def process_one_csv(csv_path: Path):
     if xcol not in df.columns:
         raise KeyError(f"CSV missing x column '{xcol}'. Columns: {list(df.columns)}")
 
-    if mode in {"N_WORKERS", "MODEL_VERSION", "RING_RADIUS", "DIMENSIONALITY", "MONITORING_ITERATIONS"}:
+    if mode in {
+        "N_WORKERS",
+        "THRESHOLD",
+        "FILTER_ENABLED",
+        "FILTER_STRENGTH",
+        "FULLY_INFORMED_VS_CLASSICAL",
+        "DIMENSIONALITY",
+        "MONITORING_ITERATIONS",
+    }:
         df[xcol] = pd.to_numeric(df[xcol], errors="coerce")
         df = df.dropna(subset=[xcol]).sort_values(xcol)
     elif mode == "TOPOLOGY":
         df[xcol] = df[xcol].astype(str)
     else:
-        return
-    
+        raise ValueError(f"Unsupported preprocessing mode: {mode}")
+
     if (
         "TOTAL_MESSAGES_SENT_PBEST" in df.columns
         and "TOTAL_MESSAGES_SENT" in df.columns
@@ -257,18 +301,27 @@ def process_one_csv(csv_path: Path):
 
             xs_plot = plot_df[plot_xcol].tolist()
             ys_plot = plot_df[ycol].tolist()
+            
+        plot_color = get_plot_color(mode)
+        use_bar = should_use_bar_plot(mode)
 
         plt.figure()
+        ax = plt.gca()
+        ax.set_axisbelow(True)
 
         if mode == "MONITORING_ITERATIONS":
-            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3)
+            plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
+
+        elif use_bar:
+            positions = np.arange(len(xs_plot))
+            plt.bar(positions, ys_plot, width=0.35, color=plot_color)
 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             positions = np.arange(len(xs_plot))
-            plt.plot(positions, ys_plot, marker="o")
+            plt.plot(positions, ys_plot, marker="o", color=plot_color)
 
         else:
-            plt.plot(xs_plot, ys_plot, marker="o")
+            plt.plot(xs_plot, ys_plot, marker="o", color=plot_color)
         
         # plt.margins(y=0.25)
        
@@ -296,9 +349,12 @@ def process_one_csv(csv_path: Path):
                 tick_idx = range(len(xs_plot))
 
             tick_positions = [xs_plot[i] for i in tick_idx]
-            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]  # <-- rounding
+            tick_labels = [f"{xs_plot[i]:.1f}" for i in tick_idx]
 
             plt.xticks(tick_positions, tick_labels, ha="right")
+
+        elif use_bar:
+            plt.xticks(positions, [str(x) for x in xs_plot])
 
         elif mode in {"DIMENSIONALITY", "TOPOLOGY"}:
             plt.xticks(positions, xs_plot)
