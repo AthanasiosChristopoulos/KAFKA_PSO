@@ -86,7 +86,7 @@ public class Dl4jModelFactory {
 
 		} else if (DATASET.contains("pendigits")) {
 
-			int version = 2;
+			int version = 1;
 
 			if(cfg.MODEL_VERSION != -1) {
 				version = cfg.MODEL_VERSION;
