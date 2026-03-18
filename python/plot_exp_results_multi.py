@@ -592,8 +592,8 @@ def main():
 
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
 
-    # csv_dir = Path(f"../java/exp_dataset")
-    csv_dir = Path(f"../java/exp_dataset_heavy")
+    csv_dir = Path(f"../java/exp_dataset")
+    # csv_dir = Path(f"../java/exp_dataset_heavy")
     # csv_dir = Path(f"../java/exp_dataset/loss_functions")
     
     if args.delete:
