@@ -222,40 +222,44 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
         lines = [line.strip() for line in f if line.strip()]
 
     current_block = []
-    current_meta = None
 
     for line in lines:
         if line.startswith("MONITORING_ITER,"):
+            # start a new block
             if current_block:
+                # unexpected case: block without trailing metadata
                 df = pd.read_csv(StringIO("\n".join(current_block)))
-                experiments.append((df, current_meta or {}))
+                experiments.append((df, {}))
                 current_block = []
-                current_meta = None
 
             current_block = [line]
 
         elif line.startswith("LOSS_FUNCTION,"):
-            new_meta = {}
+            # metadata belongs to the block we just finished
+            meta = {}
             parts = line.split(",")
 
             for i in range(0, len(parts) - 1, 2):
                 key = parts[i].strip()
                 value = parts[i + 1].strip()
-                new_meta[key] = value
+                meta[key] = value
 
             if current_block:
                 df = pd.read_csv(StringIO("\n".join(current_block)))
-                experiments.append((df, current_meta or {}))
+                experiments.append((df, meta))
                 current_block = []
 
-            current_meta = new_meta
+        elif line.startswith("FILTER_ENABLED,"):
+            # end of experiment blocks; ignore summary table
+            break
 
         else:
             current_block.append(line)
 
+    # If file ended without metadata for the last block
     if current_block:
         df = pd.read_csv(StringIO("\n".join(current_block)))
-        experiments.append((df, current_meta or {}))
+        experiments.append((df, {}))
 
     return experiments
 
@@ -306,27 +310,27 @@ def plot_loss_functions_experiments(csv_path: Path, outdir: Path, mode: str):
         plt.close()
         saved.append(outpath)
 
-        # Accuracy vs Time
-        plot_df = df[["TIME_SEC", "ACCURACY"]].sort_values("TIME_SEC")
-        plot_df = downsample_df(plot_df, MAX_POINTS)
+        # # Accuracy vs Time
+        # plot_df = df[["TIME_SEC", "ACCURACY"]].sort_values("TIME_SEC")
+        # plot_df = downsample_df(plot_df, MAX_POINTS)
 
-        xs_plot = plot_df["TIME_SEC"].tolist()
-        ys_plot = plot_df["ACCURACY"].tolist()
+        # xs_plot = plot_df["TIME_SEC"].tolist()
+        # ys_plot = plot_df["ACCURACY"].tolist()
 
-        plt.figure()
-        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
-        plt.ylim(0, 1)
-        plt.yticks(np.linspace(0, 1, 11))
-        plt.xlabel("TIME_SEC")
-        plt.ylabel("ACCURACY")
-        plt.title(f"{loss_function} - {combine_loss} - {regularizer} (vs Time)")
-        plt.grid(True)
-        plt.tight_layout()
+        # plt.figure()
+        # plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
+        # plt.ylim(0, 1)
+        # plt.yticks(np.linspace(0, 1, 11))
+        # plt.xlabel("TIME_SEC")
+        # plt.ylabel("ACCURACY")
+        # plt.title(f"{loss_function} - {combine_loss} - {regularizer} (vs Time)")
+        # plt.grid(True)
+        # plt.tight_layout()
 
-        outpath = outdir / f"{csv_path.stem}_accuracy_vs_time_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
-        plt.savefig(outpath, dpi=200, bbox_inches="tight")
-        plt.close()
-        saved.append(outpath)
+        # outpath = outdir / f"{csv_path.stem}_accuracy_vs_time_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
+        # plt.savefig(outpath, dpi=200, bbox_inches="tight")
+        # plt.close()
+        # saved.append(outpath)
 
     return saved
 
@@ -589,8 +593,8 @@ def main():
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
 
     # csv_dir = Path(f"../java/exp_dataset")
-    # csv_dir = Path(f"../java/exp_dataset_heavy")
-    csv_dir = Path(f"../java/exp_dataset/loss_functions")
+    csv_dir = Path(f"../java/exp_dataset_heavy")
+    # csv_dir = Path(f"../java/exp_dataset/loss_functions")
     
     if args.delete:
         delete_pngs(csv_dir)
