@@ -243,11 +243,11 @@ Quotes:
 “Generate an initial population of M networks.”
 
 ## ====================================================================
-13)
+13) Kashyap
 A Study of Hybrid and Evolutionary Metaheuristics for Single Hidden Layer Feedforward Neural Network Architecture
 
 Quotes:
-“This study presents a population-based metaheuristic framework for training ANNs… framing the training objective as a high-dimensional nonlinear optimization problem.”
+“This study presents a population-based metaheuristic framework for training ANNs … framing the training objective as a high-dimensional nonlinear optimization problem.”
 “the trainable parameters of the ANN—consisting of weights and biases—are components of a high-dimensional vector.”
 “This study employs a single hidden layer feedforward neural network architecture.”
 

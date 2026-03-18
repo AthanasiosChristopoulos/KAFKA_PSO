@@ -94,7 +94,7 @@
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
-	
+
 		"Self Transfer Learning":
 		- Not transfer learning (by definition means transfering from task 1 to task 2)
 		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen
@@ -139,7 +139,7 @@
 	# ========================================================================================
 
 	60) Write dimplomatiki
-		- κανε introductory κεφαλαια
+		- κανε DL4J πραγματα ... explain more about it
 
 	## =======================================================================================
 
@@ -161,6 +161,14 @@
 	75) You obviously didnt read all these papers ...
 		=> clean them up
 
+	# ========================================================================================
+	++) If more work is necessary:
+		- Better / more complex filters
+		- Better Non Differentiable functions
+		- Use of PSO techniques for better accuracy
+		- Better solution than cifar or mnist transfer learning
+		- Better starter datasets
+		- Better Kafka Architecture 
 		
 ## =======================================================================================
 

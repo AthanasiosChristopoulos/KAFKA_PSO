@@ -10,6 +10,8 @@
 	=> Briefly mention existing frameworks / technologies, 
 		=> and why this doesnt solve the problem completely are
 	=> Introduce your system / method
+		=> Introduce
+		=> Say the main features and what it has to do with the above
 
 	=> what does this work contribute
 
