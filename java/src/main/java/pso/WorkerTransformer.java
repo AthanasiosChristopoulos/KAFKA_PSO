@@ -550,8 +550,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             if (logger.isEnabled(2)) logger.log(taskInstance + ", Starting at -> " + 
                             "Offset: " + context.offset() + ", Partition: " + context.partition() +
                             ", Topic: " + context.topic());
-            if (logger.isEnabled(2)) logger.log(taskInstance + 
-                    ", Sample DataMessage: " + value.toStringFull());
+            // if (logger.isEnabled(2)) logger.log(taskInstance + 
+            //         ", Sample DataMessage: " + value.toStringFull());
 
             logger.log("Starting Delay: " + (System.nanoTime() - this.t0) / 1_000_000_000.0);
 

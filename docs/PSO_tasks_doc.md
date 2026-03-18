@@ -142,24 +142,20 @@
 
 	## =======================================================================================
 
-	65) Non differentiable Functions, with requirements:
+	65) Find better Non differentiable Functions, with requirements:
 		- 1) Continious, but non differentiable
 		- 2) Πρεπει να εχουν χρησιμοποιηθει σε καποιο γνωστο / οχι οτι να ναι venue (χώρος δημοσίευσης)
 		- 3) Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
 	## =======================================================================================
 
-	69) Prediction Models:
-		- Θα υλοποιησεις το Linear Growth και θα δεις αυξηση στο communication και θα πεις static ειναι καλυτερο
+	69) Prediction Models: Best one is Static
 		
 	## =======================================================================================
 	## New Tasks
 
-	70) Time in iris, winequality and pendigits is too short !
-		=> This doesnt have to affect accuracy only time
-		=> Βαλε * 5 στα δεδομενα => μπορεις να το πεις verbally οτι το εκανες
-		=> Βρες αλλο Dataset (iris not enough)
-		=> Σκοπος ειναι να αποδειξουμε οτι αυτο που βλεπουμε δεν ειναι noise! σε 1.5 sec, noise εχει πολυ μεγαλυτερη ισχυη
+	70) Winequality and SUSY replacements ?
+		=> Βρες αλλο Dataset	
 
 	75) You obviously didnt read all these papers ...
 		=> clean them up

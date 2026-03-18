@@ -157,6 +157,7 @@ public class Config {
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_IRIS", "3"));
             N_BATCHES = 1;
             if(HEAVY_SAMPLES) NUM_SAMPLES = NUM_SAMPLES * 10;
+            
         } else if("wine".equals(DATASET)) {
             NUM_FEATURES = Integer.parseInt(getenv(dotenv, "NUM_FEATURES_WINE", "13"));
             NUM_CLASSES = Integer.parseInt(getenv(dotenv, "NUM_CLASSES_WINE", "3"));
