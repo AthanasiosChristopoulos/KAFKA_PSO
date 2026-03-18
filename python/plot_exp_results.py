@@ -100,7 +100,7 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
 
 # ============================================================================================
 
-def plot_loss_functions_experiments(csv_path: Path, outdir: Path):
+def plot_loss_functions_experiments(csv_path: Path, outdir: Path, mode):
     experiments = parse_loss_functions_csv(csv_path)
     saved = []
 
@@ -175,6 +175,7 @@ def downsample_df(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
 def main():
         
     mode = os.getenv("EXPERIMENTATION_MODE", "").strip()
+    print(mode)
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
     csv_dir = f"../java/{experimentation_dir}"
     
@@ -205,7 +206,7 @@ def main():
         outdir = csv_path.parent
 
         suffix = "loss_functions"
-        saved = plot_loss_functions_experiments(csv_path, outdir)
+        saved = plot_loss_functions_experiments(csv_path, outdir, mode)
 
         print("Mode:", mode)
         print("CSV :", csv_path)

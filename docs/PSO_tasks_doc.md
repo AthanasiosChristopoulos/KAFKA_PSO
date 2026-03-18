@@ -94,6 +94,7 @@
 	# ========================================================================================
 
 	64) More Transfer Learning Experimentation:
+	
 		"Self Transfer Learning":
 		- Not transfer learning (by definition means transfering from task 1 to task 2)
 		- του βαζω ενα ποσοστο των δεδομενων στο pretraining => historic data και μετα τα υπολοιπα που δεν εχει δει => previously unseen

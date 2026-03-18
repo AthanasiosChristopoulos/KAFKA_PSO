@@ -2,6 +2,18 @@
 ## ================================================================================================
 ## Papers I have already downloaded:
 
+Strong sources:
+IEEE
+Springer
+Elsevier
+ACM
+NeurIPS / ICML / ICLR
+
+Medium:
+University journals (like this one)
+
+Bad: No DOI
+
 1)
 Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
 
@@ -282,8 +294,13 @@ https://lightning.ai/docs/torchmetrics/stable/classification/hinge_loss.html?utm
 
 For multi class hinge loss
 
+## =====================================================================
+17)
+DERIVATIVE-FREE OPTIMIZATION FOR CUSTOM LOSSFUNCTIONS
 
-
+"Custom loss functions may be requi-red when dealing with domain-specific objectives, non-traditional evaluationmetrics, or real-world constraints that are difficult to express in a differentiable form."
+"Examples include loss functions that depend on ranking metrics (suchas mean average precision in information retrieval), loss functions involvingdiscrete variables (such as edit distance in text generation), or loss functionsthat integrate external black-box evaluations (such as real-world reinforcementlearning rewards or adversarial robustness measures)"
+"However, in many real-world applications, the use of standard loss functi-ons is insufficient or even inappropriate"
 
 ## =====================================================================
 ## Picture Gathering:
