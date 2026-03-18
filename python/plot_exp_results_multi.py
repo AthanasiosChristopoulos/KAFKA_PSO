@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import numpy as np
+from io import StringIO
 
 load_dotenv("../java/.env")
 MAX_POINTS = 200
@@ -40,6 +41,7 @@ MODE_COLORS = {
 }
 
 # ============================================================================================
+
 def get_plot_color(mode: str) -> str | None:
     return MODE_COLORS.get(mode)
 
@@ -52,6 +54,7 @@ def should_use_bar_plot(mode: str) -> bool:
 # Filename -> plotting config
 
 CSV_CONFIGS = {
+    
     "results_threshold.csv": {
         "mode": "THRESHOLD",
         "xcol": "LOSS_THRESHOLD_DIFF",
@@ -156,6 +159,15 @@ CSV_CONFIGS = {
             ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs TOPOLOGY", "messages"),
         ],
     },
+    "results_loss_functions.csv": {
+        "mode": "LOSS_FUNCTIONS",
+        "xcol": "MONITORING_ITER",
+        "xlabel": "MONITORING_ITER",
+        "suffix": "loss_functions",
+        "plots": [
+            ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy", "MONITORING_ITER", "MONITORING_ITER"),
+        ],
+    },
 }
 
 MODE_TO_FILENAME = {
@@ -203,9 +215,138 @@ def get_csv_config_from_filename(csv_path: Path) -> dict:
 
 # ============================================================================================
 
-def process_one_csv(csv_path: Path):
-    config = get_csv_config_from_filename(csv_path)
+def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
+    experiments = []
 
+    with open(csv_path, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    current_block = []
+    current_meta = None
+
+    for line in lines:
+        if line.startswith("MONITORING_ITER,"):
+            if current_block:
+                df = pd.read_csv(StringIO("\n".join(current_block)))
+                experiments.append((df, current_meta or {}))
+                current_block = []
+                current_meta = None
+
+            current_block = [line]
+
+        elif line.startswith("LOSS_FUNCTION,"):
+            new_meta = {}
+            parts = line.split(",")
+
+            for i in range(0, len(parts) - 1, 2):
+                key = parts[i].strip()
+                value = parts[i + 1].strip()
+                new_meta[key] = value
+
+            if current_block:
+                df = pd.read_csv(StringIO("\n".join(current_block)))
+                experiments.append((df, current_meta or {}))
+                current_block = []
+
+            current_meta = new_meta
+
+        else:
+            current_block.append(line)
+
+    if current_block:
+        df = pd.read_csv(StringIO("\n".join(current_block)))
+        experiments.append((df, current_meta or {}))
+
+    return experiments
+
+# ============================================================================================
+
+def plot_loss_functions_experiments(csv_path: Path, outdir: Path, mode: str):
+    experiments = parse_loss_functions_csv(csv_path)
+    saved = []
+
+    for df, meta in experiments:
+        if "MONITORING_ITER" not in df.columns or "ACCURACY" not in df.columns:
+            continue
+
+        df["MONITORING_ITER"] = pd.to_numeric(df["MONITORING_ITER"], errors="coerce")
+        df["TIME_SEC"] = pd.to_numeric(df["TIME_SEC"], errors="coerce")
+        df["ACCURACY"] = pd.to_numeric(df["ACCURACY"], errors="coerce")
+        df = df.dropna(subset=["MONITORING_ITER", "TIME_SEC", "ACCURACY"])
+
+        loss_function = meta.get("LOSS_FUNCTION", "UNKNOWN")
+        combine_loss = meta.get("COMBINE_LOSS", "UNKNOWN")
+        regularizer = meta.get("REGULARIZER", "UNKNOWN")
+
+        safe_loss = loss_function.lower()
+        safe_combine = combine_loss.lower()
+        safe_regularizer = regularizer.lower()
+
+        # Accuracy vs Monitoring Iteration
+        plot_df = df[["MONITORING_ITER", "ACCURACY"]].sort_values("MONITORING_ITER")
+        plot_df = downsample_df(plot_df, MAX_POINTS)
+
+        xs_plot = plot_df["MONITORING_ITER"].tolist()
+        ys_plot = plot_df["ACCURACY"].tolist()
+
+        plot_color = get_plot_color(mode)
+
+        plt.figure()
+        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
+        plt.ylim(0, 1)
+        plt.yticks(np.linspace(0, 1, 11))
+        plt.xlabel("MONITORING_ITER")
+        plt.ylabel("ACCURACY")
+        plt.title(f"{loss_function} - {combine_loss} - {regularizer}")
+        plt.grid(True)
+        plt.tight_layout()
+
+        outpath = outdir / f"{csv_path.stem}_accuracy_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
+        plt.savefig(outpath, dpi=200, bbox_inches="tight")
+        plt.close()
+        saved.append(outpath)
+
+        # Accuracy vs Time
+        plot_df = df[["TIME_SEC", "ACCURACY"]].sort_values("TIME_SEC")
+        plot_df = downsample_df(plot_df, MAX_POINTS)
+
+        xs_plot = plot_df["TIME_SEC"].tolist()
+        ys_plot = plot_df["ACCURACY"].tolist()
+
+        plt.figure()
+        plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
+        plt.ylim(0, 1)
+        plt.yticks(np.linspace(0, 1, 11))
+        plt.xlabel("TIME_SEC")
+        plt.ylabel("ACCURACY")
+        plt.title(f"{loss_function} - {combine_loss} - {regularizer} (vs Time)")
+        plt.grid(True)
+        plt.tight_layout()
+
+        outpath = outdir / f"{csv_path.stem}_accuracy_vs_time_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
+        plt.savefig(outpath, dpi=200, bbox_inches="tight")
+        plt.close()
+        saved.append(outpath)
+
+    return saved
+
+# ============================================================================================
+
+def process_one_csv(csv_path: Path):
+    
+    config = get_csv_config_from_filename(csv_path)
+    
+    if config["mode"] == "LOSS_FUNCTIONS":
+        outdir = csv_path.parent
+        saved = plot_loss_functions_experiments(csv_path, outdir, config["mode"])
+
+        print(f"[OK] Mode: {config['mode']}")
+        print(f"     CSV : {csv_path}")
+        print("     Saved:")
+        for p in saved:
+            print(f"      - {p}")
+        return
+    
     mode = config["mode"]
     xcol = config["xcol"]
     xlabel = config["xlabel"]
@@ -294,6 +435,7 @@ def process_one_csv(csv_path: Path):
         ys_plot = ys.loc[mask].tolist()
 
         if mode == "MONITORING_ITERATIONS":
+            
             max_points = MAX_POINTS
             plot_df = df.loc[mask, [plot_xcol, ycol]].copy()
             plot_df[plot_xcol] = pd.to_numeric(plot_df[plot_xcol], errors="coerce")
@@ -446,8 +588,9 @@ def main():
 
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
 
-    csv_dir = Path(f"../java/exp_dataset")
+    # csv_dir = Path(f"../java/exp_dataset")
     # csv_dir = Path(f"../java/exp_dataset_heavy")
+    csv_dir = Path(f"../java/exp_dataset/loss_functions")
     
     if args.delete:
         delete_pngs(csv_dir)
