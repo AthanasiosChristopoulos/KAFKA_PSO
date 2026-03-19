@@ -773,7 +773,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 ", monitoring_threshold: " + monitoring_threshold);  
         // * 100 is for the user, just scale it upwards 
                 
-        // =========================================================================================================
+        // ===================================================================================
         // Check Convergence
 
         if(EARLY_STOPPING && checkConvergence(true, false)) {
