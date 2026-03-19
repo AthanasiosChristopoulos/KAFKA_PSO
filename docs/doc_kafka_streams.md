@@ -106,6 +106,8 @@ But when caching is disabled:
 ## ============================================================================
 ## KTable vs GlobalKTable:
 
+A \texttt{GlobalKTable} differs from a standard \texttt{KTable} in that each Kafka Streams application instance maintains a fully replicated local copy of the table by consuming all partitions of the input topic. In contrast, a \texttt{KTable} is partitioned across instances with the same \texttt{application.id}.
+
 Each Kafka Streams Instance must have the same application ID to be considered the same application
 
 A KTable is partitioned across instances of the same Streams application.
@@ -118,7 +120,9 @@ In a GlobalKTable (still performs the same core functionality, but):
     => Every Instance of the application gets all partitions of the topic and keeps a full copy of the table in a local state store.
         => An application (identified by a unique application.id) still keeps a local copy of the GlobalKTable 
         => Each application will build it own State Store / own GlobalKTable
+        => the word “global” means “globally replicated from the topic,” not “one JVM-global singleton shared by everybody”
 
+    => A GlobalKTable is not one shared in-memory table for the whole application. each Kafka Streams instance maintains its own local replica
     => Make every Streams instance consume all partitions of the INPUT_TOPIC into that store.
     => They don’t participate in Kafka Streams task scheduling
         => They dont create a task

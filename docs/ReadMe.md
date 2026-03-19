@@ -1042,6 +1042,25 @@ improve the ability to escape local minima
  
     Protocol 3) Keep Kafka Topology, just filter based on Neighborhood + WorkerId
 
+        pbestStream.to("PBEST_TOPIC_A", Produced.with(Serdes.String(), weightsSerde));
+        pbestStream.to("PBEST_TOPIC_B", Produced.with(Serdes.String(), weightsSerde));
+        pbestStream.to("PBEST_TOPIC_C", Produced.with(Serdes.String(), weightsSerde));
+
+    Protocol 4)
+        - multi PBEST_FOR_WORKER topics:
+            - Produce: N
+            - Send: N * K
+            - Receive: N * K
+
+        - Normal:
+            - Produce: N
+            - Send: N
+            - Receive: N * N
+
+        - With N_WORKERS = 20 and K = 6, then:
+            - Normal: N^2 + N = 420
+            - multi topic: 2 * N * K = 240
+
 More problems:
  - Partition count of a broker is stable   
  - Increasing partitions (manually) is allowed, but it changes (key, partition) mapping for new partitions
@@ -1066,6 +1085,7 @@ Router fanout (targeted)
     Consumed by workers: N * K
 N = 40 => 520 deliveries
 N = 10 => 130 deliveries
+
 ! Problem: Kafka doesn’t “know workerId”; it assigns partitions to consumers:
     - Kafka Streams uses consumer group assignment / protocol → partitions go to whoever is alive, i.e. StreamsPartitionAssignor is used.
     - You cannot do consumer.assign() (manual assignment) inside Kafka Streams. You can in a plain Kafka Consumer. This means a worker cant decide which partitions to subscribe to.

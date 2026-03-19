@@ -170,6 +170,9 @@
 		- Better solution than cifar or mnist transfer learning
 		- Better starter datasets
 		- Better Kafka Architecture => for neighborhoods
+			=> Intoduce N_WORKER topics (called PBEST_FOR_WORKER_0) to the structure and have each worker send to the specific worker topics who will actually listen to them
+			=> have the worker
+
 		
 ## =======================================================================================
 
