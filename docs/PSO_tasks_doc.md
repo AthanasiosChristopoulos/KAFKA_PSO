@@ -162,13 +162,14 @@
 		=> clean them up
 
 	# ========================================================================================
+
 	++) If more work is necessary:
 		- Better / more complex filters
 		- Better Non Differentiable functions
 		- Use of PSO techniques for better accuracy
 		- Better solution than cifar or mnist transfer learning
 		- Better starter datasets
-		- Better Kafka Architecture 
+		- Better Kafka Architecture => for neighborhoods
 		
 ## =======================================================================================
 
