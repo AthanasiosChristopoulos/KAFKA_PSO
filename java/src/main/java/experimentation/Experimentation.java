@@ -579,6 +579,7 @@ public class Experimentation {
                     cfg.FULLY_INFORMED = fully_informed;
                     // cfg.ENABLE_NEIGHBORHOODS = false;
                     cfg.ENABLE_NEIGHBORHOODS = true;
+                    cfg.EARLY_STOPPING = true;
                     cfg.N_WORKERS = 20;
                     cfg.refreshConfig();
 
