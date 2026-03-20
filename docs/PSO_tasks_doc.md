@@ -171,7 +171,8 @@
 		- Better starter datasets
 		- Better Kafka Architecture => for neighborhoods
 			=> Intoduce N_WORKER topics (called PBEST_FOR_WORKER_0) to the structure and have each worker send to the specific worker topics who will actually listen to them
-			=> have the worker
+			=> for number of messages total = sent + received, just calculate reveided (with a + N)
+
 
 		
 ## =======================================================================================
