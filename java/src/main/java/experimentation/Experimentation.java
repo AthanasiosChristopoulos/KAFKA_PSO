@@ -577,8 +577,9 @@ public class Experimentation {
                     CoordinatorControl.getInstance().resetForNewRun(cfg.N_WORKERS);
 
                     cfg.FULLY_INFORMED = fully_informed;
-                    cfg.ENABLE_NEIGHBORHOODS = false;
-                    cfg.N_WORKERS = 10;
+                    // cfg.ENABLE_NEIGHBORHOODS = false;
+                    cfg.ENABLE_NEIGHBORHOODS = true;
+                    cfg.N_WORKERS = 20;
                     cfg.refreshConfig();
 
                     System.out.println("===============================================================================================");

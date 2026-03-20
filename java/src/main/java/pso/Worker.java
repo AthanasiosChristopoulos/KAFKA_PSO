@@ -46,7 +46,6 @@ public class Worker implements Runnable {
     private final String RUN_ID = cfg.RUN_ID;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
-    private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
     public final boolean DATASET_PARTITIONING = cfg.DATASET_PARTITIONING;
 
     private String stateStoreName;
