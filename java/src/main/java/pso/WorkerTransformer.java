@@ -1312,10 +1312,10 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
             
             if (logger.isEnabled(2)) logger.log(taskInstance + 
                     ", average elapsed time Measurements: over " + per_task_count + " batches: " + "\n" +
-                    "=> per batch: " + String.format("%.3f ms", avgMs) + "\n" + 
-                    "=> per updateX: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
-                    "=> per Prediction: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
-                    "   => per forwardPassMs: " + String.format("%.3f ms", avgForwardPassMs) + "\n" + 
+                    "Batch time:  " + String.format("%.3f ms", avgMs) + "\n" + 
+                    "   Update step: " + String.format("%.3f ms", avgMsUpdateX) + "\n" + 
+                    "   Prediction step: " + String.format("%.3f ms", avgMsPredict) + "\n" + 
+                    "       Forward pass: " + String.format("%.3f ms", avgForwardPassMs) + "\n" + 
                     "Rate of Updates / Batches per sec: " + String.format("%.5f sec", per_task_count / totalElapsedTimeSec)   // this is count_of_updates per seconds
                         // Also equivalent with batches per second
             );
