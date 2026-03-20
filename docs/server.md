@@ -111,8 +111,8 @@ scp -r achristopoulos@polytechnix:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/java
 scp C:\Users\User\Downloads\nsfw_dataset_v1-20241203T200912Z-001.zip achristopoulos@polytechnix.softnet.tuc.gr:/mnt/nas_drive/achristopoulos/KAFKA_PSO_4/data
 
 # Reset local-weights-topic:
-kafka-topics.sh --bootstrap-server localhost:19092   --delete --topic local-weights-topic
-kafka-topics.sh --bootstrap-server localhost:19092   --create --topic local-weights-topic --partitions 1 --if-not-exists
+kafka-topics.sh --bootstrap-server localhost:19092 --delete --topic local-weights-topic
+kafka-topics.sh --bootstrap-server localhost:19092 --create --topic local-weights-topic --partitions 1 --if-not-exists
 
 watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
 htop
@@ -145,7 +145,7 @@ bin/kafka-storage.sh format \
   --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 
 bin/kafka-storage.sh format \
-  --cluster-id NQ0hkMpsQlWQhDfMUh6n9A \
+  --cluster-id REdzqxscTZqoDAfMee9ktw \
   --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 
 ```
