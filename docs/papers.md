@@ -281,7 +281,6 @@ Quotes:
 		=> it encodes only a small architectural description of one dense block.
 “Thirdly, an automatic and progressive process of stacking the learned block is proposed to increase the capacity of the final neural network.”
 
-	
 ## ====================================================================
 15)
 Top-k Multiclass SVM
@@ -301,6 +300,14 @@ DERIVATIVE-FREE OPTIMIZATION FOR CUSTOM LOSSFUNCTIONS
 "Custom loss functions may be requi-red when dealing with domain-specific objectives, non-traditional evaluationmetrics, or real-world constraints that are difficult to express in a differentiable form."
 "Examples include loss functions that depend on ranking metrics (suchas mean average precision in information retrieval), loss functions involvingdiscrete variables (such as edit distance in text generation), or loss functionsthat integrate external black-box evaluations (such as real-world reinforcementlearning rewards or adversarial robustness measures)"
 "However, in many real-world applications, the use of standard loss functi-ons is insufficient or even inappropriate"
+
+## ====================================================================
+18)
+The Fully Imformed Particle Swarm: Simpler, Maybe Better
+
+"Random weighting of the two terms
+keeps the particle searching between and beyond a re-
+gion defined by the two points"
 
 ## =====================================================================
 ## Picture Gathering:
