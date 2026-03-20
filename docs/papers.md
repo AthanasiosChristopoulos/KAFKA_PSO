@@ -309,6 +309,16 @@ The Fully Imformed Particle Swarm: Simpler, Maybe Better
 keeps the particle searching between and beyond a re-
 gion defined by the two points"
 
+## ====================================================================
+19)
+On the Scalability of Particle Swarm Optimisation
+	
+“However, like any optimization algorithm it seems to have difficulties handling optimization problems of high dimension.”
+“Here we first show that dimensionality is really a problem for the classical particle swarm algorithms.”
+“We then show that increasing the swarm size can be necessary to handle problem of high dimensions but is not enough.”
+“To solve problems of increasing size, it is necessary to increase the swarm size and to run for more iterations, but this is not always sufficient to solve the problem in 10,000,000 evaluations.”
+
+
 ## =====================================================================
 ## Picture Gathering:
 0)
