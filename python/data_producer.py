@@ -1205,7 +1205,9 @@ def main():
     if args.multi:
         # DATASET_MULTI = ["iris", "winequality", "mnist5", "mnist", "cifar5-half", "kmnist", "fashion-mnist"]
         # DATASET_MULTI = ["kmnist", "fashion-mnist"]
-        DATASET_MULTI = ["winequality", "pendigits"]
+        # DATASET_MULTI = ["winequality", "pendigits"]
+        DATASET_MULTI = ["cifar5-half", "winequality", "mnist5"]
+
         print(f"Multi Dataset with: {DATASET_MULTI}" )
 
     else:

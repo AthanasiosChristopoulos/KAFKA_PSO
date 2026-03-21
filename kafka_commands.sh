@@ -78,6 +78,11 @@ docker exec -it broker bash -lc '
 /opt/kafka/bin/kafka-configs.sh --bootstrap-server localhost:9092 \
   --entity-type topics --entity-name pendigits-half-input --describe
 '
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic PBEST-WORKER-0 --from-beginning
+  
+  
 # ==============================================================
 # Evaluate position:
 
@@ -155,7 +160,8 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic wine-input --from-beginning
-  
+
+
 # wine-test: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
