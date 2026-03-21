@@ -91,7 +91,8 @@ public class Experimentation {
             // ========================================================================
             // Scenario with high workers:
             
-            List<Integer> workersList = List.of(6, 12, 18, 24, 30);
+            // List<Integer> workersList = List.of(6, 12, 18, 24, 30);
+            List<Integer> workersList = List.of(20, 25, 30, 35, 40);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
