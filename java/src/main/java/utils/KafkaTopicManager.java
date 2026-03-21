@@ -21,7 +21,7 @@ public final class KafkaTopicManager {
         return AdminClient.create(props);
     }
 
-    //================================================================================================================================================
+    //=====================================================================================================================
 
     public static void recreateTopics(String bootstrapServers, List<String> topics, int partitions, int replicationFactor) throws Exception {
         try (AdminClient admin = admin(bootstrapServers)) {
@@ -30,7 +30,7 @@ public final class KafkaTopicManager {
         }
     }
 
-    //================================================================================================================================================
+    //====================================================================================================================
 
     public static void deleteTopics(AdminClient admin, List<String> topics) throws Exception {
         // Delete only topics that exist (to avoid noisy errors)
@@ -44,7 +44,7 @@ public final class KafkaTopicManager {
         waitUntilDeleted(admin, new HashSet<>(toDelete), Duration.ofSeconds(20));
     }
 
-    //================================================================================================================================================
+    //======================================================================================================================
 
     private static void waitUntilDeleted(AdminClient admin, Set<String> topics, Duration maxWait) throws Exception {
 
@@ -58,8 +58,7 @@ public final class KafkaTopicManager {
         throw new RuntimeException("Timed out waiting for topics to delete: " + topics);
     }
 
-    //================================================================================================================================================
-
+    //===================================================================================================
     public static void createTopics(AdminClient admin, List<String> topics, int partitions, int replicationFactor) throws Exception {
 
         List<NewTopic> newTopics = new ArrayList<>();

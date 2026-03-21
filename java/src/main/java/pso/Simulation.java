@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
 import java.util.logging.LogManager;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
@@ -17,6 +19,8 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import dl4j_models.Dl4jModelFactory;
 import dl4j_models.PsoModel;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.deeplearning4j.nn.weights.WeightInit;
 
@@ -55,8 +59,19 @@ public class Simulation {
         // =================================================================================================
         // Restart the Kafka Parititions
         
-        List<String> topics;
-        if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+        List<String> topics = new ArrayList<>();
+
+        if (cfg.ENABLE_NEIGHBORHOODS && cfg.PBEST_WORKER) {
+            topics.add(cfg.PBEST_WEIGHTS_TOPIC);
+            topics.add(cfg.LOCAL_WEIGHTS_TOPIC);
+
+            List<String> workerTopics = IntStream.range(0, cfg.N_WORKERS)
+                    .mapToObj(i -> "PBEST-WORKER-" + i)
+                    .collect(Collectors.toList());
+
+            topics.addAll(workerTopics);
+
+        } else if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
             topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
         } else {
             topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);

@@ -77,6 +77,7 @@ public class Config {
     public int NEIGHBORHOOD_SIZE; 
     public boolean INCLUDE_SELF;
     public String NEIGHBORHOOD_TOPOLOGY;
+    public boolean PBEST_WORKER;
 
     public boolean DATASET_PARTITIONING;
     public boolean GIVE_HALF_TO_SELF;
@@ -343,6 +344,7 @@ public class Config {
         if(NEIGHBORHOOD_TOPOLOGY.equals("all")) {
             ENABLE_NEIGHBORHOODS = false;
         }
+        PBEST_WORKER = Boolean.parseBoolean(getenv(dotenv, "PBEST_WORKER", "false"));
 
         DATASET_PARTITIONING = Boolean.parseBoolean(getenv(dotenv, "DATASET_PARTITIONING", "false"));
 
