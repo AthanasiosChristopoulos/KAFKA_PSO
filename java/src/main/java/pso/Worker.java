@@ -164,13 +164,23 @@ public class Worker implements Runnable {
 
         if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true) {
 
-            GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
-                PBEST_WEIGHTS_TOPIC,    // messages from this are keyed differently for every worker
-                Consumed.with(Serdes.String(), weightsSerde),
-                Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(weightsSerde)
-            );
+            if(cfg.PBEST_WORKER) {
+                GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
+                    "PBEST-WORKER-" + workerId,    // messages from this are keyed differently for every worker
+                    Consumed.with(Serdes.String(), weightsSerde),
+                    Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(weightsSerde)
+                );
+            } else {
+                GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
+                    PBEST_WEIGHTS_TOPIC,    // messages from this are keyed differently for every worker
+                    Consumed.with(Serdes.String(), weightsSerde),
+                    Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(weightsSerde)
+                );
+            }
 
         } else {
             
@@ -201,26 +211,50 @@ public class Worker implements Runnable {
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 
-        if(false && cfg.FILTER_ENABLED) {
 
-            KStream<String, WeightsMessage> pBestStream = branches[0]
-                .peek((k,v) -> System.out.println("PBEST IN  key = " + k + " msgIndex = " + v.msgIndex));
+        if (cfg.PBEST_WORKER) {
+            for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
+                final int targetWorkerId = recipientWorkerId;
+                final String workerPBestTopic = "PBEST-WORKER-" + targetWorkerId;
 
-            KTable<String, WeightsMessage> pBestLatest = pBestStream
-                .groupByKey(Grouped.with(Serdes.String(), weightsSerde))
-                .reduce((oldV, newV) -> newV, Materialized.as("pbest-latest-store"));
+                branches[0]
+                    .filter((key, value) -> {
+                        if (value == null) return false;
 
-            pBestLatest.toStream()
-                .peek((k,v) -> System.out.println("PBEST OUT key = " + k + " msgIndex = " + v.msgIndex))
-                .to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+                        boolean shouldSend = shouldSendPBestToWorker(value.workerId, targetWorkerId);
 
-            branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+                        if (shouldSend) {
+                            logger.log(
+                                "[ROUTING] sender=" + value.workerId +
+                                " -> receiver=" + targetWorkerId +
+                                " | topic=" + workerPBestTopic
+                            );
+                        }
 
+                        return shouldSend;
+                    })
+                    .to(workerPBestTopic, Produced.with(Serdes.String(), weightsSerde));
+            }
         } else {
-
             branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
-            branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         }
+
+        // if (cfg.PBEST_WORKER) {
+        //     for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
+        //         final int targetWorkerId = recipientWorkerId;
+        //         final String workerPBestTopic = "PBEST-WORKER-" + targetWorkerId;
+
+        //         branches[0]
+        //             .filter((key, value) -> value != null && shouldSendPBestToWorker(value.workerId, targetWorkerId))
+        //             .to(workerPBestTopic, Produced.with(Serdes.String(), weightsSerde));
+        //     }
+        // } else {
+        //     branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+        // }
+
+        // monitoring / current weights branch
+        branches[1].to(LOCAL_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+
 
         // =====================================================================================================
         // =====================================================================================================
@@ -599,6 +633,142 @@ public class Worker implements Runnable {
     //     t.setName("metrics-logger-worker-" + workerId);
     //     t.start();
     // }
+
+    //=========================================================================================================================
+
+    private boolean shouldSendPBestToWorker(int senderWorkerId, int recipientWorkerId) {
+        if (!cfg.PBEST_WORKER) return false;
+
+        // Fully informed without neighborhoods => everyone should receive every pBest
+        if (FULLY_INFORMED && !cfg.ENABLE_NEIGHBORHOODS) {
+            return true;
+        }
+        int ringRadius = Math.max(0, cfg.NEIGHBORHOOD_SIZE / 2);
+        // Neighborhood mode => recipient receives sender only if sender is in recipient's neighborhood
+        if (cfg.ENABLE_NEIGHBORHOODS) {
+            int[] recipientNeighbors = computeNeighborIds(
+                recipientWorkerId,
+                cfg.N_WORKERS,
+                ringRadius,
+                cfg.INCLUDE_SELF,
+                cfg.NEIGHBORHOOD_TOPOLOGY
+            );
+
+            for (int neighborId : recipientNeighbors) {
+                if (neighborId == senderWorkerId) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Fallback for other pBest modes
+        return true;
+    }
+
+    //=========================================================================================================================
+
+    private static int[] computeNeighborIds(int workerId, int nWorkers, int ringRadius, boolean includeSelf,String topology) {
+        if (nWorkers <= 0) return new int[0];
+
+        switch (topology) {
+            case "square":
+                int minSquare = includeSelf ? 5 : 4;
+                if (nWorkers < minSquare) {
+                    return allWorkerIds(workerId, nWorkers, includeSelf);
+                }
+                return computeSquareNeighborIds(workerId, nWorkers, includeSelf);
+
+            case "ring":
+            default:
+                int maxPossible = includeSelf ? nWorkers : (nWorkers - 1);
+                int requested = includeSelf ? (2 * ringRadius + 1) : (2 * ringRadius);
+                if (requested > maxPossible || nWorkers < cfg.NEIGHBORHOOD_SIZE) {
+                    return allWorkerIds(workerId, nWorkers, includeSelf);
+                }
+                return computeRingNeighborIds(workerId, nWorkers, ringRadius, includeSelf);
+        }
+    }
+
+    //=========================================================================================================================
+
+    private static int[] computeRingNeighborIds(int workerId, int nWorkers, int radius, boolean includeSelf) {
+        
+        if (radius <= 0) return includeSelf ? new int[]{ workerId } : new int[0];
+
+        // Ensure we don't request more unique neighbors than exist
+        radius = Math.min(radius, (nWorkers - 1) / 2);
+
+        int size = includeSelf ? (2 * radius + 1) : (2 * radius);
+        int[] ids = new int[size];
+        int idx = 0;
+
+        if (includeSelf) ids[idx++] = workerId;
+
+        for (int d = 1; d <= radius; d++) {
+            int left  = Math.floorMod(workerId - d, nWorkers);
+            int right = Math.floorMod(workerId + d, nWorkers);
+            ids[idx++] = left;
+            ids[idx++] = right;
+        }
+
+        return ids;
+    }
+
+    //===================================================================================
+
+    private static int[] computeSquareNeighborIds(int workerId, int nWorkers, boolean includeSelf) {
+        // each node talks to its 4 von-Neumann neighbors (up/down/left/right).
+
+        int rows = (int) Math.floor(Math.sqrt(nWorkers));   // √N_WORKERS × √N_WORKERS torus grid (2D)
+        int cols = rows;
+        
+        // If not a perfect square, degrade gracefully to a rectangle
+        if (rows * cols != nWorkers) {
+            cols = (int) Math.ceil((double) nWorkers / rows); // Now rows*cols may exceed nWorkers;
+        }
+
+        // This converts a linear index (workerId) into 2D grid coordinates.
+        int row = workerId / cols;
+        int col = workerId % cols;
+
+        // these should translate into worker IDs - if they dont we need to mod with nWorkers:
+        int up    = Math.floorMod(row - 1, rows) * cols + col;
+        int down  = Math.floorMod(row + 1, rows) * cols + col;
+        int left  = row * cols + Math.floorMod(col - 1, cols);
+        int right = row * cols + Math.floorMod(col + 1, cols);
+
+        up = Math.floorMod(up, nWorkers);   // Map back into [0, nWorkers) in case rows*cols > nWorkers
+        down = Math.floorMod(down, nWorkers);
+        left = Math.floorMod(left, nWorkers);
+        right = Math.floorMod(right, nWorkers);
+
+        if (includeSelf) {
+            return new int[]{ workerId, up, down, left, right };
+        } else {
+            return new int[]{ up, down, left, right };
+        }
+    }
+    //=========================================================================================================================
+    
+    private static int[] allWorkerIds(int workerId, int nWorkers, boolean includeSelf) {
+        if (nWorkers <= 0) return new int[0];
+
+        if (includeSelf) {
+            int[] ids = new int[nWorkers];
+            for (int i = 0; i < nWorkers; i++) ids[i] = i;  // 0 ... nWorkers - 1
+            return ids;
+        } else {    // here we need to explicitly exclude self. this is why nWorkers - 1
+            if (nWorkers == 1) return new int[0];
+            int[] ids = new int[nWorkers - 1];
+            int idx = 0;
+            for (int i = 0; i < nWorkers; i++) {
+                if (i == workerId) continue;
+                ids[idx++] = i;
+            }
+            return ids;
+        }
+    }
 
 }
 
