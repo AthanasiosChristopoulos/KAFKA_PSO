@@ -161,6 +161,7 @@
 	# ========================================================================================
 
 	++) If more work is necessary:
+	
 		Low Priority ==============================================
 		- Better / more complex filters
 		- Better solution than cifar or mnist transfer learning
@@ -170,11 +171,6 @@
 		- Use of PSO techniques for better accuracy
 		- Better starter datasets
 		
-		- Better Kafka Architecture => for neighborhoods
-			=> Intoduce N_WORKER topics (called PBEST_FOR_WORKER_0) to the structure and have each worker send to the specific worker topics who will actually listen to them
-			=> for number of messages total = sent + received, just calculate reveided (with a + N)
-
-
 		
 ## =======================================================================================
 

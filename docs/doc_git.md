@@ -66,6 +66,8 @@ Codes:
 git rm -r --cached logs
 git rm -r --cached target
 
+git reset --soft HEAD~1
+
 # ===================================================================
 # .gitignore:
 # you will need this to check what is already staged:
