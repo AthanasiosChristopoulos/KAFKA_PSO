@@ -86,7 +86,7 @@ public class Experimentation {
             // List<Integer> workersList = List.of(2, 12, 24); 
             // List<Integer> workersList = List.of(1, 2, 6, 12); // ignore 1 (warm up) just see 2, 12, 24
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16); // ignore 1 (warm up) just see 2, 12, 24
-            // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
+            List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20); 
             // List<Integer> workersList = List.of(1, 2, 6, 12, 16, 20, 24); 
             // List<Integer> workersList = List.of(24); 
 
@@ -95,7 +95,7 @@ public class Experimentation {
             // Scenario with high workers:
             
             // List<Integer> workersList = List.of(6, 12, 18, 24, 30);
-            List<Integer> workersList = List.of(20, 25, 30, 35, 40);
+            // List<Integer> workersList = List.of(20, 25, 30, 35, 40);
 
             try (BufferedWriter w = Files.newBufferedWriter(
                     csvPath,
@@ -677,7 +677,7 @@ public class Experimentation {
                     resetTopics();
 
                     // ======================================================================
-                    
+
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
                     w.write(String.format("%s,%s,", cfg.ENABLE_NEIGHBORHOODS, cfg.NEIGHBORHOOD_TOPOLOGY));
