@@ -308,6 +308,9 @@ The Fully Imformed Particle Swarm: Simpler, Maybe Better
 "Random weighting of the two terms
 keeps the particle searching between and beyond a re-
 gion defined by the two points"
+“Thus, neighborhood size determines how diverse your influences will be and in an optimization algorithm diverse influences might mean that search is diluted rather than enhanced.”
+“As expected, increasing the size of the neighborhood seems to deteriorate the performance of the swarm.”
+“The very worse FIPS conditions in the study were the UAll and All topologies, where the particle is truly fully informed, gathering information from every single member of the population.”
 
 ## ====================================================================
 19)

@@ -165,7 +165,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
                 neighborKeys[i] = "pBest" + neighborIds[i];     // if wieghtId - key isnt there then pBest weight gets filtered out
             }
         } else if(cfg.PBEST_WORKER) {
-            System.out.println("PBEST - WORKER is activated");
+            // System.out.println("PBEST - WORKER is activated");
             this.neighborIds = null;
             this.neighborKeys = null;      
         } else {
