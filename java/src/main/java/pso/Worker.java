@@ -128,6 +128,10 @@ public class Worker implements Runnable {
         } else {
             applicationID = "pso-worker-_" + RUN_ID;
         }
+        final Set<Integer> pBestRecipientWorkerIds = computePBestRecipientsForThisWorker();
+
+        logger.log("[ROUTING-INIT] sender=" + workerId +
+            " recipients=" + pBestRecipientWorkerIds);
 
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationID);
         // props.put(StreamsConfig.APPLICATION_ID_CONFIG, "pso-worker-" + workerId + "_" + RUN_ID);     // different group Id, processing of the same data
@@ -211,33 +215,57 @@ public class Worker implements Runnable {
             (key, value) -> true                   // branch[1]: all others (weights)
         );
 
-
         if (cfg.PBEST_WORKER) {
-            for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
+            for (int recipientWorkerId : pBestRecipientWorkerIds) {
                 final int targetWorkerId = recipientWorkerId;
                 final String workerPBestTopic = "PBEST-WORKER-" + targetWorkerId;
 
+                logger.log(
+                    "[ROUTING-SETUP] sender=" + workerId +
+                    " -> receiver=" + targetWorkerId +
+                    " | topic=" + workerPBestTopic
+                );
+
                 branches[0]
-                    .filter((key, value) -> {
-                        if (value == null) return false;
-
-                        boolean shouldSend = shouldSendPBestToWorker(value.workerId, targetWorkerId);
-
-                        if (shouldSend) {
-                            logger.log(
-                                "[ROUTING] sender=" + value.workerId +
-                                " -> receiver=" + targetWorkerId +
-                                " | topic=" + workerPBestTopic
-                            );
-                        }
-
-                        return shouldSend;
-                    })
+                    .filter((key, value) -> value != null)
+                    .peek((key, value) -> logger.log(
+                        "[ROUTING] sender=" + workerId +
+                        " -> receiver=" + targetWorkerId +
+                        " | topic=" + workerPBestTopic +
+                        " | msgWorkerId=" + value.workerId
+                    ))
                     .to(workerPBestTopic, Produced.with(Serdes.String(), weightsSerde));
             }
         } else {
             branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
         }
+
+        // if (cfg.PBEST_WORKER) {
+        //     for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
+        //         final int targetWorkerId = recipientWorkerId;
+        //         final String workerPBestTopic = "PBEST-WORKER-" + targetWorkerId;
+
+        //         branches[0]
+        //             .filter((key, value) -> {
+        //                 if (value == null) return false;
+
+        //                 boolean shouldSend = shouldSendPBestToWorker(value.workerId, targetWorkerId);
+
+        //                 if (shouldSend) {
+        //                     logger.log(
+        //                         "[ROUTING] sender=" + value.workerId +
+        //                         " -> receiver=" + targetWorkerId +
+        //                         " | topic=" + workerPBestTopic
+        //                     );
+        //                 }
+
+        //                 return shouldSend;
+        //             })
+        //             .to(workerPBestTopic, Produced.with(Serdes.String(), weightsSerde));
+        //     }
+        // } else {
+        //     branches[0].to(PBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+        // }
 
         // if (cfg.PBEST_WORKER) {
         //     for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
@@ -634,6 +662,54 @@ public class Worker implements Runnable {
     //     t.start();
     // }
 
+    //=========================================================================================================================
+
+    private Set<Integer> computePBestRecipientsForThisWorker() {
+        Set<Integer> recipients = new HashSet<>();
+
+        if (!cfg.PBEST_WORKER) {
+            return recipients;
+        }
+
+        // Fully informed without neighborhoods => send to everyone
+        if (FULLY_INFORMED && !cfg.ENABLE_NEIGHBORHOODS) {
+            for (int i = 0; i < cfg.N_WORKERS; i++) {
+                recipients.add(i);
+            }
+            return recipients;
+        }
+
+        // Neighborhood mode:
+        // recipient r should receive sender s iff s is in neighborhood(r)
+        if (cfg.ENABLE_NEIGHBORHOODS) {
+            int ringRadius = Math.max(0, cfg.NEIGHBORHOOD_SIZE / 2);
+
+            for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
+                int[] recipientNeighbors = computeNeighborIds(
+                    recipientWorkerId,
+                    cfg.N_WORKERS,
+                    ringRadius,
+                    cfg.INCLUDE_SELF,
+                    cfg.NEIGHBORHOOD_TOPOLOGY
+                );
+
+                for (int neighborId : recipientNeighbors) {
+                    if (neighborId == this.workerId) {
+                        recipients.add(recipientWorkerId);
+                        break;
+                    }
+                }
+            }
+            return recipients;
+        }
+
+        // Fallback
+        for (int i = 0; i < cfg.N_WORKERS; i++) {
+            recipients.add(i);
+        }
+        return recipients;
+    }
+    
     //=========================================================================================================================
 
     private boolean shouldSendPBestToWorker(int senderWorkerId, int recipientWorkerId) {

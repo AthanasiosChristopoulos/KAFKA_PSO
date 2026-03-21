@@ -42,7 +42,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
     private final float SIGNIFICANT_LOSS_DIFF = cfg.SIGNIFICANT_LOSS_DIFF;
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT;
     private final float CONVERGENCE_ALPHA = cfg.CONVERGENCE_ALPHA;
-    public final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
     public final int NEIGHBORHOOD_SIZE = cfg.NEIGHBORHOOD_SIZE; 
     public final boolean INCLUDE_SELF = cfg.INCLUDE_SELF;
     public final String NEIGHBORHOOD_TOPOLOGY = cfg.NEIGHBORHOOD_TOPOLOGY;
@@ -158,13 +157,17 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         this.ringRadius = Math.max(0, NEIGHBORHOOD_SIZE / 2);
 
         // Build neighbor list only if neighborhoods enabled
-        if (cfg.ENABLE_NEIGHBORHOODS) {
+        if (cfg.ENABLE_NEIGHBORHOODS && !cfg.PBEST_WORKER) {
             this.neighborIds = computeNeighborIds(workerId, cfg.N_WORKERS, ringRadius, INCLUDE_SELF, NEIGHBORHOOD_TOPOLOGY);
             if(logger.isEnabled(2)) logger.log("neighborIds: " + Arrays.toString(neighborIds)); 
             this.neighborKeys = new String[neighborIds.length];
             for (int i = 0; i < neighborIds.length; i++) {
                 neighborKeys[i] = "pBest" + neighborIds[i];     // if wieghtId - key isnt there then pBest weight gets filtered out
             }
+        } else if(cfg.PBEST_WORKER) {
+            System.out.println("PBEST - WORKER is activated");
+            this.neighborIds = null;
+            this.neighborKeys = null;      
         } else {
             this.neighborIds = null;
             this.neighborKeys = null;
@@ -944,8 +947,9 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         }
         if (logger.isEnabled(1)) logger.log(taskInstance + ", pBest Weights: ");
 
-        if(!cfg.ENABLE_NEIGHBORHOODS) {
+        if(!cfg.ENABLE_NEIGHBORHOODS || cfg.PBEST_WORKER) {
 
+            System.out.println("cfg.PBEST_WORKER is active not WorkerTransformer filtering");
             try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                         // this is GlobalKTable it will run for all of them
                 while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
@@ -1006,7 +1010,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
     private float[] readGBestStore() {
 
-        if(cfg.ENABLE_NEIGHBORHOODS) {  // right here i am not using global gBest (bestStore.get(keyName)), but local gBest (bestStore.get(key)) 
+        if(cfg.ENABLE_NEIGHBORHOODS && !cfg.PBEST_WORKER) {  // right here i am not using global gBest (bestStore.get(keyName)), but local gBest (bestStore.get(key)) 
 
                 float minLoss = LOSS_INIT;
                 WeightsMessage bestMsg = null;
@@ -1050,6 +1054,8 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         // ===============================================================================================================================
 
         } else {
+        
+            System.out.println("cfg.PBEST_WORKER is active not WorkerTransformer filtering");
 
             if (bestStore == null) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + ", bestStore is null");
