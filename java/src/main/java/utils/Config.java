@@ -341,10 +341,11 @@ public class Config {
         NEIGHBORHOOD_SIZE = Integer.parseInt(getenv(dotenv, "NEIGHBORHOOD_SIZE", "6"));
         INCLUDE_SELF = Boolean.parseBoolean(getenv(dotenv, "INCLUDE_SELF", "false"));
         NEIGHBORHOOD_TOPOLOGY = getenv(dotenv, "NEIGHBORHOOD_TOPOLOGY", "ring");
+        PBEST_WORKER = Boolean.parseBoolean(getenv(dotenv, "PBEST_WORKER", "false"));
         if(NEIGHBORHOOD_TOPOLOGY.equals("all")) {
             ENABLE_NEIGHBORHOODS = false;
+            PBEST_WORKER = false;
         }
-        PBEST_WORKER = Boolean.parseBoolean(getenv(dotenv, "PBEST_WORKER", "false"));
 
         DATASET_PARTITIONING = Boolean.parseBoolean(getenv(dotenv, "DATASET_PARTITIONING", "false"));
 
@@ -443,6 +444,7 @@ public class Config {
 
         if(NEIGHBORHOOD_TOPOLOGY.equals("all")) {
             ENABLE_NEIGHBORHOODS = false;
+            PBEST_WORKER = false;
         }
 
         if(FULLY_INFORMED == true) {

@@ -5,8 +5,11 @@ import state.*;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,7 +32,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING,HEAVY_SAMPLES,DATASET\n";
+                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING,HEAVY_SAMPLES,DATASET,PBEST_WORKER\n";
 
     // ========================================================================
 
@@ -117,14 +120,7 @@ public class Experimentation {
                     // =================================================================================================
                     // Restart the Kafka Parititions
 
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || (cfg.ENABLE_NEIGHBORHOODS)) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    resetTopics();
 
                     // =================================================================================================
 
@@ -186,14 +182,8 @@ public class Experimentation {
                     // =================================================================================================
                     // Restart the Kafka Parititions
 
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
+                    resetTopics();
 
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
 
                     // =================================================================================================
 
@@ -253,14 +243,7 @@ public class Experimentation {
                     // =================================================================================================
                     // Restart the Kafka Parititions
 
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    resetTopics();
 
                     // =================================================================================================
 
@@ -306,14 +289,7 @@ public class Experimentation {
                 // =================================================================================================
                 // Restart the Kafka Parititions
 
-                List<String> topics;
-                if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                    topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                } else {
-                    topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                }
-
-                KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                resetTopics();
 
                 // =================================================================================================
                 ExperimentResult r = null;
@@ -435,14 +411,7 @@ public class Experimentation {
                     // =================================================================================================
                     // Restart the Kafka Parititions
 
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    resetTopics();
 
                     // =================================================================================================
 
@@ -525,14 +494,10 @@ public class Experimentation {
                     System.out.println("RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================");
 
-                    // Restart Kafka topic(s) like you already do
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    // Restart Kafka topic(s) like you already do ================================
+                    resetTopics();
+
+                    // ======================================================================
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -589,14 +554,10 @@ public class Experimentation {
                     System.out.println("RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 
-                    // Restart Kafka topic(s) like you already do
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    // Restart Kafka topic(s) like you already do ================================
+                    resetTopics();
+
+                    // ======================================================================
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -651,15 +612,10 @@ public class Experimentation {
                     System.out.println("RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 
-                    // Restart Kafka topic(s) like you already do
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    // Restart Kafka topic(s) like you already do ================================
+                    resetTopics();
 
+                    // ======================================================================
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
                     w.write(String.format("%d,%d,", cfg.MODEL_VERSION, r.getDimensionality()));
@@ -717,15 +673,11 @@ public class Experimentation {
                     System.out.println("RUN_ID: " + cfg.RUN_ID);
                     System.out.println("===============================================================================================");
 
-                    // Restart Kafka topic(s) like you already do
-                    List<String> topics;
-                    if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
-                        topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    } else {
-                        topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
-                    }
-                    KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+                    // Restart Kafka topic(s) like you already do ================================
+                    resetTopics();
 
+                    // ======================================================================
+                    
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
                     w.write(String.format("%s,%s,", cfg.ENABLE_NEIGHBORHOODS, cfg.NEIGHBORHOOD_TOPOLOGY));
@@ -763,7 +715,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b,%b,%b,%s\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b,%b,%b,%s,%b\n",
                 filterEnabled,
                 nWorkers,
                 // r.getTotalElapsedSec(),
@@ -786,7 +738,8 @@ public class Experimentation {
                 cfg.ENABLE_NEIGHBORHOODS,
                 cfg.EARLY_STOPPING,
                 cfg.HEAVY_SAMPLES,
-                cfg.DATASET
+                cfg.DATASET,
+                cfg.PBEST_WORKER
             ));
 
         } catch(Exception e) {
@@ -813,6 +766,35 @@ public class Experimentation {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // =============================================================================================================
+
+    public static void resetTopics() {
+        List<String> topics = new ArrayList<>();
+
+        if (cfg.PBEST_WORKER) {
+            topics.add(cfg.PBEST_WEIGHTS_TOPIC);
+            topics.add(cfg.LOCAL_WEIGHTS_TOPIC);
+
+            List<String> workerTopics = IntStream.range(0, cfg.N_WORKERS)
+                    .mapToObj(i -> "PBEST-WORKER-" + i)
+                    .collect(Collectors.toList());
+
+            topics.addAll(workerTopics);
+
+        } else if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
+            topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+        } else {
+            topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+        }
+
+        try {
+            KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
+        } catch(Exception e) {
+            e.printStackTrace();
+
         }
     }
 }

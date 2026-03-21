@@ -61,7 +61,7 @@ public class Simulation {
         
         List<String> topics = new ArrayList<>();
 
-        if (cfg.ENABLE_NEIGHBORHOODS && cfg.PBEST_WORKER) {
+        if (cfg.PBEST_WORKER) {
             topics.add(cfg.PBEST_WEIGHTS_TOPIC);
             topics.add(cfg.LOCAL_WEIGHTS_TOPIC);
 
@@ -78,7 +78,7 @@ public class Simulation {
         }
 
         KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
-
+        // System.exit(0);
         // =================================================================================================
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {

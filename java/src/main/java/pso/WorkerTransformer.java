@@ -143,7 +143,7 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
         if (logger.isEnabled(0)) logger.log(taskInstance + ", Worker " + workerId + 
         " WorkerTransformer started");
 
-        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true || cfg.PBEST_WORKER) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;   // this is the unique key, necessary for the statestore to work
         } else {
@@ -949,7 +949,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         if(!cfg.ENABLE_NEIGHBORHOODS || cfg.PBEST_WORKER) {
 
-            System.out.println("cfg.PBEST_WORKER is active not WorkerTransformer filtering");
             try (KeyValueIterator<String, ValueAndTimestamp<WeightsMessage>> it = bestStore.all()) {
                                         // this is GlobalKTable it will run for all of them
                 while (it.hasNext()) {  // iterate on every Statestore (they come from different workers)
@@ -1055,8 +1054,6 @@ public class WorkerTransformer implements Transformer<String, DataMessage, KeyVa
 
         } else {
         
-            System.out.println("cfg.PBEST_WORKER is active not WorkerTransformer filtering");
-
             if (bestStore == null) {
                 if (logger.isEnabled(2)) logger.log(taskInstance + ", bestStore is null");
                 return null;

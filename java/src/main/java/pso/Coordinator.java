@@ -62,7 +62,6 @@ public class Coordinator implements Runnable {
     private final String RUN_ID = cfg.RUN_ID;
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
-    private final boolean ENABLE_NEIGHBORHOODS = cfg.ENABLE_NEIGHBORHOODS;
 
     private final CustomLogger logger;
 
@@ -154,7 +153,7 @@ public class Coordinator implements Runnable {
 
         Topology mainTopology = buildMainTopology(dataSerde, weightsSerde);
         Topology gbestTopology = null;
-        if (!cfg.ENABLE_NEIGHBORHOODS && !FULLY_INFORMED) {
+        if (!cfg.ENABLE_NEIGHBORHOODS && !FULLY_INFORMED && !cfg.PBEST_WORKER) {
             gbestTopology = buildGBestRelayTopology(weightsSerde);
         }
 

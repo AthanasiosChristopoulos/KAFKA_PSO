@@ -69,7 +69,7 @@ public class Worker implements Runnable {
 
         this.workerId = workerId;
 
-        if(cfg.ENABLE_NEIGHBORHOODS  || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true || cfg.PBEST_WORKER) {
             stateStoreName = "pBestStore";
             keyName = "pBest" + workerId;
         } else {
@@ -166,7 +166,7 @@ public class Worker implements Runnable {
         // Task 0 (of Global Streams) ===============================================================================
         // input stream 4 and input stream 7
 
-        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true) {
+        if(cfg.ENABLE_NEIGHBORHOODS || FULLY_INFORMED == true || cfg.PBEST_WORKER) {
 
             if(cfg.PBEST_WORKER) {
                 GlobalKTable<String, WeightsMessage> pBestTable = builder.globalTable(
@@ -670,18 +670,10 @@ public class Worker implements Runnable {
         if (!cfg.PBEST_WORKER) {
             return recipients;
         }
-
-        // Fully informed without neighborhoods => send to everyone
-        if (FULLY_INFORMED && !cfg.ENABLE_NEIGHBORHOODS) {
-            for (int i = 0; i < cfg.N_WORKERS; i++) {
-                recipients.add(i);
-            }
-            return recipients;
-        }
-
+        
         // Neighborhood mode:
         // recipient r should receive sender s iff s is in neighborhood(r)
-        if (cfg.ENABLE_NEIGHBORHOODS) {
+        if (cfg.PBEST_WORKER) {
             int ringRadius = Math.max(0, cfg.NEIGHBORHOOD_SIZE / 2);
 
             for (int recipientWorkerId = 0; recipientWorkerId < cfg.N_WORKERS; recipientWorkerId++) {
@@ -709,38 +701,38 @@ public class Worker implements Runnable {
         }
         return recipients;
     }
-    
+
     //=========================================================================================================================
 
-    private boolean shouldSendPBestToWorker(int senderWorkerId, int recipientWorkerId) {
-        if (!cfg.PBEST_WORKER) return false;
+    // private boolean shouldSendPBestToWorker(int senderWorkerId, int recipientWorkerId) {
+    //     if (!cfg.PBEST_WORKER) return false;
 
-        // Fully informed without neighborhoods => everyone should receive every pBest
-        if (FULLY_INFORMED && !cfg.ENABLE_NEIGHBORHOODS) {
-            return true;
-        }
-        int ringRadius = Math.max(0, cfg.NEIGHBORHOOD_SIZE / 2);
-        // Neighborhood mode => recipient receives sender only if sender is in recipient's neighborhood
-        if (cfg.ENABLE_NEIGHBORHOODS) {
-            int[] recipientNeighbors = computeNeighborIds(
-                recipientWorkerId,
-                cfg.N_WORKERS,
-                ringRadius,
-                cfg.INCLUDE_SELF,
-                cfg.NEIGHBORHOOD_TOPOLOGY
-            );
+    //     // Fully informed without neighborhoods => everyone should receive every pBest
+    //     if (FULLY_INFORMED && !cfg.ENABLE_NEIGHBORHOODS) {
+    //         return true;
+    //     }
+    //     int ringRadius = Math.max(0, cfg.NEIGHBORHOOD_SIZE / 2);
+    //     // Neighborhood mode => recipient receives sender only if sender is in recipient's neighborhood
+    //     if (cfg.ENABLE_NEIGHBORHOODS) {
+    //         int[] recipientNeighbors = computeNeighborIds(
+    //             recipientWorkerId,
+    //             cfg.N_WORKERS,
+    //             ringRadius,
+    //             cfg.INCLUDE_SELF,
+    //             cfg.NEIGHBORHOOD_TOPOLOGY
+    //         );
 
-            for (int neighborId : recipientNeighbors) {
-                if (neighborId == senderWorkerId) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    //         for (int neighborId : recipientNeighbors) {
+    //             if (neighborId == senderWorkerId) {
+    //                 return true;
+    //             }
+    //         }
+    //         return false;
+    //     }
 
-        // Fallback for other pBest modes
-        return true;
-    }
+    //     // Fallback for other pBest modes
+    //     return true;
+    // }
 
     //=========================================================================================================================
 
