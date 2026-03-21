@@ -154,10 +154,7 @@
 		
 	## =======================================================================================
 	## New Tasks
-
-	70) Winequality and SUSY replacements ?
-		=> Βρες αλλο Dataset	
-
+	
 	75) You obviously didnt read all these papers ...
 		=> clean them up
 
