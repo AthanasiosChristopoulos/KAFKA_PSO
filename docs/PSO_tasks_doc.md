@@ -161,12 +161,14 @@
 	# ========================================================================================
 
 	++) If more work is necessary:
-	
+
 		Low Priority ==============================================
+		
 		- Better / more complex filters
 		- Better solution than cifar or mnist transfer learning
 
 		Lower Priority ============================================
+
 		- Better Non Differentiable functions
 		- Use of PSO techniques for better accuracy
 		- Better starter datasets
