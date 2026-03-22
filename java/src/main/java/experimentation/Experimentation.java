@@ -32,7 +32,7 @@ public class Experimentation {
                     "TOTAL_MESSAGES_SENT,TOTAL_MESSAGES_SENT_PBEST,TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS," + 
                     "TOTAL_BYTES_SENT,LOSS_THRESHOLD_DIFF,LOSS_THRESHOLD_MIN,LOSS_THRESHOLD_MAX," +
                     "PBEST_DEBOUNCE_MS,MONITORING_THRESHOLD_MIN,MONITORING_THRESHOLD_MAX," +
-                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING,HEAVY_SAMPLES,DATASET,PBEST_WORKER\n";
+                    "DATASET_PARTITIONING,ENABLE_NEIGHBORHOODS,EARLY_STOPPING,HEAVY_SAMPLES,DATASET,PBEST_WORKER,TOPOLOGY\n";
 
     // ========================================================================
 
@@ -295,7 +295,7 @@ public class Experimentation {
                 ExperimentResult r = null;
 
                 r = SimulationRunner.runOnce(cfg);
-                
+
                 // writeExperimentData(w, r, -1, -1, -1);
                 writeAccuracyValues(w, r);
                 w.write(header_1);
@@ -715,7 +715,7 @@ public class Experimentation {
         try{     
 
             w.write(String.format(
-                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b,%b,%b,%s,%b\n",
+                "%d,%d,%.3f,%.3f,%.3f,%.6f,%.6f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%d,%d,%d,%b,%b,%b,%b,%s,%b,%s\n",
                 filterEnabled,
                 nWorkers,
                 // r.getTotalElapsedSec(),
@@ -739,7 +739,8 @@ public class Experimentation {
                 cfg.EARLY_STOPPING,
                 cfg.HEAVY_SAMPLES,
                 cfg.DATASET,
-                cfg.PBEST_WORKER
+                cfg.PBEST_WORKER,
+                cfg.NEIGHBORHOOD_TOPOLOGY
             ));
 
         } catch(Exception e) {
