@@ -39,6 +39,7 @@ git reset --hard HEAD~1   # Removes commit AND changes
 git remote -v
 git remote set-url origin https://github.com/AthanasiosChristopoulos/map-explorer-frontend.git
 git remote add origin https://github.com/AthanasiosChristopoulos/map-explorer-frontend.git
+git remote add origin https://github.com/AthanasiosChristopoulos/cv.git
 
 git remote remove origin
 git remote add origin <new-repo-url>

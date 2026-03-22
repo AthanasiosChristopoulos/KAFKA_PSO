@@ -135,11 +135,6 @@
 			You start optimization from pretrained weights instead of random initialization.
 
 		You must not leak the same samples between phases. 
-		
-	# ========================================================================================
-
-	60) Write dimplomatiki
-		- κανε DL4J πραγματα ... explain more about it
 
 	## =======================================================================================
 
@@ -174,16 +169,14 @@
 		- Use of PSO techniques for better accuracy
 		- Better starter datasets
 		
-		
+	# ========================================================================================
+
+	77) What tasks, that are not classifications, are non differentiable functions useful for, meaning they beat cross entropy
+		- Generally prove that there is no dominant loss function for every tasks (no free lunch)
+
 ## =======================================================================================
 
 	Backlog Tasks:
-
-	3) Learn more about Kafka Streams + Tensorflow + Neural Learning
-		- Improve code on Apache Kafka + Tensorflow:
-		- Use / Learn about Parallelization (Threading / Instances):
-				- On Kafka Streams: Threading and more Kafka Streams instances
-				- Kafka Broker: More brokers
 	
 	6) Related Work + Research:
 		- Other attempts implementing PSO
@@ -192,10 +185,6 @@
 			- What scientific differences did you add / remove / what parameters did you use ?
 	
 	19) velocity initialiazation (magnitude)
-
-	21) Implement neighborhood topologies more efficiently:
-		=> Problem: With current protocols, if there are N Workers, there are N neighborhoods
-		=> Change Kafka / Kafka Streams architecture with Routers to fascilitate neighborhoods
 
 	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
 
@@ -207,7 +196,8 @@
 
 	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
-	41) Συγκριση η τελικη θα γινει με κατανεμημενο περιβαλλον στο training του gradient descent:
+	41) Συγκριση με gradient descent (σε ολα τα datasets) => too depressing
+		Συγκριση η τελικη θα γινει με κατανεμημενο περιβαλλον στο training του gradient descent:
 		- οχι centralized, αλλα gradient descent. 
 		- Δηλαδη θελουμε να συγκρινουμε PSO vs gradient descent σε distributed περιβαλλον
 		- Δες parameter server (independent learning με merging των μοντελλων afterwards) => δεδομενα ειναι λιγοτερα για καθε worker
