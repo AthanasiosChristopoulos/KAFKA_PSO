@@ -166,6 +166,7 @@
 		
 		- Better / more complex filters
 		- Better solution than cifar or mnist transfer learning
+		- read other peoples diplomatiki and other peoples papers to tell if yours is good enough ...
 
 		Lower Priority ============================================
 

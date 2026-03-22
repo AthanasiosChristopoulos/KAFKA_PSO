@@ -21,7 +21,7 @@ Creating Repository:
 git init
 git remote add origin https://github.com/AthanasiosChristopoulos/WifiDoctor.git
 
-# Using git:
+# git ===============================================================================
 
 git add .
 git add Documentantion.txt
@@ -36,7 +36,13 @@ git reset --hard HEAD~1   # Removes commit AND changes
 
 # Relationship to Remote - Githup repo ===================================================================
 
-git pull
+git remote -v
+git remote set-url origin https://github.com/AthanasiosChristopoulos/map-explorer-frontend.git
+git remote add origin https://github.com/AthanasiosChristopoulos/map-explorer-frontend.git
+
+git remote remove origin
+git remote add origin <new-repo-url>
+
 git fetch origin
 git reset --hard origin/<Branch name>
 git clean -fd
@@ -72,7 +78,7 @@ git reset --soft HEAD~1
 # .gitignore:
 # you will need this to check what is already staged:
 git ls-files
-# 
+
 git restore --staged main.bbl main.blg main.fls main.out main.tex
 git rm --cached main.bbl main.blg main.fls main.out main.tex
 
