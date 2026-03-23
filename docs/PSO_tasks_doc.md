@@ -173,10 +173,6 @@
 
 	77) What tasks, that are not classifications, are non differentiable functions useful for, meaning they beat cross entropy
 		- Generally prove that there is no dominant loss function for every tasks (no free lunch)
-
-	# ========================================================================================
-
-	78) οτι εκανες για cifar κανε και για fmnist
 		
 ## =======================================================================================
 
