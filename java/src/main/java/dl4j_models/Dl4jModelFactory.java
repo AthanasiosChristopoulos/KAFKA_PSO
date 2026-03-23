@@ -322,8 +322,10 @@ public class Dl4jModelFactory {
 						// after PSO 0.69, before PSO: 0.894
 					case 4 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";	
 						// Pretrained Accuracy: 0.892, Training Accuracy: 0.93, Test Accuracy:0.8466667
+						// worthless
 					case 5 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";	
 						// Pretrained Accuracy: 0.91, Training Accuracy: 0.81, Test Accuracy:0.79333335
+						// ideal
 					default -> filename = "no_pretrained_file_chosen";
 				}
 				

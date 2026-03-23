@@ -420,6 +420,39 @@ def load_dataset():
         return X_train, y_train, X_test, y_test, class_names
 
     # ==================================================================================================
+
+    elif DATASET == "fashion-mnist-half":
+        
+        print("Loading from tf.keras.datasets.fashion-mnist")
+        (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
+
+        # Normalize to [0,1]
+        X_train = X_train.astype("float32") / 255.0
+        X_test  = X_test.astype("float32") / 255.0
+
+        # Optionally clip test size (same as you do for MNIST)
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+        print("Test shape:", X_test.shape, "Labels:", y_test.shape)
+
+        class_names = [
+            "T-shirt/top",
+            "Trouser",
+            "Pullover",
+            "Dress",
+            "Coat",
+            "Sandal",
+            "Shirt",
+            "Sneaker",
+            "Bag",
+            "Ankle boot"
+        ]
+
+        return X_train, y_train, X_test, y_test, class_names
+
+    # ==================================================================================================
     elif DATASET == "kmnist":
 
         print("Loading KMNIST from local NAS files")
@@ -953,7 +986,7 @@ def load_dataset():
         X_train = x_train.astype(np.float32) / 255.0
         X_test  = x_test.astype(np.float32) / 255.0
 
-        rng = np.random.default_rng(123)
+        rng = np.random.default_rng(123) # this is going to shuffle the same way everytime, this is why this split is reliable
 
         # -------------------------------------------------
         # Step 1: reproducible split of the full training set

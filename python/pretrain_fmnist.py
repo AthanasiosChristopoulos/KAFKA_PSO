@@ -12,11 +12,51 @@ DATASET="mnist"
 # ===============================================================================
 # Load Data
 
-def load_fashion_mnist():
+def maybe_take_half(x_train, y_train, half=False, take="second", seed=123):
+    if not half:
+        return x_train, y_train
+
+    rng = np.random.default_rng(seed)
+
+    idx = rng.permutation(len(x_train))
+    x_train = x_train[idx]
+    y_train = y_train[idx]
+
+    half_idx = len(x_train) // 2
+
+    if take == "first":
+        x_train = x_train[:half_idx]
+        y_train = y_train[:half_idx]
+    elif take == "second":
+        x_train = x_train[half_idx:]
+        y_train = y_train[half_idx:]
+    else:
+        raise ValueError("take must be either 'first' or 'second'")
+
+    # optional but recommended: reshuffle selected half
+    idx_half = rng.permutation(len(x_train))
+    x_train = x_train[idx_half]
+    y_train = y_train[idx_half]
+
+    return x_train, y_train
+
+# ===============================================================================
+
+def load_fashion_mnist(half=False, take="second", seed=123):
     (x_train, y_train), (x_test, y_test) = keras.datasets.fashion_mnist.load_data()
 
-    x_train = (x_train.astype("float32") / 255.0)
-    x_test  = (x_test.astype("float32") / 255.0)
+    x_train = x_train.astype("float32") / 255.0
+    x_test  = x_test.astype("float32") / 255.0
+
+    y_train = y_train.astype("int64").reshape(-1)
+    y_test  = y_test.astype("int64").reshape(-1)
+
+    x_train, y_train = maybe_take_half(
+        x_train, y_train,
+        half=half,
+        take=take,
+        seed=seed
+    )
 
     return x_train, y_train, x_test, y_test
 
@@ -320,9 +360,11 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
         "v8": ("fmnist_base_plus_head_v8", build_fmnist_base_plus_head_v8), 
     }
     
+    half = True
+
     filename, mnist_model_function = model_registry[version]
 
-    x_train, y_train, x_test, y_test = load_fashion_mnist()
+    x_train, y_train, x_test, y_test = load_fashion_mnist(half=half, take="second")
     
     model = mnist_model_function(input_shape=x_train.shape[1:], num_classes=10)
     name_h5_file = filename

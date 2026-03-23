@@ -149,7 +149,7 @@ def load_cifar10(half):
     x_test  = x_test.astype("float32") / 255.0
 
     if half:
-        rng = np.random.default_rng(123)
+        rng = np.random.default_rng(123)    # reliable half
 
         idx = rng.permutation(len(x_train))
         x_train = x_train[idx]
