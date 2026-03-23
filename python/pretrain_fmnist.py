@@ -346,7 +346,8 @@ def build_fmnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
 
 def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
-    version = "v8"
+    version = "v4"
+    half = True
 
     model_registry = {
         "v1": ("fmnist_base_plus_head_v1", build_fmnist_base_plus_head_v1),
@@ -360,8 +361,6 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
         "v8": ("fmnist_base_plus_head_v8", build_fmnist_base_plus_head_v8), 
     }
     
-    half = True
-
     filename, mnist_model_function = model_registry[version]
 
     x_train, y_train, x_test, y_test = load_fashion_mnist(half=half, take="second")
@@ -389,7 +388,11 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
     os.makedirs(out_dir, exist_ok=True)
 
-    h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
+    if half == True:
+        h5_path = os.path.join(out_dir, f"{name_h5_file}_half.h5")
+    else:
+        h5_path = os.path.join(out_dir, f"{name_h5_file}.h5")
+    
     model.save(h5_path)
     print("Saved Keras H5:", h5_path)
 

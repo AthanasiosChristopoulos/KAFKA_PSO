@@ -1268,7 +1268,7 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
 
         exit(0)
 
-    elif "tinyimagenet" in version:     # ================================================================================
+    elif "tinyimagenet" in version:     # ==============================
 
         tiny_root = "../data/tiny-imagenet/tiny-imagenet-200"
         train_ds, val_ds = load_tiny_imagenet200(tiny_root, batch_size=batch_size, img_size=(64, 64))
@@ -1282,8 +1282,8 @@ def train_and_export(out_dir="pretrained_model", batch_size=128):
 
         history = model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS, callbacks=callbacks)
 
-    else:   # ============================================================================================================
-
+    else:   # =======================================
+        
         if "cifar100" in version: 
             x_train, y_train, x_test, y_test = load_cifar100()
             evaluate_dataset(x_train, y_train, x_test, y_test, 100)

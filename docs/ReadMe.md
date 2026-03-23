@@ -1689,3 +1689,41 @@ Evolution Strategies (ES):
     - In practice, ES is often considered stronger than PSO for neural networks.
     - It’s gradient-based in spirit, but gradient-free in implementation
     - `But mathematically, it approximates a gradient
+
+## =========================================================
+## Loss Functions Matter:
+
+### Black Box / Reinforcement Learning Scenaria:
+
+🎮 Example: Game agent
+
+Imagine a model playing a game:
+
+state → action → environment → reward
+
+Example:
+
+State: game screen
+Action: “move left”
+Reward: +10 points
+
+📦 3. Why is this called a “black box”?
+
+Because the environment is treated like something you can’t differentiate through.
+
+Think of it like this:
+
+You can do:
+input → model → action → environment → reward
+But you CANNOT do:
+∂reward / ∂action
+
+Example:
+
+Step-by-step:
+1) Model outputs motor commands:
+    action = neural_network(state)
+
+2) Robot moves in the real world:
+    You measure reward:
+    reward = distance_walked
