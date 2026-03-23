@@ -299,9 +299,15 @@ DERIVATIVE-FREE OPTIMIZATION FOR CUSTOM LOSSFUNCTIONS
 
 "Derivative-free optimization (DFO) has emerged as a powerful technique for solving optimization problems where the gradi-
 ent of the objective function is either unavailable, expensive to compute, or non-smooth."
-"Custom loss functions may be requi-red when dealing with domain-specific objectives, non-traditional evaluationmetrics, or real-world constraints that are difficult to express in a differentiable form."
+"“in many real-world applications ... Custom loss functions may be requi-red when dealing with domain-specific objectives, non-traditional evaluationmetrics, or real-world constraints that are difficult to express in a differentiable form."
 "Examples include loss functions that depend on ranking metrics (suchas mean average precision in information retrieval), loss functions involvingdiscrete variables (such as edit distance in text generation), or loss functionsthat integrate external black-box evaluations (such as real-world reinforcementlearning rewards or adversarial robustness measures)"
 "However, in many real-world applications, the use of standard loss functi-ons is insufficient or even inappropriate"
+“the generator trained with the p-statistic loss produced diverse and realistic images” => Training GAN with it
+“derivative-free optimization provides an essential toolset for handling complex, custom loss functions”
+	BUT:
+		It’s slower
+		More computationally expensive
+“loss functions may be… non-differentiable… or defined through external processes such as simulations”
 
 ## ====================================================================
 18)
@@ -314,6 +320,14 @@ gion defined by the two points"
 “As expected, increasing the size of the neighborhood seems to deteriorate the performance of the swarm.”
 “The very worse FIPS conditions in the study were the UAll and All topologies, where the particle is truly fully informed, gathering information from every single member of the population.”
 
+No Free Lunch:
+“NFL asserts that no algorithm can be better than any other, over all possible functions.”
+“It does not seem interesting to us to demonstrate that an algorithm is good on some functions and not on others.”
+	=> An algorithm should be good at many benchmarks / functions
+	=> “What we hope for is a problem-solver that can work well with a wide range of problems.”
+
+“NFL does not say that the search for a general problem-solver is futile; it does say that the search for a general function optimizer is futile.”
+
 ## ====================================================================
 19)
 On the Scalability of Particle Swarm Optimisation
@@ -323,6 +337,15 @@ On the Scalability of Particle Swarm Optimisation
 “We then show that increasing the swarm size can be necessary to handle problem of high dimensions but is not enough.”
 “To solve problems of increasing size, it is necessary to increase the swarm size and to run for more iterations, but this is not always sufficient to solve the problem in 10,000,000 evaluations.”
 
+## ====================================================================
+20)
+No Free Lunch Theorems for Optimization
+
+“for any algorithm, any elevated performance over one class of problems is offset by performance over another class.”
+“it has become important to understand the relationship between how well an algorithm performs and the optimization problem on which it is run.”
+“how can we best match algorithms to problems”
+“the average performance of any pair of algorithms across all possible problems is identical.”
+“These same results also indicate the importance of incorporating problem-specific knowledge into the behavior of the algorithm.”
 
 ## =====================================================================
 ## Picture Gathering:

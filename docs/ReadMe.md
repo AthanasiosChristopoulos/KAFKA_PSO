@@ -1662,7 +1662,7 @@ Writing rules:
 
 ## =========================================================
 ## Better Non Differentiable Alternatives to training Neural Networks:
-
+## DFO Methods 
 Evolutionary Algorithms:
     - Genetic Algorithms
     - Neuroevolution
@@ -1689,6 +1689,10 @@ Evolution Strategies (ES):
     - In practice, ES is often considered stronger than PSO for neural networks.
     - It’s gradient-based in spirit, but gradient-free in implementation
     - `But mathematically, it approximates a gradient
+
+Bayesian optimization
+
+“No Free Lunch” => No optimizer works best for all problems.
 
 ## =========================================================
 ## Loss Functions Matter:
