@@ -1659,3 +1659,31 @@ Writing rules:
     - Dont make it too complex / too formal, stick to my level of writing, just improve the actually bad experessions and grammar mistakes
     - Whatever you give me to implement as a change needs to be written in Latex. Meaning it needs to be .txt
     -> If you detect any repetition in what i am writing correct it repetitions are bad ... merge sentenses to do so
+
+## =========================================================
+## Better Non Differentiable Alternatives to training Neural Networks:
+
+Evolutionary Algorithms:
+    - Genetic Algorithms
+    - Neuroevolution
+
+        Pros:
+            Can evolve architecture + weights
+            Works without gradients
+        Cons:
+            Very computationally expensive
+            Slow for large networks
+
+        Can they be used in federated learning ?
+        practically very difficult.
+                2. Communication overhead
+
+                You must share:
+                genomes (weights or structures)
+                or fitness scores for selection
+
+                👉 This breaks the usual “lightweight updates” idea of FL
+
+Evolution Strategies (ES):
+    - Estimate gradient statistically
+    - In practice, ES is often considered stronger than PSO for neural networks.
