@@ -40,7 +40,7 @@ NUMBER_OF_DATA_REPEATS_TEST = 1
 
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
-    "nsfw", "mnist", "mnist5", "fashion-mnist", "svhn", "kmnist")
+    "nsfw", "mnist", "mnist5", "fashion-mnist", "fashion-mnist-half", "svhn", "kmnist")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
@@ -111,7 +111,10 @@ def set_epochs():
 
     if(DATASET == "fashion-mnist"):
         NUMBER_OF_DATA_REPEATS = 7
-        
+    
+    if(DATASET == "fashion-mnist-half"):
+        NUMBER_OF_DATA_REPEATS = 14
+
     if(DATASET == "svhn"):
         NUMBER_OF_DATA_REPEATS = 5
     
@@ -430,7 +433,32 @@ def load_dataset():
         X_train = X_train.astype("float32") / 255.0
         X_test  = X_test.astype("float32") / 255.0
 
-        # Optionally clip test size (same as you do for MNIST)
+        # Ensure labels are consistent (like your other pipelines)
+        y_train = y_train.astype("int64").reshape(-1)
+        y_test  = y_test.astype("int64").reshape(-1)
+
+        # -------------------------------------------------
+        # Take FIRST HALF of shuffled training set
+        # -------------------------------------------------
+        rng = np.random.default_rng(123)
+
+        idx = rng.permutation(len(X_train))
+        X_train = X_train[idx]
+        y_train = y_train[idx]
+
+        half = len(X_train) // 2
+
+        X_train = X_train[:half]
+        y_train = y_train[:half]
+
+        # optional (recommended): reshuffle the selected half
+        idx_half = rng.permutation(len(X_train))
+        X_train = X_train[idx_half]
+        y_train = y_train[idx_half]
+
+        # -------------------------------------------------
+        # Test handling (unchanged)
+        # -------------------------------------------------
         X_test = X_test[:MAX_TEST_SAMPLES]
         y_test = y_test[:MAX_TEST_SAMPLES]
 

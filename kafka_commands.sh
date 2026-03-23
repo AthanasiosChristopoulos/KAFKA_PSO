@@ -283,6 +283,33 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic fashion-mnist-test --from-beginning
 
+# fashion-mnist-half: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic fashion-mnist-half-input --partitions 40 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --describe --topic fashion-mnist-half-input
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic fashion-mnist-half-input
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic fashion-mnist-half-input --from-beginning
+
+# fashion-mnist-half-test: ======================================================
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --create --topic fashion-mnist-half-test --partitions 1 --if-not-exists
+
+kafka-topics.sh --bootstrap-server localhost:19092 --describe --topic fashion-mnist-half-test
+
+kafka-topics.sh --bootstrap-server localhost:19092 \
+  --delete --topic fashion-mnist-half-test
+
+kafka-console-consumer.sh --bootstrap-server localhost:19092 \
+  --topic fashion-mnist-half-test --from-beginning
+
 # svhn: ======================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
