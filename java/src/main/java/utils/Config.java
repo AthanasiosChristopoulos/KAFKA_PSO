@@ -126,6 +126,8 @@ public class Config {
     public int MODEL_VERSION;
 
     public boolean HEAVY_SAMPLES;
+    public String ND4J_PROFILE;
+
     public Dotenv dotenv;
 
     //=============================================================================================================
@@ -409,6 +411,8 @@ public class Config {
         EVALUATE_PRETRAINED = Boolean.parseBoolean(getenv(dotenv, "EVALUATE_PRETRAINED", "false"));
 
         MODEL_VERSION = Integer.parseInt(getenv(dotenv, "MODEL_VERSION", "1")); 
+
+        ND4J_PROFILE = getenv(dotenv, "ND4J_PROFILE", "cpu");
     } 
 
     // ==================================================================================================================================

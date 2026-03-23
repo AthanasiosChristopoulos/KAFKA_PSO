@@ -740,7 +740,8 @@ public class Experimentation {
                 cfg.HEAVY_SAMPLES,
                 cfg.DATASET,
                 cfg.PBEST_WORKER,
-                cfg.NEIGHBORHOOD_TOPOLOGY
+                cfg.NEIGHBORHOOD_TOPOLOGY, 
+                cfg.ND4J_PROFILE
             ));
 
         } catch(Exception e) {
