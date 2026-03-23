@@ -121,3 +121,6 @@ mvn -q -e -DskipTests \
 #   -Dexec.jvmArgs="-Xms512M -Xmx1G -Dorg.bytedeco.javacpp.maxbytes=1000M -Dorg.bytedeco.javacpp.maxphysicalbytes=6G" \
 #   -P$ND4J_PROFILE \
 #   compile exec:java
+
+
+printf '\a'

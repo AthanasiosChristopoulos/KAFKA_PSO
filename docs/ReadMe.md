@@ -1687,3 +1687,5 @@ Evolutionary Algorithms:
 Evolution Strategies (ES):
     - Estimate gradient statistically
     - In practice, ES is often considered stronger than PSO for neural networks.
+    - It’s gradient-based in spirit, but gradient-free in implementation
+    - `But mathematically, it approximates a gradient
