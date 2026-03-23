@@ -462,12 +462,12 @@ public class Experimentation {
             Path csvPath = dir.resolve("results_strength.csv");
 
             // =====================================================================
-            // var strengths = List.of(
-            //     FilterStrength.Level.OFF,
-            //     FilterStrength.Level.EASY,
-            //     FilterStrength.Level.MEDIUM,
-            //     FilterStrength.Level.HARD
-            // );
+            var strengths = List.of(
+                FilterStrength.Level.OFF,
+                FilterStrength.Level.EASY,
+                FilterStrength.Level.MEDIUM,
+                FilterStrength.Level.HARD
+            );
 
             // var strengths = List.of(
             //     FilterStrength.Level.OFF,
@@ -477,9 +477,9 @@ public class Experimentation {
             //     FilterStrength.Level.EASY
             // );
         
-            var strengths = List.of(
-                FilterStrength.Level.MEDIUM
-            );
+            // var strengths = List.of(
+            //     FilterStrength.Level.MEDIUM
+            // );
 
             // var strengths = List.of(
             //     FilterStrength.Level.HARD
