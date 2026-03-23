@@ -26,7 +26,8 @@ pwd
 
 pkill -u achristopoulos -f java   # is gracefull
 pgrep -u achristopoulos -f java -a # find maven process
-kill -9 <pid> # of the maven process
+pgrep -u achristopoulos -f java -a | grep maven
+kill -9 786672 # of the maven process
 
 # Run instead: 
 ps -ef | grep -i kafka | grep -v grep
