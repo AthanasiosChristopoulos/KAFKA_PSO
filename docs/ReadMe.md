@@ -1725,5 +1725,19 @@ Step-by-step:
     action = neural_network(state)
 
 2) Robot moves in the real world:
-    You measure reward:
+
+3) You measure reward:
     reward = distance_walked
+
+The enviroment produces a function that we cant differentiate, only measure.
+We dont know the enviroment / cant describe it mathermatically:
+Because:
+    physics is complex
+    contact, friction, balance
+    real-world noise
+    no closed-form equation
+
+So:
+    distance_walked = black_box(action)
+
+black box == enviroment

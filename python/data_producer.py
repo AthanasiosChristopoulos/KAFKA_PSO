@@ -40,7 +40,7 @@ NUMBER_OF_DATA_REPEATS_TEST = 1
 
 
 CNN_DATASETS = ("cifar3", "cifar5", "cifar10", "cifar10-half", "cifar5-half", 
-    "nsfw", "mnist", "mnist5", "fashion-mnist", "fashion-mnist-half", "svhn", "kmnist")
+    "nsfw", "mnist", "mnist5", "fashion-mnist", "fashion-mnist-half", "fashion-mnist5-half", "svhn", "kmnist")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--streaming', action='store_true')
@@ -114,6 +114,9 @@ def set_epochs():
     
     if(DATASET == "fashion-mnist-half"):
         NUMBER_OF_DATA_REPEATS = 14
+
+    if(DATASET == "fashion-mnist5-half"):
+        NUMBER_OF_DATA_REPEATS = 28
 
     if(DATASET == "svhn"):
         NUMBER_OF_DATA_REPEATS = 5
@@ -480,6 +483,79 @@ def load_dataset():
 
         return X_train, y_train, X_test, y_test, class_names
 
+
+    # ==================================================================================================
+    
+    elif DATASET == "fashion-mnist5-half":
+        
+        print("Loading from tf.keras.datasets.fashion-mnist")
+        (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
+
+        # Normalize to [0,1]
+        X_train = X_train.astype("float32") / 255.0
+        X_test  = X_test.astype("float32") / 255.0
+
+        # Ensure labels are consistent
+        y_train = y_train.astype("int64").reshape(-1)
+        y_test  = y_test.astype("int64").reshape(-1)
+
+        # -------------------------------------------------
+        # Step 1: shuffle + take FIRST HALF
+        # -------------------------------------------------
+        rng = np.random.default_rng(123)
+
+        idx = rng.permutation(len(X_train))
+        X_train = X_train[idx]
+        y_train = y_train[idx]
+
+        half = len(X_train) // 2
+
+        X_train = X_train[:half]
+        y_train = y_train[:half]
+
+        # -------------------------------------------------
+        # Step 2: keep only classes 0–4
+        # -------------------------------------------------
+        classes = np.array([0, 1, 2, 3, 4], dtype=np.int64)
+
+        train_mask = np.isin(y_train, classes)
+        test_mask  = np.isin(y_test, classes)
+
+        X_train = X_train[train_mask]
+        y_train = y_train[train_mask]
+
+        X_test = X_test[test_mask]
+        y_test = y_test[test_mask]
+
+        # -------------------------------------------------
+        # Step 3: (optional but recommended) reshuffle train
+        # -------------------------------------------------
+        idx_half = rng.permutation(len(X_train))
+        X_train = X_train[idx_half]
+        y_train = y_train[idx_half]
+
+        # -------------------------------------------------
+        # Step 4: test trimming (unchanged)
+        # -------------------------------------------------
+        X_test = X_test[:MAX_TEST_SAMPLES]
+        y_test = y_test[:MAX_TEST_SAMPLES]
+
+        print("Train shape:", X_train.shape, "Labels:", y_train.shape)
+        print("Test shape:", X_test.shape, "Labels:", y_test.shape)
+        print("Classes kept:", classes.tolist())
+        print("Unique train labels:", np.unique(y_train))
+        print("Unique test labels:", np.unique(y_test))
+
+        class_names = [
+            "T-shirt/top",
+            "Trouser",
+            "Pullover",
+            "Dress",
+            "Coat",
+        ]
+
+        return X_train, y_train, X_test, y_test, class_names
+        
     # ==================================================================================================
     elif DATASET == "kmnist":
 

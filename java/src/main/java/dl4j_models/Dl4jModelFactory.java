@@ -370,7 +370,50 @@ public class Dl4jModelFactory {
 				String filename;
 				switch (version) {
 					case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4_half.h5";	
-						// Pretrained Accuracy: 0.73, Training Accuracy: 0.7, Test Accuracy:0.79333335
+						// Pretrained Accuracy: 0.73, Training Accuracy: 0.82, Test Accuracy:0.862
+						// ideal
+					default -> filename = "no_pretrained_file_chosen";
+				}
+				
+				if (preTrained) {
+					System.out.println("Using model version: " + version);
+					switch (version) {
+						case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+
+				} else {
+					switch (version) {
+						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
+
+						default -> throw new IllegalArgumentException("Unknown version: " + version);
+					}
+				}
+			}
+
+		// ==============================================================================================
+
+		} else if ("fashion-mnist5-half".equals(DATASET)) {
+
+			cfg.USING_PRETRAINED_MODEL = true;
+
+			// model = createMNISTModelMLPSimple_2(workerId);
+			// model = createMNISTModelMLPSimple_1(workerId);
+			// model = createMNIST5Cnn_New_Simpler(workerId);
+			// model = createMNISTCnn_New_2(workerId);
+			// model = createMNISTCnn(workerId);
+			// model = createMNIST5Cnn_New(workerId);
+			
+			// pretrained =============================================================================================
+			
+			if(cfg.USING_PRETRAINED_MODEL) {
+
+				int version = 1;
+
+				String filename;
+				switch (version) {
+					case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4_half.h5";	
+						// Pretrained Accuracy: 0.84, Training Accuracy: 0.9, Test Accuracy:0.812
 						// ideal
 					default -> filename = "no_pretrained_file_chosen";
 				}
