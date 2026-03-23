@@ -123,4 +123,4 @@ mvn -q -e -DskipTests \
 #   compile exec:java
 
 
-printf '\a'
+curl -d "hello from $(hostname)" https://ntfy.sh/pso-test-123

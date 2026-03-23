@@ -82,7 +82,7 @@ public class Experimentation {
             } else {
                 cfg.EARLY_STOPPING = false;
             }
-            
+
             System.out.println("Running N_WORKERS with EARLY STOPPING: " + cfg.EARLY_STOPPING);
 
             // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
@@ -131,6 +131,7 @@ public class Experimentation {
                     resetTopics();
 
                     // =================================================================================================
+                    printExperimentData(n, -1, -1);
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -194,6 +195,7 @@ public class Experimentation {
 
 
                     // =================================================================================================
+                    printExperimentData(-1, fE, -1);
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -254,6 +256,7 @@ public class Experimentation {
                     resetTopics();
 
                     // =================================================================================================
+                    printExperimentData(-1, -1, theshold_offset);
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -300,11 +303,11 @@ public class Experimentation {
                 resetTopics();
 
                 // =================================================================================================
-                ExperimentResult r = null;
+                printExperimentData(-1, -1, -1);
 
+                ExperimentResult r = null;
                 r = SimulationRunner.runOnce(cfg);
 
-                // writeExperimentData(w, r, -1, -1, -1);
                 writeAccuracyValues(w, r);
                 w.write(header_1);
                 writeExperimentData(w, r, -1, -1, -1);
@@ -389,6 +392,7 @@ public class Experimentation {
             // List<String> loss_function_list = List.of("CROSS_ENTROPY");
             // List<String> combine_loss_list = List.of("AVG");
             // List<String> regularizer_list = List.of("SLOPE");
+            printExperimentData(-1, -1, -1);
 
             ExperimentResult r = null;
             try (BufferedWriter w = Files.newBufferedWriter(
@@ -509,6 +513,7 @@ public class Experimentation {
                     resetTopics();
 
                     // ======================================================================
+                    printExperimentData(-1, (cfg.FILTER_ENABLED ? 1 : 0), -1);
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -569,6 +574,7 @@ public class Experimentation {
                     resetTopics();
 
                     // ======================================================================
+                    printExperimentData(-1, -1, -1);
 
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
@@ -627,6 +633,8 @@ public class Experimentation {
                     resetTopics();
 
                     // ======================================================================
+                    printExperimentData(-1, -1, -1);
+
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
                     w.write(String.format("%d,%d,", cfg.MODEL_VERSION, r.getDimensionality()));
@@ -688,7 +696,8 @@ public class Experimentation {
                     resetTopics();
 
                     // ======================================================================
-
+                    printExperimentData(-1, -1, -1);
+                    
                     ExperimentResult r = SimulationRunner.runOnce(cfg);
 
                     w.write(String.format("%s,%s,", cfg.ENABLE_NEIGHBORHOODS, cfg.NEIGHBORHOOD_TOPOLOGY));
@@ -760,6 +769,42 @@ public class Experimentation {
         }
     }
 
+    // =============================================================================================================
+
+    private static void printExperimentData(
+        int nWorkers_arg,
+        int filterEnabled_arg,
+        float theshold_offset_arg
+    ) {
+        int nWorkers = cfg.N_WORKERS;
+        int filterEnabled = (cfg.FILTER_ENABLED ? 1 : 0);
+        float theshold_offset = cfg.LOSS_THRESHOLD_MAX - cfg.LOSS_THRESHOLD_MIN;
+
+        if (nWorkers_arg != -1) nWorkers = nWorkers_arg;
+        if (filterEnabled_arg != -1) filterEnabled = filterEnabled_arg;
+        if (theshold_offset_arg != -1) theshold_offset = theshold_offset_arg;
+
+        System.out.println("filterEnabled: " + filterEnabled);
+        System.out.println("nWorkers: " + nWorkers);
+
+        System.out.println("threshold_offset: " + theshold_offset);
+        System.out.println("LOSS_THRESHOLD_MIN: " + cfg.LOSS_THRESHOLD_MIN);
+        System.out.println("LOSS_THRESHOLD_MAX: " + cfg.LOSS_THRESHOLD_MAX);
+
+        System.out.println("PBEST_DEBOUNCE_MS: " + cfg.PBEST_DEBOUNCE_MS);
+        System.out.println("MONITORING_THRESHOLD_MIN: " + cfg.MONITORING_THRESHOLD_MIN);
+        System.out.println("MONITORING_THRESHOLD_MAX: " + cfg.MONITORING_THRESHOLD_MAX);
+
+        System.out.println("DATASET_PARTITIONING: " + cfg.DATASET_PARTITIONING);
+        System.out.println("ENABLE_NEIGHBORHOODS: " + cfg.ENABLE_NEIGHBORHOODS);
+        System.out.println("EARLY_STOPPING: " + cfg.EARLY_STOPPING);
+        System.out.println("HEAVY_SAMPLES: " + cfg.HEAVY_SAMPLES);
+
+        System.out.println("DATASET: " + cfg.DATASET);
+        System.out.println("PBEST_WORKER: " + cfg.PBEST_WORKER);
+        System.out.println("NEIGHBORHOOD_TOPOLOGY: " + cfg.NEIGHBORHOOD_TOPOLOGY);
+        System.out.println("ND4J_PROFILE: " + cfg.ND4J_PROFILE);
+    }
 
     // =============================================================================================================
 
