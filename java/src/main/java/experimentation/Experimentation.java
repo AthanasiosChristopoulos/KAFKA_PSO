@@ -470,7 +470,7 @@ public class Experimentation {
             // );
 
             var strengths = List.of(
-                FilterStrength.Level.MEDIUM,
+                // FilterStrength.Level.MEDIUM,
                 FilterStrength.Level.HARD
             );
 

@@ -75,6 +75,7 @@ which kafka-topics.sh
 kafka-topics.sh --bootstrap-server localhost:19092 --list
 
 ss -ltnp | egrep ':19092|:19093|:9092|:9093'  # Check port being used
+kill -SIGINT 414127 # same as pressing Ctrl + C
 
 # where will kafka log ?
 cd /mnt/nas_drive/achristopoulos/kafka-local/config/kraf
