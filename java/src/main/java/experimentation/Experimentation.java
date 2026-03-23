@@ -76,7 +76,15 @@ public class Experimentation {
         // =====================================================
 
         if(cfg.EXPERIMENTATION_MODE.equals("N_WORKERS")) {
-            cfg.EARLY_STOPPING = false;
+
+            if(cfg.DATASET.contains("mnist") || cfg.DATASET.contains("cifar")) {
+                cfg.EARLY_STOPPING = true;
+            } else {
+                cfg.EARLY_STOPPING = false;
+            }
+            
+            System.out.println("Running N_WORKERS with EARLY STOPPING: " + cfg.EARLY_STOPPING);
+
             // Path csvPath = createUniqueCsvPath(cfg.EXPERIMENTATION_DIR, "results");
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
@@ -443,6 +451,8 @@ public class Experimentation {
 
         } else if (cfg.EXPERIMENTATION_MODE.equals("FILTER_STRENGTH")) {
 
+            cfg.EARLY_STOPPING = true;
+
             Path dir = Path.of(cfg.EXPERIMENTATION_DIR);
             Files.createDirectories(dir);
             Path csvPath = dir.resolve("results_strength.csv");
@@ -467,6 +477,7 @@ public class Experimentation {
             // var strengths = List.of(
             //     FilterStrength.Level.EASY
             // );
+
             // =====================================================================
 
             try (BufferedWriter w = Files.newBufferedWriter(
