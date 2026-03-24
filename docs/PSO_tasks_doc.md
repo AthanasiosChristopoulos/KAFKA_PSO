@@ -161,18 +161,13 @@
 		
 		- Better / more complex filters
 		- Better solution than cifar or mnist transfer learning
-		- read other peoples diplomatiki and other peoples papers to tell if yours is good enough ...
+		- read peoples papers that you quoted
 
 		Lower Priority ============================================
 
 		- Better Non Differentiable functions
 		- Use of PSO techniques for better accuracy
 		- Better starter datasets
-		
-	# ========================================================================================
-
-	77) What tasks, that are not classifications, are non differentiable functions useful for, meaning they beat cross entropy
-		- Generally prove that there is no dominant loss function for every tasks (no free lunch)
 		
 ## =======================================================================================
 
@@ -205,7 +200,9 @@
 
 	52) End-to-end propagation delay
 
-
+	77) What tasks, that are not classifications, are non differentiable functions useful for, meaning they beat cross entropy
+		- Generally prove that there is no dominant loss function for every tasks (no free lunch)
+		
 ## ================================================================================================
 
  - Generall Plan for now (5-43:36):
