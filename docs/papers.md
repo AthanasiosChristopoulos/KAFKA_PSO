@@ -14,6 +14,7 @@ University journals (like this one)
 
 Bad: No DOI
 
+## ====================================================================
 1)
 Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
 
@@ -207,7 +208,7 @@ Quotes:
 	sub-weights = locally trained weights from each worker.
 
 ## ====================================================================
-10)
+10) Hammed Hamed
 PARTICLE SWARM OPTIMIZATION FOR NEURAL NETWORK LEARNING ENHANCEMENT
 
 Quotes:
@@ -216,14 +217,32 @@ Quotes:
 and Mohan [8], where the position of each particle in swarm represents a set of
 weight for the current epoch or iteration."
 
+<!-- ===================================================================== -->
+=> PSO better than GA:
 "Lee et al. [7] have used PSO and GA for excess return evaluation in
 stock market. Based on their experiment, it is proven that PSO algorithm is better
 compared to GA."
 
+"Weights in BP are replaced with weights from GA, while η and α (learning and momentum rate) value in BP are replaced with value from GA process."
+	=> BPNN
+
+“PSO … can be effectively applied in neural network with faster convergence rate and promising classification accuracy compared to GANN.”
+
+“The results show that PSONN give promising results in terms of convergence rate and classification accuracy compared to GANN.”
+	=> GANN using backprop + SGD:
+		- GA is used to optimize parameters / weights
+		- Backpropagation (BP) is still part of the learning pipeline
+	=> PSONN doesnt use Backprop
+
+<!-- ===================================================================== -->
+
 “There is no backpropagation concept in PSONN where the feedforward NN produced the learning error (particle fitness) based on set of weight and bias (PSO positions).”
 
 “PSO is applied to feedforward neural network … where the position of each particle in swarm represents a set of weight for the current epoch or iteration.”
+
 “The particle moves within the weight space attempting to minimize learning error. Changing the position means updating the weight of the network in order to reduce the error of the current epoch.”
+
+“Train NN using new particle position” => means just Evaluate the NN again with new weights like extract errors / probabilities, not train it with SGD.
 
 ## ====================================================================
 11)
@@ -238,13 +257,31 @@ Quotes:
 In Table II: “PSO — w = 0.7 | c1 = 1.7 | c2 = 1.7”
 
 ## ====================================================================
-12)
+12) Zhang, zhang
 Particle swarm optimisation for evolving artificial neural network
 
 Quotes:
 “In PSONN system, the learning algorithm is the PSO algorithm.”
 “Here the encoding scheme is that each individual is to parameterise a whole group of g nodes in ANNs, this means that every component of each individual represents a connection weight.”
 “Generate an initial population of M networks.”
+"GAS was used
+to evolve ANNs, but the evolution of ANNs architectures
+often suffers from the permutation problem [5]."
+ => this may be relevant in PSO as well Two different weight vectors, can represent the same function
+ => this creates redundancy in solution space:
+	2 hidden neurons:Neuron A, Neuron B
+	Now swap them: Neuron B, Neuron A
+	The network output does not change at all
+
+This one doesnt do full PSO training either (only NAS stuff):
+"Using the PT algorithm to train each network’s nodes
+on the training set (this process can evaluate the quality
+of a given network architecture)."
+	- PT = a partial training algorithm
+	- a local training method applied to the network weights
+	- Strong indirect evidence they use gradient-based training, they basically use Backprop
+		PSO → explore architectures / candidate weights
+		PT → train/refine the network
 
 ## ====================================================================
 13) Kashyap

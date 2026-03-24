@@ -1684,7 +1684,9 @@ Evolutionary Algorithms:
 
                 👉 This breaks the usual “lightweight updates” idea of FL
 
+
 Evolution Strategies (ES):
+
     - Estimate gradient statistically
     - In practice, ES is often considered stronger than PSO for neural networks.
     - It’s gradient-based in spirit, but gradient-free in implementation
@@ -1693,6 +1695,35 @@ Evolution Strategies (ES):
 Bayesian optimization
 
 “No Free Lunch” => No optimizer works best for all problems.
+
+
+## Genetic Algorithms: ======================================
+
+Is population-based like PSO, that has many global operations, lots of data copying and recombination
+Each iteration involves multiple heavy operations:
+
+Selection:
+    Evaluate all individuals    => this is a global operation!
+    Sort / probabilistically select
+
+Crossover:
+    Combine two weight vectors
+    For NN: this is large vector manipulation
+
+Mutation:
+    Randomly modify weights
+
+Idea: “Good solutions can be created by combining parts of other good solutions, plus a bit of randomness.”
+
+Crossover (Meiosis):
+    Parent A: [0.9, -0.3, -0.7, 0.1]
+    Parent B: [-0.8, 0.6,  0.3, 0.4]
+
+    Child:    [0.9, -0.3, 0.3, 0.4]
+
+Mutation:
+    Before: [0.9, -0.3, 0.3, 0.4]
+    After:  [0.9, -0.3, 0.8, 0.4]
 
 ## =========================================================
 ## Loss Functions Matter:
