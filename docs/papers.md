@@ -216,6 +216,10 @@ Quotes:
 and Mohan [8], where the position of each particle in swarm represents a set of
 weight for the current epoch or iteration."
 
+"Lee et al. [7] have used PSO and GA for excess return evaluation in
+stock market. Based on their experiment, it is proven that PSO algorithm is better
+compared to GA."
+
 “There is no backpropagation concept in PSONN where the feedforward NN produced the learning error (particle fitness) based on set of weight and bias (PSO positions).”
 
 “PSO is applied to feedforward neural network … where the position of each particle in swarm represents a set of weight for the current epoch or iteration.”

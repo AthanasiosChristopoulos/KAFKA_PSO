@@ -60,6 +60,8 @@ kafka-storage.sh format -t "$CLUSTER_ID" -c /mnt/nas_drive/achristopoulos/kafka-
 
 export KAFKA_HOME=/mnt/nas_drive/achristopoulos/kafka-local
 export PATH="$KAFKA_HOME/bin:$PATH"     # this isnt overriding PATH, this is are prepending to it (appending to the beggining of the list)
+
+# Starting the Kafka Broker
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
 kafka-server-start.sh /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server-heavy.properties
 

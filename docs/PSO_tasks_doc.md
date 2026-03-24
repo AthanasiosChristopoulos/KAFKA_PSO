@@ -150,7 +150,7 @@
 	## =======================================================================================
 	## New Tasks
 
-	75) You obviously didnt read all these papers ...
+	75) You didnt read all these papers ...
 		=> clean them up
 
 	# ========================================================================================
@@ -178,18 +178,8 @@
 		- how does yours differ ?
 			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
 			- What scientific differences did you add / remove / what parameters did you use ?
-	
+
 	19) velocity initialiazation (magnitude)
-
-	13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
-
-	11) Add buffer as a statestore (on worker who is accumulating samples)
-
-	17) X_G state store - the global current position
-
-	21) Use Vector class not float[] => important for calculations
-
-	29) Have both training and test accuracy => really hard on the coordinator because it relies on loading the entire test dataset.
 	
 	41) Συγκριση με gradient descent (σε ολα τα datasets) => too depressing
 		Συγκριση η τελικη θα γινει με κατανεμημενο περιβαλλον στο training του gradient descent:
@@ -197,6 +187,12 @@
 		- Δηλαδη θελουμε να συγκρινουμε PSO vs gradient descent σε distributed περιβαλλον
 		- Δες parameter server (independent learning με merging των μοντελλων afterwards) => δεδομενα ειναι λιγοτερα για καθε worker
 		- Basically πρεπει να κανεις το federated learning στην python με gradient descent
+
+	Improve code:
+		13) Figure out Kafka Streams aggregation HOF thing (straight from Kafka Streams DSL)
+		11) Add buffer as a statestore (on worker who is accumulating samples)
+		17) X_G state store - the global current position
+		21) Use Vector class not float[] => important for calculations
 
 	52) End-to-end propagation delay
 
