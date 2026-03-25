@@ -77,18 +77,25 @@ git branch -vv      # Shows branches on local and what they track on remote
 git config --get remote.origin.fetch    # Which branches are allowed to be tracked
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    # Set to be able to fetch everything
 
-
 git rm -r --cached logs
 git rm -r --cached target
 
 git reset --soft HEAD~1
 
 # ===================================================================
-# .gitignore:
-# you will need this to check what is already staged:
-git ls-files
+# .gitignore - Remove something you already tracked:
 
+# you will need this to check what is already staged:
+git ls-files	# for files
+git ls-files | xargs -n1 dirname | sort -u 	# for directories
+
+# for files:
 git restore --staged main.bbl main.blg main.fls main.out main.tex
 git rm --cached main.bbl main.blg main.fls main.out main.tex
+
+# for directories:
+git reset
+git rm -r --cached node_modules
+git rm -r --cached .vscode
 
 ```
