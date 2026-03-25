@@ -401,6 +401,9 @@ https://lightning.ai/docs/torchmetrics/stable/classification/hinge_loss.html?utm
 
 For multi class hinge loss
 
+“I don’t just want the correct class to be highest.
+I want it to be higher than the wrong classes by at least some margin.”
+
 ## =====================================================================
 17)
 DERIVATIVE-FREE OPTIMIZATION FOR CUSTOM LOSSFUNCTIONS
