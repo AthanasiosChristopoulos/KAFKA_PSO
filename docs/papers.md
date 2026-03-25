@@ -123,7 +123,7 @@ which implies that the global model may no longer be accurate."
 	=> Synchronization still takes place but only when necessary.
 
 ## ====================================================================
-7)
+7) Capel, capel
 Parallel PSO for Efficient Neural Network Training Using GPGPU and Apache Spark in Edge Computing Sets
 
 Quotes:
@@ -139,25 +139,25 @@ for large-scale data processing tasks."
 	=> DSPSO = Distributed Synchronous Particle Swarm Optimization
 	=> DAPSO = Distributed Asynchronous Particle Swarm Optimization
 
+"Despite the fact that these CUDA-based GPU PSO
+acceleration proposals offer extremely low latency for computation and memory access, as
+well as high throughput for suitable workloads, they suffer from poor scalability, which is
+limited by the resources of a single GPU or a small number of GPUs"
+
 The main point of this PSO implementation os to be scalable with increased data:
 	"Accordingly, this algorithm will demonstrate superior performance in the handling and
 	processing of massive datasets on distributed systems, exhibiting both scalability and fault tolerance."
 
-	"In contrast,
-	distributed implementations of PSO with Apache Spark are horizontally scalable, allowing
-	for the addition of nodes to the cluster and thus making them suitable for processing very
-	large datasets."
+	"In contrast, distributed implementations of PSO with Apache Spark are horizontally scalable, allowing
+	for the addition of nodes to the cluster and thus making them suitable for processing very large datasets."
 
 Uses Spark cluster scheduling rather than message-based communication. This means that Spark is inherently meant to be executed in a Cluster:
 
 “Spark distributes the computational parallelisation process across the available cluster executors.”
 "Secondly, the partitioning feature enables Spark to distribute the
 computational parallelisation process across the available cluster executors."
-"While the programs devel-
-oped with Spark can be executed on diverse distributed platforms, this work exclusively
-presents results from execution on a departmental GPU cluster. As future work, we in-
-tend to adapt the presented algorithms for deployment on alternative platforms, such as
-Kubernetes or Databricks."
+"While the programs developed with Spark can be executed on diverse distributed platforms, this work exclusively
+presents results from execution on a departmental GPU cluster. As future work, we intend to adapt the presented algorithms for deployment on alternative platforms, such as Kubernetes or Databricks."
 
 “Particle fitness computation and particle position update are distributed across the execution nodes of the Spark cluster.”
 	=> Uses actuall PSO training
@@ -311,16 +311,63 @@ Quotes:
 		- SGD_gradient_step
 
 ## ====================================================================
-14)
+14) Wang, wang
 Particle Swarm Optimisation for Evolving Deep Neural Networks for Image Classification by Evolving and Stacking Transferable Blocks
 
 Quotes:
 “In this paper, an efficient particle swarm optimisation method named EPSOCNN is proposed to evolve CNN architectures inspired by the idea of transfer learning.”
+"The proposed method will be evaluated on the CIFAR-10 dataset ... In addition, the evolved block will be transferred and evaluated on two other datasets — CIFAR-100 and the Street View House Numbers (SVHN) dataset."
+"In order to mitigate the bias introduced by only using a small subset, Adam optimisation [11] is used to train the CNNs instead of SGD optimisation [12]."
+	=> Backprop
+
+“the search space is minimised by integrating the existing expertise of hand-crafted CNNs”
+	The architecture is not manually designed
+	Even if only part of the architecture is searched
+	So this is a restricted / reduced NAS approach
+
 “In the proposed method, DenseNet [4] is used as the prior expertise to minimise the search space by encoding only the hyper-parameters of one dense block...”
 	=> “Instead of evolving the whole network architecture, the PSO is only utilised to evolve the optimal Dense Block on the small subset.”
 	=> NAS == Each particle is a proposal for how the CNN should be built.
 		=> it encodes only a small architectural description of one dense block.
+	
+"PSO is used to design the architecture (NAS), while backpropagation is used to train the network during evaluation."
+	=> "Furthermore, an adaptive training algorithm referred as Adam optimisation [11] is adopted to train the CNNs during the fitness evaluation"
+	=> PSO needs to evaluate architecture ... to do so, the architecture needs to be first trained, then PSO can evaluate it and then back to PSO search space 
+
 “Thirdly, an automatic and progressive process of stacking the learned block is proposed to increase the capacity of the final neural network.”
+"the proposed method stacks the learned block multiple times to obtain a CNN with more capacity, which will be depicted in Section III-E."
+	- stacking: repeating the same neural network block multiple times to build a deeper network 
+		- [Block] → [Block] → [Block] → output
+	- Core idea:
+		Search for one good CNN building block
+		Then stack it multiple times
+		That becomes the final architecture
+“the learned block from a smaller dataset is transferable to a larger dataset”
+	It suggests transfer learning (weights)
+	But actually it’s architecture reuse	=> transferable == reusable
+
+Step 1 — PSO proposes a candidate
+Particle = (layers, growth rate)
+Defines a CNN block
+Step 2 — Train that candidate (THIS is backprop)
+
+They:
+
+build the CNN block
+train it using Adam (gradient descent)
+
+Quote:
+
+“Apply Adam optimisation to train block”
+
+Step 3 — Evaluate performance
+Measure accuracy
+This becomes the fitness
+Step 4 — PSO updates particles
+Based on fitness
+Moves toward better architectures
+Step 5 — Repeat
+
 
 ## ====================================================================
 15)
