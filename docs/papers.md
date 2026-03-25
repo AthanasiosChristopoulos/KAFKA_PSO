@@ -138,7 +138,8 @@ for large-scale data processing tasks."
 “Two variants of Parallel PSO were proposed. DSPSO is more efficient for medium-sized datasets, while DAPSO is faster and more scalable for large datasets.”
 	=> DSPSO = Distributed Synchronous Particle Swarm Optimization
 	=> DAPSO = Distributed Asynchronous Particle Swarm Optimization
-
+	"Synchronous PSO updates the swarm only after all particles have been evaluated, whereas asynchronous PSO updates particles as soon as evaluations become available."
+	
 "Despite the fact that these CUDA-based GPU PSO
 acceleration proposals offer extremely low latency for computation and memory access, as
 well as high throughput for suitable workloads, they suffer from poor scalability, which is
