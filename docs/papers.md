@@ -19,10 +19,18 @@ Bad: No DOI
 Zhang, Zhang, Lok, Lyu (2007), A hybrid particle swarm optimization–back-propagation algorithm for feedforward neural network training. => The paper explicitly says it combines PSO global search with BP local search to train network weights, and it uses a heuristic transition from PSO to gradient-based search.
 
 ## ====================================================================
-2)
+2) deRose, de rosa
 
 de Rosa, Roder, Papa, dos Santos (2022), Improving Pre-Trained Weights Through Meta-Heuristics Fine-Tuning.
 	=> PSO fine-tuning not actuall training
+
+"The proposed approach aims to pre-train an architecture
+through its standard pipeline, e.g., stochastic gradient op-
+timization across a training set, followed by a fine-tuning
+using meta-heuristic optimization across a validation set (post-
+trained). The idea is to use meta-heuristic techniques to explore
+the search space better and intensify a promising solution
+found by the traditional optimization algorithm."
 
 ## ====================================================================
 3)
@@ -164,25 +172,26 @@ presents results from execution on a departmental GPU cluster. As future work, w
 	=> Uses actuall PSO training
 
 ## ====================================================================
-8)
+8) Park, park
 FedPSO: Federated Learning Using Particle Swarm Optimization to Reduce Communication Costs
 
 Quotes:	
 
 Communication Improvemnt with FedPSO
-"Thus, we propose a FedPSO, a global model update algorithm with improved
-network communication performance, by changing the form of the data that clients transmit to
-servers.
+	=> we want to avoid sending neural learning weights
+	=> clients only share score
+"Thus, we propose a FedPSO, a global model update algorithm with improved network communication performance, by changing the form of the data that clients transmit to servers."
 	“We increase its robustness in unstable network environments by transmitting score values rather than large weights.”
+
+	"We propose a new model, federated PSO (FedPSO), that collects scores such as accuracy and loss rather than weights for global model updates."
 
 	“The proposed model, FedPSO, receives the model weights only for the client that provided the best score so that the model weights do not need to be transmitted from all clients.”
 
-"In this study, we propose the algorithm using particle swarm optimization algorithm instead of FedAvg,
-which updates the global model by collecting weights of learned models that were mainly used in
-federated learning."
+"In this study, we propose the algorithm using particle swarm optimization algorithm instead of FedAvg, which updates the global model by collecting weights of learned models that were mainly used in federated learning."
+
+"Next, the proposed model, FedPSO, receives the model weights only for the client that provided the best score so that the model weights do not need to be transmitted from all clients."
 
 “Applying FedPSO significantly reduced the amount of data used in network communication.”
-	=> because of sending dcoes and ni updates
 
 “FedPSO improved the accuracy of the global model by an average of 9.47%.”
 
@@ -289,11 +298,17 @@ of a given network architecture)."
 A Study of Hybrid and Evolutionary Metaheuristics for Single Hidden Layer Feedforward Neural Network Architecture
 
 Quotes:
-“This study presents a population-based metaheuristic framework for training ANNs … framing the training objective as a high-dimensional nonlinear optimization problem.”
+“This study presents a population-based metaheuristic framework for training ANNs ... framing the training objective as a high-dimensional nonlinear optimization problem.”
 “the trainable parameters of the ANN—consisting of weights and biases—are components of a high-dimensional vector.”
 “This study employs a single hidden layer feedforward neural network architecture.”
 
 “we present an innovative hybrid PSO–SGD approach that utilizes PSO’s global search capabilities and SGD’s local refining.”
+
+!!!IMPORTANT!!!
+"However, to overcome the constraints of individual meta-
+heuristics, we offer a hybrid optimization method that in-
+tegrates the global search capability of PSO with the local
+convergence accuracy of SGD."
 
 “SGD modifies the weights using a first-order approximation of the loss landscape by descending down the negative gradient of the error function.” The protocol can be described as such:
 	Neural Network (single hidden layer)
@@ -310,6 +325,10 @@ Quotes:
 		+ PSO_cognitive_term
 		+ PSO_social_term
 		- SGD_gradient_step
+
+Dimensionality stuff:
+
+“The global search efficiency of PSO and GA is more economical in lower dimensions but becomes costly as dimensionality rises, while gradient-based approaches such as SGD exhibit superior scalability in high-dimensional scenarios.”
 
 ## ====================================================================
 14) Wang, wang
