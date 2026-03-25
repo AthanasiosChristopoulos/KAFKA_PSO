@@ -313,3 +313,12 @@ After Ctrl+Z:
 the program may still exist in memory
 
 it may still hold files, sockets, GPU memory, locks, ports, etc.
+
+
+## Commands =============================================================
+
+```bash
+tree -L 2	# print current directory up to 2 Levels deep
+
+
+```
