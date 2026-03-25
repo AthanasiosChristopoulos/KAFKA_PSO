@@ -143,16 +143,6 @@
 		- 2) Πρεπει να εχουν χρησιμοποιηθει σε καποιο γνωστο / οχι οτι να ναι venue (χώρος δημοσίευσης)
 		- 3) Πρεπει οταν τα χρησιμοποιω να μην πεφτει πολυ το accuracy σε συγκριση με cross entropy
 
-	## =======================================================================================
-
-	69) Prediction Models: Best one is Static
-		
-	## =======================================================================================
-	## New Tasks
-
-	75) You didnt read all these papers ...
-		=> clean them up
-
 	# ========================================================================================
 
 	++) If more work is necessary:
@@ -161,7 +151,6 @@
 		
 		- Better / more complex filters
 		- Better solution than cifar or mnist transfer learning
-		- read peoples papers that you quoted
 
 		Lower Priority ============================================
 
