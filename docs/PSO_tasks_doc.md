@@ -162,12 +162,6 @@
 
 	Backlog Tasks:
 	
-	6) Related Work + Research:
-		- Other attempts implementing PSO
-		- how does yours differ ?
-			- Implementation / Enviroment / Technologies (Docker, Java, Kafka Streams)
-			- What scientific differences did you add / remove / what parameters did you use ?
-
 	19) velocity initialiazation (magnitude)
 	
 	41) Συγκριση με gradient descent (σε ολα τα datasets) => too depressing
