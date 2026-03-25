@@ -5,6 +5,19 @@
 
 ```bash
 
+# ===================================================================
+# Github being unbelievably annoying
+
+git config --global user.name "AthanasiosChristopoulos"
+git config --global user.email "athanasioschristopoulos61@gmail.com"
+
+Codes:
+	username: AthanasiosChristopoulos
+	password: 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
+
+# ===================================================================
+# Git general
+
 git clone https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
 git clone -b DL4J-PSO-Server-2 --single-branch https://github.com/AthanasiosChristopoulos/KAFKA_PSO_4.git
 git push https://github.com/AthanasiosChristopoulos/Kafka_PSO.git
@@ -59,16 +72,11 @@ git branch -r       # This command shows remote-tracking branches that your loca
 
 git branch -vv      # Shows branches on local and what they track on remote     
 
+
 # Restricted fetch configuration in .git/config:
 git config --get remote.origin.fetch    # Which branches are allowed to be tracked
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"    # Set to be able to fetch everything
 
-git config --global user.name "AthanasiosChristopoulos"
-git config --global user.email "athanasioschristopoulos61@gmail.com"
-
-Codes:
-	username: AthanasiosChristopoulos
-	password: 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
 
 git rm -r --cached logs
 git rm -r --cached target
