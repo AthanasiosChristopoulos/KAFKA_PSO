@@ -113,3 +113,6 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 # These are stored outside the container lifecycle and are meant for persistence (independent from what the container does).
   # - Volumes => data survives container deletion and recreation
   # Without a volume, data survives a restart, but not a container shutdown with docker compose down, docker rm broker
+
+
+docker compose logs -f order_service  # to filter to the correct logs on a multi service docker enviroment, to just one service
