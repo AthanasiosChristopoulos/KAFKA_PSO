@@ -38,6 +38,7 @@
 			- Οτι εχω κανει οπως ειναι στο .pdf, να το περασω σε powerpoint
 			- Να κανω omit κατι σαν το Background ???
 			- 19/5/2026 ή 19/6/2026
+			- θα μιλαω σε greeklish ???
 			
 		- Comments on comments / clarifications
 		- Ποια ειναι αυτα τα 1 - 2 πραγματα ακομα ... ? 

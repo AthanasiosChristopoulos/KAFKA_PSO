@@ -1776,3 +1776,27 @@ So:
     distance_walked = black_box(action)
 
 black box == enviroment
+
+## =========================================================
+## federated scalability
+
+There are three common ways people mean it.
+
+1. Client scalability
+
+Can the method work with a very large number of clients?
+
+For example:
+    thousands or millions of phones
+    many hospitals, factories, or companies
+
+A scalable method should not require every client to participate every round, and the server should still be able to aggregate updates efficiently.
+
+2. System scalability
+
+Can the system handle limited bandwidth, dropped clients, slow devices, and uneven hardware?
+
+This is about engineering practicality:
+    low communication cost
+    robustness to stragglers
+        support for weak devices
