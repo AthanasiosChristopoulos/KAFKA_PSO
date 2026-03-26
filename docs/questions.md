@@ -25,25 +25,24 @@
 		
 		- πειραζει που δεν πεφτει το accuracy οταν τρεχω heavy ? Γενικα ειναι απλως πολυ καλυτερο με heavy ... 
 
-		- Προτεινω να βγαλουμε iris και να βαλουμε MNIST5 (ή και SUSY αμα χρειαστει)
-			- Εχει νοημα αλλο dataset ? i mean εχουμε ηδη technically 5
+		========================================================================================
 
-		- Θα μου δειτε τον κωδικα, θα πρεπει να τον καθαρησω ?
-
-		- Λεπτομεριες για παρουσιαση ... ειναι απλως ενα power point ?
-
-		- Να βαλω νεο Neighborhood config ... ? Να κανω ενα N^2 + N στα διαγραμματα ?
-		
 		- Ρωτα τον για παρουσιαση
 			- Οτι εχω κανει οπως ειναι στο .pdf, να το περασω σε powerpoint
 			- Να κανω omit κατι σαν το Background ???
 			- 19/5/2026 ή 19/6/2026
 			- θα μιλαω σε greeklish ???
 			
-		- Comments on comments / clarifications
+		- οχι SUSY 
+		
+		- Comments on comments / clarifications:
+			- may decrease. it is not that they always decrease. right?
+			- but does allow distributed PSO reducing the execution time of the centralized one. Recall that PSO is, in turn, necessary for training over non-differentiable loss functions where classic SGD-like training is inapplicable. 
+
 		- Ποια ειναι αυτα τα 1 - 2 πραγματα ακομα ... ? 
 			- hopefully not improvement in accuracy ή prediction models
-				
+			- υπαρχουν γενικα areas βελτιωσεις ? ΠΟυ θα εχουν καποιο αποτελεσμα
+			
 		- Κανε την Παρουσιαση
 
 		- Βαθμολογικο Προβλημα
@@ -52,41 +51,22 @@
 	
 		- but does allow distributed PSO reducing the execution time of the centralized one. Recall that PSO is, in turn, necessary for training over non-differentiable loss functions where classic SGD-like training is inapplicable. 
 
-	========================================================================================
-	- Για συνταξη της Διπλωματικης + Next Steps: 
+		- Αμα ειναι μπορουμε να σβησουμε απο Background κ ?
 
-		- εχω βρει αυτα τα papers να βαλω στην διπλωματικη
+		- Θα μου δειτε τον κωδικα, θα πρεπει να τον καθαρησω ?
+
+		- Να βαλω νεο Neighborhood config ... ? Να κανω ενα N^2 + N στα διαγραμματα ?
+
+	========================================================================================
+	========================================================================================
+	========================================================================================
+
+	- Για συνταξη της Διπλωματικης + Next Steps: 
 
 		- για τιτλο μηπως λειπει οτι χρησιμοποιουμε το PSO για training neural networks ? Η εννοειται ? 	
 			- Σε αλλα papers χρησιμοποιουν PSO γενικα ως τροπο βελτιοστοποιησεις μιας συναρτησεις
 
-		- το related work section ? ειναι για papers που κανουν κατι παρομοιο ? οχι απλως γενικα στο ιδιο field of study ?
-
-		- Πως ακριβως να βλεπω το experimentation ?
-			- Κανουμε study each individuall dataset by itself σιγα σιγα ?
-			- Δηλαδη κανουμε για ενα Dataset:
-				- Diagram: N_WORKERS => Ευρεση SWEET SPOT N_WORKERS για αυτο το DATASET
-				- Diagram: STRENGTH => Ευρεση SWEET SPOT SEVERIY για αυτο το DATASET
-				- Final Diagram, using the above determined parameters, to achieve best accuracy scenario:
-					=> accuracy - iterations
-			- We need to do a more generall study first:
-				- do it on pendigits: using pendigits as generall example (with INDEPENDENT = false / true)
-				to explain generally and then look at each dataset individually all diagrams
-				
-		- Στο Related Work μπαινουν sources / papers που κανω citate στην δικη μου δουλεια ? Η εχει πιο γενικη φυση ?
-		Το Related Work είναι πιο γενικής φύσης, αλλά συνήθως περιλαμβάνει papers που κάνεις cite στη δουλειά σου.
-
 		- Εχει νοημα να βαλω ενα Model Definition section μπας και εξηγησω το Transfer Learning + DL4J code
-
-		- Πως ακριβως να βλεπω το experimentation ?
-			- Κανουμε study each individuall dataset by itself σιγα σιγα ?
-			- Δηλαδη κανουμε για ενα Dataset:
-				- Diagram: N_WORKERS => Ευρεση SWEET SPOT N_WORKERS για αυτο το DATASET
-				- Diagram: STRENGTH => Ευρεση SWEET SPOT SEVERIY για αυτο το DATASET
-				- Final Diagram, using the above determined parameters, to achieve best accuracy scenario:
-					=> accuracy - iterations
-			- Keep the generall study using pendigits as generall example (with INDEPENDENT = false / true)
-				to explain generally and then look at each dataset individually all diagrams
 
 	- Email: ==========================================================================
 
