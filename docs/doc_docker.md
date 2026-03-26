@@ -115,4 +115,4 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
   # Without a volume, data survives a restart, but not a container shutdown with docker compose down, docker rm broker
 
 
-docker compose logs -f order_service  # to filter to the correct logs on a multi service docker enviroment, to just one service
+docker compose logs -f order_service  # to filter to the correct logs on a multi service docker enviroment, to just one service 

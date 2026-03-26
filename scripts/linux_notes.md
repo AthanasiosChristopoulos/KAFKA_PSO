@@ -24,9 +24,9 @@
 
  - sudo apt install mesa-utils
  - sudo apt install brightnessctl (brightnessctl info)
- - sudo brightnessctl set 100%
- - sudo brightnessctl set 60%
- - sudo brightnessctl set 50%
+   sudo brightnessctl set 100%
+   sudo brightnessctl set 60%
+   sudo brightnessctl set 50%
 
 
 # Misc: ======================================================================================
