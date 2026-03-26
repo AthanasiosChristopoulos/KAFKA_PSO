@@ -55,7 +55,7 @@ public class Coordinator implements Runnable {
     private final String TEST_TOPIC = cfg.TEST_TOPIC;
     private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
-    private final String GPEST_WEIGHTS_TOPIC = cfg.GPEST_WEIGHTS_TOPIC;
+    private final String GBEST_WEIGHTS_TOPIC = cfg.GBEST_WEIGHTS_TOPIC;
     public final String PREDICTION_INPUT_TOPIC = cfg.PREDICTION_INPUT_TOPIC;
     public final String PREDICTION_OUTPUT_TOPIC = cfg.PREDICTION_OUTPUT_TOPIC;
 
@@ -366,7 +366,7 @@ public class Coordinator implements Runnable {
 
         pBestStream
             .transform(() -> new GBestTransformer(logger, t0), "gBestEmitStore")
-            .to(GPEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
+            .to(GBEST_WEIGHTS_TOPIC, Produced.with(Serdes.String(), weightsSerde));
 
         return builder.build();
     }

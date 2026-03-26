@@ -13,7 +13,7 @@ load_dotenv()
 N_WORKERS = int(os.getenv("N_WORKERS"))
 DATA_TOPIC = os.getenv("DATA_TOPIC")
 LOCAL_WEIGHTS_TOPIC = os.getenv("LOCAL_WEIGHTS_TOPIC")
-GPEST_WEIGHTS_TOPIC = os.getenv("GPEST_WEIGHTS_TOPIC")
+GBEST_WEIGHTS_TOPIC = os.getenv("GBEST_WEIGHTS_TOPIC")
 ENABLE_LOGGING = int(os.getenv("ENABLE_LOGGING"))
 
 n_predictions = 0
@@ -228,10 +228,10 @@ def main():
                 "neighbor_pBests" : list(pBest_dictionary.values()),
             }
             
-            future = producer.send(GPEST_WEIGHTS_TOPIC, key=f"round-{global_round}", value=out)
+            future = producer.send(GBEST_WEIGHTS_TOPIC, key=f"round-{global_round}", value=out)
             producer.flush()    
             meta = future.get(timeout=10)
-            logging.info(f"====== Wrote to topic = {GPEST_WEIGHTS_TOPIC}, partition = {meta.partition}, offset = {meta.offset}, round = {global_round}")
+            logging.info(f"====== Wrote to topic = {GBEST_WEIGHTS_TOPIC}, partition = {meta.partition}, offset = {meta.offset}, round = {global_round}")
             
             # ============================== Evaluate global model ==============================
             

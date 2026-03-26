@@ -49,7 +49,9 @@
 		- Βαθμολογικο Προβλημα
 		- Μηπως θα υπηρχε καποια βοηθεια για το job market ή καποιο research position
 			- Ειναι εξυπνο να αφησεις αυτην την πορτα ανοιχτη ? ισως ?
-			
+	
+		- but does allow distributed PSO reducing the execution time of the centralized one. Recall that PSO is, in turn, necessary for training over non-differentiable loss functions where classic SGD-like training is inapplicable. 
+
 	========================================================================================
 	- Για συνταξη της Διπλωματικης + Next Steps: 
 

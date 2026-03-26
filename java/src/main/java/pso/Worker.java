@@ -42,7 +42,7 @@ public class Worker implements Runnable {
     private final String DATA_TOPIC = cfg.DATA_TOPIC;
     private final String PBEST_WEIGHTS_TOPIC = cfg.PBEST_WEIGHTS_TOPIC;
     private final String LOCAL_WEIGHTS_TOPIC = cfg.LOCAL_WEIGHTS_TOPIC;
-    private final String GPEST_WEIGHTS_TOPIC = cfg.GPEST_WEIGHTS_TOPIC;
+    private final String GBEST_WEIGHTS_TOPIC = cfg.GBEST_WEIGHTS_TOPIC;
     private final String RUN_ID = cfg.RUN_ID;  
     private final boolean FULLY_INFORMED = cfg.FULLY_INFORMED;
     private final boolean DEBUG_KAFKA = cfg.DEBUG_KAFKA;
@@ -189,7 +189,7 @@ public class Worker implements Runnable {
         } else {
             
             GlobalKTable<String, WeightsMessage> gBestTable = builder.globalTable(
-                GPEST_WEIGHTS_TOPIC,   // messages from this have the same key, "gBest",
+                GBEST_WEIGHTS_TOPIC,   // messages from this have the same key, "gBest",
                                         // we get only overwrites of gBest there is only one gBest
                 Consumed.with(Serdes.String(), weightsSerde),
                 Materialized.<String, WeightsMessage>as(Stores.inMemoryKeyValueStore(stateStoreName))

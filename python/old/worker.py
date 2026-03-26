@@ -18,7 +18,7 @@ MAX_EPOCHS = int(os.getenv("MAX_EPOCHS"))
 DATA_TOPIC = os.getenv("DATA_TOPIC")
 PREDICTION_INPUT_TOPIC = os.getenv("PREDICTION_INPUT_TOPIC")
 LOCAL_WEIGHTS_TOPIC = os.getenv("LOCAL_WEIGHTS_TOPIC")
-GPEST_WEIGHTS_TOPIC = os.getenv("GPEST_WEIGHTS_TOPIC")
+GBEST_WEIGHTS_TOPIC = os.getenv("GBEST_WEIGHTS_TOPIC")
 DESIRED_ACCURACY = float(os.getenv("DESIRED_ACCURACY"))
 INERTIA = float(os.getenv("INERTIA"))
 C_SOCIAL = float(os.getenv("C_SOCIAL"))
@@ -257,7 +257,7 @@ def main():
     start_from_the_beginning() 
     
     global_consumer = KafkaConsumer(
-        GPEST_WEIGHTS_TOPIC,
+        GBEST_WEIGHTS_TOPIC,
         bootstrap_servers=["localhost:9092"],
         group_id=f"worker_global_{args.id}",
         enable_auto_commit=True,
@@ -370,7 +370,7 @@ def main():
                     assignment = global_consumer.assignment()
                     for tp in assignment:
                         pos = global_consumer.position(tp)
-                        logging.info(f"Read from topic = {GPEST_WEIGHTS_TOPIC}, partitions: {tp.partition}, offset={pos}")
+                        logging.info(f"Read from topic = {GBEST_WEIGHTS_TOPIC}, partitions: {tp.partition}, offset={pos}")
             
                     if not msg: 
                         logging.info(f"Stopped Training") # After the 5000 wait and coordinator hasnt answered, it will stop training ... 

@@ -47,7 +47,7 @@ A changelog stream interpreted as a table for each key, keep only the latest val
 ```java
 
 KTable<String, String> gBestTable = builder.table(  // table returns KTable<String, String> 
-    GPEST_WEIGHTS_TOPIC,   // The Kafka topic GPEST_WEIGHTS_TOPIC as the source of truth
+    GBEST_WEIGHTS_TOPIC,   // The Kafka topic GBEST_WEIGHTS_TOPIC as the source of truth
     Consumed.with(Serdes.String(), Serdes.String()),
         Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("gBestStore") // this is backed (disk) at /tmp/kafka-streams/APPLICATION_ID/...
         .withKeySerde(Serdes.String())  // For writing into the state store
@@ -84,7 +84,7 @@ KTable stores Records as:
 ```java
 // Caching:
 KTable<String, String> gBestTable = builder.table(
-    GPEST_WEIGHTS_TOPIC,
+    GBEST_WEIGHTS_TOPIC,
     Consumed.with(Serdes.String(), Serdes.String()),
     Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(stateStoreName)
         .withKeySerde(Serdes.String())

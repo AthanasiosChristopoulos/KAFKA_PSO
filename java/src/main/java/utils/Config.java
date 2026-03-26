@@ -23,7 +23,7 @@ public class Config {
 
     public String PBEST_WEIGHTS_TOPIC;
     public String LOCAL_WEIGHTS_TOPIC;
-    public String GPEST_WEIGHTS_TOPIC;
+    public String GBEST_WEIGHTS_TOPIC;
     public String PREDICTION_INPUT_TOPIC;
     public String PREDICTION_OUTPUT_TOPIC;
 
@@ -261,7 +261,7 @@ public class Config {
 
         PBEST_WEIGHTS_TOPIC = getenv(dotenv, "PBEST_WEIGHTS_TOPIC", "pbest-weights-topic");
         LOCAL_WEIGHTS_TOPIC = getenv(dotenv, "LOCAL_WEIGHTS_TOPIC", "local-weights-topic");
-        GPEST_WEIGHTS_TOPIC = getenv(dotenv, "GPEST_WEIGHTS_TOPIC", "global-weights-topic");
+        GBEST_WEIGHTS_TOPIC = getenv(dotenv, "GBEST_WEIGHTS_TOPIC", "global-weights-topic");
         PREDICTION_INPUT_TOPIC = getenv(dotenv, "PREDICTION_INPUT_TOPIC", "iris-output");
         PREDICTION_OUTPUT_TOPIC = getenv(dotenv, "PREDICTION_OUTPUT_TOPIC", "iris-output");
 

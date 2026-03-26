@@ -800,7 +800,7 @@ kafka-topics.sh --bootstrap-server localhost:19092 \
 kafka-console-consumer.sh --bootstrap-server localhost:19092 \
   --topic local-weights-topic --from-beginning
 
-# GPEST_WEIGHTS_TOPIC ==============================================================
+# GBEST_WEIGHTS_TOPIC ==============================================================
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic global-weights-topic --partitions 1 --if-not-exists

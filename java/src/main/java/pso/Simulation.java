@@ -74,7 +74,7 @@ public class Simulation {
         } else if (cfg.FULLY_INFORMED || cfg.ENABLE_NEIGHBORHOODS) {
             topics = List.of(cfg.PBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
         } else {
-            topics = List.of(cfg.GPEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
+            topics = List.of(cfg.GBEST_WEIGHTS_TOPIC, cfg.LOCAL_WEIGHTS_TOPIC);
         }
 
         KafkaTopicManager.recreateTopics(bootstrap, topics, 1, 1);
