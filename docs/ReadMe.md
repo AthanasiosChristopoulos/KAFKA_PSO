@@ -1800,3 +1800,10 @@ This is about engineering practicality:
     low communication cost
     robustness to stragglers
         support for weak devices
+
+## =========================================================
+## Model Parallel Learning:
+
+Different parts of the same model are placed and computed on different devices/workers.
+    Worker 1 holds layers 1–3
+    Worker 2 holds layers 4–6
