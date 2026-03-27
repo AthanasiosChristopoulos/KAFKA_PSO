@@ -33,7 +33,7 @@
 			- 19/5/2026 ή 19/6/2026
 			- θα μιλαω σε greeklish ???
 			
-		- οχι SUSY 
+		- οχι SUSY , χρειαζεται ? να βαλω κατι αλλο instead ?
 		
 		- Comments on comments / clarifications:
 			- may decrease. it is not that they always decrease. right?
