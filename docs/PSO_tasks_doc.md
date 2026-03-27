@@ -164,7 +164,12 @@
 		- Acknowledgements
 		- Βαλε abstract + κανε μεταφραση το abstract και στα ελληνικα
 
+	- Model Parallel Learning
 
+	- Code Cleaning, το ανεβαζεις ως open source
+
+	- Ensemble Learning
+	- FIT Iot
 
 ## =======================================================================================
 
