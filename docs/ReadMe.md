@@ -1868,9 +1868,34 @@ you could keep the top K particles and combine their predictions.
 
 !!! Will not work because PSO goal is converegence. Ensemble learning is pointless here the particles will make the same mistake have the same models and similar weights. => At the best case scenario, this is a what if they didnt converge enough.
 
+2. Multiple Swarms:
+Each worker doesnt have a particle, he has a swarm. Withing those swarm different models are run.
+Each worker uses the synchronous normal PSO algorythm. This needs:
+    => Much more data
+    => Much more compute time, no parallelization, synchronous, non distributed PSO.
+Each Swarm runs a different model. These models are potentially any black box models or any FNNs with different structures.
 
 3. Snapshot ensemble over time
 
 Instead of only using different workers, you could save strong models from different monitoring rounds and ensemble them later.
     => this ... nahBro convergence is expected to be always better has nothing to do with ensemblence
 
+## From gfg and ibm: ===================================================================
+Types of Ensembles Learning
+There are three main types of ensemble methods:
+
+# Parallel methods:
+Train each base learner apart from the others of the others. Per its name, then, parallel ensembles train base learners in parallel and independent of one another.
+
+## Bagging (Bootstrap Aggregating): 
+Models are trained independently on different random subsets of the training data. Their results are then combined—usually by averaging (for regression) or voting (for classification). This helps reduce variance and prevents overfitting.
+
+# Sequential methods:
+Train a new base learner so that it minimizes errors made by the previous model trained in the preceding step. In other words, sequential methods construct base models sequentially in stages.
+
+## Stacking (Stacked Generalization): 
+    => combine predictions into a meta-model. This model predicts which of the predictions of the other models is the best
+Multiple different models (often of different types) are trained and their predictions are used as inputs to a final model, called a meta-model. The meta-model learns how to best combine the predictions of the base models, aiming for better performance than any individual model.
+
+## Boosting: 
+Models are trained one after another. Each new model focuses on fixing the errors made by the previous ones. The final prediction is a weighted combination of all models, which helps reduce bias and improve accuracy.
