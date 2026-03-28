@@ -1836,7 +1836,27 @@ Combine output methods:
     average of probabilities: each model outputs class probabilities, and you average them
     weighted average / weighted vote: better models get more influence
 
+As a PSO swarm: there is a big practical issue
 
+Classical PSO assumes particles live in the same search space dimension. In your system, particles exchange:
+
+positions xi
+pbest
+gbest
+flattened weight vectors
+
+Your own WeightsMessage design and the PSO update logic assume a weight vector of dimension 
+𝑑
+d, and message size is described as depending on that single model dimensionality. If different workers have different architectures, then their weight vectors have different lengths, so the usual PSO operations like:
+
+velocity update
+position update
+comparing / sharing gbest
+averaging weights with FedAvg
+
+become incompatible across particles. You cannot directly subtract, add, or average parameter vectors of different sizes in standard PSO/FedAvg. That follows from the structure of your implementation as described in the thesis excerpt.
+
+=> At the end of the day we are doing PSO and we are optimizing on thing.
 
 ## Alternatives to classical Ensemble Learning ======================================================
 
@@ -1849,4 +1869,10 @@ After training, instead of keeping only:
 you could keep the top K particles and combine their predictions.
 
 !!! Will not work because PSO goal is converegence. Ensemble learning is pointless here the particles will make the same mistake have the same models and similar weights. => At the best case scenario, this is a what if they didnt converge enough.
+
+
+3. Snapshot ensemble over time
+
+Instead of only using different workers, you could save strong models from different monitoring rounds and ensemble them later.
+    => this ... nahBro convergence is expected to be always better has nothing to do with ensemblence
 
