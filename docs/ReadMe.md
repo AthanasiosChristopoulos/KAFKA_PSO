@@ -1807,3 +1807,6 @@ This is about engineering practicality:
 Different parts of the same model are placed and computed on different devices/workers.
     Worker 1 holds layers 1–3
     Worker 2 holds layers 4–6
+
+## =========================================================
+## Ensemble Learning

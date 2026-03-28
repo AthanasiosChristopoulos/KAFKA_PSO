@@ -99,6 +99,9 @@ git ls-files | xargs -n1 dirname | sort -u 	# for directories
 git restore --staged main.bbl main.blg main.fls main.out main.tex
 git rm --cached main.bbl main.blg main.fls main.out main.tex
 
+git restore --staged presentation.pdf
+git rm --cached presentation.pdf
+
 # for directories:
 git reset
 git rm -r --cached node_modules
