@@ -1874,6 +1874,16 @@ Each worker uses the synchronous normal PSO algorythm. This needs:
     => Much more data
     => Much more compute time, no parallelization, synchronous, non distributed PSO.
 Each Swarm runs a different model. These models are potentially any black box models or any FNNs with different structures.
+    => Much closer to real ensemble learning
+    => Basically we would do:
+        Worker 1
+            Train architecture A
+        Worker 2
+            Train architecture B
+        Worker 3
+            Train architecture C
+        Worker 4
+            Train architecture D
 
 3. Snapshot ensemble over time
 
@@ -1884,18 +1894,68 @@ Instead of only using different workers, you could save strong models from diffe
 Types of Ensembles Learning
 There are three main types of ensemble methods:
 
+
+## Ensemble Learning Training ==================================================
+
+The ensemble model gets separated into:
+
+1) Training stage
+    - Train multiple models
+    - 1) train them completely independently and on the same data: 
+        Often ensemble models are trained in parallel, independently, almost exactly as if each one were the only model in the system. The ensemble part comes only during the prediction stage.
+    - 2) 
+
+2) Prediction stage
+    - Combine their outputs => this is the voting part
+
 # Parallel methods:
 Train each base learner apart from the others of the others. Per its name, then, parallel ensembles train base learners in parallel and independent of one another.
 
 ## Bagging (Bootstrap Aggregating): 
-Models are trained independently on different random subsets of the training data. Their results are then combined—usually by averaging (for regression) or voting (for classification). This helps reduce variance and prevents overfitting.
+Models are trained independently on different random subsets of the training data. This means different subset of the training data. If every model sees slightly different data, they make slightly different errors. That is one of the most common ways ensembles are trained.
+
+Their results are then combined—usually by averaging (for regression) or voting (for classification). This helps reduce variance and prevents overfitting.
 
 # Sequential methods:
 Train a new base learner so that it minimizes errors made by the previous model trained in the preceding step. In other words, sequential methods construct base models sequentially in stages.
 
 ## Stacking (Stacked Generalization): 
-    => combine predictions into a meta-model. This model predicts which of the predictions of the other models is the best
+=> combine predictions into a meta-model. This model predicts which of the predictions of the other models is the best.
+
 Multiple different models (often of different types) are trained and their predictions are used as inputs to a final model, called a meta-model. The meta-model learns how to best combine the predictions of the base models, aiming for better performance than any individual model.
 
 ## Boosting: 
-Models are trained one after another. Each new model focuses on fixing the errors made by the previous ones. The final prediction is a weighted combination of all models, which helps reduce bias and improve accuracy.
+Models are trained one after another / together, they are no longer independent but a part of a larger whole. 
+
+Each new model focuses on fixing the errors made by the previous ones. The final prediction is a weighted combination of all models, which helps reduce bias and improve accuracy.
+
+## IoT stuff ===================================================================
+
+!!! If IoT wont do it, my phones and several other devices will !!!
+Requirements of my code. The biggest issue is not Java alone. It is the combination of:
+
+    - Kafka Streams
+    - DL4J / neural-network inference
+    - native dependencies
+    - memory / local state
+    - ARM embedded hardware limitations
+
+
+## Normal Devices Federated Learning ===========================================
+
+ - Phones
+ - Tables
+ - PCs 
+
+Problems: 
+The main catch is this: not every personal device is equally suitable. Your laptop / desktop PCs are the best candidates. A phone or Android tablet is much less suitable for your current code, because the normal Kafka Java client/Streams stack depends on standard JVM pieces that Android does not fully provide in the normal app environment. The Android limitation is commonly noted around missing Java management classes, which is exactly the kind of dependency Kafka clients use.
+
+Ranking:
+    Desktop / laptop: yes, very plausible
+    Linux mini-PC / Raspberry Pi-class machine: maybe
+    Android phone / Android tablet: not for your current Kafka Streams worker as-is
+    Tiny IoT boards: no for the full worker
+
+How to implement it:
+ - localhost only works inside one machine.
+ - if broker and worker are on the same laptop, then localhost:9092 works
