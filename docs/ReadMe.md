@@ -1810,3 +1810,43 @@ Different parts of the same model are placed and computed on different devices/w
 
 ## =========================================================
 ## Ensemble Learning
+
+Ensemble learning means:
+    - Instead of using one model, you use multiple models and combine their predictions.
+    - Combine model outputs
+    - Models may be:
+        - reasonably good individually
+        - different from each other (otherwise this is pointless)
+            => If they are diverse, the ensemble can cancel out individual mistakes.
+            => This is usually implemented by having different model types
+
+Different Model Types: 
+    one worker uses an MLP
+    another uses a CNN
+    another uses a different CNN
+    another uses a shallower classifier
+    another uses SVM
+
+Motivation:
+    - Different federated devices may be able to run on different models
+    - Different models make different mistakes, on different samples, if you combine them well, the final prediction can be more accurate and more robust
+
+Combine output methods: 
+    majority vote: each model votes for a class, the most votes wins
+    average of probabilities: each model outputs class probabilities, and you average them
+    weighted average / weighted vote: better models get more influence
+
+
+
+## Alternatives to classical Ensemble Learning ======================================================
+
+1. Ensemble of top particles
+
+After training, instead of keeping only:
+    - the best particle
+    - the averaged weights model
+
+you could keep the top K particles and combine their predictions.
+
+!!! Will not work because PSO goal is converegence. Ensemble learning is pointless here the particles will make the same mistake have the same models and similar weights. => At the best case scenario, this is a what if they didnt converge enough.
+
