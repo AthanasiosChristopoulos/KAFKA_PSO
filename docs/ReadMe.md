@@ -1845,9 +1845,7 @@ pbest
 gbest
 flattened weight vectors
 
-Your own WeightsMessage design and the PSO update logic assume a weight vector of dimension 
-𝑑
-d, and message size is described as depending on that single model dimensionality. If different workers have different architectures, then their weight vectors have different lengths, so the usual PSO operations like:
+Your own WeightsMessage design and the PSO update logic assume a weight vector of dimension d, and message size is described as depending on that single model dimensionality. If different workers have different architectures, then their weight vectors have different lengths, so the usual PSO operations like:
 
 velocity update
 position update
