@@ -273,7 +273,7 @@ public class Config {
 
         TEST_SIZE = Integer.parseInt(getenv(dotenv, "TEST_SIZE", "30"));
         DESIRED_ACCURACY = Float.parseFloat(getenv(dotenv, "DESIRED_ACCURACY", "0.9"));
-        SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "global-model");
+        SAVE_MODEL_NAME = getenv(dotenv, "SAVE_MODEL_NAME", "no-save");
 
         FULLY_INFORMED = Boolean.parseBoolean(getenv(dotenv, "FULLY_INFORMED", "false"));
 

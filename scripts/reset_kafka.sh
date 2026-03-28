@@ -3,6 +3,9 @@
 BROKER="broker"
 BOOTSTRAP="localhost:9092"
 
+# ================================================================
+# Recreate topics
+
 TOPICS=(
   "local-weights-topic"
   "global-weights-topic"
@@ -27,7 +30,7 @@ set -euo pipefail
 BROKER="broker"
 BOOTSTRAP="localhost:9092"
 
-# Match either prefix
+# ================================================================
 PREFIX_REGEX="(pso-coordinator|pso-gbest)"
 SUFFIX="-gBestEmitStore-changelog"
 

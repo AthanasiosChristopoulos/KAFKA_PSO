@@ -348,7 +348,6 @@ public void onAllWorkersReported() {
 
     if (control.getBestGlobalModelAccuracy() >= this.DESIRED_ACCURACY) {
         System.out.println("Stopped, because DESIRED_ACCURACY reached");
-        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, start);
         control.requestStopFinal();
         return;
     }
@@ -519,17 +518,11 @@ public void onAllWorkersReported() {
 
     @Override
     public void close() {
-        // try {
-        //     consumer.wakeup();                // breaks poll safely
-        // } catch (Exception ignored) {}
 
-        // try {
-        //     consumer.close(Duration.ofSeconds(5));
-        // } catch (Exception ignored) {
+        if(!cfg.SAVE_MODEL_NAME.equals("no-save")) {
+            Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start); // save final solution
+        }
 
-        // }
-
-        Dl4jParamUtils.saveModel(bestGlobalModel, SAVE_MODEL_NAME, this.start);         // save final solution
         double avgMs = (sumElapsedNs / 1_000_000.0) / evaluation_count;
         double avgForwardPassMs = forwardPassNs / evaluation_count;
 
