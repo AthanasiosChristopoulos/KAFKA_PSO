@@ -1932,14 +1932,127 @@ Each new model focuses on fixing the errors made by the previous ones. The final
 ## IoT stuff ===================================================================
 
 !!! If IoT wont do it, my phones and several other devices will !!!
-Requirements of my code. The biggest issue is not Java alone. It is the combination of:
 
+## Requirements of my code:
+The biggest issue is not Java alone. It is the combination of:
     - Kafka Streams
     - DL4J / neural-network inference
     - native dependencies
     - memory / local state
     - ARM embedded hardware limitations
 
+
+1. It must run a real Linux userland => device needs to work like a real computer
+
+Your worker is not microcontroller firmware. It is a normal JVM process with Kafka Streams. So the device needs:
+
+Linux userland
+SSH access
+writable filesystem
+process management
+enough RAM for JVM + app + libraries
+DL4J / native ML stack on ARM embedded Linux
+
+That points to A8-M3 / Raspberry Pi 3, not the smaller sensor nodes.
+
+2. It must support a JVM for the correct CPU architecture
+Your code is Java, so the node needs:
+A Java runtime compatible with the board CPU
+likely ARM-compatible OpenJDK
+enough RAM to start the JVM sanely
+
+3. It must have enough RAM / Memory
+This is the hard part.
+and that RocksDB’s default block cache is 50 MB per store unless configured.
+Your A8 target has 256 MB RAM total.
+
+4. It must have local writable storage / temp space
+    => 4. Filesystem / package management / setup complexity
+
+5. It must have stable network connectivity to Kafka brokers
+
+6. It must support your native ML stack
+
+This is the biggest practical blocker in your code.
+
+Your worker is not just Kafka Streams. It also pulls in:
+
+DL4J / ND4J
+likely native BLAS / backend dependencies
+org.bytedeco... imports
+
+That means the board needs:
+
+correct native binaries for its CPU architecture
+compatible libc / OS environment
+enough RAM to load those libraries
+
+This is where a Linux A8 board can still fail even if plain Java works.
+
+## Verdict: ===================================================================
+M3 / similar sensor nodes: no, not for your Java Kafka Streams worker
+    => These are very simple boards, the only operate as sensors.
+A8-M3 / Raspberry Pi 3 class **Linux boards**: maybe, but still hard
+A server / VM / workstation: yes, much more natural for your current code
+
+Kafka broker + coordinator on a normal server / VM / laptop. An IoT wont run the kafka broker, but it will run the Kafka Streams instance that will communicate with it using TCP
+
+From the provided site IoT - LAB:
+
+Can realistically run (best candidates):
+    Raspberry Pi 3 (rpi3)
+    IoT-LAB A8-M3 (a8)
+
+Because they are application processors / Linux-capable-ish boards, not tiny embedded MCUs. You need mini computers, not microcontroller boards:
+    Arduino Zero
+    BBC micro:bit
+    IoT-LAB M3
+    SAMR21 / SAMR30 / SAMR34
+    nRF52840DK / nRF52DK
+    Nucleo WL55JC
+    OpenMoteB
+    Qorvo DWM1001 / DWM3001
+    ST B-L072Z-LRWAN1
+    ST B-L475E-IOT01A
+    Zigduino
+    Zolertia Firefly
+
+If it says Cortex M0 / M3 / M4
+    → No
+If it says Cortex A8 / Cortex-A53
+    → Maybe / Yes
+    A8 → maybe
+    RPi3 → yes
+
+## What to look for in the specs:
+
+1. CPU family:
+    Cortex-M boards are usually for embedded firmware
+    Cortex-A boards are much closer to tiny Linux computers
+        "ARM itself describes Cortex-A as “application CPUs” and Cortex-M as “low-power CPUs for microcontrollers used in embedded systems & real-time control.”"
+
+2. Operating system support
+If the board page talks about:
+    RIOT
+    Contiki-NG
+    FreeRTOS
+    bare-metal / firmware flashing
+that is a strong sign the board is a microcontroller device, not a normal JVM machine.
+    => Does it run Linux or just firmware?
+    => “Can I SSH in and run a normal Linux program?”
+
+IoT-LAB’s Linux-capable boards, like A8-M3 and Raspberry Pi 3, are the right kind of target. IoT-LAB documents both as embedded Linux-capable boards, unlike the many Cortex-M boards.
+
+3. RAM
+KB of RAM - a few MB → immediate no
+hundreds of MB → maybe
+1 GB+ → much more comfortable
+
+## Realistic:
+
+Use IoT-LAB for the data-generation / networking side, not for PSO training itself.
+    data-generation => IoT-LAB sensor nodes generate real IoT traffic
+    networking side => A8/RPi Linux board acts as gateway / forwarder
 
 ## Normal Devices Federated Learning ===========================================
 
@@ -1953,7 +2066,7 @@ The main catch is this: not every personal device is equally suitable. Your lapt
 Ranking:
     Desktop / laptop: yes, very plausible
     Linux mini-PC / Raspberry Pi-class machine: maybe
-    Android phone / Android tablet: not for your current Kafka Streams worker as-is
+    Android phone / Android tablet: not for your current Kafka Streams worker as-is, bad if the plan depends on Android phones/tablets running your current worker unchanged
     Tiny IoT boards: no for the full worker
 
 How to implement it:
