@@ -330,3 +330,48 @@ achristopoulos@polytechnix:~$
 here is some info for you ... 
 
 
+# Kafka Local Installation Tutorial (Ubuntu, KRaft Mode)
+
+A clean step-by-step guide to install and run **Apache Kafka locally on Ubuntu** using **KRaft mode** (without ZooKeeper).
+
+---
+
+
+### Download Kafka for Linux from scratch =================================
+
+Download Kafka
+```bash
+mkdir -p ~/tools
+cd ~/tools
+wget https://archive.apache.org/dist/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+tar -xzf kafka_2.13-3.7.0.tgz
+mv kafka_2.13-3.7.0 kafka-local
+
+export KAFKA_HOME=~/tools/kafka-local
+export PATH="$KAFKA_HOME/bin:$PATH"
+
+which kafka-topics.sh   # Verify
+
+cd ~/tools/kafka-local/config/kraft
+
+nano server.properties  # We need to properly configure kafka through server properties file
+mkdir -p ~/kafka-kraft/logs
+log.dirs=/home/ds123f15/kafka-kraft/logs
+log.retention.hours=-1
+log.retention.bytes=2221225472
+group.initial.rebalance.delay.ms=500
+
+cd ~/tools/kafka-local
+bin/kafka-storage.sh random-uuid
+
+bin/kafka-storage.sh format \
+  --cluster-id <PASTE_CLUSTER_ID_HERE> \
+  --config ~/tools/kafka-local/config/kraft/server.properties
+
+bin/kafka-storage.sh format \
+  --cluster-id TZnQLupIQNKrZbEwke1-cw \
+  --config ~/tools/kafka-local/config/kraft/server.properties
+
+# Start the broker
+kafka-server-start.sh ~/tools/kafka-local/config/kraft/server.properties
+```
