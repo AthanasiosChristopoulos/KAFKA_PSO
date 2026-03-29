@@ -70,11 +70,8 @@ public class CoordinatorProcessor implements Processor<String, WeightsMessage, S
     private final String TEST_TOPIC = cfg.TEST_TOPIC;
     private final int TEST_SIZE = cfg.TEST_SIZE;
     private final float DESIRED_ACCURACY = cfg.DESIRED_ACCURACY;
-    private final String RUN_ID = cfg.RUN_ID;   
     private static final int SAMPLING_CONSTANT = cfg.SAMPLING_CONSTANT; 
     private final String SAVE_MODEL_NAME = cfg.SAVE_MODEL_NAME;   
-
-    // private KafkaConsumer<String, DataMessage> consumer;
 
     private final CoordinatorControl control;
 

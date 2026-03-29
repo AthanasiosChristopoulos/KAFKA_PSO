@@ -6,15 +6,18 @@ import time
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+
 BATCH_SIZE = 100
 N_WARMUP = 30
 N_RUNS = 200
 
+# =========================================================================
 def get_cifar_batch():
     (x_train, _), _ = keras.datasets.cifar10.load_data()
     x = x_train[:BATCH_SIZE].astype("float32") / 255.0
     return tf.constant(x)
 
+# =========================================================================
 def print_env():
     gpus = tf.config.list_physical_devices("GPU")
     print("TensorFlow:", tf.__version__)
@@ -24,9 +27,7 @@ def print_env():
     else:
         print("Device: CPU")
 
-# ---------------------------
-# Prebuilt: MobileNetV3Small base + GAP
-# ---------------------------
+# =========================================================================
 def build_prebuilt_mobilenetv3small_base():
     base = tf.keras.applications.MobileNetV3Small(
         input_shape=(32, 32, 3),
@@ -41,9 +42,7 @@ def build_prebuilt_mobilenetv3small_base():
     ], name="prebuilt_mobilenetv3small_base_gap")
     return model
 
-# ---------------------------
-# Prebuilt: MobileNetV2 base + GAP (reference)
-# ---------------------------
+# =========================================================================
 def build_prebuilt_mobilenetv2_base():
     base = tf.keras.applications.MobileNetV2(
         input_shape=(32, 32, 3),
@@ -59,9 +58,7 @@ def build_prebuilt_mobilenetv2_base():
     return model
 
 
-# ---------------------------
-# Prebuilt: MobileNetV1 base + GAP (reference)
-# ---------------------------
+# =========================================================================
 def build_prebuilt_mobilenetv1_base():
     base = tf.keras.applications.MobileNet(
         input_shape=(32, 32, 3),
@@ -76,10 +73,7 @@ def build_prebuilt_mobilenetv1_base():
     ], name="prebuilt_mobilenetv2_base_gap")
     return model
 
-# ---------------------------
-# ResNet 20 Cifar   
-# ---------------------------
-
+# =========================================================================
 def build_cifar_resnet20_base_gap(input_shape=(32, 32, 3)):
     """
     CIFAR ResNet-20 backbone + GAP.
@@ -96,18 +90,14 @@ def build_cifar_resnet20_base_gap(input_shape=(32, 32, 3)):
     def residual_block(x, filters, stride=1):
         shortcut = x
 
-        # First conv
         x = layers.Conv2D(filters, 3, strides=stride, padding="same",
                           use_bias=False, kernel_initializer="he_normal")(x)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-
-        # Second conv
         x = layers.Conv2D(filters, 3, strides=1, padding="same",
                           use_bias=False, kernel_initializer="he_normal")(x)
         x = layers.BatchNormalization()(x)
 
-        # Projection if shape changes
         if stride != 1 or shortcut.shape[-1] != filters:
             shortcut = layers.Conv2D(filters, 1, strides=stride, padding="same",
                                      use_bias=False, kernel_initializer="he_normal")(shortcut)
@@ -119,20 +109,15 @@ def build_cifar_resnet20_base_gap(input_shape=(32, 32, 3)):
 
     inputs = keras.Input(shape=input_shape)
 
-    # CIFAR stem
     x = conv_bn_relu(inputs, 16, kernel_size=3, stride=1)
-
-    # ResNet-20: 3 stages, each with 3 residual blocks (n=3), total depth = 6n+2 = 20
-    # Stage 1: 16 filters, stride 1
     for _ in range(3):
         x = residual_block(x, 16, stride=1)
 
-    # Stage 2: 32 filters, first block stride 2
     x = residual_block(x, 32, stride=2)
+
     for _ in range(2):
         x = residual_block(x, 32, stride=1)
 
-    # Stage 3: 64 filters, first block stride 2
     x = residual_block(x, 64, stride=2)
     for _ in range(2):
         x = residual_block(x, 64, stride=1)
@@ -142,9 +127,7 @@ def build_cifar_resnet20_base_gap(input_shape=(32, 32, 3)):
     model = keras.Model(inputs, x, name="cifar_resnet20_base_gap")
     return model
 
-# ---------------------------
-# Tiny fully-conv + GAP (PSO-friendly)
-# ---------------------------
+# =========================================================================
 def build_tiny_fcn_gap():
     return keras.Sequential([
         layers.Input(shape=(32, 32, 3)),
@@ -156,9 +139,7 @@ def build_tiny_fcn_gap():
         layers.GlobalAveragePooling2D(),
     ], name="tiny_fcn_gap")
 
-# ---------------------------
-# Simple Flatten+Dense CNN (like your simple ones)
-# ---------------------------
+# =========================================================================
 def build_simple_flatten_dense():
     return keras.Sequential([
         layers.Input(shape=(32, 32, 3)),
@@ -169,6 +150,7 @@ def build_simple_flatten_dense():
         layers.Dense(64, activation="relu", use_bias=True),
     ], name="simple_flatten_dense")
 
+# =========================================================================
 def benchmark_forward(model, x, use_tf_function=True, jit_compile=False):
     # Build once
     _ = model(x, training=False)
@@ -181,21 +163,18 @@ def benchmark_forward(model, x, use_tf_function=True, jit_compile=False):
     else:
         forward = lambda inp: model(inp, training=False)
 
-    # Warmup
     for _ in range(N_WARMUP):
         _ = forward(x)
 
-    # Timed
     start = time.perf_counter()
     for _ in range(N_RUNS):
         y = forward(x)
-    # Force materialize (sync for GPU)
     _ = y.numpy()
     end = time.perf_counter()
 
     return (end - start) / N_RUNS * 1000.0
 
-# ============================================================================================
+# ===============================================================
 
 def main(): 
     
@@ -206,7 +185,7 @@ def main():
         ("Prebuilt MobileNetV3Small base+GAP", build_prebuilt_mobilenetv3small_base()),
         ("Prebuilt MobileNetV2 base+GAP",      build_prebuilt_mobilenetv2_base()),
         ("Prebuilt MobileNetV1 base+GAP",      build_prebuilt_mobilenetv1_base()),
-        ("CIFAR ResNet-20 base+GAP",           build_cifar_resnet20_base_gap()),  # <--- add this
+        ("CIFAR ResNet-20 base+GAP",           build_cifar_resnet20_base_gap()),
         ("Tiny fully-conv + GAP",              build_tiny_fcn_gap()),
         ("Simple Flatten+Dense",               build_simple_flatten_dense()),
     ]
@@ -224,16 +203,15 @@ def main():
         times.append((name, t_ms))
         print(f"Avg forward: {t_ms:.3f} ms")
 
-    # Print comparison table
     print("\n\n=== Results (avg ms per forward pass) ===")
     for name, t in sorted(times, key=lambda z: z[1]):
         print(f"{t:8.3f} ms  | {name}")
 
-    # Relative to fastest
     fastest = min(t for _, t in times)
     print("\n=== Relative slowdown vs fastest ===")
     for name, t in sorted(times, key=lambda z: z[1]):
         print(f"{t/fastest:6.2f}x  | {name}")
 
+# =========================================================================
 if __name__ == "__main__":
     main()
