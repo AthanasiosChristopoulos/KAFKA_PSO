@@ -9,7 +9,8 @@ cd ./java
 set -a     
 source .env
 set +a
-
+sleep 3s
+echo "woke up"
 mvn -q -e -DskipTests \
 -Dexec.mainClass=pso.CoordinatorMain \
  -P$ND4J_PROFILE compile exec:java

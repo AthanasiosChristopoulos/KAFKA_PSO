@@ -1,15 +1,13 @@
 #!/bin/bash
 
-cd ./java
-# mvn -q -DskipTests clean  
-# mvn -q -P$ND4J_PROFILE clean compile
+cd ./java || exit 1
 
-# ==============================================================
-
-set -a     
+set -a
 source .env
 set +a
 
 mvn -q -e -DskipTests \
--Dexec.mainClass=pso.WorkerMain \
- -P$ND4J_PROFILE compile exec:java
+  -Dexec.mainClass=pso.WorkerMain \
+  -Dexec.args="1" \
+  -P"$ND4J_PROFILE" \
+  compile exec:java
