@@ -29,52 +29,46 @@ TARGET_WIDTH = 28
 TARGET_CHANNELS = 1
 
 # ============================================================
-# Utilities
-# ============================================================
 
 def set_seed(seed: int = 123):
     np.random.seed(seed)
     tf.random.set_seed(seed)
 
+# ============================================================
 
 def ensure_dir(path: str):
     os.makedirs(path, exist_ok=True)
 
 
 # ============================================================
-# Data loading / preprocessing
-# ============================================================
+# Data loading
 
 def preprocess_svhn_images(X: np.ndarray) -> np.ndarray:
-    X_tf = tf.convert_to_tensor(X, dtype=tf.float32)          # (N, 32, 32, 3)
-    X_tf = tf.image.rgb_to_grayscale(X_tf)                    # (N, 32, 32, 1)
-    X_tf = tf.image.resize(X_tf, [TARGET_HEIGHT, TARGET_WIDTH])  # (N, 28, 28, 1)
+    X_tf = tf.convert_to_tensor(X, dtype=tf.float32)         
+    X_tf = tf.image.rgb_to_grayscale(X_tf)                 
+    X_tf = tf.image.resize(X_tf, [TARGET_HEIGHT, TARGET_WIDTH]) 
 
     return X_tf.numpy().astype(np.float32)
 
+# ============================================================
 
 def load_svhn_mat(file_path: str, convert_to_mnist):
     data = loadmat(file_path)
 
-    # In SVHN .mat files:
-    # X is stored as (32, 32, 3, N)
-    # y is stored as (N, 1), with label 10 meaning digit 0
     X = data["X"]
     y = data["y"]
 
-    # Convert to (N, 32, 32, 3) and normalize
     X = np.transpose(X, (3, 0, 1, 2)).astype(np.float32) / 255.0
     y = y.reshape(-1).astype(np.int64)
 
-    # SVHN uses label 10 for digit 0
     y[y == 10] = 0
 
-    # Convert to (N, 28, 28, 1)
     if convert_to_mnist:
         X = preprocess_svhn_images(X)
 
     return X, y
 
+# ============================================================
 
 def load_svhn_dataset(data_dir: str, convert_to_mnist):
     train_path = os.path.join(data_dir, TRAIN_FILE)
@@ -97,13 +91,11 @@ def load_svhn_dataset(data_dir: str, convert_to_mnist):
 
 # ============================================================
 # Model
-# ============================================================
 
 def build_svhn_model_v1(input_shape=(28, 28, 1), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Block 1
         layers.Conv2D(32, (3, 3), padding="same", use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
@@ -112,10 +104,9 @@ def build_svhn_model_v1(input_shape=(28, 28, 1), num_classes=10):
         layers.BatchNormalization(),
         layers.Activation("relu"),
 
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 28 -> 14
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.20),
 
-        # Block 2
         layers.Conv2D(64, (3, 3), padding="same", use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
@@ -124,18 +115,16 @@ def build_svhn_model_v1(input_shape=(28, 28, 1), num_classes=10):
         layers.BatchNormalization(),
         layers.Activation("relu"),
 
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 14 -> 7
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.30),
 
-        # Block 3
         layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
 
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 7 -> 3
+        layers.MaxPooling2D(pool_size=(2, 2)),  
         layers.Flatten(),
 
-        # One hidden dense layer
         layers.Dense(64, use_bias=False),
         layers.BatchNormalization(),
         layers.Activation("relu"),
@@ -152,23 +141,19 @@ def build_svhn_model_v2(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Block 1
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 32 -> 16
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.20),
 
-        # Block 2
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 16 -> 8
+        layers.MaxPooling2D(pool_size=(2, 2)),   
         layers.Dropout(0.30),
 
-        # Block 3
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 8 -> 4
+        layers.MaxPooling2D(pool_size=(2, 2)), 
 
-        layers.Flatten(),                        # 4*4*64 = 1024
+        layers.Flatten(),                  
 
-        # Only one dense layer at the end
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -180,21 +165,18 @@ def build_svhn_model_v3_mnist(input_shape=(28, 28, 1), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Block 1
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 28 -> 14
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.20),
 
-        # Block 2
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 14 -> 7
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.30),
 
-        # Block 3
         layers.Conv2D(22, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 7 -> 3
+        layers.MaxPooling2D(pool_size=(2, 2)),  
 
-        layers.Flatten(),                        # 3*3*22 = 198
+        layers.Flatten(),             
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -218,7 +200,7 @@ def build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10):
         layers.Conv2D(10, (3, 3), padding="same", activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
 
-        layers.Flatten(),   # 3x3x10 = 90
+        layers.Flatten(),  
         layers.Dense(num_classes, activation="softmax"),
     ])
 
@@ -285,6 +267,7 @@ def build_svhn_model_v8_mnist(input_shape=(28, 28, 1), num_classes=10):
 
 # =====================================================================================
 # 516/516 - 3s - loss: 0.4986 - accuracy: 0.8633 - top2_acc: 0.9297 - val_loss: 0.5489 - val_accuracy: 0.8474 - val_top2_acc: 0.9232 - lr: 0.0010 - 3s/epoch - 6ms/step
+
 def build_svhn_model_v5_mnist(input_shape=(28, 28, 1), num_classes=10):
 
     model = keras.Sequential([
@@ -346,14 +329,14 @@ def build_svhn_model_v9_mnist(input_shape=(28, 28, 1), num_classes=10):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(8, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+        layers.MaxPooling2D(pool_size=(2, 2)),      
 
         layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+        layers.MaxPooling2D(pool_size=(2, 2)),     
 
         layers.Conv2D(2, (3, 3), padding="same", activation="relu"),
-                                                   # 7 x 7 x 2
-        layers.Flatten(),                           # 98
+                                                
+        layers.Flatten(),                      
         layers.Dense(num_classes, activation="softmax"),
     ])
     return model
@@ -365,13 +348,13 @@ def build_svhn_model_v10_mnist(input_shape=(28, 28, 1), num_classes=10):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(12, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+        layers.MaxPooling2D(pool_size=(2, 2)),         
 
         layers.Conv2D(24, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+        layers.MaxPooling2D(pool_size=(2, 2)),      
 
-        layers.Conv2D(2, (3, 3), padding="same", activation="relu"),   # 7x7x2
-        layers.Flatten(),                                                # 98
+        layers.Conv2D(2, (3, 3), padding="same", activation="relu"), 
+        layers.Flatten(),                                             
         layers.Dense(num_classes, activation="softmax"),
     ])
     return model
@@ -383,55 +366,17 @@ def build_svhn_model_v11_mnist(input_shape=(28, 28, 1), num_classes=10):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(12, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 28 -> 14
+        layers.MaxPooling2D(pool_size=(2, 2)),    
 
         layers.Conv2D(24, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 14 -> 7
+        layers.MaxPooling2D(pool_size=(2, 2)),       
 
         layers.Conv2D(16, (1, 1), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),          # 7 -> 3
+        layers.MaxPooling2D(pool_size=(2, 2)),        
 
-        layers.Flatten(),                                # 3*3*16 = 144
+        layers.Flatten(),                            
         layers.Dense(num_classes, activation="softmax"),
     ])
-    return model
-# =====================================================================================
-
-def build_svhn_model_v12_mnist(input_shape=(28, 28, 1), num_classes=10):
-    inputs = keras.Input(shape=input_shape)
-
-    x = layers.Conv2D(24, (3, 3), padding="same", use_bias=False)(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-
-    # Downsample: 28x28 -> 14x14
-    x = layers.Conv2D(32, (3, 3), strides=2, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-    x = layers.Dropout(0.10)(x)
-
-    # Feature block
-    x = layers.Conv2D(48, (3, 3), padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-
-    # Downsample: 14x14 -> 7x7
-    x = layers.Conv2D(64, (3, 3), strides=2, padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-    x = layers.Dropout(0.15)(x)
-
-    # Final feature refinement
-    x = layers.Conv2D(64, (3, 3), padding="same", use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-
-    x = layers.GlobalAveragePooling2D()(x)
-
-    # Final dense layer params = 64*10 + 10 = 650
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
-
-    model = keras.Model(inputs, outputs, name="svhn_v12_mnist")
     return model
 
 # =====================================================================================
@@ -450,7 +395,6 @@ def build_svhn_model_v13_mnist(input_shape=(28, 28, 1), num_classes=10):
 
         layers.GlobalAveragePooling2D(),
 
-        # 64*10 + 10 = 650
         layers.Dense(num_classes, activation="softmax"),
     ])
     return model
@@ -461,21 +405,18 @@ def build_svhn_model_v3(input_shape=(32, 32, 3), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
 
-        # Block 1
         layers.Conv2D(32, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 32 -> 16
+        layers.MaxPooling2D(pool_size=(2, 2)),  
         layers.Dropout(0.20),
 
-        # Block 2
         layers.Conv2D(64, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 16 -> 8
+        layers.MaxPooling2D(pool_size=(2, 2)),  
         layers.Dropout(0.30),
 
-        # Block 3
         layers.Conv2D(12, (3, 3), padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 8 -> 4
+        layers.MaxPooling2D(pool_size=(2, 2)), 
 
-        layers.Flatten(),                        # 4*4*12 = 192
+        layers.Flatten(),                     
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -488,17 +429,17 @@ def build_svhn_model_v4(input_shape=(32, 32, 3), num_classes=10):
         layers.Input(shape=input_shape),
 
         layers.Conv2D(16, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 32 -> 16
+        layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Dropout(0.20),
 
         layers.Conv2D(32, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 16 -> 8
+        layers.MaxPooling2D(pool_size=(2, 2)), 
         layers.Dropout(0.25),
 
         layers.Conv2D(6, (3, 3), padding="same", activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),   # 8 -> 4
+        layers.MaxPooling2D(pool_size=(2, 2)),  
 
-        layers.Flatten(),                        # 4*4*6 = 96
+        layers.Flatten(),                     
         layers.Dense(num_classes, activation="softmax"),
     ])
 
@@ -518,7 +459,6 @@ def compile_model(model: keras.Model, learning_rate: float = 1e-3):
 
 # ============================================================
 # Training
-# ============================================================
 
 def get_callbacks(model_out_dir: str, model_name: str):
     ensure_dir(model_out_dir)
@@ -561,7 +501,6 @@ def train_model(model, X_train, y_train,  model_out_dir, model_name,
 
 # ============================================================
 # Evaluation / saving
-# ============================================================
 
 def evaluate_model(model, X_test, y_test):
     results = model.evaluate(X_test, y_test, verbose=0)
@@ -570,6 +509,7 @@ def evaluate_model(model, X_test, y_test):
     for name, value in zip(model.metrics_names, results):
         print(f"  {name}: {value:.4f}")
 
+# ============================================================
 
 def save_model(model, model_out_dir: str, model_name: str):
     ensure_dir(model_out_dir)
@@ -582,7 +522,6 @@ def save_model(model, model_out_dir: str, model_name: str):
 
 # ============================================================
 # Main
-# ============================================================
 
 def main():
     
@@ -602,6 +541,7 @@ def main():
     X_train, y_train, X_test, y_test = load_svhn_dataset(DATA_DIR, convert_to_mnist)
 
     if convert_to_mnist == True:
+
         if "v4" in MODEL_NAME:
             model = build_svhn_model_v4_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v7" in MODEL_NAME:
@@ -614,8 +554,6 @@ def main():
             model = build_svhn_model_v10_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v11" in MODEL_NAME:
             model = build_svhn_model_v11_mnist(input_shape=(28, 28, 1), num_classes=10)
-        elif "v12" in MODEL_NAME:
-            model = build_svhn_model_v12_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v13" in MODEL_NAME:
             model = build_svhn_model_v13_mnist(input_shape=(28, 28, 1), num_classes=10)
         elif "v5" in MODEL_NAME:
@@ -635,12 +573,15 @@ def main():
             # Epoch 20/20
             # 516/516 - 3s - loss: 0.5567 - accuracy: 0.8295 - top2_acc: 0.9154 - val_loss: 0.4936 - val_accuracy: 0.8497 - val_top2_acc: 0.9227 - lr: 0.0010 - 3s/epoch - 6ms/step
             model = build_svhn_model_v4(input_shape=(32, 32, 3), num_classes=10)
+
         elif "v3" in MODEL_NAME:
-            model = build_svhn_model_v3(input_shape=(32, 32, 3), num_classes=10)        
+            model = build_svhn_model_v3(input_shape=(32, 32, 3), num_classes=10)    
+
         elif "v2" in MODEL_NAME:
             # Epoch 20/20
             # 516/516 - 4s - loss: 0.2593 - accuracy: 0.9218 - top2_acc: 0.9671 - val_loss: 0.2865 - val_accuracy: 0.9199 - val_top2_acc: 0.9623 - lr: 5.0000e-04 - 4s/epoch - 8ms/step
             model = build_svhn_model_v2(input_shape=(32, 32, 3), num_classes=10)
+
         else:
             print("Something is wrong")
             
@@ -659,7 +600,7 @@ def main():
     )
 
     evaluate_model(model, X_test, y_test)
-    save_model(model, MODEL_OUT_DIR, MODEL_NAME)
+    # save_model(model, MODEL_OUT_DIR, MODEL_NAME)
 
 # =========================================================================================
 

@@ -21,11 +21,30 @@ mvn -q -DskipTests -Dexec.mainClass=experimentation.Experimentation clean compil
 
 ```
 
-## Run Docker: ===========================================================
+## Run with Docker: ===========================================================
 
+This means that kafka will run on the Docker. a docker-compose.yml is provided for just this 
 ```bash
 docker compose up
 docker compose stop
+```
+
+## Run with Kafka local Installation: ===========================================================
+
+Having kafka already installed, you should have a server.properties in the installation dir. The log.dir is the most important setting, and determines where records are stored. 
+```bash
+mkdir -p /mnt/nas_drive/achristopoulos/kafka-kraft
+log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs
+```
+
+Then, you can follow this kraft example:
+```bash
+cd /mnt/nas_drive/achristopoulos/kafka-local    
+bin/kafka-storage.sh random-uuid    # outputs a UUID
+bin/kafka-storage.sh format \
+  --cluster-id <UUID> \
+  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+
 ```
 
 # htop Alternatives for GPU: ==========================================================
@@ -65,7 +84,8 @@ sudo apt install -y python3.11 python3.11-venv python3.11-dev
 source ~/venvs/tf215/bin/activate
 ```
 
-
+## ============================================================================================
+## ============================================================================================
 ## ============================================================================================
 ## Generall Aspects / Topics of this Thesis (they are combined with each other):
 
