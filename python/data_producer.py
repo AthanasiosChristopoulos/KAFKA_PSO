@@ -528,7 +528,7 @@ def load_dataset():
         
     elif DATASET == "cifar5-half":
 
-        classes = np.array((0, 1, 4, 8, 9), dtype=np.int64)
+        classes = np.array((0, 1, 4, 8, 9), dtype=np.int64) # airplane, automobile, deer, ship, truck
 
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 

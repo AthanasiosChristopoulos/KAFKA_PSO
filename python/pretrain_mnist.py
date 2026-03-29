@@ -129,14 +129,14 @@ def build_fmnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
         layers.Reshape((28, 28, 1)),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)), 
 
         layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+        layers.GlobalAveragePooling2D(),                   
 
         layers.Activation("softmax"),
     ])
@@ -169,7 +169,7 @@ def build_fmnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
         layers.Conv2D(10, (3, 3), padding="same", activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
 
-        layers.Flatten(),   # 3x3x10 = 90
+        layers.Flatten(),
         layers.Dense(num_classes, activation="softmax"),
     ])
 
@@ -191,13 +191,13 @@ def build_fmnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),   # 28 -> 26
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),         # 26 -> 13
+        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),  
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),   
 
-        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),    # 13 -> 11
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),         # 11 -> 5
+        layers.Conv2D(8, (3, 3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"), 
 
-        layers.Flatten(),                                                                 # 5*5*8 = 200
+        layers.Flatten(),                                    
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -219,15 +219,15 @@ def build_fmnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True),   # 28->26
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 26->13
+        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True), 
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),   
 
-        layers.Conv2D(12, (3,3), padding="valid", activation="relu", use_bias=True),  # 13->11
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 11->5
+        layers.Conv2D(12, (3,3), padding="valid", activation="relu", use_bias=True), 
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),    
 
-        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),   # 5->3
+        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),
 
-        layers.Flatten(),                                                               # 3*3*4 = 36
+        layers.Flatten(),                                                     
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -249,15 +249,15 @@ def build_fmnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True),   # 28->26
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 26->13
+        layers.Conv2D(8, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),   
 
-        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),   # 13->11
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),         # 11->5
+        layers.Conv2D(4, (3,3), padding="valid", activation="relu", use_bias=True),
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2), padding="valid"),  
 
-        layers.Conv2D(3, (3,3), padding="valid", activation="relu", use_bias=True),   # 5->3
+        layers.Conv2D(3, (3,3), padding="valid", activation="relu", use_bias=True),
 
-        layers.Flatten(),                                                               # 3*3*3 = 27
+        layers.Flatten(),                                                       
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -278,15 +278,15 @@ def build_fmnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),    # 28->28
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                          # 28->14
+        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),   
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                       
 
-        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),    # 14->14
-        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                          # 14->7
+        layers.Conv2D(8, (3,3), padding="same", activation="relu", use_bias=True),  
+        layers.MaxPooling2D(pool_size=(2,2), strides=(2,2)),                     
 
-        layers.Conv2D(2, (3,3), padding="same", activation="relu", use_bias=True),    # 7->7
+        layers.Conv2D(2, (3,3), padding="same", activation="relu", use_bias=True), 
 
-        layers.Flatten(),                                                               # 7*7*2 = 98
+        layers.Flatten(),                                                        
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -397,12 +397,12 @@ def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
         layers.Reshape((28, 28, 1)),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)), 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),                         # -> (128,)
+        layers.GlobalAveragePooling2D(),                    
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
 
@@ -418,16 +418,17 @@ def build_mnist_base_plus_head_v3(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 # 422/422 - 2s - loss: 0.4197 - accuracy: 0.8475 - val_loss: 0.3674 - val_accuracy: 0.8668 - lr: 0.0010 - 2s/epoch - 6ms/step
+
 def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
-        layers.Conv2D(20, (5, 5), padding="valid", activation="relu", use_bias=True),  # 28 -> 24
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),       # 24 -> 12
+        layers.Conv2D(20, (5, 5), padding="valid", activation="relu", use_bias=True), 
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),   
 
-        layers.Conv2D(50, (5, 5), padding="valid", activation="relu", use_bias=True),  # 12 -> 8
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),        # 8 -> 4
+        layers.Conv2D(50, (5, 5), padding="valid", activation="relu", use_bias=True), 
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="valid"),  
 
         layers.GlobalAveragePooling2D(),                    
 
@@ -449,18 +450,19 @@ def build_mnist_base_plus_head_v4(input_shape=(28, 28), num_classes=10):
 
 # ===============================================================================
 # 422/422 - 2s - loss: 0.4331 - accuracy: 0.8451 - val_loss: 0.4314 - val_accuracy: 0.8420 - lr: 0.0010 - 2s/epoch - 4ms/step
+
 def build_mnist_base_plus_head_v5(input_shape=(28, 28), num_classes=10):
     model = keras.Sequential([
         layers.Input(shape=input_shape),
         layers.Reshape((28, 28, 1)),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),  
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   
         layers.Conv2D(128, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),                          # -> (50,)
+        layers.GlobalAveragePooling2D(),                      
 
         layers.Dense(64, activation="relu", use_bias=True),
         layers.Dense(32, activation="relu", use_bias=True),
@@ -487,12 +489,12 @@ def build_mnist_base_plus_head_v6(input_shape=(28, 28), num_classes=10):
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(2),                         # 28 -> 14
+        layers.MaxPooling2D(2),                  
 
-        layers.Conv2D(64, 3, strides=2, padding="same", activation="relu", use_bias=True),   # 7 -> 4
-        layers.MaxPooling2D(2),                         # 4 -> 2
+        layers.Conv2D(64, 3, strides=2, padding="same", activation="relu", use_bias=True),
+        layers.MaxPooling2D(2),                 
 
-        layers.Flatten(),                               # 2*2*64 = 256
+        layers.Flatten(),                           
         layers.Dense(64, activation="relu", use_bias=True),
         layers.Dense(num_classes, activation="softmax", use_bias=True),
     ])
@@ -514,14 +516,14 @@ def build_mnist_base_plus_head_v7(input_shape=(28, 28), num_classes=10):
         layers.Reshape((28, 28, 1)),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)), 
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)), 
 
         layers.Conv2D(num_classes, kernel_size=1, padding="same", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+        layers.GlobalAveragePooling2D(),                   
 
         layers.Activation("softmax"),
     ])
@@ -544,14 +546,14 @@ def build_mnist_base_plus_head_v8(input_shape=(28, 28), num_classes=10):
         layers.Reshape((28, 28, 1)),
 
         layers.Conv2D(32, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 28->14
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   
 
         layers.Conv2D(64, 3, padding="same", activation="relu", use_bias=True),
-        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   # 14->7
+        layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),   
 
         layers.Conv2D(10, 3, padding="same", activation="relu", use_bias=True),
 
-        layers.GlobalAveragePooling2D(),                         # -> (num_classes,)
+        layers.GlobalAveragePooling2D(),                 
 
         layers.Activation("softmax"),
     ])
