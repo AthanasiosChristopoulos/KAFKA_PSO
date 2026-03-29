@@ -2,10 +2,21 @@
 
 cd ./java
 
+# ==============================================================
+
 delete=2
-set -a           # auto-export all variables
+set -a        
 source .env
 set +a
+
+# ==============================================================
+# Less debugging messages:
+
+mvn -q -e -DskipTests \
+-Dexec.mainClass=experimentation.Experimentation \
+ -P$ND4J_PROFILE compile exec:java
+
+# ==============================================================
 
 mvn -q -e -DskipTests \
 -Dexec.mainClass=experimentation.Experimentation \
@@ -14,4 +25,6 @@ mvn -q -e -DskipTests \
 -Dorg.slf4j.simpleLogger.log.org.nd4j=debug \
  -P$ND4J_PROFILE compile exec:java
 
-curl -d "hello from $(hostname)" https://ntfy.sh/pso-test-123
+# ==============================================================
+
+curl -d "hello from $(hostname)" https://ntfy.sh/pso-test-123 # sends a notification to this site when training has finished, which makes a notification noise
