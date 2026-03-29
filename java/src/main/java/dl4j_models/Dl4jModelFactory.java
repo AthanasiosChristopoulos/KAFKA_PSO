@@ -212,7 +212,7 @@ public class Dl4jModelFactory {
 						case 6 -> pair = createCNN_pretrained_1_L(workerId, filename, 64);	// 0.71
 						case 7 -> pair = createCNN_pretrained_2_L_v7(workerId, filename);	// 0.77
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_1(workerId, filename, 64);	// 0.46
-						// case 7 -> pair = createCNN_pretrained_2_L_v7_2(workerId, filename, 10); // 0.66	
+						// case 7 -> pair = createCNN_pretrained_3_L_v7_2(workerId, filename, 10); // 0.66	
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_3(workerId, filename, 5 * 5 * 10);	
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_4(workerId, filename);	// 0.77
 						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 800); // 80% Partial Freeze
@@ -224,7 +224,7 @@ public class Dl4jModelFactory {
 						case 14 -> pair = createCNN_pretrained_1_L(workerId, filename, 200);
 						case 15 -> pair = createCNN_pretrained_1_L(workerId, filename, 800);
 						case 16 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);
-						case 17 -> pair = createCNN_pretrained_2_L_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
+						case 17 -> pair = createCNN_pretrained_2_L(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
 						case 18 -> pair = createCNN_pretrained_1_L(workerId, filename, 400);
 						case 19 -> pair = createCNN_pretrained_1_L(workerId, filename, 784);
 							// 78%
@@ -725,7 +725,7 @@ public class Dl4jModelFactory {
 	
 	// ===========================================================================================
 
-	public static Pair<PsoModel, Integer>  createCNN_pretrained_2_L_v1(int workerId, String fileName, int inputDim) {
+	public static Pair<PsoModel, Integer>  createCNN_pretrained_2_L(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
@@ -974,7 +974,7 @@ public class Dl4jModelFactory {
 	}
 
 	// ====================================================================================
-	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_2(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_3_L_v7_2(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
