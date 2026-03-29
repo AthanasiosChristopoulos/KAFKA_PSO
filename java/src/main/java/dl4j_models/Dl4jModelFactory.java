@@ -215,7 +215,6 @@ public class Dl4jModelFactory {
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_2(workerId, filename, 10); // 0.66	
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_3(workerId, filename, 5 * 5 * 10);	
 						// case 7 -> pair = createCNN_pretrained_2_L_v7_4(workerId, filename);	// 0.77
-				
 						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 800); // 80% Partial Freeze
 						case 10 -> pair = createCNN_pretrained_1_L(workerId, filename, 576);	
 						case 11 -> pair = createCNN_pretrained_1_L(workerId, filename, 90);
