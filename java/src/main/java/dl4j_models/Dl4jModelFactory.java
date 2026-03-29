@@ -37,7 +37,7 @@ public class Dl4jModelFactory {
     public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
 
-	public static final boolean printModel = false;
+	public static final boolean printModel = true;
 
 	// ===========================================================================================
 
@@ -82,7 +82,7 @@ public class Dl4jModelFactory {
 				model = createDenseModel_4(workerId);
 				model = createDenseModel_4_RELU(workerId);
 			}
-
+			System.out.println(model.summary());
 		// ========================================================================================
 
 		} else if ("winequality".equals(DATASET)) {
