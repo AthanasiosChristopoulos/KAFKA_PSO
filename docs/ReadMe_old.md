@@ -2072,3 +2072,25 @@ Ranking:
 How to implement it:
  - localhost only works inside one machine.
  - if broker and worker are on the same laptop, then localhost:9092 works
+
+The Raspberry Pi 3, the best this has to offer:
+| Category             | Specification                                  |
+| -------------------- | ---------------------------------------------- |
+| Platform             | Raspberry Pi 3 Model B                         |
+| FIT IoT-LAB Board ID | `rpi3`                                         |
+| Site                 | Grenoble                                       |
+| Available Nodes      | rpi3-1 to rpi3-5                               |
+| SoC                  | Broadcom BCM2837                               |
+| CPU Architecture     | ARM Cortex-A53                                 |
+| CPU Cores            | 4                                              |
+| CPU Frequency        | 1.2 GHz                                        |
+| RAM                  | 1 GB LPDDR2                                    |
+| Built-in Wireless    | Wi-Fi, BLE                                     |
+| Extra Radio          | IEEE 802.15.4 (via co-microcontroller)         |
+| Wi-Fi/BLE Chip       | BCM43438                                       |
+| Ethernet             | Yes                                            |
+| Operating System     | Embedded Linux (Yocto-based)                   |
+| Power Monitoring     | Global +5V only                                |
+| Co-microcontroller   | SAMR21 (Grenoble nodes)                        |
+| Debug / Programming  | `iotlab_flash`, `iotlab_reset`, `iotlab_debug` |
+| UART Access          | `/dev/iotlab/<tty_co_microcontroller>`         |
