@@ -12,6 +12,8 @@ MAX_POINTS = 200
 
 PLOT_STYLE = "bar"     # options: "line", "bar" 
 
+# ============================================================================================
+
 BAR_COMPATIBLE_MODES = {
     "N_WORKERS",
     "FILTER_ENABLED",
@@ -22,16 +24,7 @@ BAR_COMPATIBLE_MODES = {
     "TOPOLOGY",
 }
 
-# "gold"        # already good (default pick)
-# "goldenrod"   # darker, more muted
-# "darkgoldenrod"
-# "tab:orange",
-# "tab:green",
-# "tab:blue",
-# "coral"        # softer orange
-# "tomato"       # slightly reddish orange
-# "darkorange"   # deeper orange
-# "khaki"  
+# ============================================================================================
 
 MODE_COLORS = {
     "N_WORKERS": "tab:orange",
@@ -39,6 +32,18 @@ MODE_COLORS = {
     "TOPOLOGY": "khaki",
     "LOSS_FUNCTIONS": "tab:green"
 }
+
+# Color options:
+    # "gold" 
+    # "goldenrod" 
+    # "darkgoldenrod"
+    # "tab:orange",
+    # "tab:green",
+    # "tab:blue",
+    # "coral"      
+    # "tomato"    
+    # "darkorange" 
+    # "khaki"  
 
 # ============================================================================================
 def get_plot_color(mode: str) -> str | None:
@@ -63,7 +68,6 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
     for line in lines:
         if line.startswith("MONITORING_ITER,"):
             if current_block:
-                # unexpected repeated header without metadata, finalize previous if needed
                 df = pd.read_csv(StringIO("\n".join(current_block)))
                 experiments.append((df, current_meta or {}))
                 current_block = []
@@ -74,9 +78,6 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
         elif line.startswith("LOSS_FUNCTION,"):
             current_meta = {}
             parts = line.split(",")
-
-            # expected format:
-            # LOSS_FUNCTION,HINGE,COMBINE_LOSS,AVG,REGULARIZER,NONE
             for i in range(0, len(parts) - 1, 2):
                 key = parts[i].strip()
                 value = parts[i + 1].strip()
@@ -91,7 +92,6 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
         else:
             current_block.append(line)
 
-    # in case file ends without metadata line
     if current_block:
         df = pd.read_csv(StringIO("\n".join(current_block)))
         experiments.append((df, current_meta or {}))
@@ -179,9 +179,6 @@ def main():
     experimentation_dir = os.getenv("EXPERIMENTATION_DIR", "").strip()
     csv_dir = f"../java/{experimentation_dir}"
     
-    # csv_dir = f"../java/exp_dataset/classical_vs_fully_informed/pendigits"
-    # mode = "FULLY_INFORMED_VS_CLASSICAL"
-    
     if not experimentation_dir:
         raise RuntimeError("EXPERIMENTATION_DIR is not set in ../java/.env")
 
@@ -200,6 +197,7 @@ def main():
         ]
     
     # =================================================================================================
+    # if its loss functions, the .csv that needs to be read is very different. So we make a custom function for it, to read_csv line by line
 
     elif mode == "LOSS_FUNCTIONS":
         csv_path = Path(f"{csv_dir}/results_loss_functions.csv")
@@ -233,7 +231,7 @@ def main():
     
     elif mode == "FILTER_STRENGTH":
         csv_path = Path(f"{csv_dir}/results_strength.csv")
-        xcol = "STRENGTH_CODE"  # This is what is needed for the pandas to find the correct code
+        xcol = "STRENGTH_CODE"  
         xlabel = "FILTER_STRENGTH_INDEX"
         suffix = "strength"
         plots = [
@@ -247,7 +245,7 @@ def main():
     
     elif mode == "FULLY_INFORMED_VS_CLASSICAL":
         csv_path = Path(f"{csv_dir}/results_fully_informed_vs_classical.csv")
-        xcol = "FULLY_INFORMED"  # This is what is needed for the pandas to find the correct code
+        xcol = "FULLY_INFORMED" 
         xlabel = "FULLY_INFORMED"
         suffix = "fully_informed_vs_classical"
         plots = [
@@ -271,7 +269,6 @@ def main():
     # =================================================================================================
 
     elif mode == "N_WORKERS":
-        # default: N_WORKERS experiments
         csv_path = Path(f"{csv_dir}/results_n_workers.csv")
         xcol = "N_WORKERS"
         xlabel = "N_WORKERS"
@@ -318,7 +315,6 @@ def main():
         exit(-1)
         
     # =================================================================================================
-    # data frame processing 
     
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
@@ -326,7 +322,6 @@ def main():
 
     if(mode != "MONITORING_ITERATIONS"):
         df = pd.read_csv(csv_path)
-
     else:
         lines = []
         with open(csv_path, "r", encoding="utf-8") as f:
@@ -347,7 +342,6 @@ def main():
     elif mode == "TOPOLOGY":
         df[xcol] = df[xcol].astype(str)
 
-    # pbest estimation only when those columns exist (won't run for MONITORING)
     if "TOTAL_MESSAGES_SENT_PBEST" in df.columns and "TOTAL_MESSAGES_SENT" in df.columns and "TOTAL_BYTES_SENT" in df.columns:
         df["PBEST_BYTES_EST"] = compute_pbest_bytes(df)
 
@@ -363,7 +357,6 @@ def main():
             raise KeyError(f"CSV missing y column '{ycol}' needed for plot '{title}'. Columns: {list(df.columns)}")
 
         ys = pd.to_numeric(df[ycol], errors="coerce")
-        # for monitoring, keep NaNs out rather than forcing to 0
         mask = ys.notna()
         xs_plot = df.loc[mask, xcol].tolist()
         ys_plot = ys.loc[mask].tolist()
@@ -382,11 +375,12 @@ def main():
             ys_plot = pd.to_numeric(plot_df[ycol], errors="coerce").tolist()
        
         plot_color = get_plot_color(mode)
-            
-        plt.figure()
-        
+                    
         # ===========================================================================================
-        # plot points:
+        # Actually plot:
+
+        plt.figure()
+
         use_bar = should_use_bar_plot(mode)
 
         if mode == "MONITORING_ITERATIONS":
@@ -403,8 +397,6 @@ def main():
         else:
             plt.plot(xs_plot, ys_plot, marker="o", color=plot_color)
         
-        # plt.margins(y=0.5)
-
         if ycol in {"GBEST_ACC", "ACCURACY"}:
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
@@ -424,7 +416,8 @@ def main():
         if use_bar:
             plt.grid(True)
         else:
-            plt.grid(True)        
+            plt.grid(True)  
+
         # ===========================================================================================
         # xticks:
         
@@ -454,7 +447,6 @@ def main():
 
         plt.tight_layout()
         
-        # outpath = outdir / f"{csv_path.stem}_{tag}_vs_{suffix}.png"
         outpath = outdir / f"{csv_path.stem}_{tag}.png"
         plt.savefig(outpath, dpi=200, bbox_inches="tight")
         plt.close()

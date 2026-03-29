@@ -65,10 +65,9 @@ docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
 # ===============================================================================
 # How to get Keras 2 .h5 files in Ubuntu server enviroment:
 
-```bash
-# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
+We need keras 2 not keras 3 for the .h5 file conversions. This is the standard way on Ubuntu when you need an older Python.
 
-# This is the standard way on Ubuntu when you need an older Python.
+```bash
 
 # 1) Install prerequisites
 sudo apt update

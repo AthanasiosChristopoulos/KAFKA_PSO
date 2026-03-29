@@ -13,6 +13,8 @@ MAX_POINTS = 200
 
 PLOT_STYLE = "bar"     # options: "line", "bar" 
 
+# ============================================================================================
+
 BAR_COMPATIBLE_MODES = {
     "N_WORKERS",
     "FILTER_ENABLED",
@@ -23,22 +25,26 @@ BAR_COMPATIBLE_MODES = {
     "TOPOLOGY",
 }
 
-# "gold"        # already good (default pick)
-# "goldenrod"   # darker, more muted
-# "darkgoldenrod"
-# "tab:orange",
-# "tab:green",
-# "tab:blue",
-# "coral"        # softer orange
-# "tomato"       # slightly reddish orange
-# "darkorange"   # deeper orange
-# "khaki"  
+# ============================================================================================
+
 MODE_COLORS = {
     "N_WORKERS": "tab:orange",
     "FILTER_STRENGTH": "firebrick",
     "TOPOLOGY": "khaki",
     "LOSS_FUNCTIONS": "tab:green"
 }
+
+# Color options:
+    # "gold" 
+    # "goldenrod" 
+    # "darkgoldenrod"
+    # "tab:orange",
+    # "tab:green",
+    # "tab:blue",
+    # "coral"      
+    # "tomato"    
+    # "darkorange" 
+    # "khaki"  
 
 # ============================================================================================
 
@@ -103,16 +109,6 @@ CSV_CONFIGS = {
             ("TOTAL_MESSAGES_SENT", "TOTAL_MESSAGES_SENT", "Messages vs FULLY_INFORMED_VS_CLASSICAL", "messages"),
         ],
     },
-    # "results_monitoring_iterations.csv": {
-    #     "mode": "MONITORING_ITERATIONS",
-    #     "xcol": "MONITORING_ITER",
-    #     "xlabel": "MONITORING_ITER",
-    #     "suffix": "monitoring",
-    #     "plots": [
-    #         ("ACCURACY", "ACCURACY", "Accuracy vs Monitoring Iteration", "accuracy"),
-    #     ],
-    # },
-    
     "results_monitoring_iterations.csv": {
         "mode": "MONITORING_ITERATIONS",
         "xcol": "MONITORING_ITER",
@@ -170,6 +166,8 @@ CSV_CONFIGS = {
     },
 }
 
+# ============================================================================================
+
 MODE_TO_FILENAME = {
     cfg["mode"]: filename
     for filename, cfg in CSV_CONFIGS.items()
@@ -195,6 +193,25 @@ def downsample_df(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
     idx = np.linspace(0, n - 1, num=max_rows, dtype=int)
     return df.iloc[idx].copy()
 
+# ============================================================================================
+
+def delete_pngs(root_dir: Path):
+
+    png_files = list(root_dir.rglob("*.png"))
+
+    if not png_files:
+        print("No PNG files found.")
+        return
+
+    for p in png_files:
+        try:
+            p.unlink()
+            print("Deleted:", p)
+        except Exception as e:
+            print("Failed:", p, e)
+
+    print(f"\nDeleted {len(png_files)} PNG files.")
+    
 # ============================================================================================
 
 def get_csv_config_from_mode(mode: str) -> dict:
@@ -225,9 +242,7 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
 
     for line in lines:
         if line.startswith("MONITORING_ITER,"):
-            # start a new block
             if current_block:
-                # unexpected case: block without trailing metadata
                 df = pd.read_csv(StringIO("\n".join(current_block)))
                 experiments.append((df, {}))
                 current_block = []
@@ -235,7 +250,6 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
             current_block = [line]
 
         elif line.startswith("LOSS_FUNCTION,"):
-            # metadata belongs to the block we just finished
             meta = {}
             parts = line.split(",")
 
@@ -250,13 +264,11 @@ def parse_loss_functions_csv(csv_path: Path) -> list[tuple[pd.DataFrame, dict]]:
                 current_block = []
 
         elif line.startswith("FILTER_ENABLED,"):
-            # end of experiment blocks; ignore summary table
             break
 
         else:
             current_block.append(line)
 
-    # If file ended without metadata for the last block
     if current_block:
         df = pd.read_csv(StringIO("\n".join(current_block)))
         experiments.append((df, {}))
@@ -310,28 +322,6 @@ def plot_loss_functions_experiments(csv_path: Path, outdir: Path, mode: str):
         plt.close()
         saved.append(outpath)
 
-        # # Accuracy vs Time
-        # plot_df = df[["TIME_SEC", "ACCURACY"]].sort_values("TIME_SEC")
-        # plot_df = downsample_df(plot_df, MAX_POINTS)
-
-        # xs_plot = plot_df["TIME_SEC"].tolist()
-        # ys_plot = plot_df["ACCURACY"].tolist()
-
-        # plt.figure()
-        # plt.plot(xs_plot, ys_plot, marker="o", markersize=3, markeredgewidth=0.3, color=plot_color)
-        # plt.ylim(0, 1)
-        # plt.yticks(np.linspace(0, 1, 11))
-        # plt.xlabel("TIME_SEC")
-        # plt.ylabel("ACCURACY")
-        # plt.title(f"{loss_function} - {combine_loss} - {regularizer} (vs Time)")
-        # plt.grid(True)
-        # plt.tight_layout()
-
-        # outpath = outdir / f"{csv_path.stem}_accuracy_vs_time_{safe_loss}_{safe_combine}_{safe_regularizer}.png"
-        # plt.savefig(outpath, dpi=200, bbox_inches="tight")
-        # plt.close()
-        # saved.append(outpath)
-
     return saved
 
 # ============================================================================================
@@ -340,6 +330,9 @@ def process_one_csv(csv_path: Path):
     
     config = get_csv_config_from_filename(csv_path)
     
+    # ================================================================================
+    # Specifically to loss functions
+
     if config["mode"] == "LOSS_FUNCTIONS":
         outdir = csv_path.parent
         saved = plot_loss_functions_experiments(csv_path, outdir, config["mode"])
@@ -350,7 +343,9 @@ def process_one_csv(csv_path: Path):
         for p in saved:
             print(f"      - {p}")
         return
-    
+
+    # ================================================================================
+
     mode = config["mode"]
     xcol = config["xcol"]
     xlabel = config["xlabel"]
@@ -406,6 +401,7 @@ def process_one_csv(csv_path: Path):
     saved = []
 
     for plot in plots:
+
         if len(plot) == 4:
             ycol, ylabel, title, tag = plot
             plot_xcol = xcol
@@ -453,6 +449,9 @@ def process_one_csv(csv_path: Path):
         plot_color = get_plot_color(mode)
         use_bar = should_use_bar_plot(mode)
 
+        # ===============================================================
+        # Actually plot:
+
         plt.figure()
         ax = plt.gca()
         ax.set_axisbelow(True)
@@ -470,9 +469,7 @@ def process_one_csv(csv_path: Path):
 
         else:
             plt.plot(xs_plot, ys_plot, marker="o", color=plot_color)
-        
-        # plt.margins(y=0.25)
-       
+               
         if ycol in {"GBEST_ACC", "ACCURACY"}:
             plt.ylim(0, 1)
             plt.yticks(np.linspace(0, 1, 11))
@@ -551,25 +548,7 @@ def process_multi(csv_dir: Path):
             print(f" - {name}")
 
 # ============================================================================================
-
-def delete_pngs(root_dir: Path):
-
-    png_files = list(root_dir.rglob("*.png"))
-
-    if not png_files:
-        print("No PNG files found.")
-        return
-
-    for p in png_files:
-        try:
-            p.unlink()
-            print("Deleted:", p)
-        except Exception as e:
-            print("Failed:", p, e)
-
-    print(f"\nDeleted {len(png_files)} PNG files.")
-    
-# ============================================================================================
+# Another functionality is to delete all the generate .png figures from the directories
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -593,8 +572,6 @@ def main():
     default_csv_dir = Path(f"../java/{experimentation_dir}") if experimentation_dir else None
 
     csv_dir = Path(f"../java/exp_dataset")
-    # csv_dir = Path(f"../java/exp_dataset_heavy")
-    # csv_dir = Path(f"../java/exp_dataset/loss_functions")
     
     if args.delete:
         delete_pngs(csv_dir)
@@ -604,10 +581,6 @@ def main():
 
     if not mode:
         raise RuntimeError("EXPERIMENTATION_MODE is not set in ../java/.env")
-
-    # config = get_csv_config_from_mode(mode)
-    # csv_path = csv_dir / MODE_TO_FILENAME[config["mode"]]
-    # process_one_csv(csv_path)
 
 # ============================================================================================
 

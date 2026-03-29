@@ -638,31 +638,3 @@ def train_and_export(out_dir="pretrained_model", epochs=10, batch_size=128):
 
 if __name__ == "__main__":
     train_and_export()
-
-
-
-
-
-# ===============================================================================
-# How to get Keras 2 .h5 files:
-# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
-
-# This is the standard way on Ubuntu when you need an older Python.
-
-# 1) Install prerequisites
-# sudo apt update
-# sudo apt install -y software-properties-common
-
-# 2) Add deadsnakes
-# sudo add-apt-repository ppa:deadsnakes/ppa
-# sudo apt update
-
-# 3) Install Python 3.11 + venv
-# sudo apt install -y python3.11 python3.11-venv python3.11-dev
-
-# 4) Create the venv using python3.11
-# python3.11 -m venv ~/venvs/tf215
-# source ~/venvs/tf215/bin/activate
-# python --version   # should say 3.11.x
-# pip install --upgrade pip
-# pip install "tensorflow==2.15.*"
