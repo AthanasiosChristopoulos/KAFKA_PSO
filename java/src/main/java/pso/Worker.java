@@ -63,8 +63,7 @@ public class Worker implements Runnable {
     private final MetricsCollector collector; 
     private boolean KAFKA_METRICS_ENABLED = false;
     
-    // =====================================================================================================
-
+    // =========================================================================
     public Worker(int workerId, MetricsCollector collector) {
 
         this.workerId = workerId;
@@ -83,8 +82,8 @@ public class Worker implements Runnable {
         this.collector = collector;
     }
 
-    // =====================================================================================================
-
+    // ===========================================================================
+    
     @Override
     public void run() {
         // try {

@@ -4,6 +4,7 @@
 # recreate:
 
 kafka-topics.sh --bootstrap-server localhost:19092 --list 
+kafka-topics.sh --bootstrap-server localhost:9092 --list 
 
 kafka-topics.sh --bootstrap-server localhost:19092 \
   --create --topic pbest-weights-topic --partitions 1 --if-not-exists

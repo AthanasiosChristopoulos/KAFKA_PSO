@@ -29,22 +29,67 @@ docker compose up
 docker compose stop
 ```
 
-## Run with Kafka local Installation: ===========================================================
+### Download and use Kafka for Linux from scratch =================================
 
-Having kafka already installed, you should have a server.properties in the installation dir. The log.dir is the most important setting, and determines where records are stored. 
+Download Kafka
 ```bash
-mkdir -p /mnt/nas_drive/achristopoulos/kafka-kraft
-log.dirs=/mnt/nas_drive/achristopoulos/kafka-kraft/logs
-```
+mkdir -p ~/tools
+cd ~/tools
+wget https://archive.apache.org/dist/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+tar -xzf kafka_2.13-3.7.0.tgz
+mv kafka_2.13-3.7.0 kafka-local
 
-Then, you can follow this kraft example:
-```bash
-cd /mnt/nas_drive/achristopoulos/kafka-local    
-bin/kafka-storage.sh random-uuid    # outputs a UUID
+export KAFKA_HOME=~/tools/kafka-local
+export PATH="$KAFKA_HOME/bin:$PATH"
+
+# Optional - Make this permanent:
+echo 'export KAFKA_HOME="$HOME/tools/kafka-local"' >> ~/.bashrc
+echo 'export PATH="$KAFKA_HOME/bin:$PATH"' >> ~/.bashrc
+
+which kafka-topics.sh   # Verify
+
+cd ~/tools/kafka-local/config/kraft
+
+nano server.properties  # We need to properly configure kafka through server properties file
+mkdir -p ~/kafka-kraft/logs
+log.dirs=/home/ds123f15/kafka-kraft/logs
+log.retention.hours=-1
+log.retention.bytes=2221225472
+group.initial.rebalance.delay.ms=500
+
+cd ~/tools/kafka-local
+bin/kafka-storage.sh random-uuid
+
 bin/kafka-storage.sh format \
-  --cluster-id <UUID> \
-  --config /mnt/nas_drive/achristopoulos/kafka-local/config/kraft/server.properties
+  --cluster-id <PASTE_CLUSTER_ID_HERE> \
+  --config ~/tools/kafka-local/config/kraft/server.properties
 
+bin/kafka-storage.sh format \
+  --cluster-id SzSR1IyuQAKPMUnwquMqgQ \
+  --config ~/tools/kafka-local/config/kraft/server.properties
+
+# Start the broker
+kafka-server-start.sh ~/tools/kafka-local/config/kraft/server.properties
+
+# Optional: Set Kafka logging level to ERROR
+# nano ~/tools/kafka-local/config/log4j.properties
+# and set everything to warn (there are multiple options, so you should do)
+sed -i 's/=INFO/=WARN/g' ~/tools/kafka-local/config/log4j.properties
+
+```
+## Python Dependencies: ====================================================
+```bash
+python3 -m pip install \
+  tensorflow \
+  scikit-learn \
+  kafka-python \
+  numpy \
+  pandas \
+  pillow \
+  scipy \
+  tensorflow-datasets
+
+python -m pip install tensorflow-datasets
 ```
 
 # htop Alternatives for GPU: ==========================================================
