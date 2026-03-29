@@ -2094,3 +2094,30 @@ The Raspberry Pi 3, the best this has to offer:
 | Co-microcontroller   | SAMR21 (Grenoble nodes)                        |
 | Debug / Programming  | `iotlab_flash`, `iotlab_reset`, `iotlab_debug` |
 | UART Access          | `/dev/iotlab/<tty_co_microcontroller>`         |
+
+
+### Run Project using federated - Remote stuff =============================
+
+Find your machine’s LAN IP:
+```bash
+hostname -I # local network address inside your home/router LAN.
+# or
+ip addr
+```
+
+Change in server.properties the following:
+listeners=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+    => Kafka should listen on all network interfaces on this machine for that port.
+    => that means that kafka permits all communication 
+    => 0.0.0.0:9092 = explicit “all IPv4 interfaces”
+    => same as listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+
+listeners:
+    “On which local addresses should I open sockets and wait for connections?”
+
+advertised.listeners:
+    “What address should I hand out to clients so they know how to reach me?”
+
+localhost → only this same machine
+192.168.2.15 → other devices on your LAN
+public IP → Internet-facing/router side, usually not what you want for local Kafka

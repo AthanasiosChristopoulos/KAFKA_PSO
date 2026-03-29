@@ -77,6 +77,21 @@ kafka-server-start.sh ~/tools/kafka-local/config/kraft/server.properties
 sed -i 's/=INFO/=WARN/g' ~/tools/kafka-local/config/log4j.properties
 
 ```
+
+### Run Project using federated - Remote stuff =============================
+
+Find your machine’s LAN IP:
+```bash
+hostname -I # you get lan_ip out of this 
+# or
+ip addr
+```
+Set:
+```bash
+controller.quorum.voters=1@<lan_ip>:9093
+listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+advertised.listeners=PLAINTEXT://<lan_ip>:9092
+```
 ## Python Dependencies: ====================================================
 ```bash
 python3 -m pip install \
