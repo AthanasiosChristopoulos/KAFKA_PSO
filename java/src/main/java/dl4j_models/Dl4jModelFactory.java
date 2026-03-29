@@ -210,11 +210,11 @@ public class Dl4jModelFactory {
 						case 3 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);		// 0.89
 						case 4 -> pair = createCNN_pretrained_3_L_v4(workerId, filename, 50);
 						case 6 -> pair = createCNN_pretrained_1_L(workerId, filename, 64);	// 0.71
-						case 7 -> pair = createCNN_pretrained_2_L_v7(workerId, filename);	// 0.77
-						// case 7 -> pair = createCNN_pretrained_2_L_v7_1(workerId, filename, 64);	// 0.46
-						// case 7 -> pair = createCNN_pretrained_3_L_v7_2(workerId, filename, 10); // 0.66	
-						// case 7 -> pair = createCNN_pretrained_2_L_v7_3(workerId, filename, 5 * 5 * 10);	
-						// case 7 -> pair = createCNN_pretrained_2_L_v7_4(workerId, filename);	// 0.77
+						case 7 -> pair = createCNN_pretrained_1_L_v7(workerId, filename);	// 0.77
+						// case 7 -> pair = createCNN_pretrained_Global_1_L(workerId, filename, 64);	// 0.46
+						// case 7 -> pair = createCNN_pretrained_Convolutional_Global_1_L(workerId, filename, 10); // 0.66	
+						// case 7 -> pair = createCNN_pretrained_Convolutional_1_L(workerId, filename, 5 * 5 * 10);	
+						// case 7 -> pair = createCNN_pretrained_2_L_v7(workerId, filename);	// 0.77
 						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 800); // 80% Partial Freeze
 						case 10 -> pair = createCNN_pretrained_1_L(workerId, filename, 576);	
 						case 11 -> pair = createCNN_pretrained_1_L(workerId, filename, 90);
@@ -314,8 +314,8 @@ public class Dl4jModelFactory {
 						case 1, 3, 10, 14, 15, 20 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);
 						case 7, 13, 17 -> pair = createCNN_pretrained_1_L(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 							// cifar 10 trained 75%, cifar 5 optimized 90%
-						case 16 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 128);
-						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
+						case 16 -> pair = createCNN_pretrained_Global_1_L(workerId, filename, 128);
+						case 6 -> pair = createCNN_pretrained_Global_1_L(workerId, filename, 200);
 						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
 						case 8, 18 -> pair = createCNN_pretrained_1_L(workerId, filename, 384); 
 							// 77% accuracy pretrained, 75% new head
@@ -390,72 +390,7 @@ public class Dl4jModelFactory {
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
-	// ============================================================================
-
-	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(int workerId, String fileName, int inputDim) {
-
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
-
-		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define updater etc.
-		// Use NoOp to prevent optimizer assumptions (since PSO will drive updates).
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())
-				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.inferenceWorkspaceMode(WorkspaceMode.NONE)
-				.build();
-
-		int start = (int) new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(2 + cfg.FREEZE_INDEX)
-			.build().numParams();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(2)
-			.build();
-		
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)
-                .addLayer(new GlobalPoolingLayer.Builder()
-						.poolingType(PoolingType.AVG)
-						.poolingDimensions(1, 2)
-						.build())
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(inputDim)       
-						.nOut(NUM_CLASSES)    
-						.activation(Activation.SOFTMAX)
-						.weightInit(WeightInit.XAVIER)
-						.biasInit(0.0)
-						.build())
-				.build();
-
-		model.init(); 
-	
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-	}
-
     // ===================================================================================================
-
-// 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
-// 		try {
-// 			File f = new File(fileName);
-// 			if (!f.exists()) {
-// 				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
-// 			}
-
-// 			ComputationGraph base = KerasModelImport.importKerasModelAndWeights(
-// 					f.getAbsolutePath(),
-// 					false
-// 			);
-// 			return new PsoGraphAdapter(base);
-
-// 		} catch (Exception e) {
-// 			throw new RuntimeException("Failed to import MobileNetV2 base from: " + fileName, e);
-// 		}
-// 	}
 
 	public static PsoModel pretrainedModelMobileNetV2(String fileName) {
 		try {
@@ -895,7 +830,7 @@ public class Dl4jModelFactory {
 
 	// ================================================================================
 
-	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_1_L_v7(
 			int workerId, String filename) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -935,7 +870,7 @@ public class Dl4jModelFactory {
 
 	// ==================================================================
 
-	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_1(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_Global_1_L(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -974,7 +909,7 @@ public class Dl4jModelFactory {
 	}
 
 	// ====================================================================================
-	public static Pair<PsoModel, Integer> createCNN_pretrained_3_L_v7_2(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_Convolutional_Global_1_L(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1022,7 +957,7 @@ public class Dl4jModelFactory {
 
 	// =============================================================================
 
-	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_3(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_Convolutional_1_L(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1068,7 +1003,7 @@ public class Dl4jModelFactory {
 
 	// ==============================================================================
 
-	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_4(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7(
 			int workerId, String filename) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
