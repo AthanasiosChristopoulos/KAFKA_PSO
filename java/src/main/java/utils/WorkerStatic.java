@@ -134,14 +134,16 @@ public final class WorkerStatic {
 
         this.velocity = new float[this.flatModel.length];
 
-        if(logger.isEnabled(2)) {
+        if(logger.isEnabled(2)) {   // Print initialization information about the model
             this.logger.log("Initial Model: " + Dl4jParamUtils.sampleFlat(this.flatModel, SAMPLING_CONSTANT) + 
                 ", with LOSS_FUNCTION: " + cfg.LOSS_FUNCTION);
                 
-            Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);
             logger.log("Model with shape: ");
             Map<String, INDArray> pt = model.paramTable();
             pt.forEach((k, v) -> logger.log(k + " -> " + Arrays.toString(v.shape())));
+
+            // Optionally store flattened init model in .txt for later review
+            // Dl4jParamUtils.saveModel(model, "Init-" + workerId + "-model", this.start);
         }
 
         this.pBestWeights = Arrays.copyOf(flatModel, flatModel.length);
@@ -168,19 +170,20 @@ public final class WorkerStatic {
         TOTAL_BYTES_SENT += BYTES_PER_WEIGHTSMESSAGE;
         if(msgType.equals("current_weights")) {
              TOTAL_MESSAGES_SENT_CURRENT_WEIGHTS++;
+
         } else if(msgType.equals("pBest")) {
             TOTAL_MESSAGES_SENT_PBEST++;
+
         } else {
             System.out.println("Error Right here 1");
         }
-
     }
 
-    // ===========================================================================
+    // ======================================================================
 
     public static void initFixedSendSizes(int weightsDim) {
 
-        float[] dummyWeights = new float[weightsDim]; // zeros
+        float[] dummyWeights = new float[weightsDim]; 
         WeightsMessage dummy = new WeightsMessage(0, "00000000-0000-0000-0000-000000000000", 0f, 0f, dummyWeights);
         WeightsMessageSerializer valueSer = new WeightsMessageSerializer();
         byte[] val = valueSer.serialize(null, dummy);
@@ -188,8 +191,8 @@ public final class WorkerStatic {
         BYTES_PER_WEIGHTSMESSAGE = val.length;
     }
     
-    // =========================================================================================================
-
+    // =========================================================================
+    
     public static String printBatchesReadSummary() {
         long sum = 0;
         long sum_samples = 0;

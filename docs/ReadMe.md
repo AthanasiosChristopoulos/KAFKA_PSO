@@ -15,7 +15,6 @@ mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
 mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
 mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
 
-
 ```
 
 ## Run Docker: ===========================================================
