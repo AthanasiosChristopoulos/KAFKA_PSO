@@ -3,7 +3,6 @@ package dl4j_models;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.WorkspaceMode;
 import org.deeplearning4j.nn.conf.CNN2DFormat;
-import org.deeplearning4j.nn.conf.CacheMode;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
@@ -21,18 +20,12 @@ import org.nd4j.linalg.learning.config.Adam;
 
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
-import org.deeplearning4j.nn.conf.preprocessor.CnnToFeedForwardPreProcessor;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
-import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 
 import org.deeplearning4j.zoo.ZooModel;
 import org.deeplearning4j.zoo.model.LeNet;
 import org.deeplearning4j.zoo.PretrainedType;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-
-import org.deeplearning4j.nn.transferlearning.TransferLearning;
-import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.nd4j.linalg.learning.config.NoOp;
 import org.nd4j.common.primitives.Pair;
 
@@ -43,7 +36,6 @@ public class Dl4jModelFactory {
     public static final int NUM_FEATURES = cfg.NUM_FEATURES;
     public static final int NUM_CLASSES = cfg.NUM_CLASSES;
     public static final int NEURAL_OUTPUT = cfg.NEURAL_OUTPUT;
-    private static final float WEIGHTS_INIT_SCALE = cfg.WEIGHTS_INIT_SCALE;
 
 	public static final boolean printModel = false;
 
@@ -55,32 +47,19 @@ public class Dl4jModelFactory {
 		int head_layer_idx = -1;
 		Pair<PsoModel, Integer> pair = null;
 
-		if("iris".equals(DATASET)) {
-			// model = createIrisModel(workerId);
-			// model = createDenseModel_1(workerId);
-			model = createDenseModel_2(workerId);
-			// model = createDenseModel_3(workerId);
 
-		} else if ("wine".equals(DATASET)) {
-			model = createWineModel(workerId);
+		// ================================================================	
+		if("iris".equals(DATASET)) {
+			model = createDenseModel_1(workerId);
+			model = createDenseModel_2(workerId);
+			model = createDenseModel_3(workerId);
+
+		// ================================================================	
 
 		} else if ("susy".equals(DATASET)) {
-			// model = createSUSYModel_SOFTMAX(workerId);
-			// model = createSUSYModel(workerId);
 			model = createDenseModel_1(workerId);
-
-		} else if ("bank".equals(DATASET)) {
-			// model = createBankModel(workerId);
-			model = createBankModel40K(workerId);
-
-		} else if ("adult".equals(DATASET)) {
-			model = createAdultModel(workerId);
-
-		} else if ("covertype".equals(DATASET)) {
-			model = createCovertypeModel(workerId);
-
-		} else if ("har".equals(DATASET)) {
-			model = createHarModel(workerId);
+			model = createDenseModel_2(workerId);
+			model = createDenseModel_3(workerId);
 
 		// ========================================================================================
 
@@ -101,76 +80,52 @@ public class Dl4jModelFactory {
 				model = createDenseModel_3(workerId);
 			} else if(version == 4) {
 				model = createDenseModel_4(workerId);
-				// model = createDenseModel_4_RELU(workerId);
+				model = createDenseModel_4_RELU(workerId);
 			}
 
 		// ========================================================================================
 
 		} else if ("winequality".equals(DATASET)) {
-			// model = createWineQualityModel(workerId);
-			// model = createDenseModel_1(workerId);
-			// model = createDenseModel_2(workerId);
+			model = createWineQualityModel(workerId);
+			model = createDenseModel_1(workerId);
+			model = createDenseModel_2(workerId);
 			model = createDenseModel_3(workerId);
 
 		// =========================================================================================
 		
-		} else if ("letter".equals(DATASET)) {
-			model = createLetterModel(workerId);
-			// model = createLetterModel70K(workerId);
-
 		} else if ("mnist5".equals(DATASET)) {	// Forward pass cost: CPU => 200ms / GPU => 30ms  
 
-			// model = createMNISTModelMLP(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNIST5Cnn(workerId);	// 70ms forward pass
-			// model = createMNIST5Cnn_Simple(workerId);	// 25ms forward pass on average
-			// model = createMNIST5MLP(workerId);
-			// model = createMNIST5MLP_Reduced(workerId);
-			// model = createMNIST5Cnn_New(workerId);			// this costs on forward pass much more time (60ms)
-			// model = createMNIST5Cnn_New_Simpler(workerId);
-			// model = createMNIST5Cnn_New_2(workerId);		// 0.89
-			// model = createMNIST5Cnn_New_3(workerId);		// 0.3
-			// model = createMNIST5Cnn_New_4(workerId);		// 0.915
-			model = createMNIST5Cnn_New_4_without_2_Dense(workerId);		// used for experimentation
+			model = createDenseModel_1(workerId);
+			model = createDenseModel_2(workerId);
+			model = createDenseModel_3(workerId);
+			model = createDenseModel_4(workerId);
 
-			// Bad Experimentation ================================================================
-			// model = createMNIST5Cnn_New_5(workerId);		// 0.385 with GlobalPooling Layer
-			// model = createMNIST5Cnn_New_6(workerId);		// 86%
-			// model = createMNIST5Cnn_New_7(workerId); 		// 0.37, with GlobalPooling Layer
-			// model = createMNIST5Cnn_New_8(workerId); 		// 0.795
-			// model = createMNIST5Cnn_New_9(workerId); 	// 92%
-			// model = createMNIST5Cnn_New_10(workerId); 		// 0.935
-			// model = createMNIST5Cnn_New_11(workerId); 		// 0.925
-			// model = createMNIST5Cnn_New_12(workerId);		// 0.935
-			// model = createDenseModel_1(workerId);
-			// model = createMNIST5Cnn_New_13(workerId);		// Accuracy:0.92333335
-			// model = createMNIST5Cnn_New_14(workerId);		// Accuracy:0.933
+			// ===========================================================
+			model = createCnn_2_Dense_1(workerId);
+			model = createCnn_2_Dense_2(workerId);		// 0.89
+			model = createCnn_1_Dense_3(workerId);		// used for experimentation
+			model = createCnn_Global_1_Dense_4_v2(workerId);		// 0.915
+
+			// Experimentation with very small models ========================================
+			model = createCnn_Global_1_Dense_5(workerId);	
+			model = createCnn_1_Dense_6(workerId);		
+			model = createCnn_1_Dense_7(workerId); 	
+			model = createCnn_1_Dense_8(workerId); 	// this works too well for what it is. that is because of the dimensionality problem.
+			model = createDenseModel_1(workerId);
 
 	// ===================================================================================
 
 		} else if ("mnist".equals(DATASET)) {
 
-			// cfg.USING_PRETRAINED_MODEL = false;
-			// model = createMNISTModelMLP(workerId);			
-			// model = createMNISTModelMLPSimple_0(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST5Cnn_New(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTModelCNNHeavy(workerId);
+			cfg.USING_PRETRAINED_MODEL = false;
+			model = createCnn_Global_1_Dense_4(workerId);
+			model = createCnn_2_Dense_1(workerId);
+			model = createCnn_2_Dense_0(workerId);
 
-			// model = createMNIST5Cnn_New_4_without_2_Dense(workerId); 	// 0.69, after going heavy on it
-			// model = createMNIST5Cnn_New_4_without_2_Dense_v2(workerId); 	// performs worse at 0.66
-			// model = createMNIST5Cnn_New_4(workerId);	
-			// model = createMNIST5Cnn_New_9(workerId); 	// 62%
-			// model = createMNIST5Cnn_New_10(workerId);	// 65%
-			// model = createMNIST5Cnn_New_12(workerId);	// 0.6433333
-			// model = createMNIST5Cnn_New_13(workerId); // 0.7366667
-			// model = createMNIST5Cnn_New_14(workerId); // bestAccuracy: 0.69
-			// model = createDenseModel_1(workerId);	// 0.6066667
+			model = createCnn_1_Dense_3(workerId); 	// 0.69, after going heavy on it
+			model = createCnn_1_Dense_3_v2(workerId); 	// performs worse at 0.66
 
+			// ======================================================================
 			cfg.USING_PRETRAINED_MODEL = true;
 			
 			if(cfg.USING_PRETRAINED_MODEL) {
@@ -240,7 +195,7 @@ public class Dl4jModelFactory {
 					switch (version) {
 						case -2, -1, 0 -> model = pretrainedModelLeNet();
 						case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-						24, 25 -> model = pretrainedModelMNIST(filename);
+						24, 25 -> model = loadPretrainedModel(filename);
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
 					}
 
@@ -292,205 +247,9 @@ public class Dl4jModelFactory {
 					}
 				}
 			}
-
-		// ======================================================================================================================	
-
-		} else if ("fashion-mnist".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNIST5Cnn_New_Simpler(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST5Cnn_New(workerId);
-			
-			// pretrained =============================================================================================
-			
-			if(cfg.USING_PRETRAINED_MODEL) {
-
-				int version = 5;
-
-				String filename;
-				switch (version) {
-					case 1 -> filename = "../python/pretrained_model/mnist_base_plus_head_v2.h5";	
-						// after PSO 66%, before PSO: 0.126 
-					case 2 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2.h5";	
-						// after PSO 0.69, before PSO: 0.9
-					case 3 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v2_1.h5";	
-						// after PSO 0.69, before PSO: 0.894
-					case 4 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v1.h5";	
-						// Pretrained Accuracy: 0.892, Training Accuracy: 0.93, Test Accuracy:0.8466667
-						// worthless
-					case 5 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";	
-						// Pretrained Accuracy: 0.91, Training Accuracy: 0.81, Test Accuracy:0.79333335
-						// ideal
-					default -> filename = "no_pretrained_file_chosen";
-				}
-				
-				if (preTrained) {
-					System.out.println("Using model version: " + version);
-					switch (version) {
-						case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-
-				} else {
-					switch (version) {
-						case 1, 2 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
-						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 400);
-						case 4 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
-						case 5 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-				}
-			}
-
-		// ==============================================================================================
-
-		} else if ("fashion-mnist-half".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNIST5Cnn_New_Simpler(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST5Cnn_New(workerId);
-			
-			// pretrained =============================================================================================
-			
-			if(cfg.USING_PRETRAINED_MODEL) {
-
-				int version = 1;
-
-				String filename;
-				switch (version) {
-					case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4_half.h5";	
-						// Pretrained Accuracy: 0.73, Training Accuracy: 0.82, Test Accuracy:0.862
-						// ideal
-					default -> filename = "no_pretrained_file_chosen";
-				}
-				
-				if (preTrained) {
-					System.out.println("Using model version: " + version);
-					switch (version) {
-						case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-
-				} else {
-					switch (version) {
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-				}
-			}
-
-		// ==============================================================================================
-
-		} else if ("fashion-mnist5-half".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-
-			// model = createMNISTModelMLPSimple_2(workerId);
-			// model = createMNISTModelMLPSimple_1(workerId);
-			// model = createMNIST5Cnn_New_Simpler(workerId);
-			// model = createMNISTCnn_New_2(workerId);
-			// model = createMNISTCnn(workerId);
-			// model = createMNIST5Cnn_New(workerId);
-			
-			// pretrained =============================================================================================
-			
-			if(cfg.USING_PRETRAINED_MODEL) {
-
-				int version = 1;
-
-				String filename;
-				switch (version) {
-					case 1 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4_half.h5";	
-						// Pretrained Accuracy: 0.84, Training Accuracy: 0.9, Test Accuracy:0.812
-						// ideal
-					default -> filename = "no_pretrained_file_chosen";
-				}
-				
-				if (preTrained) {
-					System.out.println("Using model version: " + version);
-					switch (version) {
-						case 1, 2, 3, 4, 5 -> model = pretrainedModelMNIST(filename);
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-
-				} else {
-					switch (version) {
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-				}
-			}
-
-		// ==============================================================================================
-
-		} else if ("kmnist".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-
-			// pretrained =============================================================================================
-			
-			if(cfg.USING_PRETRAINED_MODEL) {
-
-				int version = 4;
-
-				String filename;
-				switch (version) {
-					case 1 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v1.h5";	
-						// 0.9 => pretrained
-					case 2 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v2.h5";	
-					case 3 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v3.h5";	
-					case 4 -> filename = "../python/pretrained_model/kmnist_base_plus_head_v4.h5";	
-						// 0.65 on trained, 0.922 on pretrained
-					default -> filename = "no_pretrained_file_chosen";
-						// 0.74 after training (high difficulty), 0.91 on pretrained
-				}
-				
-				if (preTrained) {
-					System.out.println("Using model version: " + version);
-					switch (version) {
-						case 1, 2, 3, 4 -> model = pretrainedModelMNIST(filename);
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-
-				} else {
-					switch (version) {
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
-						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 64);
-						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-						case 4 -> pair = createCNNModel_1_Layer(workerId, filename, 180);
-
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-				}
-			}
-
 		// ==============================================================================================
 
 		} else if (DATASET.contains("cifar")) {
-
-			// model = createCifar3Model_PSO_Simple(workerId);
-			// model = createCifar3Model(workerId);
-			// model = createCifar3Model_New(workerId);	
-			// model = createCifar3Model_New_Simpler(workerId);
-			// model = createCifar3Model_New_Simpler_2(workerId);
-			// model = createCifar3Model_New_Simpler_3(workerId);
-			// model = createCifar3Model_New_Simpler_4(workerId);
-			// model = createMNIST5Cnn_New_Simpler(workerId);
-			// model = buildCifarNCHW(3);
-			// model = createCifarCnn_New_13(workerId);	// failure !!!
 
 			cfg.USING_PRETRAINED_MODEL = true;
 
@@ -517,7 +276,7 @@ public class Dl4jModelFactory {
 						// on cifar10 => 65%, on cifar5 => 83%
 						// on cifar10 => 75%, on cifar5 => 83%
 					case 8 -> filename = "../python/pretrained_model/cifar10_base_plus_head_v6.h5";		// 81% new one under certain circustances => 500
-																									// 72% => 100 and 77% pretrained
+							 // 72% => 100 and 77% pretrained
 					case 9 -> filename = "../python/pretrained_model/cifar100_base_plus_head_v5.h5";			// 67%
 					case 10 -> filename = "../python/pretrained_model/stl10_pretrained_base_plus_head_v1.h5";	// 60%
 					case 11 -> filename = "../python/pretrained_model/stl10_pretrained_resnet20_v1.h5";	// 60%
@@ -551,7 +310,7 @@ public class Dl4jModelFactory {
 					System.out.println("Using model version: " + version);
 
 					switch (version) {
-						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20 -> model = pretrainedModelCIFAR(filename);
+						case 1, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20 -> model = loadPretrainedModel(filename);
 						case 2, 4, 5, 11 -> model = pretrainedModelMobileNetV2(filename);
 						default -> throw new IllegalStateException("Unknown ???" );
 					}
@@ -559,61 +318,27 @@ public class Dl4jModelFactory {
 				} else {
 
 					switch (version) {
-						case 1, 3, 10, 14, 15, 20 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 128);
-						case 7, 13, 17 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
+						case 1, 3, 10, 14, 15, 20 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);
+						case 7, 13, 17 -> pair = createCNN_pretrained_1_L(workerId, filename, 64); 		// 73% cifar10, 91% cifar5
 							// cifar 10 trained 75%, cifar 5 optimized 90%
 						case 16 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 128);
 						case 6 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(workerId, filename, 200);
-						case 9 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
-						case 8, 18 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 384); 
+						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 64); 		// 60% cifar5 (pretrained 0.014)
+						case 8, 18 -> pair = createCNN_pretrained_1_L(workerId, filename, 384); 
 							// 77% accuracy pretrained, 75% new head
-						case 12 -> pair = createCNN_1_L(workerId, filename, 64, 25); 
+						case 12 -> pair = createCNN_pretrained_1_L(workerId, filename, 64); 
 
 						case 2, 4 -> pair = createCifarFromMobileNetV2Base(workerId, filename); 
 						case 11-> pair = createCifarFromResNet20Stl10(workerId, filename);
 						case 5 -> pair = createCifarFromMobileNet(workerId, filename);
-						case 19 -> pair = createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(workerId, filename, 192);
+						case 19 -> pair = createCNN_pretrained_1_L(workerId, filename, 192);
 
 						default -> throw new IllegalStateException("Unknown ???");
 					}
 				}
 			}
 
-		// ======================================================================================================================	
-
-		} else if ("svhn".equals(DATASET)) {
-
-			cfg.USING_PRETRAINED_MODEL = true;
-
-			// pretrained =============================================================================================
-			if(cfg.USING_PRETRAINED_MODEL) {
-				
-				int version = 1;
-
-				String filename;
-				switch (version) {
-					case 1 -> filename = "../python/pretrained_model/svhn_v4_final.h5";		// NO FREEZE 69%, FULL freeze 81%, 80% Partial Freeze					
-					default -> filename = "no_pretrained_file_chosen";
-				}
-				
-				if (preTrained) {
-					switch (version) {
-						case 1 -> model = pretrainedModelMNIST(filename);
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-
-				} else {
-
-					switch (version) {
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 96); // 80% Partial Freeze
-							// 83) bestAccuracy: 0.51
-
-						default -> throw new IllegalArgumentException("Unknown version: " + version);
-					}
-				}
-			}
-
-		// ======================================================================================================================	
+		// ==========================================================================
 
 		} else {
             throw new IllegalArgumentException("Invalid DATASET: " + DATASET);
@@ -631,48 +356,11 @@ public class Dl4jModelFactory {
 	}
 
 	// ============================================================================
+	// public static Pair<PsoModel, Integer> createCNN_pretrained_1_L(int workerId, String fileName, int inputDim, int freeze_index) {
 
-	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v3(
-			int workerId, String fileName, int inputDim) {
+	public static Pair<PsoModel, Integer> createCNN_pretrained_1_L(int workerId, String fileName, int inputDim) {
 
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
-
-		// ============================================================================
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())
-				.trainingWorkspaceMode(WorkspaceMode.NONE)
-				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
-				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.build();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)
-			.build();
-
-		int start = (int) truncated.numParams();
-
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(64)      
-						.nOut(NUM_CLASSES)     
-						.activation(Activation.SOFTMAX)
-						.weightInit(WeightInit.XAVIER)
-						.biasInit(0.0)
-						.build())
-				.build();
-
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-	}
-
-	// ============================================================================
-
-	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v1_v4(int workerId, String fileName, int inputDim) {
-
-		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -694,48 +382,7 @@ public class Dl4jModelFactory {
 		
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
-				// .setFeatureExtractor(7)	// look at model.summary()
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(inputDim)           // for this TF model: 128
-						.nOut(NUM_CLASSES) 
-						.activation(Activation.SOFTMAX)
-						.weightInit(WeightInit.XAVIER)
-						.biasInit(0.0)
-						.build())
-				.build();
-
-		model.init(); 
-
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-	}
-
-	// ============================================================================
-
-	public static Pair<PsoModel, Integer> createCNN_1_L(int workerId, String fileName, int inputDim, int freeze_index) {
-
-		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
-
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())
-				.trainingWorkspaceMode(WorkspaceMode.NONE)
-				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
-				.cudnnAlgoMode(ConvolutionLayer.AlgoMode.NO_WORKSPACE)
-				.build();
-
-		int start = (int) new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1 + cfg.FREEZE_INDEX)
-			.build().numParams();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)
-			.build();
-		
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)
-				.setFeatureExtractor(freeze_index)			// look at model.summary()
+				// .setFeatureExtractor(freeze_index)			// look at model.summary()
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(inputDim)           // for this TF model: 128
 						.nOut(NUM_CLASSES) 
@@ -755,7 +402,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createCIFAR_CNN_Pretrained_CIFAR_Simpler_v6(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelCIFAR(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define updater etc.
@@ -795,27 +442,6 @@ public class Dl4jModelFactory {
 		model.init(); 
 	
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-	}
-    // ===================================================================================================
-
-	public static PsoModel pretrainedModelCIFAR(String fileName) {
-		try {
-			File f = new File(fileName);
-
-			if (!f.exists()) {
-				throw new IllegalStateException("Missing pretrained Keras model: " + f.getAbsolutePath());
-			}
-
-			MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(	// these are Keras .h5 files (only in Keras)
-					f.getAbsolutePath(),
-					false   // enforceTrainingConfig = false (ignore Keras optimizer config)
-			);
-
-			return new PsoMultiLayerAdapter(model, true);
-
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to import CIFAR-10 Keras .h5 model", e);
-		}
 	}
 
     // ===================================================================================================
@@ -1049,9 +675,9 @@ public class Dl4jModelFactory {
 		}
 	}
 
-	// ======================================================================================================================
+	// =================================================
 
-	public static PsoModel pretrainedModelMNIST(String fileName) {
+	public static PsoModel loadPretrainedModel(String fileName) {
 		try {
 
 			File f = new File(fileName);
@@ -1072,12 +698,11 @@ public class Dl4jModelFactory {
 		}
 	}
 
-	// ======================================================================================================================
-
+	// ===========================================================
 	public static PsoModel createMNIST_CNN_Pretrained_MNIST_v1(int workerId, String fileName) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 
@@ -1110,7 +735,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler_v1(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
@@ -1155,7 +780,7 @@ public class Dl4jModelFactory {
 		Activation act = cfg.NEED_PROBS ? Activation.SOFTMAX : Activation.IDENTITY;
 		// Pretrained Model ===========================================================
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		
@@ -1194,7 +819,7 @@ public class Dl4jModelFactory {
 
 		// Pretrained Model ===========================================================
 		System.out.println("AAAAAAAAAAAAAAAAa");
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(fileName).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
 		
@@ -1232,7 +857,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v4(int workerId, String filename, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -1284,7 +909,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v5(int workerId, String filename, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
 		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
@@ -1334,7 +959,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v6(int workerId, String filename, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
@@ -1376,7 +1001,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v6_1(int workerId, String filename, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
@@ -1411,7 +1036,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7(
 			int workerId, String filename) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1454,7 +1079,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(
 			int workerId, String filename, int inputDim) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1495,7 +1120,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_2(
 			int workerId, String filename, int inputDim) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1543,7 +1168,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_3(
 			int workerId, String filename, int inputDim) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1589,7 +1214,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_4(
 			int workerId, String filename) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1638,7 +1263,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(
 			int workerId, String filename) {
 
-				MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+				MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1684,7 +1309,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(
 			int workerId, String filename) {
 				
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -1736,7 +1361,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(
 			int workerId, String filename, int inputDim) {
 
-		MultiLayerNetwork pretrained = pretrainedModelMNIST(filename).asMultiLayerNetwork();
+		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2020,50 +1645,9 @@ public class Dl4jModelFactory {
 // out : (500*10)+10 = 5,010
 // TOTAL = 1,256,080
 
-	// ======================================================================================================================
-	// Iris Dataset Model Architecture 
+	// ========================================================================
 
-	public static PsoModel createIrisModel(int workerId) {
-		if(printModel) {
-			System.out.println("Using Iris Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId) // or pass seed from outside
-				.weightInit(WeightInit.XAVIER)				
-				.list()
-				.layer(new DenseLayer.Builder() // Hidden Layer 1 (with input Layer)
-						.nIn(NUM_FEATURES)
-						.nOut(16)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder() // Hidden Layer 2
-						.nIn(16)
-						.nOut(16)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder() // Output Layer 
-						.nIn(16)
-						.nOut(NEURAL_OUTPUT)
-						.lossFunction(LossFunctions.LossFunction.MCXENT)  // is used only for model.fit(...). Ignore it, we arent doing backpropagation
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init(); // sets the random weights 
-		return new PsoMultiLayerAdapter(model);
-	} 
-
-	// Number of weights in the network calculation:  
-        // For Hidden Layer 1   => 4 * 16 + 16 (Bias) 
-        // For Hidden Layer 2   => 16 * 16 + 16
-        // For Output Layer     => 16 * 3 + 3
-        // 403 weights all in all
-
-	// ======================================================================================================================
-
-	public static PsoModel createDenseModel_1(int workerId) {	
+	public static PsoModel createDenseModel_1(int workerId) {	// no hidden layers
 		if (printModel) System.out.println("Model: createDenseModel_1");  
 
 		Activation act = Activation.SOFTMAX;
@@ -2092,54 +1676,21 @@ public class Dl4jModelFactory {
 		model.init();
 		return new PsoMultiLayerAdapter(model);
 	}
-	
 
-	// ======================================================================================================================
-	// Wine Dataset Model Architecture 
+	// =====================================================================================
 
-	public static PsoModel createWineModel(int workerId) {
-		if(printModel) {
-			System.out.println("Using Wine Model");
-		}
+	public static PsoModel createDenseModel_2(int workerId) {	// single hidden layer
+		if (printModel) System.out.println("Using createDenseModel_2");
 
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-                .list()
-                .layer(new DenseLayer.Builder()
-                        .nIn(NUM_FEATURES)
-                        .nOut(32)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new DenseLayer.Builder()
-                        .nIn(32)
-                        .nOut(16)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-                        .nIn(16)
-                        .nOut(NEURAL_OUTPUT)
-                        .activation(Activation.SOFTMAX)
-                        .build())
-                .build();
+		Activation act = Activation.SOFTMAX;
+		LossFunctions.LossFunction loss; 
 
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-        model.init();
-        return new PsoMultiLayerAdapter(model);
-	} 
-
-	// Number of weights in the network calculation:  
-        // For Hidden Layer 1   => 13 * 32 + 32 
-        // For Hidden Layer 2   => 32 * 16 + 16
-        // For Output Layer     => 16  * 3 + 3
-        // 1027 weights 
-
-	// ======================================================================================================================
-	// MNIST Dataset Model Architecture 
-
-	public static PsoModel createMNISTModelMLP(int workerId) {
-		if(printModel) {
-			System.out.println("Using MNIST Model");
+		if (NEURAL_OUTPUT == 1) {
+			act = Activation.SIGMOID;
+			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
+		} else {
+			act = Activation.SOFTMAX;
+			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
 		}
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -2148,17 +1699,120 @@ public class Dl4jModelFactory {
 				.list()
 				.layer(new DenseLayer.Builder()
 						.nIn(NUM_FEATURES)
+						.nOut(32)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(loss)
+						.nIn(32)
+						.nOut(NEURAL_OUTPUT)
+						.activation(act)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model);
+	}
+
+		// ==================================================================================
+
+	public static PsoModel createDenseModel_3(int workerId) {	// two hidden layers
+
+		if (printModel) System.out.println("Using createDenseModel_3");
+		Activation act = Activation.SOFTMAX;
+		LossFunctions.LossFunction loss; 
+
+		if (NEURAL_OUTPUT == 1) {
+			act = Activation.SIGMOID;
+			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
+		} else {
+			act = Activation.SOFTMAX;
+			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)     
+						.nOut(64)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(64)
+						.nOut(64)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(loss)
+						.nIn(64)
+						.nOut(NEURAL_OUTPUT)   
+						.activation(act)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model);
+	}
+
+	// ============================================================================
+
+	public static PsoModel createDenseModel_4(int workerId) { // 2 hidden layers and more parameters
+		if(printModel) {
+			System.out.println("Using PenDigits Model");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES)  
+						.nOut(128)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new DenseLayer.Builder()
+						.nIn(128)
+						.nOut(128)
+						.activation(Activation.TANH)
+						.build())
+				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT) 
+						.activation(Activation.SOFTMAX)
+						.build())
+				.build();
+
+		MultiLayerNetwork model = new MultiLayerNetwork(conf);
+		model.init();
+		return new PsoMultiLayerAdapter(model);
+	}
+	// ===================================================================
+	// PENDIGITS Dataset Model Architecture
+
+	public static PsoModel createDenseModel_4_RELU(int workerId) {
+		if(printModel) {
+			System.out.println("Using PenDigits Model");
+		}
+
+		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+				.seed(123 + workerId)
+				.weightInit(WeightInit.XAVIER)
+				.list()
+				.layer(new DenseLayer.Builder()
+						.nIn(NUM_FEATURES) 
 						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
 				.layer(new DenseLayer.Builder()
 						.nIn(128)
-						.nOut(64)
+						.nOut(128)
 						.activation(Activation.RELU)
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(64)
-						.nOut(NEURAL_OUTPUT)
+						.nIn(128)
+						.nOut(NEURAL_OUTPUT) 
 						.activation(Activation.SOFTMAX)
 						.build())
 				.build();
@@ -2168,197 +1822,15 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model);
 	}
 
-	// Number of weights in the network calculation:  
-        // For Hidden Layer 1   => 784 * 256 + 256  
-        // For Hidden Layer 2   => 256 * 128 + 128
-        // For Output Layer     => 128 * 10 + 10
-        // 235146 weights all in all
-		// 400000 == NN400K
-		// this is comparable to NN400K
+	// Number of weights in the network calculation:
+	// For Hidden Layer 1   => 16 * 128 + 128
+	// For Hidden Layer 2   => 128 * 128 + 128
+	// For Output Layer     => 128 * 10 + 10
+	// 19978 weights 
 
-		// 1048576
-		// 1881444
-		//  940584
+	// =======================================================================
 
-	// ======================================================================================================================
-
-	public static PsoModel createMNISTModelMLPSimple_0(int workerId) {
-		if(printModel) {
-			System.out.println("Using MNIST Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(64)
-						.nOut(32)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(32)
-						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNISTModelMLPSimple_1(int workerId) {
-		if (printModel) {
-			System.out.println("Using MNIST Tiny MLP (1 hidden layer, PSO-friendly)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(0, new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(32)
-						.activation(Activation.TANH) 
-						.build())
-				.layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(32)
-						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.feedForward(NUM_FEATURES))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNISTModelMLPSimple_2(int workerId) {
-		if (printModel) {
-			System.out.println("Using MNIST Ultra-Simple Model (no hidden / logistic regression)");
-		}
-
-		int nIn = NUM_FEATURES;       // should be 28*28 = 784
-		int nOut = NEURAL_OUTPUT;     // should be 10
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(0, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(nIn)
-						.nOut(nOut)
-						.activation(Activation.SOFTMAX)
-						.build())
-				// Helps DL4J infer shapes cleanly for a single-layer net:
-				.setInputType(InputType.feedForward(nIn))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}	// 784 * 10 + 10 = 7850 parameters	 
-
-	// ======================================================================================================================
-
-    public static PsoModel createMNIST5MLP(int workerId) {
-
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123 + workerId)
-                .weightInit(WeightInit.XAVIER)
-                .updater(new Adam(1e-3))
-                .list()
-                .layer(new DenseLayer.Builder()
-                        .nIn(NUM_FEATURES)
-                        .nOut(128)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new DenseLayer.Builder()
-                        .nIn(128)
-                        .nOut(64)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-                        .nIn(64)
-                        .nOut(NEURAL_OUTPUT)
-                        .activation(Activation.SOFTMAX)
-                        .build())
-                .build();
-
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-        model.init();
-        return new PsoMultiLayerAdapter(model);
-    }
-	// Weight Calculation: 
-	// 784×128 + 128 = 100,480
-	// 128×64 + 64 = 8,256
-	// 64×4 + 4 = 260
-	// total = 100,480 + 8,256 + 260 = 108,996 weights
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNISTCnn_New_2(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN (PSO-feasible)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
-						.nIn(1)
-						.nOut(8)       
-						.stride(1, 1)
-						.padding(0, 0)							// 26 x 26 x 8
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
-						.nOut(16)     
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nOut(32)                // keep 32 (good PSO control knob)
-						.activation(Activation.TANH)  // smoother than ReLU for PSO
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNISTModelCNNHeavy(int workerId) {
+	public static PsoModel createCnn_2_Dense_0(int workerId) {
 
 		int height = 28, width = 28, channels = 1;
 		int nOut = 10;
@@ -2407,86 +1879,47 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model);
 	}
 
-	// ======================================================================================================================
+	// =================================================================================
 
-	public static PsoModel createMNIST5MLP_Reduced(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)   // 784
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(64)
-						.nOut(32)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(32)
-						.nOut(NEURAL_OUTPUT)  // 4
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// 784→64: 784×64 + 64 = 50,176 + 64 = 50,240
-	// 64→32: 64×32 + 32 = 2,048 + 32 = 2,080
-	// 32→4: 32×4 + 4 = 128 + 4 = 132
-	// Total = 50,240 + 2,080 + 132 = 52,452 parameters
-
-	// ======================================================================================================================
-
-    public static PsoModel createMNISTCnn(int workerId) {
-		if(printModel) {
-			System.out.println("Using CNN MNIST Model");
-		}
+    public static PsoModel createCnn_Global_1_Dense_4(int workerId) {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(123 + workerId)
                 .weightInit(WeightInit.RELU)
                 .updater(new Adam(1e-3))
                 .list()
-                // Conv2D(16, 3, padding="same", use_bias=False)
                 .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(16)		// Number of filters / feature maps == 16, output channels
+                        .nOut(16)	
                         .stride(1, 1)
-                        .padding(1, 1)       // "same" for 3x3 with stride 1
+                        .padding(1, 1)     
                         .hasBias(false)
                         .activation(Activation.IDENTITY)
                         .build())
-                .layer(new ActivationLayer.Builder() 	// ReLU
+                .layer(new ActivationLayer.Builder() 	
                         .activation(Activation.RELU)
                         .build())
-                .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// MaxPooling2D()
+                .layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
                         .kernelSize(2, 2)
                         .stride(2, 2)
                         .build())
-                .layer(new ConvolutionLayer.Builder(3, 3)			// 3x3x32
+                .layer(new ConvolutionLayer.Builder(3, 3)		
                         .nOut(32)
                         .stride(1, 1)
                         .padding(1, 1)
                         .hasBias(false)
                         .activation(Activation.IDENTITY)
                         .build())
-                .layer(new ActivationLayer.Builder()		// ReLU
+                .layer(new ActivationLayer.Builder()	
                         .activation(Activation.RELU)
                         .build())
-                .layer(new GlobalPoolingLayer.Builder()		// GlobalAveragePooling2D() => Outputs 32 one for each channel / feature map
+                .layer(new GlobalPoolingLayer.Builder()		
                         .poolingType(PoolingType.AVG)
                         .build())
-                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	// (num_classes, softmax)
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
                         .nOut(NUM_CLASSES)
                         .activation(Activation.SOFTMAX)
                         .build())
-                .setInputType(InputType.convolutional(28, 28, 1)) // this is the input shape: h,w,c => (28,28,1)
+                .setInputType(InputType.convolutional(28, 28, 1)) 
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
@@ -2515,220 +1948,9 @@ public class Dl4jModelFactory {
         return new PsoMultiLayerAdapter(model);
     }
 
-	// ======================================================================================================================
-	// MNIST5CNN
+	// ===================================================================================
 
-
-	public static PsoModel createMNIST5Cnn(int workerId) {
-		if (printModel) {
-				System.out.println("Using CNN MNIST5 Model");
-			}
-
-			MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-					.seed(123 + workerId)
-					.weightInit(WeightInit.RELU)
-					.list()
-					.layer(new ConvolutionLayer.Builder(3, 3)	// 3 × 3 × 1 (because GrayScale) × 8 + 8 (Biases) = 80
-							.nOut(8)
-							.stride(1, 1)	// this is the convolutional step 
-							.padding(1, 1)	// this is a padding of the input image so that output image gets same size
-							.hasBias(true)           
-							.activation(Activation.IDENTITY)  
-							.build())
-					.layer(new ActivationLayer.Builder()
-							.activation(Activation.LEAKYRELU)	// An activation layer doesnt have parameters
-							.build())
-					.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)		// MaxPooling2D(2x2) => Sampling Layer => doesnt have parameters
-							.kernelSize(2, 2)
-							.stride(2, 2)
-							.build())
-					.layer(new ConvolutionLayer.Builder(3, 3)			//  3 * 3 * 8 * 16 + 16 (Biases) = 1168
-							.nOut(16)
-							.stride(1, 1)
-							.padding(1, 1)
-							.hasBias(true)
-							.activation(Activation.IDENTITY)
-							.build())
-					.layer(new ActivationLayer.Builder()
-							.activation(Activation.LEAKYRELU)
-							.build())
-					.layer(new GlobalPoolingLayer.Builder()		// GlobalAveragePooling2D()
-							.poolingType(PoolingType.AVG)
-							.build())
-					.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	// since not using model.fit(...), this loss function will never be used
-							.nOut(NUM_CLASSES)                   // MNIST5 => 4 Classes 	16 × 4 + 4 = 68, // this project only uses model.output(...)
-							.activation(Activation.SOFTMAX)
-							.build())
-					.setInputType(InputType.convolutional(28, 28, 1))
-					.build();
-
-			MultiLayerNetwork model = new MultiLayerNetwork(conf);
-			model.init();
-			return new PsoMultiLayerAdapter(model);
-	}
-	
-	// Total = 80 + 1168 + 68 = 1316
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_Simple(int workerId) {
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN SIMPLE");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.RELU)  
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(4)
-						.stride(1, 1)
-						.padding(1, 1)        
-						.hasBias(true)
-						.activation(Activation.IDENTITY)
-						.build())
-				.layer(new ActivationLayer.Builder()
-						.activation(Activation.LEAKYRELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new GlobalPoolingLayer.Builder()
-						.poolingType(PoolingType.AVG)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(4)
-						.nOut(NUM_CLASSES)     
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN");
-		}
-
-		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER) 
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(1)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(0, 0)        
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(64)
-						.stride(1, 1)
-						.padding(0, 0)           
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(64)
-						.stride(1, 1)
-						.padding(0, 0)        
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nOut(32)              
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(numClasses)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))	// MNIST input: [batch, 1, 28, 28]
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// Params => k * k = 3 * 3 = 9, conv = nOut*(k*k*nIn + bias)
-	// conv1: 32*(9*1+1)=320	// nIn = 1 because 1 channel because grayscale
-	// conv2: 64*(9*32+1)=18496
-	// conv3: 64*(9*64+1)=36928
-
-	// Flatten means flattening the feature maps => 64 (number of channels) * 3 * 3 (dimensionality of the feature maps) = 576
-	// dense: 576 * 64 + 64 = 36928
-	// total 320 + 18496 + 36928 + 36928 = 92932 params
-	// Reported Dimensionality: 92932
-
-	public static PsoModel createMNIST5Cnn_New_Simpler(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN");
-		}
-
-		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER) 
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(1)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(0, 0)        
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(64)
-						.stride(1, 1)
-						.padding(0, 0)           
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nOut(32)           	  
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(numClasses)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_2(int workerId) {
+	public static PsoModel createCnn_2_Dense_1(int workerId) {
 
 		if (printModel) {
 			System.out.println("Using MNIST5 CNN (PSO-feasible)");
@@ -2760,8 +1982,8 @@ public class Dl4jModelFactory {
 						.stride(2, 2)
 						.build())
 				.layer(new DenseLayer.Builder()
-						.nOut(32)                // keep 32 (good PSO control knob)
-						.activation(Activation.TANH)  // smoother than ReLU for PSO
+						.nOut(32)               
+						.activation(Activation.TANH) 
 						.build())
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
 						.nOut(NUM_CLASSES)
@@ -2783,63 +2005,10 @@ public class Dl4jModelFactory {
 	// 32 * 4 + 4 = 132
 	// 80 + 1168 + 12832 + 132 = 14212 trainable parameters
 
-	// ======================================================================================================================
 
-	public static PsoModel createMNIST5Cnn_New_3(int workerId) {
+	// ===================================================================
 
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN (PSO-feasible)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
-						.nIn(1)
-						.nOut(8)       
-						.stride(1, 1)
-						.padding(0, 0)							// 26 x 26 x 8
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
-						.nOut(16)     
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new GlobalPoolingLayer.Builder()
-                        .poolingType(PoolingType.AVG)
-                        .build())
-				.layer(new DenseLayer.Builder()
-						.nOut(32)                // keep 32 (good PSO control knob)
-						.activation(Activation.TANH)  // smoother than ReLU for PSO
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-	
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_4(int workerId) {
+	public static PsoModel createCnn_2_Dense_2(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2882,9 +2051,8 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_4_without_2_Dense(int workerId) {
+	// ===================================================================
+	public static PsoModel createCnn_1_Dense_3(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2923,9 +2091,9 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
+	// ============================================================================
 
-	public static PsoModel createMNIST5Cnn_New_4_without_2_Dense_v2(int workerId) {
+	public static PsoModel createCnn_1_Dense_3_v2(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -2964,9 +2132,9 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
+	// ==============================================================================
 
-	public static PsoModel createMNIST5Cnn_New_5(int workerId) {
+	public static PsoModel createCnn_Global_1_Dense_4_v2(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -3006,55 +2174,10 @@ public class Dl4jModelFactory {
 		model.init();
 		return new PsoMultiLayerAdapter(model, false);
 	}
-	
-	// ======================================================================================================================
 
-	public static PsoModel createMNIST5Cnn_New_6(int workerId) {
+	// ===========================================================================
 
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x4
-						.nIn(1)
-						.nOut(4)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x4
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)   // -> 10x10x8
-						.nOut(8)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 5x5x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()             // 200 -> 12
-						.nOut(12)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_7(int workerId) {
+	public static PsoModel createCnn_Global_1_Dense_5(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -3087,95 +2210,9 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
+	// ==============================================================================
 
-	public static PsoModel createMNIST5Cnn_New_8(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x8
-						.nIn(1)
-						.nOut(8)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(1, 1)   // 13x13x8 -> 13x13x4
-						.nOut(4)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 6x6x4
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()             // 144 -> 10
-						.nOut(10)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_9(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)   // 28x28x1 -> 26x26x8
-						.nIn(1)
-						.nOut(8)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 13x13x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(1, 1)   // 13x13x8 -> 13x13x4
-						.nOut(4)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 6x6x4
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_10(int workerId) {
+	public static PsoModel createCnn_1_Dense_6(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -3204,9 +2241,9 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
+	// ================================================================================
 
-	public static PsoModel createMNIST5Cnn_New_11(int workerId) {
+	public static PsoModel createCnn_1_Dense_7(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -3241,70 +2278,10 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model, false);
 	}
 
-	// ======================================================================================================================
 
-	public static PsoModel createMNIST5Cnn_New_12(int workerId) {
+	// ==================================================================
 
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(5, 5)   // 28x28x1 -> 24x24x8
-						.nIn(1)
-						.nOut(8)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)   // 12x12x8 -> 10x10x8
-						.nOut(8)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_13(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(28, 28, 1))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createMNIST5Cnn_New_14(int workerId) {
+	public static PsoModel createCnn_1_Dense_8(int workerId) {
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.seed(123 + workerId)
@@ -3329,468 +2306,8 @@ public class Dl4jModelFactory {
 		model.init();
 		return new PsoMultiLayerAdapter(model, false);
 	}
-	// ======================================================================================================================
-	// SUSY Dataset Model Architecture 
-
-	public static PsoModel createSUSYModel_SOFTMAX(int workerId) {
-		if(printModel) {
-			System.out.println("Using SUSY Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)  // 18
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(128)
-						.nOut(NEURAL_OUTPUT)  // 2
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// Number of weights in the network calculation:  
-		// For Hidden Layer 1   => 18 * 128 + 128  
-		// For Hidden Layer 2   => 128 * 128 + 128
-		// For Output Layer     => 128 * 2 + 2
-		// 19202 weights all in all
-		// 38018
-
-	
-	// ======================================================================================================================
-	// SUSY Dataset Model Architecture - Binary Cross Entropy Loss
-
-	public static PsoModel createSUSYModel(int workerId) {
-		if(printModel) {
-			System.out.println("Using SUSY Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)  // 18
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
-						.nIn(128)
-						.nOut(NEURAL_OUTPUT)  
-						.activation(Activation.SIGMOID)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
 
 	// ===============================================================================
-	// Bank Dataset Model Architecture 
-
-	public static PsoModel createBankModel(int workerId) {
-		int outputSize = 1;
-		if(printModel) {
-			System.out.println("Using BANK Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.updater(new Adam(1e-3))
-				.l2(1e-4)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(64)
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
-						.nIn(64)
-						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SIGMOID)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-	
-	// Number of weights in the network calculation:  
-        // For Hidden Layer 1   => 53 * 64 + 64  
-        // For Hidden Layer 2   => 64 * 64 + 64
-        // For Output Layer     => 64 * 1 + 1
-        // 7681 weights all in all
-		// this is comparable to NN4K
-
-	// ======================================================================================================================
-
-	public static PsoModel createBankModel40K(int workerId) {
-		int outputSize = 1; 
-		if(printModel) {
-			System.out.println("Using BANK Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.updater(new Adam(1e-3))
-				.l2(1e-4)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(256)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(256)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
-						.nIn(128)
-						.nOut(outputSize)
-						.activation(Activation.SIGMOID)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-	
-	// Number of weights in the network calculation:  
-        // For Hidden Layer 1   => 53 * 256 + 256  
-        // For Hidden Layer 2   => 256 * 128 + 128
-        // For Output Layer     => 128 * 1 + 1
-        // 46849 weights all in all
-		// this is comparable to NN40K
-
-	// ======================================================================================================================
-
-	public static PsoModel createAdultModel(int workerId) {
-
-		if(printModel) {
-			System.out.println("Using ADULT_INCOME Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.updater(new Adam(1e-3))
-				.l2(1e-4)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)      // Adult input features after one-hot + scaling
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(64)
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT) // binary cross-entropy
-						.nIn(64)
-						.nOut(NEURAL_OUTPUT)
-						.activation(Activation.SIGMOID)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// Number of weights in the network calculation:
-	// For Hidden Layer 1   => 96 * 64 + 64
-	// For Hidden Layer 2   => 64 * 64 + 64
-	// For Output Layer     => 64 * 1 + 1
-	// Total weights = 10433
-	// this is comparable to NN40K)
-
-	// ======================================================================================================================
-	// COVERTYPE Dataset Model Architecture
-
-	public static PsoModel createCovertypeModel(int workerId) {
-		if(printModel) {
-			System.out.println("Using Covertype Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)    
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(128)
-						.nOut(NEURAL_OUTPUT)  
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// Number of weights in the network calculation:
-	// For Hidden Layer 1   => 54 * 128 + 128
-	// For Hidden Layer 2   => 128 * 128 + 128
-	// For Output Layer     => 128 * 7 + 7
-	// Total weights        => (54*128+128) + (128*128+128) + (128*7+7)
-	//                      => (6912+128) + (16384+128) + (896+7)
-	//                      => 7040 + 16512 + 903
-	//                      => 24455 weights 
-	// this is comparable to NN40K
-
-	// ======================================================================================================================
-	// HAR (UCI Human Activity Recognition) Dataset Model Architecture
-
-	public static PsoModel createHarModel(int workerId) {
-		if(printModel) {
-			System.out.println("Using HAR Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)  // 561
-						.nOut(32)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(32)
-						.nOut(32)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(32)
-						.nOut(NEURAL_OUTPUT)  // 6
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-
-	// Number of weights in the network calculation:
-	// For Hidden Layer 1   => 561 * 32 + 32
-	// For Hidden Layer 2   => 32 * 32 + 32
-	// For Output Layer     => 32 * 6 + 6
-	// 19046 weights all in all
-	//
-	// Breakdown:
-	// Hidden1: 561*32 = 17952, +32 biases  = 17984
-	// Hidden2: 32*32  = 1024,  +32 biases  = 1056
-	// Output : 32*6   = 192,   +6 biases   = 198
-	// Total  : 17984 + 1056 + 198 = 19038  <-- wait, check below
-	//
-	// Total is:
-	// 17984 + 1056 + 198 = 19238
-
-	// ======================================================================================================================
-	// PENDIGITS Dataset Model Architecture
-
-	public static PsoModel createDenseModel_4_RELU(int workerId) {
-		if(printModel) {
-			System.out.println("Using PenDigits Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)   // 16 
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(128)
-						.nOut(NEURAL_OUTPUT) // 10 (digits 0..9)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-
-	// Number of weights in the network calculation:
-	// For Hidden Layer 1   => 16 * 128 + 128
-	// For Hidden Layer 2   => 128 * 128 + 128
-	// For Output Layer     => 128 * 10 + 10
-	// 19978 weights 
-
-	// or with pendigits-half 
-
-	// For Hidden Layer 1   => 16 * 128 + 128
-	// For Hidden Layer 2   => 128 * 128 + 128
-	// For Output Layer     => 128 * 5 + 5
-	// 19333 weights 
-
-	// ======================================================================================================================
-
-	public static PsoModel createDenseModel_4(int workerId) {
-		if(printModel) {
-			System.out.println("Using PenDigits Model");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				// .weightInit(new UniformDistribution(-WEIGHTS_INIT_SCALE, WEIGHTS_INIT_SCALE)) 
-				.weightInit(WeightInit.XAVIER)	// .weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)   // 16 
-						.nOut(128)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(128)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(128)
-						.nOut(NEURAL_OUTPUT) // 10 (digits 0..9)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		// model.params().muli(WEIGHTS_INIT_SCALE);
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createDenseModel_3(int workerId) {
-
-		if (printModel) System.out.println("Using createDenseModel_3");
-		Activation act = Activation.SOFTMAX;
-		LossFunctions.LossFunction loss; 
-
-		if (NEURAL_OUTPUT == 1) {
-			act = Activation.SIGMOID;
-			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
-		} else {
-			act = Activation.SOFTMAX;
-			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)     // 16
-						.nOut(64)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(64)
-						.nOut(64)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(loss)
-						.nIn(64)
-						.nOut(NEURAL_OUTPUT)   // 10
-						.activation(act)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createDenseModel_2(int workerId) {	// single hidden layer
-		if (printModel) System.out.println("Using createDenseModel_2");
-
-		Activation act = Activation.SOFTMAX;
-		LossFunctions.LossFunction loss; 
-
-		if (NEURAL_OUTPUT == 1) {
-			act = Activation.SIGMOID;
-			loss = LossFunctions.LossFunction.XENT;   // binary cross-entropy
-		} else {
-			act = Activation.SOFTMAX;
-			loss = LossFunctions.LossFunction.MCXENT; // multi-class cross-entropy
-		}
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(32)
-						.activation(Activation.TANH)
-						.build())
-				.layer(new OutputLayer.Builder(loss)
-						.nIn(32)
-						.nOut(NEURAL_OUTPUT)
-						.activation(act)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
 
 	public static PsoModel createPendigitsModelSmaller_3(int workerId) {	// no hidden layer just weights connecting input and output layer ...
 		if (printModel) System.out.println("Using PenDigits Ultra-Simple Model (no hidden)");
@@ -3811,7 +2328,7 @@ public class Dl4jModelFactory {
 		return new PsoMultiLayerAdapter(model);
 	}
 
-	// ======================================================================================================================
+	// ======================================================================
 	// WineQuality Dataset Model Architecture
 
 	public static PsoModel createWineQualityModel(int workerId) {
@@ -3820,19 +2337,16 @@ public class Dl4jModelFactory {
 				.seed(123 + workerId)
 				.weightInit(WeightInit.XAVIER)
 				.list()
-				// Hidden Layer 1: nIn = inputDim, nOut = 12, relu
 				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)     // 12 in this case
+						.nIn(NUM_FEATURES)
 						.nOut(12)
 						.activation(Activation.RELU)
 						.build())
-				// Hidden Layer 2: nIn = 12, nOut = 9, relu
 				.layer(new DenseLayer.Builder()
 						.nIn(12)
 						.nOut(9)
 						.activation(Activation.RELU)
 						.build())
-				// Output Layer: nIn = 9, nOut = 1, sigmoid, binary cross-entropy
 				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.XENT)
 						.nIn(9)
 						.nOut(NEURAL_OUTPUT)
@@ -3852,481 +2366,5 @@ public class Dl4jModelFactory {
 	// Output Layer    => 9 * 1 + 1
 	//
 	// Total params    => (inputDim * 12 + 12) + (12 * 9 + 9) + (9 * 1 + 1)
-	//
-	// If inputDim = 12:
-	// Hidden Layer 1  => 12*12 + 12 = 156
-	// Hidden Layer 2  => 12*9  + 9  = 117
-	// Output Layer    => 9*1   + 1  = 10
-	// total           => 156 + 117 + 10 = 283 weights
 
-	// ======================================================================================================================
-	// Letter
-
-	public static PsoModel createLetterModel(int workerId) {
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(128)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(128)
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder()
-						.nIn(64)
-						.nOut(NEURAL_OUTPUT)
-						.lossFunction(LossFunctions.LossFunction.MCXENT) // softmax cross-entropy
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// Layer 1: 16 → 256
-	// Weights: 16 * 256 = 4096
-	// Biases: 256
-	// Total: 4352
-	// Layer 2: 256 → 256
-	// Weights: 256 * 256 = 65536
-	// Biases: 256
-	// Total: 65792
-	// Output: 256 → 26
-	// Weights: 256 * 26 = 6656
-	// Biases: 26
-	// Total: 6682
-	// Grand total
-	// 4352 + 65792 + 6682 = 76826 parameters
-
-	// ======================================================================================================================
-	// Letter 70k (bigger)
-
-	public static PsoModel createLetterModel70K(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new DenseLayer.Builder()
-						.nIn(NUM_FEATURES)
-						.nOut(256)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nIn(256)
-						.nOut(256)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder()
-						.nIn(256)
-						.nOut(NEURAL_OUTPUT)
-						.lossFunction(LossFunctions.LossFunction.MCXENT) // softmax cross-entropy
-						.activation(Activation.SOFTMAX)
-						.build())
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-	// CIFAR3
-
-    public static PsoModel createCifar3Model(int workerId) {
-
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123 + workerId)
-                .weightInit(WeightInit.XAVIER)
-                .updater(new Adam(1e-3))
-                .list()
-                .layer(0, new ConvolutionLayer.Builder(3, 3)	// Conv(8, 3x3, same) + ReLU
-                        .nIn(3)               // RGB input channels => thats why 3
-                        .nOut(8)
-                        .stride(1, 1)
-                        .padding(1, 1)        
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2, 2)
-                        .stride(2, 2)
-                        .build())
-                .layer(2, new ConvolutionLayer.Builder(3, 3)
-                        .nIn(8)
-                        .nOut(16)
-                        .stride(1, 1)
-                        .padding(1, 1)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2, 2)
-                        .stride(2, 2)
-                        .build())
-                .layer(4, new GlobalPoolingLayer.Builder()
-                        .poolingType(PoolingType.AVG)
-                        .build())
-                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-                        .nIn(16)           
-                        .nOut(NUM_CLASSES)      	// 3 for CIFAR-3
-                        .activation(Activation.SOFTMAX)
-                        .build())
-                .setInputType(InputType.convolutional(32, 32, 3))
-                .build();
-
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-        model.init();
-        return new PsoMultiLayerAdapter(model);
-    }
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_PSO_Simple(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using CIFAR3 CNN SIMPLE (PSO): Conv8 -> LeakyReLU -> Pool -> GAP -> Softmax");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.RELU)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(3)                    // RGB
-						.nOut(8)
-						.stride(1, 1)
-						.padding(1, 1)
-						.hasBias(true)
-						.activation(Activation.IDENTITY)
-						.build())
-				.layer(new ActivationLayer.Builder()
-						.activation(Activation.LEAKYRELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new GlobalPoolingLayer.Builder()
-						.poolingType(PoolingType.AVG)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nIn(8)
-						.nOut(NUM_CLASSES) 
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifarCnn_New_13(int workerId) {
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX) // -> 12x12x8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model, false);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_New(int workerId) {	// Recommended
-
-		if (printModel) {
-			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3) // 3 * 3 * 3 * 32 = 864
-						.nIn(3)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(0, 0)	// no padding this means input (32x32) => output (30x30)
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (30x30) =>  output (15x15)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 32 * 64 = 18432
-						.nOut(64)										// input  (15x15) =>  output (13x13)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 64 * 64 = 36864 
-						.nOut(64)										// input  (6x6) =>  output (4x4)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new DenseLayer.Builder()		// Flatten implicit (no need to explicitly define a Flatten Layer)
-						.nOut(64)				// 4 * 4 * 64 = 1024 (flattend input), 1024 * 64 + 64 = 65600
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-	// 896+18,496+36,928+65,600+195=122,115​
-	// Recorded Dimensionality of the output is: 122115. 45% accuracy
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_New_Simpler(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using CIFAR3 CNN (Keras-style better): 32/64/64 -> Dense(64 relu) -> Softmax(3)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.inferenceWorkspaceMode(WorkspaceMode.ENABLED)
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-
-				.layer(new ConvolutionLayer.Builder(3, 3) // 3 * 3 * 3 * 32 = 864
-						.nIn(3)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(0, 0)	// no padding this means input (32x32) => output (30x30)
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (30x30) =>  output (15x15)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 32 * 64 = 18432
-						.nOut(64)										// input  (15x15) =>  output (13x13)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()		// Flatten implicit (no need to explicitly define a Flatten Layer)
-						.nOut(64)				// 4 * 4 * 64 = 1024 (flattend input), 1024 * 64 + 64 = 65600
-						.activation(Activation.RELU)
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-	// 896+18,496+36,928+65,600+195=122,115​
-	// Recorded Dimensionality of the output is: 122115. 45% accuracy
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_New_Simpler_2(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using CIFAR3 SIMPLE A: Conv(32) -> MaxPool -> Dense(64 relu) -> Softmax(3)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(3)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(1, 1)                 // SAME padding keeps 32x32
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)                  // 32x32 -> 16x16
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 3 * 3 * 32 * 64 = 18432
-						.nOut(64)										// input  (15x15) =>  output (13x13)
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// input  (13x13) =>  output (6x6)
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build()) 	
-				// Big dense block (good for PSO search space)
-				.layer(new DenseLayer.Builder()
-						.nOut(32)
-						.activation(Activation.RELU)
-						
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nOut(NUM_CLASSES)             // = 3
-						.activation(Activation.SOFTMAX)
-						.build())
-
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_New_Simpler_3(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using CIFAR3 SIMPLE B: Conv(16)->Pool->Conv(32)->Pool->Dense(64)->Softmax(3)");
-		}
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nIn(3)
-						.nOut(16)
-						.stride(1, 1)
-						.padding(1, 1)                 // SAME: 32x32
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)                  // 32->16
-						.build())
-
-				.layer(new ConvolutionLayer.Builder(3, 3)
-						.nOut(32)
-						.stride(1, 1)
-						.padding(1, 1)                 // SAME: 16x16
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-						.kernelSize(2, 2)
-						.stride(2, 2)                  // 16->8
-						.build())
-
-				.layer(new DenseLayer.Builder()
-						.nOut(64)
-						.activation(Activation.RELU)
-						.build())
-
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-						.nOut(NUM_CLASSES)
-						.activation(Activation.SOFTMAX)
-						.build())
-
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		return new PsoMultiLayerAdapter(model);
-	}
-
-	// ======================================================================================================================
-
-	public static PsoModel createCifar3Model_New_Simpler_4(int workerId) {
-
-		if (printModel) {
-			System.out.println("Using MNIST5 CNN (PSO-feasible)");
-		}
-
-		int numClasses = NUM_CLASSES;   // MNIST5 => 4, MNIST => 10
-
-		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-				.seed(123 + workerId)
-				.weightInit(WeightInit.XAVIER)
-				.list()
-				.layer(new ConvolutionLayer.Builder(3, 3)	// 28 x 28 x 1
-						.nIn(1)
-						.nOut(8)       
-						.stride(1, 1)
-						.padding(0, 0)							// 26 x 26 x 8
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 13 x 13 x 8
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new ConvolutionLayer.Builder(3, 3)				// 11 x 11 x 16
-						.nOut(16)     
-						.stride(1, 1)
-						.padding(0, 0)
-						.activation(Activation.RELU)
-						.build())
-				.layer(new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)	// 5 x 5 x 16
-						.kernelSize(2, 2)
-						.stride(2, 2)
-						.build())
-				.layer(new DenseLayer.Builder()
-						.nOut(32)                // keep 32 (good PSO control knob)
-						.activation(Activation.TANH)  // smoother than ReLU for PSO
-						.build())
-				.layer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)	
-						.nOut(numClasses)
-						.activation(Activation.SOFTMAX)
-						.build())
-
-				.setInputType(InputType.convolutional(32, 32, 3))
-				.build();
-
-		MultiLayerNetwork model = new MultiLayerNetwork(conf);
-		model.init();
-		// Dl4jParamUtils.printLayerHelpers(model, new long[]{1, 3, 32, 32});
-		return new PsoMultiLayerAdapter(model);
-	}
 }
