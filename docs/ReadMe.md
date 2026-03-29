@@ -7,13 +7,17 @@
 docker compose up
 docker compose stop
 
-# Then start the training with the configuration parameters from .env file
+# Normal Training: Start the training with the configuration parameters from .env file
 ./run_streams.sh
 
 # or manually from:
 mvn -q -DskipTests -Dexec.mainClass=pso.Simulation clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.EvaluateIrisModel clean compile exec:java
-mvn -q -DskipTests -Dexec.mainClass=evaluate.ExportDl4jModel clean compile exec:java
+
+# Experimentation: Runs whatever expriment is selected via the .env file
+./run_streams_exp.sh
+
+# or manually from:
+mvn -q -DskipTests -Dexec.mainClass=experimentation.Experimentation clean compile exec:java
 
 ```
 
@@ -24,12 +28,43 @@ docker compose up
 docker compose stop
 ```
 
-## Run (Java) Project: ===========================================================
+# htop Alternatives for GPU: ==========================================================
 
 ```bash
-./run_streams.sh --reset
-
+nvidia-smi	# Confirm if it was successfully installed
+watch -n 0.5 nvidia-smi
+watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
 ```
+
+# Where does Docker store records ?
+```bash
+docker exec -it broker sh -lc       # runs it as a shell inside the docker container   
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs'
+docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
+```
+
+# ===============================================================================
+# How to get Keras 2 .h5 files in Ubuntu server enviroment:
+
+```bash
+# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
+
+# This is the standard way on Ubuntu when you need an older Python.
+
+# 1) Install prerequisites
+sudo apt update
+sudo apt install -y software-properties-common
+
+# 2) Add deadsnakes
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+# 3) Install Python 3.11 + venv
+sudo apt install -y python3.11 python3.11-venv python3.11-dev
+
+source ~/venvs/tf215/bin/activate
+```
+
 
 ## ============================================================================================
 ## Generall Aspects / Topics of this Thesis (they are combined with each other):
@@ -346,40 +381,3 @@ improve the ability to escape local minima
             => Stable at: c1 = c2 = 2.05, φ = 4.1   => K ≈ 0.729
             =>  to: v = 0.729 v + 1.494 r1 (...) + 1.494 r2 (...)
     - If this is quaranteed then technically no need for Vmax (but Vmax is still helpful in practice)
-
-# htop Alternatives for GPU: ==========================================================
-
-```bash
-nvidia-smi	# Confirm if it was successfully installed
-watch -n 0.5 nvidia-smi
-watch -n 1 -t nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv
-```
-
-# Where does Docker store records ?
-```bash
-docker exec -it broker sh -lc       # runs it as a shell inside the docker container   
-docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs'
-docker exec -it broker sh -lc 'du -sh /tmp/kafka-logs/*'  # show per partition
-```
-
-# ===============================================================================
-# How to get Keras 2 .h5 files in Ubuntu server enviroment:
-
-```bash
-# Option 1 (recommended on Ubuntu): install Python 3.11 via deadsnakes PPA
-
-# This is the standard way on Ubuntu when you need an older Python.
-
-# 1) Install prerequisites
-sudo apt update
-sudo apt install -y software-properties-common
-
-# 2) Add deadsnakes
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update
-
-# 3) Install Python 3.11 + venv
-sudo apt install -y python3.11 python3.11-venv python3.11-dev
-
-source ~/venvs/tf215/bin/activate
-```
