@@ -153,12 +153,12 @@ public class Dl4jModelFactory {
 						// 0.756 accuracy after PSO training, 66.4% in the pretrained
 					// case 11 -> filename = "../python/pretrained_model/svhn_28x28x1_v4_mnist_final.h5";	
 					case 11 -> filename = "../python/pretrained_model/svhn_v4_mnist_final.h5";				
-			
 						// 0.82 PSO training, 0.652 pretrained (also 0.8466667)
 						// even if pretty slow it will keep improving
 						// recommended for svhn version
 						// this also needs a lot of workers !!! for accuracy
 						// the more complicated the problem, the most important is the accuracy
+						
 					case 12 -> filename = "../python/pretrained_model/svhn_28x28x1_v3_mnist_final.h5";				
 						// 0.785 PSO training, 0.676 pretrained
 					case 13 -> filename = "../python/pretrained_model/fmnist_base_plus_head_v4.h5";
@@ -206,41 +206,39 @@ public class Dl4jModelFactory {
 						case -1 -> pair = createMNIST_CNN_PretrainedLeNet_v2(workerId);
 						case 0 -> pair = createMNIST_CNN_PretrainedLeNet_v3(workerId);
 
-						case 1 -> pair = createCNNModel_1_Layer(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
-						case 2 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
-						case 3 -> pair = createCNNModel_1_Layer(workerId, filename, 128);		// 0.89
-						case 4 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v4(workerId, filename, 50);
-						case 5 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v5(workerId, filename, 128);	// 0.7
-						case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6(workerId, filename, 256);	// 0.53
-						// case 6 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v6_1(workerId, filename, 64);	// 0.71
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7(workerId, filename);	// 0.77
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(workerId, filename, 64);	// 0.46
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_2(workerId, filename, 10); // 0.66	
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_3(workerId, filename, 5 * 5 * 10);	
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_4(workerId, filename);	// 0.77
-						case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.84, 0.86 with freeze index 1
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(workerId, filename);	// 0.84, 0.86 with freeze index 1
-						// case 7 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(workerId, filename, 64);	// 0.23
-						case 8 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
-						case 9 -> pair = createCNNModel_1_Layer(workerId, filename, 800); // 80% Partial Freeze
-						case 10 -> pair = createCNNModel_1_Layer(workerId, filename, 576);	
-						case 11 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-						// case 11 -> pair = createCNNModel_1_Layer_Logits(workerId, filename, 90);
-						case 13 -> pair = createCNNModel_1_Layer(workerId, filename, 90);
-						case 12 -> pair = createCNNModel_1_Layer(workerId, filename, 198);
-						case 14 -> pair = createCNNModel_1_Layer(workerId, filename, 200);
-						case 15 -> pair = createCNNModel_1_Layer(workerId, filename, 800);
-						case 16 -> pair = createCNNModel_1_Layer(workerId, filename, 128);
-						case 17 -> pair = createMNIST_CNN_Pretrained_MNIST_Simpler_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
-						case 18 -> pair = createCNNModel_1_Layer(workerId, filename, 400);
-						case 19 -> pair = createCNNModel_1_Layer(workerId, filename, 784);
+						case 1 -> pair = createCNN_pretrained_1_L(workerId, filename, 64);	// 0.99, fine-tuneable 0.9
+						case 2 -> pair = createCNN_pretrained_1_L(workerId, filename, 800);
+						case 3 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);		// 0.89
+						case 4 -> pair = createCNN_pretrained_3_L_v4(workerId, filename, 50);
+						case 6 -> pair = createCNN_pretrained_1_L(workerId, filename, 64);	// 0.71
+						case 7 -> pair = createCNN_pretrained_2_L_v7(workerId, filename);	// 0.77
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_1(workerId, filename, 64);	// 0.46
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_2(workerId, filename, 10); // 0.66	
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_3(workerId, filename, 5 * 5 * 10);	
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_4(workerId, filename);	// 0.77
+						case 7 -> pair = createCNN_pretrained_2_L_v7_5(workerId, filename);	// 0.84, 0.86 with freeze index 1
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_5_1(workerId, filename);	// 0.84, 0.86 with freeze index 1
+						// case 7 -> pair = createCNN_pretrained_2_L_v7_6(workerId, filename, 64);	// 0.23
+						case 8 -> pair = createCNN_pretrained_2_L_v7_5(workerId, filename);	// 0.72% partially frozen, 0.7% fully frozen
+						case 9 -> pair = createCNN_pretrained_1_L(workerId, filename, 800); // 80% Partial Freeze
+						case 10 -> pair = createCNN_pretrained_1_L(workerId, filename, 576);	
+						case 11 -> pair = createCNN_pretrained_1_L(workerId, filename, 90);
+						// case 11 -> pair = createCNN_pretrained_1_L_Logits(workerId, filename, 90);
+						case 13 -> pair = createCNN_pretrained_1_L(workerId, filename, 90);
+						case 12 -> pair = createCNN_pretrained_1_L(workerId, filename, 198);
+						case 14 -> pair = createCNN_pretrained_1_L(workerId, filename, 200);
+						case 15 -> pair = createCNN_pretrained_1_L(workerId, filename, 800);
+						case 16 -> pair = createCNN_pretrained_1_L(workerId, filename, 128);
+						case 17 -> pair = createCNN_pretrained_2_L_v1(workerId, filename, 800);	// 0.8, fine-tuneable 0.7
+						case 18 -> pair = createCNN_pretrained_1_L(workerId, filename, 400);
+						case 19 -> pair = createCNN_pretrained_1_L(workerId, filename, 784);
 							// 78%
-						case 20 -> pair = createCNNModel_1_Layer(workerId, filename, 144);
-						case 21 -> pair = createCNNModel_1_Layer(workerId, filename, 36);
-						case 22 -> pair = createCNNModel_1_Layer(workerId, filename, 27);
-						case 23 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
-						case 24 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
-						case 25 -> pair = createCNNModel_1_Layer(workerId, filename, 98);
+						case 20 -> pair = createCNN_pretrained_1_L(workerId, filename, 144);
+						case 21 -> pair = createCNN_pretrained_1_L(workerId, filename, 36);
+						case 22 -> pair = createCNN_pretrained_1_L(workerId, filename, 27);
+						case 23 -> pair = createCNN_pretrained_1_L(workerId, filename, 98);
+						case 24 -> pair = createCNN_pretrained_1_L(workerId, filename, 98);
+						case 25 -> pair = createCNN_pretrained_1_L(workerId, filename, 98);
 							// 81.3%
 
 						default -> throw new IllegalArgumentException("Unknown version: " + version);
@@ -732,7 +730,7 @@ public class Dl4jModelFactory {
 	
 	// ===========================================================================================
 
-	public static Pair<PsoModel, Integer>  createMNIST_CNN_Pretrained_MNIST_Simpler_v1(int workerId, String fileName, int inputDim) {
+	public static Pair<PsoModel, Integer>  createCNN_pretrained_2_L_v1(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
@@ -762,9 +760,7 @@ public class Dl4jModelFactory {
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(64)
 						.nOut(NUM_CLASSES)     
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -778,6 +774,7 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer> createCNNModel_1_Layer(int workerId, String fileName, int inputDim) {
 
 		Activation act = cfg.NEED_PROBS ? Activation.SOFTMAX : Activation.IDENTITY;
+
 		// Pretrained Model ===========================================================
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
@@ -818,7 +815,6 @@ public class Dl4jModelFactory {
 	public static Pair<PsoModel, Integer>  createCNNModel_1_Layer_Logits(int workerId, String fileName, int inputDim) {
 
 		// Pretrained Model ===========================================================
-		System.out.println("AAAAAAAAAAAAAAAAa");
 		MultiLayerNetwork pretrained = loadPretrainedModel(fileName).asMultiLayerNetwork();
 
 		// ============================================================================
@@ -852,23 +848,22 @@ public class Dl4jModelFactory {
 		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
 	}
 
-	// ======================================================================================================================
-
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v4(int workerId, String filename, int inputDim) {
-
+	// ==================================================================
+	
+	public static Pair<PsoModel, Integer> createCNN_pretrained_3_L_v4(int workerId, String filename, int inputDim) {
 		// Pretrained Model ===========================================================
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
 		
 		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
+
 		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
 				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
+				.updater(new NoOp())  
 				.build();
 
 		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
 			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(3)	// its 2 because for some reason the activation layers counts as well
+			.removeLayersFromOutput(3)
 			.build();
 
 		int start = (int) truncated.numParams();
@@ -893,9 +888,7 @@ public class Dl4jModelFactory {
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
 						.nIn(32)
 						.nOut(NUM_CLASSES)   
-						.activation(Activation.SOFTMAX)	// OutputLayer in DL4J contains its own activation function (softmax / sigmoid / etc.)	
-														// this depends on the methodology used to define activation layers. They can be embedded or
-														// be external (right afterwards) to dense layers
+						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
     					.biasInit(0.0)
 						.build())
@@ -904,136 +897,10 @@ public class Dl4jModelFactory {
 
 	}
 
-	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v5(int workerId, String filename, int inputDim) {
+	// ================================================================================
 
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
-		
-		// ============================================================================
-		// DL4J needs a FineTuneConfiguration to define the updater (Adam, SGD, learning rate )
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())   // <-- prevents optimizer assumptions
-				.build();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(3)	// its 2 because for some reason the activation layers counts as well
-			.build();
-
-		int start = (int) truncated.numParams();
-
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
-				.setFeatureExtractor(5)
-				.addLayer(new DenseLayer.Builder()
-					.nIn(inputDim)        
-					.nOut(64)
-					.activation(Activation.RELU)
-					.weightInit(WeightInit.XAVIER)
-					.biasInit(0.0)
-					.build())
-				.addLayer(new DenseLayer.Builder()
-					.nIn(64)          
-					.nOut(32)
-					.activation(Activation.RELU)
-					.weightInit(WeightInit.XAVIER)
-					.biasInit(0.0)
-					.build())
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(32)
-						.nOut(NUM_CLASSES)    
-						.activation(Activation.SOFTMAX)	
-						.weightInit(WeightInit.XAVIER)
-    					.biasInit(0.0)
-						.build())
-				.build();
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-
-	}
-
-	// ======================================================================================================================
-
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v6(int workerId, String filename, int inputDim) {
-
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
-		
-		// ============================================================================
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())  
-				.build();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(2)
-			.build();
-
-		int start = (int) truncated.numParams();
-
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
-				.setFeatureExtractor(7)
-				.addLayer(new DenseLayer.Builder()
-					.nIn(inputDim)            // IMPORTANT
-					.nOut(64)
-					.activation(Activation.RELU)
-					.weightInit(WeightInit.XAVIER)
-					.biasInit(0.0)
-					.build())
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(64)
-						.nOut(NUM_CLASSES)   
-						.activation(Activation.SOFTMAX)	
-						.weightInit(WeightInit.XAVIER)
-    					.biasInit(0.0)
-						.build())
-				.build();
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-
-	}
-
-	// ======================================================================================================================
-
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v6_1(int workerId, String filename, int inputDim) {
-
-		// Pretrained Model ===========================================================
-		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
-		
-		// ============================================================================
-		FineTuneConfiguration ftc = new FineTuneConfiguration.Builder()
-				.seed(123 + workerId)
-				.updater(new NoOp())  
-				.build();
-
-		MultiLayerNetwork truncated = new TransferLearning.Builder(pretrained)
-			.fineTuneConfiguration(ftc)
-			.removeLayersFromOutput(1)
-			.build();
-
-		int start = (int) truncated.numParams();
-
-		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
-				.fineTuneConfiguration(ftc)     // <-- REQUIRED in 1.0.0-M2.1
-				.setFeatureExtractor(8)
-				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(inputDim)
-						.nOut(NUM_CLASSES)    
-						.activation(Activation.SOFTMAX)	
-						.weightInit(WeightInit.XAVIER)
-    					.biasInit(0.0)
-						.build())
-				.build();
-		return Pair.of(new PsoMultiLayerAdapter(model, true), start);
-
-	}
-
-	// ======================================================================================================================
-
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7(
 			int workerId, String filename) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1076,7 +943,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_1(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_1(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1117,7 +984,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_2(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_2(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1165,7 +1032,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_3(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_3(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1211,7 +1078,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_4(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_4(
 			int workerId, String filename) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1260,7 +1127,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_5(
 			int workerId, String filename) {
 
 				MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1283,15 +1150,13 @@ public class Dl4jModelFactory {
 				.removeLayersFromOutput(2)
 				.build();
 
-		// Add OutputLayer, but MUST flatten CNN activations first via preprocessor
-		// After 2x MaxPool: 28->14->7, channels=64  => 7*7*64 = 3136 inputs
 		int h = 7, w = 7, c = 10;
-		int flattened = h * w * c; // 3136
+		int flattened = h * w * c; 
 
 		MultiLayerNetwork model = new TransferLearning.Builder(truncated)
 				.fineTuneConfiguration(ftc)
 				.addLayer(new OutputLayer.Builder(LossFunctions.LossFunction.SPARSE_MCXENT)
-						.nIn(flattened)              // 3136
+						.nIn(flattened)          
 						.nOut(NUM_CLASSES)
 						.activation(Activation.SOFTMAX)
 						.weightInit(WeightInit.XAVIER)
@@ -1306,7 +1171,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_5_1(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_5_1(
 			int workerId, String filename) {
 				
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
@@ -1358,7 +1223,7 @@ public class Dl4jModelFactory {
 
 	// ======================================================================================================================
 
-	public static Pair<PsoModel, Integer> createMNIST_CNN_Pretrained_MNIST_Simpler_v7_6(
+	public static Pair<PsoModel, Integer> createCNN_pretrained_2_L_v7_6(
 			int workerId, String filename, int inputDim) {
 
 		MultiLayerNetwork pretrained = loadPretrainedModel(filename).asMultiLayerNetwork();
