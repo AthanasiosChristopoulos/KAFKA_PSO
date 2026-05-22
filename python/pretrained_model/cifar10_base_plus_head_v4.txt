@@ -1,0 +1,4 @@
+Logging training output to: pretrained_model/cifar10_base_plus_head_v4.txt
+Will save model to: pretrained_model/cifar10_base_plus_head_v4.h5
+
+Epoch 1/30
